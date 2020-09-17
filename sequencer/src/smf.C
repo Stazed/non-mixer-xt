@@ -20,6 +20,7 @@
 #include "smf.H"
 #include "phrase.H"
 #include "pattern.H"
+#include <math.h>
 
 using namespace MIDI;
 
@@ -143,11 +144,11 @@ smf::read_byte ( void )
 }
 
 void
-smf::write_var ( long var )
+smf::write_var ( unsigned long var )
 {
-    long buffer;
-    buffer = var & 0x7F;
-
+    unsigned long buffer = var & 0x7F;
+    byte_t buf[4];
+    
     /* we shift it right 7, if there is
        still set bits, encode into buffer
        in reverse order */
@@ -157,15 +158,19 @@ smf::write_var ( long var )
 	buffer |= ( var & 0x7F ) | 0x80;
     }
 
-    for ( ;; )
+    int i = 0;
+    
+    while ( i < 4 )
     {
-        write_byte( buffer );
-
+	buf[i++] = buffer;
+        
         if ( buffer & 0x80 )
             buffer >>= 8;
         else
             break;
     }
+
+    write_bytes( buf, i );    
 }
 
 
@@ -183,15 +188,6 @@ smf::write_long ( unsigned long x )
 }
 
 void
-smf::write_ascii ( const char *buf )
-{
-    if ( strlen( buf ) != 4 )
-        ASSERTION( "invalid MIDI value" );
-
-    write_bytes( (void *)buf, 4 );
-}
-
-void
 smf::write_short ( unsigned short x )
 {
     byte_t buf[2];
@@ -206,6 +202,15 @@ void
 smf::write_byte ( byte_t b )
 {
     write_bytes( &b, 1 );
+}
+
+void
+smf::write_ascii ( const char *buf )
+{
+    if ( strlen( buf ) != 4 )
+        ASSERTION( "invalid MIDI value" );
+
+    write_bytes( (void *)buf, 4 );
 }
 
 
@@ -231,7 +236,7 @@ smf::write_event ( const midievent *e )
     tick_t delta = ts - _time;
     _time = ts;
 
-    write_var( delta );
+    write_var( floor(delta) );
 
     if ( _cue && (e->is_note_off() || e->is_note_on() ) )
     {

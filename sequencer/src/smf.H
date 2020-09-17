@@ -64,7 +64,7 @@ public:
     void read_bytes ( void *p, int l );
     byte_t read_byte ( void );
 
-    void write_var ( long var );
+    void write_var ( unsigned long var );
     void write_long ( unsigned long x );
     void write_ascii ( const char *buf );
     void write_short ( unsigned short x );
