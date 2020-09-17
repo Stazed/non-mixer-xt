@@ -371,51 +371,69 @@ sequence::load ( const char *name )
 void
 sequence::save ( const char *name ) const
 {
-    smf f;
+    
+    char *tmp  = NULL;
 
-    /* open for writing */
-    f.open( name, smf::WRITE );
-
-    f.write_header( 2 );
-
-    DMESSAGE( "saving playlist" );
-
-    f.open_track( NULL, -1 );
-
-    DMESSAGE( "saving song info" );
-
-    f.write_song_info( song.play_mode, phrase::phrases(), pattern::patterns(), this->name(), notes() );
-
-    for ( int i = 0; i < _rd->num; ++i )
     {
-        char pat[256];
+	const char *filename = basename(name);
+	char *dir = (char*)malloc( (strlen(name) - strlen(filename)) + 1 );
+	strncpy( dir, name, strlen(name) - strlen(filename) );
+    
+	asprintf( &tmp, "%s#%s", dir, filename );
+	free(dir);
+    }
+    
+    {
+	smf f;
 
-        phrase *p = phrase::phrase_by_number( _rd->phrases[ i ] );
+	/* open for writing */
+	f.open( tmp, smf::WRITE );
 
-        snprintf( pat, 256, "%d: %s", p->number(), p->name() );
+	f.write_header( 2 );
 
-        f.write_meta_event( smf::CUEPOINT, pat );
+	DMESSAGE( "saving playlist" );
+
+	f.open_track( NULL, -1 );
+
+	DMESSAGE( "saving song info" );
+
+	f.write_song_info( song.play_mode, phrase::phrases(), pattern::patterns(), this->name(), notes() );
+
+	for ( int i = 0; i < _rd->num; ++i )
+	{
+	    char pat[256];
+
+	    phrase *p = phrase::phrase_by_number( _rd->phrases[ i ] );
+
+	    snprintf( pat, 256, "%d: %s", p->number(), p->name() );
+
+	    f.write_meta_event( smf::CUEPOINT, pat );
+	}
+
+	f.close_track( 0 );
+
+	DMESSAGE( "saving phrases" );
+
+	for ( int i = 0; i < phrase::phrases(); i++ )
+	{
+	    phrase *p = phrase::phrase_by_number( i + 1 );
+
+	    p->dump( &f );
+	}
+
+	DMESSAGE( "saving patterns" );
+
+	for ( int i = 0; i < pattern::patterns(); i++ )
+	{
+	    pattern *p = pattern::pattern_by_number( i + 1 );
+
+	    p->dump( &f );
+	}
     }
 
-    f.close_track( 0 );
+    rename(tmp,name);
 
-    DMESSAGE( "saving phrases" );
-
-    for ( int i = 0; i < phrase::phrases(); i++ )
-    {
-        phrase *p = phrase::phrase_by_number( i + 1 );
-
-        p->dump( &f );
-    }
-
-    DMESSAGE( "saving patterns" );
-
-    for ( int i = 0; i < pattern::patterns(); i++ )
-    {
-        pattern *p = pattern::pattern_by_number( i + 1 );
-
-        p->dump( &f );
-    }
+    free(tmp);
 }
 
 
