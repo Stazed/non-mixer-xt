@@ -713,6 +713,29 @@ Audio_Region::draw ( void )
         fl_line_style( FL_SOLID, 0 );
     }
 
+
+    /* draw dog ear */
+    {
+	const int pw = 8;
+	
+	/* fl_color( fl_color_add_alpha( FL_WHITE, 127 ) ); */
+	/* fl_color( FL_BACKGROUND_COLOR ); */
+	fl_color( fl_color_add_alpha( FL_WHITE, 127 ) );
+
+	fl_begin_polygon();
+
+	fl_vertex( line_x() + Fl::box_dx(box()), 
+		   y() + Fl::box_dy(box()) );
+
+	fl_vertex( pw + line_x() + Fl::box_dx(box()), 
+		   y() + Fl::box_dy(box()) );
+
+	fl_vertex( line_x() + Fl::box_dx(box()), 
+		  pw + y() + Fl::box_dy(box()) );
+
+	fl_end_polygon();
+    }
+	    
     if ( selected() )
         draw_selection_frame( line_x() + Fl::box_dx(box()),
                               y() + Fl::box_dy(box()),
