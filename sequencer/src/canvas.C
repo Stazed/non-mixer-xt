@@ -1585,12 +1585,12 @@ Canvas::handle ( int m )
 
                             ghost_note->start = this->m.grid->x_to_ts( dx );
                             ghost_note->note = dy;
-                            ghost_note->duration = this->m.grid->default_length();
+                            ghost_note->duration = this->m.grid->default_length() - 1;
                             ghost_note->velocity = 64;
 
                             drag_note->start = this->m.grid->x_to_ts( dx );
                             drag_note->note = dy;
-                            drag_note->duration = this->m.grid->default_length();
+                            drag_note->duration = this->m.grid->default_length() - 1;
                             drag_note->velocity = 64;
                     
 
