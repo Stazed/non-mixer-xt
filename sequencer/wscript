@@ -32,6 +32,7 @@ def configure(conf):
     conf.define('SYSTEM_PATH', '/'.join( [ conf.env.DATADIR, APPNAME ] ) )
     conf.define('DOCUMENT_PATH', '/'.join( [ conf.env.DATADIR, 'doc' ] ) )
     conf.define('PIXMAP_PATH', '/'.join( [ conf.env.DATADIR, 'pixmaps' ] ) )
+    conf.define('INSTRUMENTS_PATH', '/'.join( [ conf.env.DATADIR, APPNAME, 'instruments' ] ) )
 
     conf.write_config_header('config.h', remove=False)
 

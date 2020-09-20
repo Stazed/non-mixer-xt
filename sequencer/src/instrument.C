@@ -160,7 +160,7 @@ Instrument::read ( const char *s )
     if ( ! ( fp = fopen( pat, "r" ) ) )
     {
 
-        sprintf( pat, "%s/%s/%s.inst", SYSTEM_PATH, INSTRUMENT_DIR, s );
+        sprintf( pat, "%s/%s.inst", INSTRUMENTS_PATH, s );
 
         if ( ! ( fp = fopen( pat, "r" ) ) )
             return false;
@@ -261,7 +261,7 @@ get_listing( const char *dir )
 
     if ( 0 > ( n = scandir( dir, &names, instrument_filter, alphasort ) ) )
     {
-        WARNING( "couldn't open instrument directory" );
+        WARNING( "couldn't open instrument directory: %s", dir );
         return NULL;
     }
     else
@@ -291,7 +291,7 @@ get_listing( const char *dir )
 char **
 Instrument::listing ( void )
 {
-    list <string> *sys = get_listing( SYSTEM_PATH "/" INSTRUMENT_DIR );
+    list <string> *sys = get_listing( INSTRUMENTS_PATH );
     list <string> *usr = get_listing( config.user_config_dir );
 
     if ( ! ( usr || sys ) )

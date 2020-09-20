@@ -38,4 +38,3 @@ const char COPYRIGHT[]  = "Copyright (c) 2007-2013 Jonathan Moore Liles";
 /* directories */
 
 #define USER_CONFIG_DIR ".non/"
-#define INSTRUMENT_DIR "instruments/"
