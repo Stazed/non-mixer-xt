@@ -1,3 +1,4 @@
+"Accoustic Bass Drum", 35, 100
 "Bass Drum 1", 36, 100
 "Side Stick", 37, 80
 "Acoustic Snare", 38, 100
@@ -20,6 +21,8 @@
 "Splash Cymbal", 55, 64
 "Cowbell", 56, 64
 "Crash Cymbal 2", 57, 64
+"Vibraslap", 58, 65
+"Ride Cymbal 2", 59, 80
 "Hi Bongo", 60, 100
 "Low Bongo", 61, 100
 "Mute Hi Conga", 62, 80
