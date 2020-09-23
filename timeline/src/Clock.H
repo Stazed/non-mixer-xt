@@ -164,7 +164,7 @@ public:
 
             fl_font( FL_COURIER_BOLD, 24 );
 
-            Fl_Color c = fl_color_average( FL_WHITE, FL_GRAY, 0.60 );
+            Fl_Color c = fl_color_average( fl_contrast(FL_WHITE, FL_BACKGROUND_COLOR) , FL_GRAY, 0.60 );
 
             fl_color( c );
 
