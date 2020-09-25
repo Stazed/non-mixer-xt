@@ -25,6 +25,7 @@
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Pack.H>
 #include <FL/Fl_Scalepack.H>
+#include <FL/Enumerations.H>
 
 #include "dsp.h"
 
@@ -164,7 +165,7 @@ JACK_Module::JACK_Module ( bool log )
             Fl_Browser *o = connection_display = new Fl_Browser( 0, 0, w(), h() );
             o->has_scrollbar(Fl_Browser_::VERTICAL);
             o->textsize( 10 );
-            o->textcolor( FL_LIGHT3 );
+            o->textcolor( fl_contrast( FL_LIGHT3, FL_BACKGROUND_COLOR ) );
             o->textfont( FL_COURIER );
             o->box( FL_FLAT_BOX );
             o->color( FL_DARK1 );
