@@ -50,6 +50,9 @@
 
 bool Controller_Module::learn_by_number = false;
 bool Controller_Module::_learn_mode = false;
+
+Controller_Module* Controller_Module::_learning_control = NULL;
+
 
 
 void
@@ -836,9 +839,26 @@ Controller_Module::draw ( void )
 
     if ( learn_mode() )
     {
-        fl_rectf( x(),y(),w(),h(), fl_color_add_alpha( FL_MAGENTA, 50 ) );
+	fl_rectf( x(),y(),w(),h(),
+		  fl_color_add_alpha(
+		      this == _learning_control
+		      ? FL_RED
+		      : FL_GREEN,
+		      60 ) );
     }
 }
+
+void Controller_Module::learning_callback ( void *userdata )
+{
+    ((Controller_Module*)userdata)->learning_callback();
+}
+
+void Controller_Module::learning_callback ( void )
+{
+    _learning_control = NULL;
+    this->redraw();
+}
+
 
 int
 Controller_Module::handle ( int m )
@@ -852,6 +872,10 @@ Controller_Module::handle ( int m )
             {
                 tooltip( "Now learning control. Move the desired control on your controller" );
 
+		_learning_control = this;
+		
+		this->redraw();
+		
                 //connect_to( &module->control_input[port] );
                 Port *p = control_output[0].connected_port();
                 
@@ -861,7 +885,7 @@ Controller_Module::handle ( int m )
 
                     DMESSAGE( "Will learn %s", path );
 
-                    mixer->osc_endpoint->learn( path );
+                    mixer->osc_endpoint->learn( path, Controller_Module::learning_callback, this );
                 }
 
                 return 1;

@@ -187,6 +187,7 @@ namespace OSC
     Endpoint::Endpoint ( )
     {  
         _learning_path = NULL;
+	_learning_callback = NULL;
         _peer_signal_notification_callback = 0;
         _peer_signal_notification_userdata = 0;
         _peer_scan_complete_callback = 0;
@@ -685,8 +686,13 @@ namespace OSC
             DMESSAGE( "Learned translation \"%s\" -> \"%s\"", path, ep->_learning_path );
             
             free(ep->_learning_path);
+
+	    ep->_learning_callback(ep->_learning_userdata);
+
+	    ep->_learning_userdata = NULL;
+	    ep->_learning_callback = NULL;
             ep->_learning_path = NULL;
-            
+
             return 0;
         }
 
@@ -1066,12 +1072,15 @@ namespace OSC
 
     /* prepare to learn a translation for /path/. The next unhandled message to come through will be mapped to /path/ */
     void
-    Endpoint::learn ( const char *path )
+    Endpoint::learn ( const char *path, void (*callback)(void*), void *userdata )
     {
         if ( _learning_path )
             free( _learning_path );
 
         _learning_path = NULL;
+
+	_learning_callback = callback;
+	_learning_userdata = userdata;
 
         if ( path )
             _learning_path = strdup( path );
