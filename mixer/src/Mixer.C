@@ -621,8 +621,14 @@ Mixer::osc_strip_by_number ( const char *path, const char *types, lo_arg **argv,
     }
 
     char *new_path;
+
+    char *stripname = escape_url( o->name() );
     
-    asprintf( &new_path, "%s/strip/%s/%s", client_name, o->name(), rem );
+    asprintf( &new_path, "%s/strip/%s/%s", client_name, stripname, rem );
+
+    free( stripname );
+    
+    /* DMESSAGE( "Forwarding by-number OSC path: %s === %s", path, new_path ); */
 
     free( rem );
 
