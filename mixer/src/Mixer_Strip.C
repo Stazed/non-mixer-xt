@@ -980,13 +980,13 @@ static bool matches_pattern ( const char *pattern, Module::Port *p )
             return false;
         }
 
+	/* DMESSAGE( "Auto-connect comparing pattern: %s, to port %s", pattern, */
+	/* 	  p->jack_port()->name() ); */
+
         /* group matches... try port group */
         if ( ! strcmp( port_group, "mains" ) )
-        { 
-            if ( index( p->jack_port()->name(), '/' ) )
-                return false;
-            else
-                return true;
+        {	    
+            return !index( p->jack_port()->name(), '/' );
         }
         else
         {
@@ -996,7 +996,7 @@ static bool matches_pattern ( const char *pattern, Module::Port *p )
             if ( n )
             {
 //                *n = 0;
-                if ( ! strncmp( port_group, pn, ( n - 1 ) - pn ) )
+                if ( ! strncmp( port_group, pn, n - pn ) )
                     return true;
                 else
                     return false;
