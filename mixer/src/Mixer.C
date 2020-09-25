@@ -911,7 +911,7 @@ Mixer::rows ( int ideal_rows )
 
     _rows = ideal_rows;
     
-    if ( _strip_height != sh );
+    if ( _strip_height != sh )
     {
         mixer_strips->redraw();
         scroll->redraw();
