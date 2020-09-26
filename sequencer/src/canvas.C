@@ -620,16 +620,7 @@ Canvas::draw_dash ( tick_t x, int y, tick_t w, int color, int selected ) const
     
     if ( w > 4 )
     {
-	/* cairo_set_operator( Fl::cairo_cc(), CAIRO_OPERATOR_HSL_COLOR ); */
-	/* cairo_set_operator( Fl::cairo_cc(), CAIRO_OPERATOR_OVER ); */
-	
-	fl_rectf( x, y + 1, w, m.div_h - 1, fl_color_add_alpha( color, 200 ) );
-	
-	
-	fl_rect(x, y + 1, w, m.div_h - 1, color );
-
-    
-        /* fl_draw_box( FL_BORDER_BOX, x, y + 1, w, m.div_h - 1, color ); */
+        fl_draw_box( FL_UP_BOX, x, y + 1, w, m.div_h - 1, color );
         
         if ( selected )
         {
@@ -812,7 +803,7 @@ Canvas::draw_clip ( int X, int Y, int W, int H )
                    ghost_note->velocity,
                    1 );
 
-    fl_color( fl_color_add_alpha( fl_rgb_color( 127,127,127 ), 50 ));
+    fl_color( fl_color_add_alpha( fl_rgb_color( 127,127,127 ), 25 ));
 
     /* draw grid */
     
