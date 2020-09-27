@@ -436,7 +436,10 @@ save_settings ( void )
     
     return true;
 }
-    
+
+
+static int max_signal = 0;
+
 
 bool
 load_settings ( void )
@@ -451,12 +454,16 @@ load_settings ( void )
     char *signal_name;
     char *midi_event;
 
+    max_signal = 0;
+    
     while ( 2 == fscanf( fp, "[%m[^]]] %m[^\n]\n", &midi_event, &signal_name ) )
     {
         DMESSAGE( "%s, %s", midi_event, signal_name );
 
         if ( sig_map.find( midi_event ) == sig_map.end() )
         {
+	    ++max_signal;
+	    
             signal_mapping m;
 
             m.deserialize( midi_event );
@@ -700,8 +707,6 @@ main ( int argc, char **argv )
     
     DMESSAGE( "waiting for events" );
 
-    static int max_signal = 1;
-
     jack_midi_event_t ev;
     midievent e;
     while ( ! got_sigterm )
@@ -749,7 +754,7 @@ main ( int argc, char **argv )
                     {
                         char *s;
 
-                        asprintf( &s, "/control/%i", max_signal++ );
+                        asprintf( &s, "/control/%i", ++max_signal );
                       
                         signal_mapping m;
                         
