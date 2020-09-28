@@ -847,6 +847,12 @@ o->maximum( pattern::patterns() );}
 char picked[80];
 mapping_menu->item_pathname(picked, sizeof(picked)-1 );
 
+const char *text = o->text();
+
+if ( ! strcmp( text, picked ) )
+   // nothing picked...
+   return;
+
 if ( 0 == strncmp( picked, "Instrument", strlen( "Instrument" ) ) )
 {
 	((pattern*)pattern_canvas_widget->grid())->mapping.open( Mapping::INSTRUMENT, o->text() );
