@@ -20,6 +20,7 @@
 #include "Module.H"
 #include <FL/fl_draw.H>
 #include <FL/fl_ask.H>
+#include <FL/Enumerations.H>
 
 #include <stdlib.h>
 #include <string.h>
@@ -173,7 +174,9 @@ Module::init ( void )
     selection_color( FL_YELLOW );
 
     labelsize(12);
-    color( fl_rgb_color( 122,190,200 ) );
+
+    color( fl_color_average( fl_rgb_color( 0x3a, 0x99, 0x7c ), FL_BACKGROUND_COLOR, 1.0f ));
+
     tooltip();
 }
 
@@ -686,6 +689,9 @@ Module::draw_box ( int tx, int ty, int tw, int th )
 
     Fl_Color c = color();
 
+    if ( bypass() )
+	c = fl_darker(fl_darker(c));
+    
     if ( ! active_r() )
         c = fl_inactive( c );
 
@@ -776,8 +782,14 @@ Module::draw_label ( int tx, int ty, int tw, int th )
 
     Fl_Color c = fl_contrast( FL_FOREGROUND_COLOR, color() );
 
-    fl_color( active_r() && ! bypass() ? c : fl_inactive(c) );
+    if ( bypass() )
+	c = fl_darker(c);
+    
+    /* fl_color( active_r() && ! bypass() ? c : fl_inactive(c) ); */
 
+    if ( !active_r() )
+	c = fl_inactive(c);
+    
     fl_font( FL_HELVETICA, labelsize() );
 
     char *di = strstr( lab, " -" );
@@ -826,15 +838,18 @@ Module::draw_label ( int tx, int ty, int tw, int th )
    
     }
 
+
+    fl_color( c );
+
     fl_draw( s ? s : lab, tx, ty, tw, th, align() | FL_ALIGN_CLIP );
     
-    if ( bypass() )
-    {
-        fl_color( fl_color_add_alpha( fl_color(), 127 )  );
-        fl_line_style( FL_SOLID, 2 );
-        fl_line( tx, ty + th * 0.5, tx + tw, ty + th * 0.5 );
-        fl_line_style( FL_SOLID, 0 );
-    }
+    /* if ( bypass() ) */
+    /* { */
+    /*     fl_color( fl_color_add_alpha( fl_color(), 127 )  ); */
+    /*     fl_line_style( FL_SOLID, 2 ); */
+    /*     fl_line( tx, ty + th * 0.5, tx + tw, ty + th * 0.5 ); */
+    /*     fl_line_style( FL_SOLID, 0 ); */
+    /* } */
 
 
     free(lab);
