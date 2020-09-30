@@ -416,6 +416,7 @@ int signal_handler ( float value, void *user_data )
 
 
 std::map<std::string,signal_mapping> sig_map;
+std::map<int,std::string> sig_map_ordered;
 
 bool
 save_settings ( void )
@@ -425,11 +426,12 @@ save_settings ( void )
     if ( !fp )
         return false;
     
-    for ( std::map<std::string,signal_mapping>::const_iterator i = sig_map.begin();
-          i != sig_map.end();
+    for ( std::map<int,std::string>::const_iterator i = sig_map_ordered.begin();
+          i != sig_map_ordered.end();
           i++ )
     {
-        fprintf( fp, "[%s] %s\n", i->first.c_str(), i->second.signal_name.c_str() );
+	
+        fprintf( fp, "[%s] %s\n", i->second.c_str(), sig_map[i->second.c_str()].signal_name.c_str() );
     }
     
     fclose(fp);
@@ -450,6 +452,7 @@ load_settings ( void )
         return false;
     
     sig_map.clear();
+    sig_map_ordered.clear();
     
     char *signal_name;
     char *midi_event;
@@ -471,6 +474,8 @@ load_settings ( void )
             sig_map[midi_event] = m;
             sig_map[midi_event].signal_name = signal_name;
             sig_map[midi_event].signal = osc->add_signal( signal_name, OSC::Signal::Output, 0, 1, 0, signal_handler, &sig_map[midi_event] );
+
+	    sig_map_ordered[max_signal] = midi_event;
         }
        
         free(signal_name);
@@ -779,6 +784,8 @@ main ( int argc, char **argv )
                         sig_map[midi_event] = m;
                         sig_map[midi_event].signal_name = s;
                         sig_map[midi_event].signal = osc->add_signal( s, OSC::Signal::Output, 0, 1, 0, signal_handler, &sig_map[midi_event] );
+
+			sig_map_ordered[max_signal] = midi_event;
 
                         nsm_send_is_dirty( nsm );
 
