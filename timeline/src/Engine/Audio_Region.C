@@ -118,10 +118,12 @@ Audio_Region::read ( sample_t *buf, bool buf_is_empty, nframes_t pos, nframes_t 
 
     const Range r = _range;
 
+    /* ASSERT( r.legnth > 0, "Region has zero length!" ); */
+
     const nframes_t rS = r.start;
-    const nframes_t rE = r.start + r.length;
+    const nframes_t rE = r.start + r.length; /* one more than the last frame of the region! */
     const nframes_t bS = pos;
-    const nframes_t bE = pos + nframes;
+    const nframes_t bE = pos + nframes; /* one more than the last frame of the buffer! */
     
     /* do nothing if region isn't inside buffer */
     if ( bS > rE || bE < rS )
@@ -188,20 +190,42 @@ Audio_Region::read ( sample_t *buf, bool buf_is_empty, nframes_t pos, nframes_t 
             WARNING("Loop size (%lu) is smaller than buffer size (%lu). Behavior undefined.", _loop, nframes );            
         }
         
-        const nframes_t lO = sO % _loop; /* how far we are into the loop */
-        const nframes_t nthloop = sO / _loop; /* which loop iteration */
-        const nframes_t seam_L = rS + ( nthloop * _loop ); /* receding seam */
-        const nframes_t seam_R = rS + ( (nthloop + 1 ) * _loop ); /* upcoming seam */
-        
-        /* read interleaved channels */
-        if ( seam_R > bS && seam_R < bE  )
-        {
-            /* this buffer covers a loop boundary */
+        const nframes_t lO = sO % _loop, /* how far we are into the loop */
+	    nthloop = sO / _loop, /* which loop iteration */
+	    seam_L = rS + ( nthloop * _loop ), /* receding seam */
+	    seam_R = rS + ( ( nthloop + 1 ) * _loop ); /* upcoming seam */
 
+        /* read interleaved channels */
+        if (
+	    /* this buffer contains a loop boundary, which lies on neither the first or the last frame, and therefore requires a splice of two reads from separate parts of the region. */            
+	    seam_R > bS && seam_R < bE
+	    &&
+	    /* but if the end seam of the loop is also the end seam of the region, we only need one read */
+	    seam_R != rE
+	    &&
+	    /* also, if the seam is within the buffer, but beyond the end of the region (as in last loop iteration), do the simpler read in the else clause */
+	    seam_R <= rE
+	    )
+        {
+	    /* this buffer covers a loop boundary */
+	   
             /* read the first part */
-            cnt = _clip->read( cbuf + ( _clip->channels() * bO ), -1, r.offset + lO, ( seam_R - bS ) - bO ); 
+            cnt = _clip->read(
+		cbuf + ( _clip->channels() * bO ), /* buf */
+		-1,				   /* chan */
+		r.offset + lO,			   /* start */
+		( seam_R - bS ) - bO		   /* len */
+		);
+
+	    /* ASSERT( len > cnt, "Error in region looping calculations" ); */
+	    
             /* read the second part */
-            cnt += _clip->read( cbuf + ( _clip->channels() * ( bO + cnt ) ), -1, r.offset + 0, ( len - cnt ) - bO );
+            cnt += _clip->read(
+		cbuf + ( _clip->channels() * ( bO + cnt ) ), /* buf */
+		-1,					     /* chan */
+		r.offset + 0,				     /* start */
+		( len - cnt ) - bO			     /* len */
+		);
 
             /* assert( cnt == len ); */
         }
