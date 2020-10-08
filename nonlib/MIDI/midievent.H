@@ -59,7 +59,7 @@ namespace MIDI
 
     public:
 
-        static inline int
+        static inline byte_t
         event_size ( byte_t op )
             {
                 switch ( op )
@@ -104,15 +104,15 @@ namespace MIDI
         void opcode ( byte_t o );
         void lsb ( byte_t n );
         void msb ( byte_t n );
-        int lsb ( void ) const;
-        int msb ( void ) const;
+        byte_t lsb ( void ) const;
+        byte_t msb ( void ) const;
         int pitch ( void ) const;
         void pitch ( int n );
         void data ( byte_t D1, byte_t D2 );
         void data ( byte_t *D1, byte_t *D2 ) const;
         void raw ( byte_t *p, int l) const;
-        int size ( void ) const;
-        void note_velocity ( int vel );
+	byte_t size ( void ) const;
+        void note_velocity ( byte_t vel );
         bool is_note_on ( void ) const;
         bool is_note_off ( void ) const;
         virtual unsigned char note ( void ) const;
@@ -198,13 +198,13 @@ namespace MIDI
         _data.msb = n & 0x7F;
     }
 
-    inline int
+    inline byte_t
     midievent::lsb ( void ) const
     {
         return _data.lsb;
     }
 
-    inline int
+    inline byte_t
     midievent::msb ( void ) const
     {
         return _data.msb;

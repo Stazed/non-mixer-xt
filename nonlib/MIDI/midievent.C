@@ -87,19 +87,19 @@ namespace MIDI
         memcpy( p, &_data, l );
     }
 
-    int
+    byte_t
     midievent::size ( void ) const
     {
         return midievent::event_size( opcode() );
     }
 
     void
-    midievent::note_velocity ( int vel )
+    midievent::note_velocity ( byte_t vel )
     {
         _data.msb = vel & 0x7F;
     }
 
-    unsigned char
+    byte_t
     midievent::note ( void ) const
     {
         return _data.lsb;
@@ -111,7 +111,7 @@ namespace MIDI
         _data.lsb = note & 0x7F;
     }
 
-    unsigned char
+    byte_t
     midievent::note_velocity ( void ) const
     {
         return _data.msb;
