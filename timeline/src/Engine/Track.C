@@ -287,7 +287,7 @@ Track::record ( Capture *c, nframes_t frame )
     free( pat );
 
     if ( ! c->audio_file )
-        FATAL( "Could not create file for new capture!" );
+        FATAL( "Could not create file for new capture! (%s)", pat );
 
     /* open it again for reading in the GUI thread */
     //   Audio_File *af = Audio_File::from_file( c->audio_file->name() );

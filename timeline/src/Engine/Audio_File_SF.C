@@ -112,7 +112,10 @@ Audio_File_SF::create ( const char *filename, nframes_t samplerate, int channels
     const Audio_File::format_desc *fd = Audio_File::find_format( Audio_File_SF::supported_formats, format );
 
     if ( ! fd )
+    {
+	DMESSAGE( "Unsupported capture format: %s", format );
         return (Audio_File_SF *)1;
+    }
 
     si.samplerate =  samplerate;
     si.channels   =  channels;
@@ -125,7 +128,7 @@ Audio_File_SF::create ( const char *filename, nframes_t samplerate, int channels
 
     if ( ! ( out = sf_open( filepath, SFM_WRITE, &si ) ) )
     {
-        printf( "couldn't create soundfile.\n" );
+        WARNING( "couldn't create soundfile \"%s\": libsndfile says: %s", filepath, sf_strerror(NULL) );
         free( name );
         return NULL;
     }
