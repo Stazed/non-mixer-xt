@@ -128,6 +128,7 @@ Sequence_Region::split ( Sequence_Region * copy, nframes_t where )
     trim_right( where );
     copy->trim_left( where );
     sequence()->add( copy );
+    copy->redraw();
 }
 
 
