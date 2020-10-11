@@ -757,8 +757,10 @@ void Mixer::add ( Mixer_Strip *ms )
     mixer_strips->add( ms );
 
     ms->size( ms->w(), _strip_height );
-   ms->redraw();
-   ms->take_focus();
+    ms->redraw();
+    ms->take_focus();
+
+    renumber_strips();
 }
 
 int
@@ -775,12 +777,24 @@ Mixer::quit ( void )
     while ( Fl::first_window() ) Fl::first_window()->hide();
 }
 
+void
+Mixer::renumber_strips ( void )
+{
+    for ( int i = mixer_strips->children(); i--; )
+    {
+	Mixer_Strip *o = (Mixer_Strip*)mixer_strips->child(i);
+	
+        o->number( find_strip( o ) );
+    }
+}
+		      
 
 void
 Mixer::insert ( Mixer_Strip *ms, Mixer_Strip *before )
 {
 //    mixer_strips->remove( ms );
     mixer_strips->insert( *ms, before );
+    renumber_strips();
 //    scroll->redraw();
 }
 void
@@ -789,6 +803,7 @@ Mixer::insert ( Mixer_Strip *ms, int i )
     Mixer_Strip *before = (Mixer_Strip*)mixer_strips->child( i );
 
     insert( ms, before);
+    renumber_strips();
 }
 
 void
@@ -799,6 +814,7 @@ Mixer::move_left ( Mixer_Strip *ms )
     if ( i > 0 )
         insert( ms, i - 1 );
 
+    renumber_strips();
     /* FIXME: do better */
     mixer_strips->redraw();
 }
@@ -811,6 +827,8 @@ Mixer::move_right ( Mixer_Strip *ms )
     if ( i < mixer_strips->children() - 1 )
         insert( ms, i + 2 );
 
+    renumber_strips();
+    
     /* FIXME: do better */
     mixer_strips->redraw();
 }
@@ -823,6 +841,8 @@ void Mixer::remove ( Mixer_Strip *ms )
     
     if ( parent() )
         parent()->redraw();
+
+    renumber_strips();
 }
 
 

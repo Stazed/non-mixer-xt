@@ -534,6 +534,7 @@ Mixer_Strip::update ( void )
     }
 }
 
+
 void
 Mixer_Strip::init ( )
 {
@@ -562,10 +563,28 @@ Mixer_Strip::init ( )
             o->box(FL_FLAT_BOX);
             o->tooltip( "Drag and drop to move strip" );
         }
+	
+	{ Fl_Progress* o = dsp_load_progress = new Fl_Progress(61, 183, 45, 14, "group dsp");
+	    o->box(FL_BORDER_BOX);
+	    o->type(FL_HORIZONTAL);
+	    /* o->labelsize( 9 ); */
+	    o->minimum( 0 );
+//                o->maximum( 0.25f );
+	    o->maximum( 1 );
+	    /* o->color(fl_rgb_color( 10,10,10 ) ); */
+	    o->color2(FL_CYAN);
+	    
+	    o->color(fl_contrast(FL_DARK1,FL_FOREGROUND_COLOR));
+	    o->labelcolor(FL_FOREGROUND_COLOR);
+	    /* o->labeltype(FL_NORMAL_LABEL); */
+	    o->labeltype(FL_NORMAL_LABEL);
+	    o->labelfont( FL_COURIER_BOLD );
+	    o->labelsize( 12 );
+	}
 
         { Fl_Pack *o = new Fl_Pack( 2, 2, 114, 100 );
             o->type( Fl_Pack::VERTICAL );
-            o->spacing( 2 );
+	    o->spacing(2);
             {
                 Fl_Sometimes_Input *o = new Fl_Sometimes_Input( 2, 2, 144, 15 );
                 name_field = o;
@@ -582,7 +601,7 @@ Mixer_Strip::init ( )
             }
             { Fl_Scalepack *o = new Fl_Scalepack( 7, 143, 110, 18 );
                 o->type( Fl_Pack::HORIZONTAL );
-              
+		o->spacing(2);
                 { Fl_Flip_Button* o = width_button = new Fl_Flip_Button(61, 183, 45, 22, "[]/[-]");
                     o->type(1);
                     o->tooltip( "Switch between wide and narrow views" );
@@ -604,16 +623,6 @@ Mixer_Strip::init ( )
 
                 o->end();
             } // Fl_Group* o
-            { Fl_Progress* o = dsp_load_progress = new Fl_Progress(61, 183, 45, 14, "group dsp");
-                o->box(FL_BORDER_BOX);
-                o->type(FL_HORIZONTAL);
-                o->labelsize( 9 );
-                o->minimum( 0 );
-//                o->maximum( 0.25f );
-                o->maximum( 1 );
-               o->color(fl_rgb_color( 10,10,10 ) );
-                o->color2(FL_CYAN);
-            }
             { Fl_Choice* o = group_choice = new Fl_Choice(61, 183, 45, 22);
                 o->tooltip( "Create or assign group" );
                 o->labeltype(FL_NO_LABEL);
@@ -624,6 +633,7 @@ Mixer_Strip::init ( )
                 o->callback( ((Fl_Callback*)cb_handle), this );
             }
             { Fl_Scalepack *o = new Fl_Scalepack( 0,0, 45, 22 );
+		o->spacing(2);
                 o->type( FL_HORIZONTAL );
                 { Fl_Flip_Button* o = tab_button = new Fl_Flip_Button(61, 183, 45, 22, "Fadr/Signl");
                     o->tooltip( "Switch between fader and signal views" );
@@ -1225,10 +1235,23 @@ Mixer_Strip::send_feedback ( void )
         _chain->send_feedback();
 }
 
+/* called to inform the strip its number has changed. */
+void
+Mixer_Strip::number ( int n )
+{
+    if ( _number != n )
+    {
+	_number = n;
+	char *s =NULL;
+	asprintf( &s,"%i", n+1 );
+	dsp_load_progress->label(s);
+    }
+}
+
 int
 Mixer_Strip::number ( void ) const
 {
-    return mixer->find_strip( this );
+    return _number;
 }
 
 /************/

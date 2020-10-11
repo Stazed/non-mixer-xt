@@ -98,6 +98,7 @@ private:
     int _gain_controller_mode;
     int _mute_controller_mode;
     bool _manual_connection;
+    int _number;
 
     Fl_Menu_Button *output_connection_button;
     Fl_Flip_Button *width_button;
@@ -125,7 +126,7 @@ private:
     Fl_Progress *dsp_load_progress;
 
     Fl_Box *color_box;
-
+    
     nframes_t nframes;
 
     Fl_Color _color;
@@ -176,6 +177,7 @@ public:
     void group ( Group * );
     void send_feedback ( void );
     int number ( void ) const;
+    void number ( int );
     static bool import_strip ( const char *filename );
 
     void command_toggle_fader_view ( void );

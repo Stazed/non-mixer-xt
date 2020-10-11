@@ -159,6 +159,8 @@ public:
     void save_project_settings ( void );
     void load_project_settings ( void );
 
+    void renumber_strips ( void );
+    
 public:
     
     void command_toggle_fader_view ( void );
