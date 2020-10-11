@@ -534,7 +534,6 @@ Mixer_Strip::update ( void )
     }
 }
 
-
 void
 Mixer_Strip::init ( )
 {
@@ -633,8 +632,8 @@ Mixer_Strip::init ( )
                 o->callback( ((Fl_Callback*)cb_handle), this );
             }
             { Fl_Scalepack *o = new Fl_Scalepack( 0,0, 45, 22 );
-		o->spacing(2);
                 o->type( FL_HORIZONTAL );
+		o->spacing(2);
                 { Fl_Flip_Button* o = tab_button = new Fl_Flip_Button(61, 183, 45, 22, "Fadr/Signl");
                     o->tooltip( "Switch between fader and signal views" );
                     o->type(1);
