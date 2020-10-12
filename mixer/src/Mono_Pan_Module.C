@@ -66,8 +66,22 @@ Mono_Pan_Module::handle_sample_rate_change ( nframes_t n )
 }
 
 bool
-Mono_Pan_Module::configure_inputs ( int )
+Mono_Pan_Module::configure_inputs ( int n )
 {
+    THREAD_ASSERT( UI );
+
+    int on = audio_input.size();
+
+    if ( n > on )
+    {
+	add_port( Port( this, Port::INPUT, Port::AUDIO ) );
+    }
+    else if ( n < on )
+    {
+	audio_input.back().disconnect();
+	audio_input.pop_back();	
+    }
+    
     return true;
 }
 
@@ -82,7 +96,10 @@ Mono_Pan_Module::process ( nframes_t nframes )
 {
     if ( unlikely( bypass() ) )
     {
-        buffer_copy( (sample_t*)audio_output[1].buffer(), (sample_t*)audio_input[0].buffer(), nframes );
+	if ( audio_input.size() == 1 )
+	{
+	    buffer_copy( (sample_t*)audio_output[1].buffer(), (sample_t*)audio_input[0].buffer(), nframes );
+	}
     }
     else
     {
@@ -90,11 +107,18 @@ Mono_Pan_Module::process ( nframes_t nframes )
 
         sample_t gainbuf[nframes];            
         bool use_gainbuf = smoothing.apply( gainbuf, nframes, gt );
-        
+
+	if ( audio_input.size() == 2 )
+	{
+	    /* convert stereo to mono */
+	    buffer_mix( (sample_t*)audio_input[0].buffer(),
+			(sample_t*)audio_input[1].buffer(),
+			nframes );
+	}
+	
         if ( unlikely( use_gainbuf ) )
         {            
-            /* right channel */
-                
+            /* right channel */                
             buffer_copy_and_apply_gain_buffer( (sample_t*)audio_output[1].buffer(),
                                                (sample_t*)audio_input[0].buffer(),
                                                gainbuf,

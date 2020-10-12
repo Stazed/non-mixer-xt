@@ -33,7 +33,7 @@ public:
 
     const char *name ( void ) const { return "Mono Pan"; }
 
-    int can_support_inputs ( int n ) { return ( n == 1 ) ? 2 : -1; }
+    int can_support_inputs ( int n ) { return ( n == 1 || n == 2 ) ? 2 : -1; }
     bool configure_inputs ( int n );
 
     LOG_CREATE_FUNC( Mono_Pan_Module );
