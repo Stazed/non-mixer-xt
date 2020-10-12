@@ -477,7 +477,7 @@ Audio_Region::draw_box( void )
     }
 
     Fl_Boxtype b;
-    Fl_Color c = selected() ? fl_color_average( color, fl_rgb_color(10,10,10), 0.4f ) : color;
+    Fl_Color c = color;// selected() ? fl_color_average( color, fl_rgb_color(10,10,10), 0.4f ) : color;
 
     if ( Audio_Region::show_box )
     {
