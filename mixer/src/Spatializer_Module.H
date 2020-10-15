@@ -32,6 +32,8 @@ class Spatializer_Module : public JACK_Module
     Value_Smoothing_Filter delay_smoothing;
     Value_Smoothing_Filter late_gain_smoothing;
     Value_Smoothing_Filter early_gain_smoothing;
+    Value_Smoothing_Filter azimuth_smoothing;
+    Value_Smoothing_Filter elevation_smoothing;
     
     std::vector<filter*> _lowpass;
     std::vector<filter*> _highpass;

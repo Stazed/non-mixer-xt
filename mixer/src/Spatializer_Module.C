@@ -536,6 +536,8 @@ Spatializer_Module::Spatializer_Module ( ) : JACK_Module ( false )
     early_gain_smoothing.sample_rate( sample_rate() );
     delay_smoothing.cutoff( 0.5f );
     delay_smoothing.sample_rate( sample_rate() );
+    azimuth_smoothing.sample_rate( sample_rate() );
+    elevation_smoothing.sample_rate( sample_rate() );
 }
 
 Spatializer_Module::~Spatializer_Module ( )
@@ -557,6 +559,8 @@ Spatializer_Module::handle_sample_rate_change ( nframes_t n )
     delay_smoothing.sample_rate( n );
     early_gain_smoothing.sample_rate( n );
     late_gain_smoothing.sample_rate( n );
+    azimuth_smoothing.sample_rate( n );
+    elevation_smoothing.sample_rate( n );
 
     for ( unsigned int i = 0; i < audio_input.size(); i++ )
     {
@@ -626,9 +630,13 @@ Spatializer_Module::process ( nframes_t nframes )
 
     sample_t gainbuf[nframes];
     sample_t delaybuf[nframes];
-        
+    sample_t azimuthbuf[nframes];
+    sample_t elevationbuf[nframes];
+    
     bool use_gainbuf = false;
     bool use_delaybuf = delay_smoothing.apply( delaybuf, nframes, delay_seconds );
+    bool use_azimuthbuf = azimuth_smoothing.apply( azimuthbuf, nframes, azimuth );
+    bool use_elevationbuf = elevation_smoothing.apply( elevationbuf, nframes, elevation );
        
     for ( unsigned int i = 0; i < audio_input.size(); i++ )
     {
@@ -655,12 +663,30 @@ Spatializer_Module::process ( nframes_t nframes )
             buffer_apply_gain( (sample_t*)aux_audio_output[0].jack_port()->buffer(nframes), nframes, late_gain );
     }
 
+    
     float early_angle = azimuth - angle;
     if ( early_angle > 180.0f )
         early_angle = -180 - ( early_angle - 180 );
     else  if ( early_angle < -180.0f )
         early_angle = 180 - ( early_angle + 180 );
 
+    if ( !use_azimuthbuf )
+    {
+    	/* for ( nframes_t i = 0; i < nframes; ++i ) */
+	azimuthbuf[0] = azimuth + angle;
+    }
+    else
+    {
+    	/* for ( nframes_t i = 0; i < nframes; ++i ) */
+	azimuthbuf[0] += angle;
+    }
+
+    if ( !use_elevationbuf )
+	elevationbuf[0] = elevation;
+    
+    azimuth = azimuthbuf[0];
+    elevation = elevationbuf[0];
+        
     /* send to early reverb */
     if ( audio_input.size() == 1 )
     {
