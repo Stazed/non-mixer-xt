@@ -378,7 +378,7 @@ Panner::draw ( void )
         if ( ! p->visible )
             continue;
 
-        Fl_Color c = fl_color_add_alpha( p->color, 100 );
+        Fl_Color c = fl_color_add_alpha( p->color, 150 );
 
         fl_color(c);
 
