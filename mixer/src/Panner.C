@@ -56,6 +56,7 @@ Panner::Panner ( int X, int Y, int W, int H, const char *L ) :
         o->add("5 Meters",0,0,&ranges[2]);
         o->add("10 Meters",0,0,&ranges[3]);
         o->add("15 Meters",0,0,&ranges[4]);
+	o->textcolor( fl_contrast( FL_GRAY0, FL_FOREGROUND_COLOR ));
         o->value(_range_mode);
         o->callback( cb_mode, this );
     }
@@ -69,6 +70,7 @@ Panner::Panner ( int X, int Y, int W, int H, const char *L ) :
         o->add("Spherical");
         o->add("Planar");
         o->value(_projection_mode);
+	o->textcolor( fl_contrast( FL_GRAY0, FL_FOREGROUND_COLOR ));
         o->callback( cb_mode, this );
     }
                   

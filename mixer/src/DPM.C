@@ -51,6 +51,9 @@ DPM::DPM ( int X, int Y, int W, int H, const char *L ) :
 
     dim( 0.85f );
 
+    box( FL_FLAT_BOX );
+    color( fl_color_average( FL_BLACK,  FL_BACKGROUND_COLOR, 0.66f ) );
+
     /* initialize gradients */
     if ( DPM::_gradient[ 0 ] == 0 )
     {
@@ -65,11 +68,9 @@ DPM::DPM ( int X, int Y, int W, int H, const char *L ) :
             fl_rgb_color( 250, 40, 30 )
         };
 
-        DPM::blend( 6, breaks, cols );
+        DPM::blend( 6, breaks, cols, color() );
     }
 
-    box( FL_FLAT_BOX );
-    color( FL_BACKGROUND_COLOR );
 
     resize( X,Y,W,H);
 }

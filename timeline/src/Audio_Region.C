@@ -566,7 +566,7 @@ Audio_Region::draw ( void )
         /*                                Audio_Region::inherit_track_color ? sequence()->track()->color() :  _box_color, */
         /*                                0.75f ); */
     
-        fl_color( fl_color_add_alpha( FL_DARK1, 127 ) );
+        fl_color( fl_color_add_alpha( fl_rgb_color( 20,20,20 ), 127 ) );
 
         draw_fade( _fade_in, Fade::In, false, X, W );
         draw_fade( _fade_out, Fade::Out, false, X, W );

@@ -92,7 +92,7 @@ public:
 
     static
     void
-    blend ( int nbreaks, int* b, Fl_Color *c )
+    blend ( int nbreaks, int* b, Fl_Color *c, Fl_Color bc )
         {
             for ( int i = 0; i < nbreaks - 1; i++ )
             {
@@ -102,6 +102,6 @@ public:
             }
 
             for ( int i = 0; i < 128; i++ )
-                _dim_gradient[ i ] = fl_color_average( FL_BLACK, _gradient[ i ], _dim );
+                _dim_gradient[ i ] = fl_color_average( bc, _gradient[ i ], _dim );
         }
 };
