@@ -175,7 +175,7 @@ Module_Parameter_Editor::make_controls ( void )
     control_pack->clear();
 
     { SpectrumView *o = spectrum_view = new SpectrumView( 25, 40, 300, 240, "Spectrum" );
-        o->labelsize(9);
+        o->labelsize(14);
         o->align(FL_ALIGN_TOP);
 
 
@@ -199,7 +199,7 @@ Module_Parameter_Editor::make_controls ( void )
     float radius_value = 0.0f;
     
     Fl_Color fc = fl_color_add_alpha( FL_CYAN, 200 );
-    Fl_Color bc = FL_BACKGROUND2_COLOR;
+    Fl_Color bc = FL_BACKGROUND_COLOR;
 
     controls_by_port.resize( module->control_input.size() );
     
@@ -306,11 +306,11 @@ Module_Parameter_Editor::make_controls ( void )
                     o->minimum( p->hints.minimum );
                     o->maximum( p->hints.maximum );
                 }
-                o->color( bc );
+                o->color( FL_BACKGROUND_COLOR );
                 o->selection_color( fc );
                 o->value( p->control_value() );
                 o->align(FL_ALIGN_TOP);
-                o->box( FL_DOWN_BOX );
+                o->box( FL_FLAT_BOX );
 
                 /* a couple of plugins have ridiculously small units */
                 float r =  fabs( p->hints.maximum - p->hints.minimum );
@@ -383,11 +383,12 @@ Module_Parameter_Editor::make_controls ( void )
                 o->color( bc );
                 o->selection_color( fc );
                 o->value( p->control_value() );
+		o->box( FL_FLAT_BOX );
             }
 
         }
 //        w->align(FL_ALIGN_TOP);
-        w->labelsize( 10 );
+        w->labelsize( 14 );
 
         controls_by_port[i] = w;
 
@@ -422,7 +423,7 @@ Module_Parameter_Editor::make_controls ( void )
         o->align(FL_ALIGN_TOP);
         o->when(FL_WHEN_CHANGED);
         o->label( "Spatialization" );
-        o->labelsize( 10 );
+        o->labelsize( 14 );
 
         _callback_data.push_back( callback_data( this, azimuth_port_number, elevation_port_number, radius_port_number ) );
         o->callback( cb_panner_value_handle, &_callback_data.back() );
