@@ -292,7 +292,7 @@ Canvas::_update_row_mapping ( void )
     else
         m.maxh = 128;
 
-    m.vp->h = min( m.vp->h, m.maxh );
+    m.vp->h = max( m.vp->h, m.maxh );
 
     resize_grid();
 }
