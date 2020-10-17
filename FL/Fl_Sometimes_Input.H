@@ -30,6 +30,7 @@
 class Fl_Sometimes_Input : public Fl_Input
 {
     Fl_Boxtype _up_box;
+    char *_text;
 
 public:
 
@@ -53,7 +54,7 @@ public:
             {
                 fl_draw_box( up_box(), x(), y(), w(), h(), color() );
 
-                Fl_Color c = fl_contrast( textcolor(), color() );
+                Fl_Color c = textcolor();// fl_contrast( textcolor(), color() );
 
                 fl_color( active_r() ? c : fl_inactive( c ) );
 
@@ -80,19 +81,30 @@ public:
                 case FL_KEYDOWN:
                 {
                     if (  ( Fl::event_key() == FL_Enter ||
-                            Fl::event_key() == FL_Tab ) ) 
+                            Fl::event_key() == FL_Tab ) )
                     {
+			do_callback();
+			free( _text );
                         Fl::focus( NULL );
                         r = 1;
                     }
+		    else if ( Fl::event_key() == FL_Escape )
+		    {
+			value( _text );
+			Fl::focus( NULL );
+			
+			r = 1;
+		    }
                     break;
                 }
                 case FL_FOCUS:
+		    _text = strdup( value() );
                     redraw();
                     r = 1;
                     break;
                 case FL_UNFOCUS:
-                    do_callback();
+		    _text = NULL;
+		    redraw();
                     r = 1;
                     break;
                 case FL_PUSH:
