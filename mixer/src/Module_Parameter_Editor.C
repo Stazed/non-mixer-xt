@@ -383,7 +383,7 @@ Module_Parameter_Editor::make_controls ( void )
                 o->color( bc );
                 o->selection_color( fc );
                 o->value( p->control_value() );
-		o->box( FL_FLAT_BOX );
+		o->box( FL_BORDER_BOX );
             }
 
         }
