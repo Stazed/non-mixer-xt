@@ -102,6 +102,6 @@ public:
             }
 
             for ( int i = 0; i < 128; i++ )
-                _dim_gradient[ i ] = fl_color_average( bc, _gradient[ i ], _dim );
+                _dim_gradient[ i ] = fl_color_average( FL_BLACK, _gradient[ i ], _dim );
         }
 };

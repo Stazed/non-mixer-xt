@@ -51,7 +51,7 @@ DPM::DPM ( int X, int Y, int W, int H, const char *L ) :
 
     dim( 0.85f );
 
-    box( FL_FLAT_BOX );
+    box( FL_NO_BOX );
     color( fl_color_average( FL_BLACK,  FL_BACKGROUND_COLOR, 0.66f ) );
 
     /* initialize gradients */
@@ -136,10 +136,14 @@ DPM::resize ( int X, int Y, int W, int H )
 
 void DPM::bbox ( int &X, int &Y, int &W, int &H )
 {
-    X = x() + 2;
-    Y = y() + 2;
-    W = w() - 4;
-    H = h() - 4;
+    /* X = x() + 2; */
+    /* Y = y() + 2; */
+    /* W = w() - 4; */
+    /* H = h() - 4; */
+    X = x();
+    Y = y();
+    W = w();
+    H = h();
 }
 
 void
@@ -151,6 +155,9 @@ DPM::draw ( void )
     int X,Y,W,H;
     bbox(X,Y,W,H);
 
+    if ( 0 == fl_not_clipped(X,Y,W,H ) )
+	return;
+    
     int v = pos( value() );
     int pv = pos( peak() );
     
@@ -165,9 +172,9 @@ DPM::draw ( void )
     {
         draw_label();
 
-        draw_box( FL_FLAT_BOX, x(), y(), w(), h(), FL_DARK1 );
+        draw_box( FL_FLAT_BOX, X, Y, W, H, FL_BACKGROUND_COLOR );
     }
-
+    
     fl_push_clip( X, Y, W, H );
 
     const int active = active_r();
@@ -221,7 +228,7 @@ DPM::draw ( void )
         if ( type() == FL_HORIZONTAL )
         {
             xx = X + p * bw;
-            fl_rectf( X + (p * bw), Y, bw, H, c );
+            fl_rectf( xx, Y, bw, H, c );
         }
         else
         {
@@ -229,19 +236,19 @@ DPM::draw ( void )
             fl_rectf( X, yy, W, bh, c );
         }
         
-        if ( _pixels_per_segment >= 3 )
-        {
-            fl_color( FL_DARK1 );
+        /* if ( _pixels_per_segment >= 3 ) */
+        /* { */
+        /*     fl_color( FL_DARK1 ); */
 
-            if ( type() == FL_HORIZONTAL )
-            {
-                fl_line( xx, Y, xx, Y + H - 1 );
-            }
-            else
-            {
-                fl_line( X, yy, X + W - 1, yy );
-            }
-        }
+        /*     if ( type() == FL_HORIZONTAL ) */
+        /*     { */
+        /*         fl_line( xx, Y, xx, Y + H - 1 ); */
+        /*     } */
+        /*     else */
+        /*     { */
+        /*         fl_line( X, yy, X + W - 1, yy ); */
+        /*     } */
+        /* } */
 
         /* } */
         /* else */
