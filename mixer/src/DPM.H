@@ -22,6 +22,7 @@
 #include <FL/Fl_Valuator.H> // for FL_HORIZONTAL and FL_VERTICAL
 
 #include "Meter.H"
+#include "dsp.h"
 
 class DPM : public Meter
 {
@@ -31,6 +32,8 @@ class DPM : public Meter
     int _pixels_per_segment;
     int _last_drawn_hi_segment;
 
+    Value_Smoothing_Filter smoothing;
+    
     float _value;
 
     int pos ( float v )
@@ -71,6 +74,11 @@ public:
 
     void value ( float v )
         {
+	    sample_t buf[100];
+
+	    if ( smoothing.apply( buf, 1, v ) )
+		v = buf[0];
+	    	    
             if ( _value != v )
             {
                 if ( pos( v ) != pos( _value ) ) 

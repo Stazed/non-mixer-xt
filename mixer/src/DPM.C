@@ -71,7 +71,15 @@ DPM::DPM ( int X, int Y, int W, int H, const char *L ) :
         DPM::blend( 6, breaks, cols, color() );
     }
 
+    {
+	smoothing.cutoff(25);
+	smoothing.sample_rate(1500);
 
+	/* clear initial hump */
+	sample_t t[1500];
+	smoothing.apply(t,1500,-70);   
+    }
+    
     resize( X,Y,W,H);
 }
 
@@ -86,7 +94,7 @@ DPM::draw_label ( void )
     if ( parent()->child( 0 ) == this )
     {
         fl_font( FL_TIMES, 8 );
-        fl_color( FL_WHITE );
+        fl_color( FL_FOREGROUND_COLOR );
         /* draw marks */
         char pat[5];
         if ( type() == FL_HORIZONTAL )
@@ -238,7 +246,7 @@ DPM::draw ( void )
         
         /* if ( _pixels_per_segment >= 3 ) */
         /* { */
-        /*     fl_color( FL_DARK1 ); */
+        /*     fl_color( FL_CYAN ); */
 
         /*     if ( type() == FL_HORIZONTAL ) */
         /*     { */
@@ -260,5 +268,19 @@ DPM::draw ( void )
         /* } */
     }
 
+    /* fl_color( fl_color_add_alpha( FL_WHITE, 127 ) ); */
+
+    /* for ( int i = 0; i < 50; i++ ) */
+    /* { */
+    /* 	int yy = Y + i * H / 50; */
+	
+    /* 	if ( type() == FL_VERTICAL ) */
+    /*     { */
+    /* 	    int ww = i % 2 == 0 ? W : W / 2; */
+	    
+    /* 	    fl_line( X + ((W/2) - ww/2), yy, X + ww - 1, yy ); */
+    /*     } */
+    /* } */
+    
     fl_pop_clip();
 }

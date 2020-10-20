@@ -237,6 +237,7 @@ Value_Smoothing_Filter::sample_rate ( nframes_t n )
     w = _cutoff / (FS * T);
 }
 
+/* FIXME: need a method that just returns a single value, skipping the within-buffer interpolation */
 bool
 Value_Smoothing_Filter::apply( sample_t * __restrict__ dst, nframes_t nframes, float gt )
 {
