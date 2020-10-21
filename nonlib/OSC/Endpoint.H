@@ -120,6 +120,7 @@ namespace OSC
     struct Peer
     {
         bool _scanning;
+	int _scanning_current;
 
         char *name;
         lo_address addr;
