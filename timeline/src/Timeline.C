@@ -53,7 +53,7 @@
 #include "TLE.H"
 /*  */
 
-#include "OSC_Thread.H"
+
 #include "OSC/Endpoint.H"
 
 #include <unistd.h>
@@ -612,8 +612,10 @@ Timeline::ntracks ( void ) const
 
 Timeline::~Timeline ( )
 {
-    delete osc_thread;
-    osc_thread = 0;
+    delete osc_transmit_thread;
+    osc_transmit_thread = 0;
+    delete osc_receive_thread;
+    osc_receive_thread = 0;
     delete osc;
     osc = 0;
 }
@@ -627,7 +629,8 @@ Timeline::Timeline ( int X, int Y, int W, int H, const char* L ) : BASE( X, Y, W
     play_cursor_track = NULL;
 
     _created_new_takes = 0;
-    osc_thread = 0;
+    osc_transmit_thread = 0;
+    osc_receive_thread = 0;
     _sample_rate = 44100;
 
     box( FL_FLAT_BOX );
@@ -2179,11 +2182,18 @@ Timeline::init_osc ( const char *osc_port )
     
 //    osc->start();
     
-    if ( ! osc_thread )
+    if ( ! osc_transmit_thread )
     {
-        osc_thread = new OSC_Thread();
+        osc_transmit_thread = new OSC_Transmit_Thread();
         
-        osc_thread->start();
+        osc_transmit_thread->start();
+    }
+
+    if ( ! osc_receive_thread )
+    {
+        osc_receive_thread = new OSC_Receive_Thread();
+        
+        osc_receive_thread->start();
     }
 
     return 0;
@@ -2262,7 +2272,7 @@ Timeline::update_osc_connection_state ( void )
 void
 Timeline::process_osc ( void )
 {
-    THREAD_ASSERT( OSC );
+    THREAD_ASSERT( OSC_Transmit );
 
     sequence_lock.rdlock();
 

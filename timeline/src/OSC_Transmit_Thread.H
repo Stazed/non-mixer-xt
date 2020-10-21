@@ -22,7 +22,7 @@
 #include "Thread.H"
 #include "Mutex.H"
 
-class OSC_Thread : public Mutex
+class OSC_Transmit_Thread : public Mutex
 {
     Thread _thread;                                    /* io thread */
 
@@ -30,9 +30,9 @@ class OSC_Thread : public Mutex
 
 public:
 
-    OSC_Thread ( );
+    OSC_Transmit_Thread ( );
 
-    virtual ~OSC_Thread ( );
+    virtual ~OSC_Transmit_Thread ( );
 
     void join ( void );
     void shutdown ( void ) { _shutdown = true; }

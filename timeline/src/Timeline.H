@@ -31,7 +31,8 @@
 #include <assert.h>
 #include <list>
 
-#include "OSC_Thread.H"
+#include "OSC_Transmit_Thread.H"
+#include "OSC_Receive_Thread.H"
 
 class Fl_Scroll;
 class Fl_Pack;
@@ -136,7 +137,8 @@ public:
     void damage_sequence ( void );
 
     OSC::Endpoint *osc;
-    OSC_Thread *osc_thread;
+    OSC_Transmit_Thread *osc_transmit_thread;
+    OSC_Receive_Thread *osc_receive_thread;
 
     void process_osc ( void );
 #undef Bars

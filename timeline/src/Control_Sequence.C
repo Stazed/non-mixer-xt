@@ -601,7 +601,7 @@ Control_Sequence::menu_cb ( const Fl_Menu_ *m )
 void
 Control_Sequence::connect_osc ( void )
 {
-    timeline->osc_thread->lock();
+    timeline->osc_receive_thread->lock();
 
     if ( _persistent_osc_connections.size() )
     {
@@ -623,7 +623,7 @@ Control_Sequence::connect_osc ( void )
 
     /* header()->outputs_indicator->value( _osc_output() && _osc_output()->connected() ); */
   
-    timeline->osc_thread->unlock();
+    timeline->osc_receive_thread->unlock();
 }
 
 void

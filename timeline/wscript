@@ -76,7 +76,8 @@ src/Engine/Record_DS.C
 src/Engine/Timeline.C
 src/Engine/Track.C
 src/NSM.C
-src/OSC_Thread.C
+src/OSC_Transmit_Thread.C
+src/OSC_Receive_Thread.C
 src/Project.C
 src/Sequence.C
 src/Sequence_Point.C

@@ -17,78 +17,26 @@
 /* Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 /*******************************************************************************/
 
-#include "OSC_Thread.H"
+#pragma once
 
-#include "Timeline.H"
+#include "Thread.H"
+#include "Mutex.H"
 
-#include <stdlib.h>
-#include <unistd.h>
-
-#include "debug.h"
-
-#include "OSC/Endpoint.H"
-
-extern Timeline *timeline;
-
-OSC_Thread::OSC_Thread ( )
+class OSC_Receive_Thread : public Mutex
 {
-    //   _thread.init();
-    _shutdown = false;
-}
+    Thread _thread;                                    /* io thread */
 
-OSC_Thread::~OSC_Thread ( )
-{
-    lock();
-    if ( _shutdown == false )
-    {
-        _shutdown = true;
-        _thread.join();
-    }
-    unlock();
-}   
-        
+    volatile bool _shutdown;
 
-void
-OSC_Thread::start ( )
-{
-    _thread.clone( &OSC_Thread::process, this );
-}
+public:
 
-void
-OSC_Thread::join ( )
-{
-    _thread.join();
-}
+    OSC_Receive_Thread ( );
 
-void
-OSC_Thread::process ( void )
-{
-    _thread.name( "OSC" );
+    virtual ~OSC_Receive_Thread ( );
 
-    DMESSAGE( "OSC Thread starting" );
-
-    while ( !_shutdown )
-    {
-        if ( trylock() )
-        {
-            timeline->osc->check();        
-            timeline->process_osc();
-            unlock();
-        }
-
-        usleep( 50 * 1000 );
-    }
-
-    DMESSAGE( "OSC Thread stopping." );
-}
-
-void *
-OSC_Thread::process ( void *v )
-{
-    OSC_Thread *t = (OSC_Thread*)v;
-    
-    t->process();
-
-    return NULL;
-}
-
+    void join ( void );
+    void shutdown ( void ) { _shutdown = true; }
+    void start ( void );
+    void process ( void );
+    static void *process ( void * );
+};
