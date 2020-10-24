@@ -49,7 +49,7 @@ DPM::DPM ( int X, int Y, int W, int H, const char *L ) :
 
 //    resize( X, Y, W, H );
 
-    dim( 0.85f );
+    dim( 0.95f );
 
     box( FL_NO_BOX );
     color( fl_color_average( FL_BLACK,  FL_BACKGROUND_COLOR, 0.66f ) );
@@ -57,18 +57,26 @@ DPM::DPM ( int X, int Y, int W, int H, const char *L ) :
     /* initialize gradients */
     if ( DPM::_gradient[ 0 ] == 0 )
     {
-        int breaks[] = {0,60,70,80,90,127};
+	int breaks[] = {0,80,90,110,127};
 
-        Fl_Color cols[] = { 
-            fl_rgb_color( 45,58,64),
-            fl_rgb_color( 84,181,195 ), 
-            fl_rgb_color( 122,200,211 ), 
-            fl_rgb_color( 178,213,212 ), 
-            fl_rgb_color( 209,213,179 ),
-            fl_rgb_color( 250, 40, 30 )
+	Fl_Color cols[] = { 
+            fl_darker( FL_CYAN ),
+            FL_CYAN,
+	    fl_lighter( FL_CYAN ),
+            fl_color_average( FL_YELLOW, FL_RED, 0.50f ),
+            FL_RED
         };
 
-        DPM::blend( 6, breaks, cols, color() );
+	for ( int i = 0; i < 4; ++i )
+	{
+	    cols[i] = fl_color_average( cols[i], FL_BACKGROUND_COLOR, 0.60f );
+	}
+
+        DPM::blend( 5,
+		    breaks,
+		    cols,
+		    color() );
+
     }
 
     {
@@ -244,19 +252,19 @@ DPM::draw ( void )
             fl_rectf( X, yy, W, bh, c );
         }
         
-        /* if ( _pixels_per_segment >= 3 ) */
-        /* { */
-        /*     fl_color( FL_CYAN ); */
+        if ( _pixels_per_segment >= 3 )
+        {
+            fl_color( FL_BLACK );
 
-        /*     if ( type() == FL_HORIZONTAL ) */
-        /*     { */
-        /*         fl_line( xx, Y, xx, Y + H - 1 ); */
-        /*     } */
-        /*     else */
-        /*     { */
-        /*         fl_line( X, yy, X + W - 1, yy ); */
-        /*     } */
-        /* } */
+            if ( type() == FL_HORIZONTAL )
+            {
+                fl_line( xx, Y, xx, Y + H - 1 );
+            }
+            else
+            {
+                fl_line( X, yy, X + W - 1, yy );
+            }
+        }
 
         /* } */
         /* else */

@@ -57,7 +57,7 @@ Meter_Indicator_Module::Meter_Indicator_Module ( bool is_default )
     dpm_pack->color( FL_BACKGROUND_COLOR );
     dpm_pack->box( FL_FLAT_BOX );
     dpm_pack->type( FL_HORIZONTAL );
-    dpm_pack->spacing(1);
+    dpm_pack->spacing(2);
     
     end();
 
