@@ -763,7 +763,7 @@ void Mixer::add ( Mixer_Strip *ms )
     mixer_strips->add( ms );
 
     ms->size( ms->w(), _strip_height );
-    ms->redraw();
+    /* ms->redraw(); */
     ms->take_focus();
 
     renumber_strips();

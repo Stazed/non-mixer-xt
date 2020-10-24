@@ -49,6 +49,8 @@ extern char *instance_name;
 #include "Mixer.H"
 #include "Group.H"
 
+#include "Project.H"
+
 
 static JACK_Module *receptive_to_drop = NULL;
 
@@ -299,12 +301,23 @@ JACK_Module::update_connection_status ( void )
         return;
     }
 
+    /* causes a lot of unnecessary redraws to do this when loading */
+    if ( Project::is_opening() )
+	return;
+
+    /* FIXME: only do something if port list actually changed! */
     std::list<std::string> output_names = get_connections_for_ports( aux_audio_output );
     std::list<std::string> input_names = get_connections_for_ports( aux_audio_input );
 
+    if ( (unsigned int)connection_display->size() == input_names.size() + output_names.size() )
+	/* looks like nothing was added or removed, bail.
+	   FIXME: this would be better if it actually compared the lists item by item. */
+	return;
+    
     connection_display->clear();
 
     int n = 0;
+
     for ( std::list<std::string>::const_iterator j = input_names.begin();
           j != input_names.end();
           j++ )
@@ -329,7 +342,8 @@ JACK_Module::update_connection_status ( void )
     else
         size( w(), 24 );
         
-    parent()->parent()->redraw();
+    /* parent()->parent()->redraw(); */
+    parent()->redraw();
 }
 
 void
