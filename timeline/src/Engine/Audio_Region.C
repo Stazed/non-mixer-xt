@@ -271,17 +271,21 @@ Audio_Region::read ( sample_t *buf, bool buf_is_empty, nframes_t pos, nframes_t 
             
         Fade fade;
 
-        fade = declick < _fade_in ? _fade_in : declick;
-        
-        /* do fade in if necessary */
-        if ( sO < fade.length )
-            apply_fade( cbuf, _clip->channels(), fade, bS, bE, rS, Fade::In );                
-
-        fade = declick < _fade_out ? _fade_out : declick;
-
-        /* do fade out if necessary */
-        if ( sO + cnt + fade.length > r.length )
-            apply_fade( cbuf, _clip->channels(), fade, bS, bE, rE, Fade::Out );                
+	/* disabling fade also disables de-clicking for perfectly abutted edits. */
+	if ( fade.type != Fade::Disabled )
+	{	    
+	    fade = declick < _fade_in ? _fade_in : declick;
+	    
+	    /* do fade in if necessary */
+	    if ( sO < fade.length )
+		apply_fade( cbuf, _clip->channels(), fade, bS, bE, rS, Fade::In );                
+	    
+	    fade = declick < _fade_out ? _fade_out : declick;
+	    
+	    /* do fade out if necessary */
+	    if ( sO + cnt + fade.length > r.length )
+		apply_fade( cbuf, _clip->channels(), fade, bS, bE, rE, Fade::Out );
+	}
     }
 
     if ( buf != cbuf )

@@ -224,6 +224,8 @@ Audio_Region::menu_cb ( const Fl_Menu_ *m )
         _fade_in.type = Fade::Logarithmic;
     else if ( ! strcmp( picked, "Fade/In/Parabolic" ) )
         _fade_in.type = Fade::Parabolic;
+    else if ( ! strcmp( picked, "Fade/In/Disabled" ) )
+        _fade_in.type = Fade::Disabled;
     else if ( ! strcmp( picked, "Fade/Out/Linear" ) )
         _fade_out.type = Fade::Linear;
     else if ( ! strcmp( picked, "Fade/Out/Sigmoid" ) )
@@ -232,6 +234,8 @@ Audio_Region::menu_cb ( const Fl_Menu_ *m )
         _fade_out.type = Fade::Logarithmic;
     else if ( ! strcmp( picked, "Fade/Out/Parabolic" ) )
         _fade_out.type = Fade::Parabolic;
+    else if ( ! strcmp( picked, "Fade/Out/Disabled" ) )
+        _fade_out.type = Fade::Disabled;
     else if ( ! strcmp( picked, "/Color" ) )
         box_color( fl_show_colormap( box_color() ) );
     else if ( ! strcmp( picked, "/Split at mouse" ) )
@@ -351,12 +355,16 @@ Audio_Region::menu ( void )
             { "Sigmoid",          0, 0, 0,  FL_MENU_RADIO | ( it == Fade::Sigmoid     ? FL_MENU_VALUE : 0 ) },
             { "Logarithmic",      0, 0, 0,  FL_MENU_RADIO | ( it == Fade::Logarithmic ? FL_MENU_VALUE : 0 ) },
             { "Parabolic",        0, 0, 0,  FL_MENU_RADIO | ( it == Fade::Parabolic   ? FL_MENU_VALUE : 0 ) },
+            { "Disabled",        0, 0, 0,  FL_MENU_RADIO | ( it == Fade::Disabled   ? FL_MENU_VALUE : 0 ) },
+
             { 0                   },
             { "Out",              0, 0, 0,  FL_SUBMENU    },
             { "Linear",           0, 0, 0,  FL_MENU_RADIO | ( ot == Fade::Linear      ? FL_MENU_VALUE : 0 ) },
             { "Sigmoid",          0, 0, 0,  FL_MENU_RADIO | ( ot == Fade::Sigmoid     ? FL_MENU_VALUE : 0 ) },
             { "Logarithmic",      0, 0, 0,  FL_MENU_RADIO | ( ot == Fade::Logarithmic ? FL_MENU_VALUE : 0 ) },
             { "Parabolic",        0, 0, 0,  FL_MENU_RADIO | ( ot == Fade::Parabolic   ? FL_MENU_VALUE : 0 ) },
+            { "Disabled",        0, 0, 0,  FL_MENU_RADIO | ( ot == Fade::Disabled   ? FL_MENU_VALUE : 0 ) },
+
             { 0                   },
             { 0 },
             { "Color",        0, 0, 0,  inherit_track_color ? FL_MENU_INACTIVE : 0 },
@@ -398,6 +406,9 @@ Audio_Region::draw_fade ( const Fade &fade, Fade::fade_dir_e dir, bool line, int
     const int height = dh;
     const int width = timeline->ts_to_x( fade.length );
 
+    if ( Fade::Disabled == fade.type )
+	return;
+    
     if ( width < 4 )
         /* too small to draw */
         return;
