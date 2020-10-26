@@ -134,7 +134,7 @@ Track::init ( void )
     _name = NULL;
     _selected = false;
     _size = 1;
-
+    
     record_ds = NULL;
     playback_ds = NULL;
 
@@ -604,6 +604,15 @@ Track::remove ( Audio_Sequence *t )
     if ( ! takes )
         return;
 
+    Loggable::block_start();
+    
+    Logger log(this);
+ 
+    if ( t->id() == 0x2785 )
+    {
+	WARNING( "****** 0x2785 removed here *****");
+    }
+
     if ( sequence() == t )
     {
         pack->remove( t );
@@ -617,8 +626,10 @@ Track::remove ( Audio_Sequence *t )
     else
         takes->remove( t );
 
-/*     delete t; */
+    delete t;
 
+    Loggable::block_end();
+    
     adjust_size();
 }
 
@@ -647,9 +658,18 @@ Track::remove ( Control_Sequence *t )
 void
 Track::sequence ( Audio_Sequence * t )
 {
+    Logger log(this);
+    
+    /* FIXME: testing */
+    if ( sequence() != NULL && sequence()->id() == 0x2785 )
+    {
+	DMESSAGE( "****** Here *****");
+    }
+
     if ( sequence() == t )
     {
-        DMESSAGE( "Attempt to set sequence twice" );
+	/* ASSERT( false, "Attempt to set same sequence twice" ); */
+        DMESSAGE( "Attempt to set same sequence twice, %p == %p", t, sequence() );
         return;
     }
 
@@ -873,8 +893,13 @@ Track::menu_cb ( const Fl_Menu_ *m )
     else if ( !strcmp( picked, "Takes/New" ) )
     {
         timeline->track_lock.wrlock();
+	
+	Loggable::block_start();
+
         sequence( (Audio_Sequence*)sequence()->clone_empty() );
         timeline->track_lock.unlock();
+
+	Loggable::block_end();
     }
     else if ( !strcmp( picked, "Takes/Remove" ) )
     {
@@ -909,7 +934,7 @@ Track::menu_cb ( const Fl_Menu_ *m )
     else if ( !strncmp( picked, "Takes/", sizeof( "Takes/" ) - 1 ) )
     {
         Audio_Sequence* s = (Audio_Sequence*)m->mvalue()->user_data();
-
+	
         timeline->track_lock.wrlock();
         sequence( s );
         timeline->track_lock.unlock();

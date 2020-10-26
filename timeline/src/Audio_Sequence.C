@@ -177,7 +177,8 @@ Audio_Sequence::set ( Log_Entry &e )
 
             assert( t );
 
-            t->sequence( this );
+	    /* FIXME: this causes the sequences to be set twice in the replay logic, first when the sequence is created, then when track sequence is assigned. */
+             t->sequence( this );
         }
         else if ( ! strcmp( ":name", s ) )
             name( v );
