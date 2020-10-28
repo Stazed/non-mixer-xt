@@ -70,12 +70,8 @@ protected:
     void get ( Log_Entry &e ) const;
     void set ( Log_Entry &e );
 
-    virtual void draw ( void )
-        {
-//            draw_box();
-            Fl_Group::draw();
-        }
-
+    virtual void draw ( void );
+    virtual void resize ( int X, int Y, int W, int H );
     virtual int handle ( int m );
 
 private:

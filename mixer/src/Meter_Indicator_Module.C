@@ -31,6 +31,7 @@
 #include "FL/Fl_Dial.H"
 #include "FL/Fl_Labelpad_Group.H"
 #include "FL/Fl_Scalepack.H"
+#include <FL/fl_draw.H>
 
 #include "Chain.H"
 #include "DPM.H"
@@ -43,7 +44,7 @@ Meter_Indicator_Module::Meter_Indicator_Module ( bool is_default )
     : Module ( is_default, 50, 100, name() )
 {
     box( FL_FLAT_BOX );
-    color( FL_BLACK );
+    color( fl_darker( fl_darker( FL_BACKGROUND_COLOR )));
 
     _disable_context_menu = false;
     _pad = true;
@@ -53,13 +54,13 @@ Meter_Indicator_Module::Meter_Indicator_Module ( bool is_default )
 
     control_input[0].hints.visible = false;
 
-    dpm_pack = new Fl_Scalepack( x(), y(), w(), h() );
-    dpm_pack->color( FL_BACKGROUND_COLOR );
-    dpm_pack->box( FL_FLAT_BOX );
+    dpm_pack = new Fl_Scalepack( x() + 2, y() + 2, w() - 4, h() - 4 );
+    /* dpm_pack->color( FL_BACKGROUND_COLOR ); */
+    dpm_pack->box( FL_NO_BOX );
     dpm_pack->type( FL_HORIZONTAL );
-    dpm_pack->spacing(2);
-    
-    end();
+    dpm_pack->spacing(1);
+
+     end();
 
     control_value = new float[1];
     *control_value = -70.0f;
@@ -81,6 +82,23 @@ Meter_Indicator_Module::~Meter_Indicator_Module ( )
 }
 
 
+
+void Meter_Indicator_Module::resize ( int X, int Y, int W, int H )
+{
+    Fl_Group::resize(X,Y,W,H);
+    dpm_pack->resize( x() + 2, y() + 2, w() - 4, h() - 4 );
+}
+
+void
+Meter_Indicator_Module::draw ( void )
+{
+    /* draw_box(x(),y(),w(),h()); */
+
+    Fl_Group::draw();
+    
+    fl_rect( x(), y(), w(), h(), fl_darker(FL_BACKGROUND_COLOR));
+    fl_rect( x()+1, y()+1, w()-2, h()-2, fl_darker(fl_darker(FL_BACKGROUND_COLOR)));
+}
 
 void
 Meter_Indicator_Module::get ( Log_Entry &e ) const

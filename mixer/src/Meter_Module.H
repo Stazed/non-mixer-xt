@@ -47,5 +47,6 @@ protected:
 
     virtual int handle ( int m );
     virtual void process ( nframes_t nframes );
-    virtual void draw ( void ) { draw_box(x(),y(),w(),h()); }
+    virtual void draw ( void );
+    virtual void resize ( int X, int Y, int W, int H );
 };
