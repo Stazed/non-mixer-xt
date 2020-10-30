@@ -174,7 +174,7 @@ Module_Parameter_Editor::make_controls ( void )
 
     control_pack->clear();
 
-    { SpectrumView *o = spectrum_view = new SpectrumView( 25, 40, 300, 240, "Spectrum" );
+    { SpectrumView *o = spectrum_view = new SpectrumView( 25, 40, 360, 300, "Spectrum" );
         o->labelsize(14);
         o->align(FL_ALIGN_TOP);
 
@@ -210,7 +210,7 @@ Module_Parameter_Editor::make_controls ( void )
         control_pack->flow(true);
         control_pack->flowdown(true);
         control_pack->type( FL_HORIZONTAL );
-        control_pack->size( 900, 240 );
+        control_pack->size( 900, 300 );
     }
     else if ( mode_choice->value() == 2 )
     {
