@@ -314,6 +314,7 @@ name->value( e->selected() );
 // display the proper subtype
 switch ( e->opcode() )
 {
+
 \#define TWO d1 = (Fl_Valuator*)tab->child( 0 ); d2 = (Fl_Valuator*)tab->child( 1 )
 \#define ONE d1 = (Fl_Valuator*)tab->child( 0 ); d2 = NULL
 		
@@ -354,11 +355,16 @@ switch ( e->opcode() )
 	case midievent::PITCH_WHEEL:
 		tab = pitch_tab;
 		name->color( pitch_color );
-		
+
 		ONE;
 		d1->value( e->pitch() );
 		goto pitch;
 		break;
+	default:
+		WARNING("Encountered unknown opcode");
+		return;
+		break;
+		
 }
 
 
