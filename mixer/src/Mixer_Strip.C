@@ -1244,6 +1244,10 @@ Mixer_Strip::number ( int n )
 	char *s =NULL;
 	asprintf( &s,"%i", n+1 );
 	dsp_load_progress->label(s);
+	/* color code groups of eight */
+	dsp_load_progress->color( (n / 8) % 2 == 0 ? FL_BACKGROUND_COLOR : FL_BLACK );	
+	/* dsp_load_progress->color( fl_color_average( (Fl_Color)n / 8, FL_BACKGROUND_COLOR, 0.66f )); */
+	dsp_load_progress->labelcolor(fl_contrast( FL_BACKGROUND_COLOR, dsp_load_progress->color() ));
     }
 }
 
