@@ -201,11 +201,16 @@ buffer_get_peak ( const sample_t * __restrict__ buf, nframes_t nframes )
 
     float pmax = 0.0f;
     float pmin = 0.0f;
-
-    for ( nframes_t i = 0; i < nframes; i++ )
+    
+    while (nframes--)
     {
-        pmax = buf_[i] > pmax ? buf_[i] : pmax;
-        pmin = buf_[i] < pmin ? buf_[i] : pmin;
+	const float v = *buf_++;
+
+	if ( v > pmax )
+	    pmax = v;
+	
+	if ( v < pmin )
+	    pmin = v;
     }
 
     pmax = fabsf(pmax);
@@ -241,6 +246,9 @@ Value_Smoothing_Filter::sample_rate ( nframes_t n )
 bool
 Value_Smoothing_Filter::apply( sample_t * __restrict__ dst, nframes_t nframes, float gt )
 {
+    if ( target_reached(gt) )
+        return false;
+
     sample_t * dst_ = (sample_t*) assume_aligned(dst);
     
     const float a = 0.07f;
@@ -250,9 +258,6 @@ Value_Smoothing_Filter::apply( sample_t * __restrict__ dst, nframes_t nframes, f
 
     float g1 = this->g1;
     float g2 = this->g2;
-
-    if ( target_reached(gt) )
-        return false;
 
     for (nframes_t i = 0; i < nframes; i++)
     {

@@ -74,7 +74,7 @@ public:
 
     void value ( float v )
         {
-	    sample_t buf[100];
+	    sample_t buf[1];
 
 	    if ( smoothing.apply( buf, 1, v ) )
 		v = buf[0];

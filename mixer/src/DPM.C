@@ -43,7 +43,7 @@ DPM::DPM ( int X, int Y, int W, int H, const char *L ) :
 
     _last_drawn_hi_segment = 0;
 
-    pixels_per_segment( 4 );
+    pixels_per_segment( 5 );
 
     type( FL_VERTICAL );
 
@@ -51,8 +51,11 @@ DPM::DPM ( int X, int Y, int W, int H, const char *L ) :
 
     dim( 0.95f );
 
-    box( FL_NO_BOX );
-    color( fl_color_average( FL_BLACK,  FL_BACKGROUND_COLOR, 0.66f ) );
+    box( FL_FLAT_BOX );
+
+    color(FL_BLACK);
+    
+    /* color( fl_color_average( FL_BLACK,  FL_BACKGROUND_COLOR, 0.25f ) ); */
 
     /* initialize gradients */
     if ( DPM::_gradient[ 0 ] == 0 )
@@ -80,12 +83,11 @@ DPM::DPM ( int X, int Y, int W, int H, const char *L ) :
     }
 
     {
-	smoothing.cutoff(25);
-	smoothing.sample_rate(1500);
-
+	/* smoothing.cutoff(25); */
+	smoothing.cutoff(200);
+	smoothing.sample_rate(30000);
+	smoothing.reset(-70.0f);
 	/* clear initial hump */
-	sample_t t[1500];
-	smoothing.apply(t,1500,-70);   
     }
     
     resize( X,Y,W,H);
@@ -188,7 +190,7 @@ DPM::draw ( void )
     {
         draw_label();
 
-        draw_box( FL_FLAT_BOX, X, Y, W, H, FL_BACKGROUND_COLOR );
+        draw_box( box(), X, Y, W, H, color() );
     }
     
     fl_push_clip( X, Y, W, H );
@@ -233,7 +235,7 @@ DPM::draw ( void )
         else if ( p == pv )
             c = div_color( p );
         else
-            c = dim_div_color( p );
+            c = FL_DARK1; // fl_color_average( FL_BACKGROUND_COLOR, FL_BLACK, 0.50f );// FL_BACKGROUND_COLOR; //dim_div_color( p );
         
         if ( ! active )
             c = fl_inactive( c );
@@ -244,26 +246,12 @@ DPM::draw ( void )
         if ( type() == FL_HORIZONTAL )
         {
             xx = X + p * bw;
-            fl_rectf( xx, Y, bw, H, c );
+            fl_rectf( xx + 1, Y, bw - 1, H, c );
         }
         else
         {
             yy = Y + H - ((p+1) * bh);
-            fl_rectf( X, yy, W, bh, c );
-        }
-        
-        if ( _pixels_per_segment >= 3 )
-        {
-            fl_color( FL_BLACK );
-
-            if ( type() == FL_HORIZONTAL )
-            {
-                fl_line( xx, Y, xx, Y + H - 1 );
-            }
-            else
-            {
-                fl_line( X, yy, X + W - 1, yy );
-            }
+            fl_rectf( X, yy + 1, W, bh - 1, c );
         }
 
         /* } */

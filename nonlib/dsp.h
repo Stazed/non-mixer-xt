@@ -57,6 +57,8 @@ public:
 
     void cutoff ( float v ) { _cutoff = v; }
 
+    void reset ( float v ) { g2 = g1 = v; }
+
     void sample_rate ( nframes_t v );
     
     inline bool target_reached ( float gt ) const { return gt == g2; }

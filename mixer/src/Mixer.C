@@ -590,7 +590,7 @@ Mixer::Mixer ( int X, int Y, int W, int H, const char *L ) :
 
    resize( X,Y,W,H );
 
-    update_frequency( 15 );
+    update_frequency( 30 );
 
     Fl::add_timeout( FEEDBACK_UPDATE_FREQ, send_feedback_cb, this );
 
