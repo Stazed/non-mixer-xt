@@ -614,13 +614,12 @@ JACK_Module::handle ( int m )
             if ( Fl::event_inside( output_connection_handle ) ||
                  Fl::event_inside( output_connection2_handle ) ||
                  Fl::event_inside( input_connection_handle ) )
-            {
                 fl_cursor( FL_CURSOR_HAND );
-            }
             else
                 fl_cursor( FL_CURSOR_DEFAULT );
 
-            Module::handle(m);
+	    /* This calls Fl_Group::handle() which somehow prevent DND FL_PASTE event from being delivered later */
+            /* Module::handle(m); */
             return 1;
         case FL_ENTER:
         case FL_DND_ENTER:
