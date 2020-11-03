@@ -571,6 +571,7 @@ Mixer::Mixer ( int X, int Y, int W, int H, const char *L ) :
             align( (Fl_Align)(FL_ALIGN_CENTER | FL_ALIGN_INSIDE) );
             o->flow( false );
             o->box( FL_FLAT_BOX );
+	    o->color( fl_darker(FL_BACKGROUND_COLOR ));
             o->type( Fl_Pack::HORIZONTAL );
             o->hspacing( 2 );
             o->vspacing( 2 );
@@ -1106,7 +1107,9 @@ Mixer::handle ( int m )
         {
             if ( ! Fl::event_inside( this ) )
                 return 0;
-            
+
+	    DMESSAGE( "Got paste into mixer, expecting strip file..." );
+	    
             const char *text = Fl::event_text();
 
             char *file;

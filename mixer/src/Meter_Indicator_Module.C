@@ -39,12 +39,14 @@
 #include "FL/test_press.H"
 
 
+const int DX = 1;
 
 Meter_Indicator_Module::Meter_Indicator_Module ( bool is_default )
     : Module ( is_default, 50, 100, name() )
 {
     box( FL_FLAT_BOX );
-    color( fl_darker( fl_darker( FL_BACKGROUND_COLOR )));
+    /* color( fl_darker( fl_darker( FL_BACKGROUND_COLOR ))); */
+    color( FL_BLACK );
 
     _disable_context_menu = false;
     _pad = true;
@@ -86,7 +88,7 @@ Meter_Indicator_Module::~Meter_Indicator_Module ( )
 void Meter_Indicator_Module::resize ( int X, int Y, int W, int H )
 {
     Fl_Group::resize(X,Y,W,H);
-    dpm_pack->resize( x() + 2, y() + 2, w() - 4, h() - 4 );
+    dpm_pack->resize( x() + DX, y() + DX, w() - DX*2, h() - DX*2);
 }
 
 void
@@ -96,8 +98,7 @@ Meter_Indicator_Module::draw ( void )
 
     Fl_Group::draw();
     
-    fl_rect( x(), y(), w(), h(), fl_darker(FL_BACKGROUND_COLOR));
-    fl_rect( x()+1, y()+1, w()-2, h()-2, fl_darker(fl_darker(FL_BACKGROUND_COLOR)));
+    fl_rect( x(), y(), w(), h(), fl_darker(fl_darker(FL_BACKGROUND_COLOR)));
 }
 
 void

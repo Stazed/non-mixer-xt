@@ -235,7 +235,7 @@ DPM::draw ( void )
         else if ( p == pv )
             c = div_color( p );
         else
-            c = FL_DARK1; // fl_color_average( FL_BACKGROUND_COLOR, FL_BLACK, 0.50f );// FL_BACKGROUND_COLOR; //dim_div_color( p );
+            c = fl_darker( FL_BACKGROUND_COLOR );//FL_DARK1; // fl_color_average( FL_BACKGROUND_COLOR, FL_BLACK, 0.50f );// FL_BACKGROUND_COLOR; //dim_div_color( p );
         
         if ( ! active )
             c = fl_inactive( c );

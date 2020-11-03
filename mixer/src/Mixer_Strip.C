@@ -588,8 +588,9 @@ Mixer_Strip::init ( )
                 Fl_Sometimes_Input *o = new Fl_Sometimes_Input( 2, 2, 144, 15 );
                 name_field = o;
 
-                o->up_box( FL_NO_BOX );
+                o->up_box( FL_FLAT_BOX );
                 o->box( FL_FLAT_BOX );
+		o->color( FL_BACKGROUND_COLOR );
                 o->selection_color( FL_BLACK );
                 o->labeltype( FL_NO_LABEL );
                 o->labelcolor( FL_GRAY0 );
