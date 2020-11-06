@@ -794,6 +794,8 @@ Audio_Region::split ( nframes_t where )
 
     Audio_Region *copy = new Audio_Region( *this );
 
+    timeline->sequence_lock.wrlock();
+
     {
         Logger _log( copy );
 
@@ -802,6 +804,8 @@ Audio_Region::split ( nframes_t where )
 
         Sequence_Region::split( copy, where );
     }
+
+    timeline->sequence_lock.unlock();
 
     log_end();
     
