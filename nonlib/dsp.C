@@ -199,24 +199,17 @@ buffer_get_peak ( const sample_t * __restrict__ buf, nframes_t nframes )
 {
     const sample_t * buf_ = (const sample_t*) assume_aligned(buf);
 
-    float pmax = 0.0f;
-    float pmin = 0.0f;
+    float p = 0.0f;
     
     while (nframes--)
     {
-	const float v = *buf_++;
+	const float v = fabsf( *buf_++ );
 
-	if ( v > pmax )
-	    pmax = v;
-	
-	if ( v < pmin )
-	    pmin = v;
+	if ( v > p )
+	    p = v;
     }
 
-    pmax = fabsf(pmax);
-    pmin = fabsf(pmin);
-    
-    return pmax > pmin ? pmax : pmin;
+    return p;
 }
 
 void
@@ -265,6 +258,8 @@ Value_Smoothing_Filter::apply( sample_t * __restrict__ dst, nframes_t nframes, f
         g2 += w * (g1 - g2);
         dst_[i] = g2;
     }
+
+    g2 += 1e-10f;		/* denormal protection */
 
     if ( fabsf( gt - g2 ) < 0.0001f )
         g2 = gt;

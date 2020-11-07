@@ -370,7 +370,7 @@ Chain::configure_ports ( void )
     client()->lock();
 
     for ( int i = 0; i < modules(); ++i )
-    {
+    {	
         module( i )->configure_inputs( nouts );
         nouts = module( i )->noutputs();
     }
@@ -573,6 +573,9 @@ Chain::insert ( Module *m, Module *n )
 {
     client()->lock();
 
+    Module::sample_rate( client()->sample_rate() );
+    n->resize_buffers( client()->nframes() );
+    
     if ( !m )
     {
         if ( modules() == 0 && n->can_support_inputs( 0 ) >= 0 )
@@ -938,7 +941,7 @@ Chain::buffer_size ( nframes_t nframes )
 int
 Chain::sample_rate_change ( nframes_t nframes )
 {
-    Module::set_sample_rate ( nframes );
+    Module::sample_rate ( nframes );
     for ( int i = 0; i < modules(); ++i )
     {
         Module *m = module(i);

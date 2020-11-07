@@ -416,7 +416,7 @@ Mixer::update_cb ( void )
 {
     Fl::repeat_timeout( _update_interval, &Mixer::update_cb, this );
 
-    if ( active_r() && visible_r() )
+    /* if ( active_r() && visible_r() ) */
     {
         for ( int i = 0; i < mixer_strips->children(); i++ )
         {
@@ -591,7 +591,7 @@ Mixer::Mixer ( int X, int Y, int W, int H, const char *L ) :
 
    resize( X,Y,W,H );
 
-    update_frequency( 30 );
+    update_frequency( 24 );
 
     Fl::add_timeout( FEEDBACK_UPDATE_FREQ, send_feedback_cb, this );
 

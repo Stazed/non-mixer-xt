@@ -82,14 +82,6 @@ DPM::DPM ( int X, int Y, int W, int H, const char *L ) :
 
     }
 
-    {
-	/* smoothing.cutoff(25); */
-	smoothing.cutoff(200);
-	smoothing.sample_rate(30000);
-	smoothing.reset(-70.0f);
-	/* clear initial hump */
-    }
-    
     resize( X,Y,W,H);
 }
 
@@ -164,6 +156,7 @@ void DPM::bbox ( int &X, int &Y, int &W, int &H )
     H = h();
 }
 
+
 void
 DPM::draw ( void )
 {
@@ -220,63 +213,51 @@ DPM::draw ( void )
     }
 
     _last_drawn_hi_segment = v;
-
+    
     for ( int p = lo; p <= hi; p++ )
     {
-        Fl_Color c;
-
-        if ( p <= v )
-        {
-            if (  p == clipv )
-                c = fl_color_average( FL_YELLOW, div_color( p ), 0.40 );
-            else
-                c = div_color( p );
-        }
-        else if ( p == pv )
-            c = div_color( p );
-        else
-            c = fl_darker( FL_BACKGROUND_COLOR );//FL_DARK1; // fl_color_average( FL_BACKGROUND_COLOR, FL_BLACK, 0.50f );// FL_BACKGROUND_COLOR; //dim_div_color( p );
-        
-        if ( ! active )
-            c = fl_inactive( c );
-
-        int yy = 0;
-        int xx = 0;
-             
-        if ( type() == FL_HORIZONTAL )
-        {
-            xx = X + p * bw;
-            fl_rectf( xx + 1, Y, bw - 1, H, c );
-        }
-        else
-        {
-            yy = Y + H - ((p+1) * bh);
-            fl_rectf( X, yy + 1, W, bh - 1, c );
-        }
-
-        /* } */
-        /* else */
-        /* { */
-        /*     if ( type() == FL_HORIZONTAL ) */
-        /*         fl_draw_box( box(), X + (p * bw), Y, bw, H, c ); */
-        /*     else */
-        /*         fl_draw_box( box(), X, Y + H - ((p + 1) * bh), W, bh, c ); */
-        /* } */
+	Fl_Color c;
+	
+	if ( p <= v )
+	{
+	    if (  p == clipv )
+		c = fl_color_average( FL_YELLOW, div_color( p ), 0.40 );
+	    else
+		c = div_color( p );
+	}
+	else if ( p == pv )
+	    c = div_color( p );
+	else
+	    c = fl_darker( FL_BACKGROUND_COLOR );//FL_DARK1; // fl_color_average( FL_BACKGROUND_COLOR, FL_BLACK, 0.50f );// FL_BACKGROUND_COLOR; //dim_div_color( p );
+	
+	if ( ! active )
+	    c = fl_inactive( c );
+	
+	int yy = 0;
+	int xx = 0;
+	
+	if ( type() == FL_HORIZONTAL )
+	{
+	    xx = X + p * bw;
+	    fl_rectf( xx + 1, Y, bw - 1, H, c );
+	}
+	else
+	{
+	    yy = Y + H - ((p+1) * bh);
+	    fl_rectf( X, yy + 1, W, bh - 1, c );
+	}
     }
 
-    /* fl_color( fl_color_add_alpha( FL_WHITE, 127 ) ); */
-
-    /* for ( int i = 0; i < 50; i++ ) */
-    /* { */
-    /* 	int yy = Y + i * H / 50; */
-	
-    /* 	if ( type() == FL_VERTICAL ) */
-    /*     { */
-    /* 	    int ww = i % 2 == 0 ? W : W / 2; */
-	    
-    /* 	    fl_line( X + ((W/2) - ww/2), yy, X + ww - 1, yy ); */
-    /*     } */
-    /* } */
-    
     fl_pop_clip();
+}
+
+void
+DPM::update ( void )
+{
+    /* do falloff */
+    float f = value() - 0.33f;
+    if ( f < -70.0f )
+	f = -78.0f;
+    
+    value(f);
 }

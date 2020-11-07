@@ -84,17 +84,14 @@ public:
 
     virtual void value ( float v )
         {
-            if ( visible_r() )
-                damage( FL_DAMAGE_USER1 );
-
-            _value = v;
-
-            if ( _value > _peak )
-                _peak = _value;
+	    _value = v;
+		
+	    if ( _value > _peak )
+		_peak = _value;
         }
 
     virtual float value ( void ) const { return _value; }
-    float peak ( void ) const { return _peak; }
+    virtual float peak ( void ) const { return _peak; }
 
     void reset ( void ) { _peak = -80.0f; redraw(); }
 

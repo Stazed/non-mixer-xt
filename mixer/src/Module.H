@@ -46,10 +46,10 @@ class Module : public Fl_Group, public Loggable {
     int _ins;
     int _outs;
     int _instances;
-    nframes_t _nframes;
     Chain *_chain;
     bool _is_default;
 
+    nframes_t _nframes;
     static nframes_t _sample_rate;
     static Module *_copied_module_empty;
     static char *_copied_module_settings;
@@ -181,12 +181,14 @@ public:
                 _by_number_path = NULL;
             }
 
+
+	nframes_t nframes ( void ) const { return _nframes; }
+	void  nframes ( nframes_t n) { _nframes = n; }
         const char *name ( void ) const { return _name; }
         Type type ( void ) const { return _type; }
         Direction direction ( void ) const  { return _direction; }
 
         Module * module ( void ) const { return _module; }
-        nframes_t nframes ( void ) const { return _nframes; }
 
         void buffer ( void *buf, nframes_t nframes ) { _buf = buf; _nframes = nframes; };
         void *buffer ( void ) const { return _buf; }
@@ -368,7 +370,6 @@ public:
 
     LOG_NAME_FUNC( Module );
 
-    nframes_t nframes ( void ) const { return _nframes; }
     virtual void resize_buffers ( nframes_t v ) { _nframes = v; }
 
 
@@ -548,7 +549,9 @@ protected:
     bool add_aux_port ( bool input, const char *prefix, int n , JACK::Port::type_e type );
 
 public:
-    nframes_t sample_rate ( void ) const { return Module::_sample_rate; }
+    
+    static nframes_t sample_rate ( void )  { return Module::_sample_rate; }
+    nframes_t nframes ( void ) { return _nframes; }
 
 
     void auto_connect_outputs();
@@ -561,7 +564,7 @@ public:
     bool add_aux_audio_input ( const char *prefix, int n );
     bool add_aux_cv_input ( const char *prefix, int n );
 
-    static void set_sample_rate ( nframes_t srate ) { _sample_rate = srate; }
+    static void sample_rate ( nframes_t srate ) { _sample_rate = srate; }
 
     void command_open_parameter_editor();
     virtual void command_activate ( void );

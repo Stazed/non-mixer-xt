@@ -275,7 +275,7 @@ Group::name ( const char *n )
     if ( !active() )
     {
         Client::init( ename );
-        Module::set_sample_rate( sample_rate() );
+        Module::sample_rate( sample_rate() );
     }
     else
     {
