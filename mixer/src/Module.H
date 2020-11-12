@@ -262,7 +262,6 @@ public:
 
         Port *connected_port ( void ) const
             {
-                ASSERT( _type == Port::CONTROL, "Operation only available for control ports" );                
                 return _connected.size() == 0 ? NULL : _connected.front();                
             }
 
