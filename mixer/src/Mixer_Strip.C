@@ -1149,6 +1149,9 @@ Mixer_Strip::handle ( int m )
 {
     static int _button = 0;
 
+    if (!_chain )
+	return 0;
+    
     Logger log( this );
     
     static Fl_Widget *dragging = NULL;

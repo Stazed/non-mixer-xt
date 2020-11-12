@@ -1097,6 +1097,9 @@ Mixer::send_feedback ( void )
 int
 Mixer::handle ( int m )
 {
+    /* if user presses certain keys when project is loading it can cause a crash. Don't respond to input. */
+    if ( Project::is_opening() )
+	return 0;
     
     if ( Fl_Group::handle( m ) )
         return 1;
