@@ -634,12 +634,15 @@ Control_Sequence::process_osc ( void )
 
     if ( _osc_output() )
     {
-        sample_t buf[1];
+        sample_t buf = 0;
+	        
+        play( &buf, (nframes_t)transport->frame, (nframes_t) 1 );
 
-        *buf = 0;
-        
-        play( buf, (nframes_t)transport->frame, (nframes_t) 1 );
-        _osc_output()->value( (float)buf[0] );
+	/* only send value if it is significantly different from the last value sent */
+	if ( fabsf( _osc_output()->value() - (float)buf ) > 0.001 )
+	{
+	    _osc_output()->value( (float)buf );
+	}
     }
 }
 
