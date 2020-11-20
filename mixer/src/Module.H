@@ -48,7 +48,8 @@ class Module : public Fl_Group, public Loggable {
     int _instances;
     Chain *_chain;
     bool _is_default;
-
+    bool _pending_feedback;
+    
     nframes_t _nframes;
     static nframes_t _sample_rate;
     static Module *_copied_module_empty;
@@ -103,6 +104,7 @@ public:
                     connected_port()->_buf = _buf;
             }
 
+	
     public:
 
         enum Direction { INPUT, OUTPUT };
@@ -120,7 +122,7 @@ public:
             float default_value;
             int dimensions;
             bool visible;
-
+	    
             Hints ( )
                 {
                     type = LINEAR;
@@ -153,6 +155,9 @@ public:
                 _by_number_path = 0;
                 _by_number_number = -1;
                 _jack_port = 0;
+		_feedback_value = -2;
+		_pending_feedback = false;
+		_feedback_milliseconds = 0;
             }
 
         Port ( const Port& p )
@@ -169,6 +174,7 @@ public:
                 _by_number_path = 0;
                 _by_number_number = -1;
                 _jack_port = p._jack_port;
+		_feedback_value = p._feedback_value;
             }
 
         virtual ~Port ( )
@@ -299,7 +305,7 @@ public:
                 _buf = buf;
             }
 
-        void send_feedback ( void );
+        void send_feedback ( bool force );
 
         bool connected_to ( Port *p )
             {
@@ -332,6 +338,8 @@ public:
         void jack_port ( JACK::Port *v ) { _jack_port = v; }
         JACK::Port *jack_port ( void ) const { return _jack_port; }
 
+	void schedule_feedback ( void ) { _pending_feedback = true; }
+	
     private:
 
         char *generate_osc_path ( void );
@@ -350,6 +358,10 @@ public:
         OSC::Signal *_scaled_signal;
         OSC::Signal *_unscaled_signal;
 
+	float _feedback_value;
+	bool _pending_feedback;
+	unsigned long long _feedback_milliseconds;
+	
         static void handle_signal_connection_state_changed ( OSC::Signal *, void *o );
     };
 

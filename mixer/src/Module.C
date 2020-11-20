@@ -48,6 +48,9 @@
 
 #include "string_util.h"
 
+#include "time.h"
+
+
 
 
 nframes_t Module::_sample_rate = 0;
@@ -166,7 +169,8 @@ Module::init ( void )
     _chain = 0;
     _instances = 1;
     _bypass = 0;
-
+    _pending_feedback = false;
+    
     box( FL_UP_BOX );
     labeltype( FL_NO_LABEL );
     align( FL_ALIGN_CENTER | FL_ALIGN_INSIDE );
@@ -331,8 +335,11 @@ Module::Port::osc_number_path ( void )
 }
 
 void
-Module::Port::send_feedback ( void )
+Module::Port::send_feedback ( bool force )
 {
+    if ( !_pending_feedback )
+	return;
+    
     float f = control_value();
 
     if ( hints.ranged )
@@ -345,18 +352,39 @@ Module::Port::send_feedback ( void )
         f =  ( f - offset ) / scale;
     }
     
-    if ( f > 1.0 )
-        f = 1.0;
-    else if ( f < 0.0 )
-        f = 0.0;
+    if ( f > 1.0f )
+        f = 1.0f;
+    else if ( f < 0.0f )
+        f = 0.0f;
+
+    /* struct timespec t; */
+    /* clock_gettime( CLOCK_MONOTONIC, &t ); */
+
+    /* /\* don't send feedback more at more than 30Hz rate. *\/ */
+    /* unsigned long long ms = (t.tv_sec * 1000 + ( t.tv_nsec / 1000000 )); */
+    /* if ( ms - _feedback_milliseconds < 1000 / 30 ) */
+    /* 	return; */
     
+    /* _feedback_milliseconds = ms; */
+		 
     if ( _scaled_signal )
     {
-        /* send feedback for by_name signal */
-        mixer->osc_endpoint->send_feedback( _scaled_signal->path(), f );
-        
-        /* send feedback for by number signal */
-        mixer->osc_endpoint->send_feedback( osc_number_path(), f  );
+
+	if ( fabsf( _feedback_value - f ) > (1.0f / 128.0f) )
+	{
+/* only send feedback if value has changed significantly since the last time we sent it. */
+	    /* DMESSAGE( "signal value: %f, controL_value: %f", _scaled_signal->value(), f ); */
+	    /* send feedback for by_name signal */
+	    mixer->osc_endpoint->send_feedback( _scaled_signal->path(), f );
+	
+	    /* send feedback for by number signal */
+	    mixer->osc_endpoint->send_feedback( osc_number_path(), f  );
+	
+	    _feedback_value = f;
+
+	    _pending_feedback = false;
+	    /* _scaled_signal->value( f ); */
+	}
     }
 }
 
@@ -364,7 +392,7 @@ void
 Module::send_feedback ( void )
 {
     for ( int i = 0; i < ncontrol_inputs(); i++ )
-        control_input[i].send_feedback();
+        control_input[i].send_feedback(true);
 }
 
 void
@@ -373,7 +401,11 @@ Module::handle_control_changed ( Port *p )
     if ( _editor )
         _editor->handle_control_changed ( p );
 
-    p->send_feedback();
+
+    p->schedule_feedback();
+    
+    /* DMESSAGE("Control changed"); */
+    /* p->send_feedback(false); */
 }
 
 /* bool */

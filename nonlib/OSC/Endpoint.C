@@ -714,7 +714,9 @@ namespace OSC
                     i->second.current_value = argv[0]->f;
                 }
 
-                i->second.suppress_feedback = true;
+		/* FIXME: this was intended to break feedback cycles, but it actually
+		 results in some feedback values not being sent at all */
+                /* i->second.suppress_feedback = true; */
 
                 lo_send_message(ep->_addr, dpath, msg );
                 return 0;

@@ -49,7 +49,8 @@
 
 #include "Controller_Module.H"
 
-const double FEEDBACK_UPDATE_FREQ = 1.0f;
+/* const double FEEDBACK_UPDATE_FREQ = 1.0f; */
+const double FEEDBACK_UPDATE_FREQ = 1.0f / 30.0f;
 
 extern char *user_config_dir;
 extern char *instance_name;
@@ -593,7 +594,6 @@ Mixer::Mixer ( int X, int Y, int W, int H, const char *L ) :
 
     update_frequency( 24 );
 
-    Fl::add_timeout( FEEDBACK_UPDATE_FREQ, send_feedback_cb, this );
 
     update_menu();
 
@@ -1078,6 +1078,7 @@ Mixer::send_feedback_cb ( void *v )
     
     m->send_feedback();
 
+    /* just to it once at the start... */
     Fl::repeat_timeout( FEEDBACK_UPDATE_FREQ, send_feedback_cb, v );
 }
 
@@ -1296,6 +1297,9 @@ Mixer::command_load ( const char *path, const char *display_name )
     auto_connect();
 
     mixer->activate();
+
+    /* Fl::remove_timeout( send_feedback_cb, this ); */
+    Fl::add_timeout( FEEDBACK_UPDATE_FREQ, send_feedback_cb, this );
 
     return true;
 }

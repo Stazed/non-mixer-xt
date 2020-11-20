@@ -74,7 +74,7 @@ PROJECT="$1"
 
 cd "$PROJECT" || fatal "No such project"
 
-[ -f history ] && [ -f info ] || fatal "Not a Non-DAW project?"
+[ -f history ] && [ -f info ] || fatal "Not a Non-Timeline project?"
 
 [ -f .lock ] && fatal "Project appears to be in use"
 

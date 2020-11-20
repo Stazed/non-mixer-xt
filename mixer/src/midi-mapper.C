@@ -394,8 +394,14 @@ int signal_handler ( float value, void *user_data )
 {
     signal_mapping *m = (signal_mapping*)user_data;
 
+    /* DMESSAGE( "Received value: %f", value ); */
+
     m->last_feedback_tick = buffers;
-        
+
+    /* magic number to give a release time to prevent thrashing. */	
+    /* if ( ! ( m->last_feedback_tick > m->last_midi_tick + 4  )) */
+    /* 	return 0; */
+
     if ( m->is_nrpn )
     {
         jack_midi_event_t jev[4];
@@ -916,7 +922,7 @@ void emit_signal_for_event ( const char *midi_event, midievent &e, struct nrpn_s
     else if ( e.opcode() == MIDI::midievent::PITCH_WHEEL )
 	val = e.pitch() / (float)MAX_14BIT;
 
-    /* DMESSAGE( "Val: %f", val ); */
+    /* DMESSAGE( "Val: %f, sigval %f", val, m->signal->value() ); */
 
     /* wait for values to sync for continuous controls (faders and knobs) before emitting signal. For toggles, just send it immediately. */
     if (
@@ -925,7 +931,7 @@ void emit_signal_for_event ( const char *midi_event, midievent &e, struct nrpn_s
 	    &&
 	 !m->is_toggle )
     {
-    	float percent_off = fabs( (val - m->signal->value()) * 100 );			
+    	float percent_off = fabs( val - m->signal->value() ) * 100.0f;
 		
     	if ( percent_off > 5 )
     	{
@@ -941,6 +947,9 @@ void emit_signal_for_event ( const char *midi_event, midievent &e, struct nrpn_s
     }
     
     m->last_midi_tick = buffers;
+
+    /* DMESSAGE( "Sent value: %f", val ); */
+    
     m->signal->value( val );
 }
 
