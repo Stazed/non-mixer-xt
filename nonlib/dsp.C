@@ -48,9 +48,9 @@ buffer_apply_gain ( sample_t * __restrict__ buf, nframes_t nframes, float g )
 	
     if ( g == 1.0f )
         return;
-    
-    for ( nframes_t i = 0; i < nframes; i++ )
-        buf_[i] *= g;
+
+    while ( nframes-- )
+	*buf_++ *= g;
 }
 
 void
@@ -58,9 +58,9 @@ buffer_apply_gain_unaligned ( sample_t * __restrict__ buf, nframes_t nframes, fl
 {
     if ( g == 1.0f )
         return;
-    
-    for ( nframes_t i = 0; i < nframes; i++ )
-        buf[i] *= g;
+
+    while ( nframes-- )
+	*buf++ *= g;
 }
 
 void
@@ -69,8 +69,8 @@ buffer_apply_gain_buffer ( sample_t * __restrict__ buf, const sample_t * __restr
     sample_t * buf_ = (sample_t*) assume_aligned(buf);
     const sample_t * gainbuf_ = (const sample_t*) assume_aligned(gainbuf);
 
-    for ( nframes_t i = 0; i < nframes; i++ )
-        buf_[i] *= gainbuf_[i];
+    while ( nframes-- )
+	*buf_++ *= *gainbuf_++;
 }
 
 void
@@ -79,9 +79,9 @@ buffer_copy_and_apply_gain_buffer ( sample_t * __restrict__ dst, const sample_t 
     sample_t * dst_ = (sample_t*) assume_aligned(dst);
     const sample_t * src_ = (const sample_t*) assume_aligned(src);
     const sample_t * gainbuf_ = (const sample_t*) assume_aligned(gainbuf);
-    
-    for ( nframes_t i = 0; i < nframes; i++ )
-        dst_[i] = src_[i] * gainbuf_[i];
+
+    while ( nframes-- )
+	*dst_++ = *src_++ * *gainbuf_++;
 }
 
 void
@@ -90,8 +90,8 @@ buffer_mix ( sample_t * __restrict__ dst, const sample_t * __restrict__ src, nfr
     sample_t * dst_ = (sample_t*) assume_aligned(dst);
     const sample_t * src_ = (const sample_t*) assume_aligned(src);
 
-    for ( nframes_t i = 0; i < nframes; i++ )
-        dst_[i] += src_[i];
+    while ( nframes-- )
+	*dst_++ += *src_++;
 }
 
 void
@@ -100,8 +100,8 @@ buffer_mix_with_gain ( sample_t * __restrict__ dst, const sample_t * __restrict_
     sample_t * dst_ = (sample_t*) assume_aligned(dst);
     const sample_t * src_ = (const sample_t*) assume_aligned(src);
 
-    for ( nframes_t i = 0; i < nframes; i++ )
-        dst_[i] += src_[i] * g;
+    while ( nframes-- )
+	*dst_++ = *src_++ * g;
 }
 
 void
