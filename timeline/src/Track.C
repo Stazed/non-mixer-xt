@@ -608,11 +608,6 @@ Track::remove ( Audio_Sequence *t )
     
     Logger log(this);
  
-    if ( t->id() == 0x2785 )
-    {
-	WARNING( "****** 0x2785 removed here *****");
-    }
-
     if ( sequence() == t )
     {
         pack->remove( t );
@@ -626,7 +621,8 @@ Track::remove ( Audio_Sequence *t )
     else
         takes->remove( t );
 
-    delete t;
+    /* doing this here creates a cycle */
+    /* delete t; */
 
     Loggable::block_end();
     
@@ -660,12 +656,6 @@ Track::sequence ( Audio_Sequence * t )
 {
     Logger log(this);
     
-    /* FIXME: testing */
-    if ( sequence() != NULL && sequence()->id() == 0x2785 )
-    {
-	DMESSAGE( "****** Here *****");
-    }
-
     if ( sequence() == t )
     {
 	/* ASSERT( false, "Attempt to set same sequence twice" ); */
