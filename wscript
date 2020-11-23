@@ -21,6 +21,8 @@ def options(opt):
                     help='Build for debugging')
     opt.add_option('--disable-sse', action='store_false', default=True, dest='sse',
                     help='Disable SSE optimization')
+    opt.add_option('--disable-native-cpu-optimization', action='store_false', default=True, dest='native',
+                    help='Disable native CPU optimziation (e.g. for generic binary packaging)')
     opt.add_option('--project', action='store', default=False, dest='project',
                     help='Limit build to a single project (' + ', '.join( projects ) + ')')
 
@@ -94,6 +96,13 @@ def configure(conf):
             "-ffast-math",
             "-pipe"
             ]
+
+    if Options.options.native:
+        print('Using native CPU optimization')
+        optimization_flags.extend( [
+            "-march=native",
+            "-mtune=native", # ~200% DSP performance increase on AMD bulldozer...
+        ]);
     
     if Options.options.sse:
         print('Using SSE optimization')
