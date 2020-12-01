@@ -89,40 +89,40 @@ DPM::DPM ( int X, int Y, int W, int H, const char *L ) :
 const int marks [] = { -70, -50, -40, -30, -20, -10, -3, 0, 4 };
 
 void
-DPM::draw_label ( void )
+DPM::public_draw_label ( int X, int Y, int W, int H )
 {
-
-    /* dirty hack */
-    if ( parent()->child( 0 ) == this )
+    fl_push_clip(X,Y,W,H);
+    fl_rectf( X,Y,W,H, FL_BACKGROUND_COLOR);
+	
+    fl_font( FL_TIMES, 8 );
+    fl_color( active_r() ? FL_FOREGROUND_COLOR : fl_inactive( FL_FOREGROUND_COLOR ) );
+    /* draw marks */
+    char pat[5];
+    if ( type() == FL_HORIZONTAL )
     {
-        fl_font( FL_TIMES, 8 );
-        fl_color( FL_FOREGROUND_COLOR );
-        /* draw marks */
-        char pat[5];
-        if ( type() == FL_HORIZONTAL )
-        {
-            for ( int i = sizeof( marks ) / sizeof( marks[0] ); i-- ; )
-            {
-                sprintf( pat, "%d", marks[ i ] );
+	for ( int i = sizeof( marks ) / sizeof( marks[0] ); i-- ; )
+	{
+	    sprintf( pat, "%d", marks[ i ] );
 
-                int v = w() *  deflection( (float)marks[ i ] );
+	    int v = w() *  deflection( (float)marks[ i ] );
 
-                fl_draw( pat, x() + v, (y() + h() + 8), 19, 8, (Fl_Align) (FL_ALIGN_RIGHT | FL_ALIGN_TOP) );
-            }
+	    fl_draw( pat, X + v, (Y + H + 8), W, 8, (Fl_Align) (FL_ALIGN_RIGHT | FL_ALIGN_TOP) );
+	}
 
-        }
-        else
-        {
-            for ( int i = sizeof( marks ) / sizeof( marks[0] ); i-- ; )
-            {
-                sprintf( pat, "%d", marks[ i ] );
-
-                int v = h() *  deflection( (float)marks[ i ] );
-
-                fl_draw( pat, x() - 20, (y() + h() - 4) - v, 19, 8, (Fl_Align) (FL_ALIGN_RIGHT | FL_ALIGN_TOP) );
-            }
-        }
     }
+    else
+    {
+	for ( int i = sizeof( marks ) / sizeof( marks[0] ); i-- ; )
+	{
+	    sprintf( pat, "%d", marks[ i ] );
+
+	    int v = h() *  deflection( (float)marks[ i ] );
+
+	    fl_draw( pat, X, (Y + H - 4) - v, W, 8, (Fl_Align) (FL_ALIGN_RIGHT | FL_ALIGN_TOP) );
+	}
+    }
+
+    fl_pop_clip();
 }
 
 void
@@ -165,9 +165,6 @@ DPM::draw ( void )
 
     int X,Y,W,H;
     bbox(X,Y,W,H);
-
-    if ( 0 == fl_not_clipped(X,Y,W,H ) )
-	return;
     
     int v = pos( value() );
     int pv = pos( peak() );
@@ -178,10 +175,13 @@ DPM::draw ( void )
     /*  int bh = _pixels_per_segment; */
     /* int bw = _pixels_per_segment; */
     int bw = W / _segments;
+    
+    if ( 0 == fl_not_clipped(X,Y,W,H ) )
+	return;
 
     if ( damage() & FL_DAMAGE_ALL )
     {
-        draw_label();
+        /* draw_label(); */
 
         draw_box( box(), X, Y, W, H, color() );
     }

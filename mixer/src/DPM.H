@@ -56,14 +56,15 @@ class DPM : public Meter
     
 protected:
 
-    virtual void draw_label ( void );
     virtual void draw ( void );
     virtual void resize ( int, int, int, int );
+    /* virtual void draw_label ( void ); */
 
     void bbox ( int &X, int &Y, int &W, int &H );
 
 public:
 
+    void public_draw_label ( int X, int Y, int W, int H );
     
     DPM ( int X, int Y, int W, int H,  const char *L = 0 );
 

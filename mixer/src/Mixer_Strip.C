@@ -675,7 +675,7 @@ Mixer_Strip::init ( )
                 { Fl_Scalepack* o = new Fl_Scalepack(2, 135, 105, 311 );
                     // o->box( FL_BORDER_BOX );
 //                        o->color( FL_RED );
-                    o->spacing( 20 );
+                    o->spacing( 0 );
                     o->type( Fl_Scalepack::HORIZONTAL );
                     { Controller_Module *o = gain_controller = new Controller_Module( true );
                         o->horizontal(false);

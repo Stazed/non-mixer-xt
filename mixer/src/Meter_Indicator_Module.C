@@ -57,7 +57,13 @@ Meter_Indicator_Module::Meter_Indicator_Module ( bool is_default )
 
     control_input[0].hints.visible = false;
 
-    dpm_pack = new Fl_Scalepack( x() + 2, y() + 2, w() - 4, h() - 4 );
+    /* dpm_pack = new Fl_Scalepack( x() + 2, y() + 2, w() - 4, h() - 4 ); */
+    /* /\* dpm_pack->color( FL_BACKGROUND_COLOR ); *\/ */
+    /* dpm_pack->box( FL_NO_BOX ); */
+    /* dpm_pack->type( FL_HORIZONTAL ); */
+    /* dpm_pack->spacing(1); */
+
+        dpm_pack = new Fl_Scalepack( x() + 20 + 2, y() + 2, w() - 20 - 4, h() - 4 );
     /* dpm_pack->color( FL_BACKGROUND_COLOR ); */
     dpm_pack->box( FL_NO_BOX );
     dpm_pack->type( FL_HORIZONTAL );
@@ -90,15 +96,25 @@ Meter_Indicator_Module::~Meter_Indicator_Module ( )
 void Meter_Indicator_Module::resize ( int X, int Y, int W, int H )
 {
     Fl_Group::resize(X,Y,W,H);
-    dpm_pack->resize( x() + DX, y() + DX, w() - DX*2, h() - DX*2);
+    dpm_pack->resize( x() + 20 + DX , y() + DX, w() - 20 - DX*2, h() - DX*2);
 }
 
 void
 Meter_Indicator_Module::draw ( void )
 {
-    /* draw_box(x(),y(),w(),h()); */
+    /* if ( damage() & FL_DAMAGE_ALL ) */
 
+    /* draw_box(x(),y(),w(),h()); */
     Fl_Group::draw();
+
+    if ( damage() & FL_DAMAGE_ALL )
+    {
+	/* need to trigger redraw of exterior label */
+	if ( dpm_pack->children() )
+	{
+	    ((DPM*)dpm_pack->child(0))->public_draw_label( x(), y(), 19, h() );
+	}
+    }
     
     fl_rect( x(), y(), w(), h(), fl_darker(fl_darker(FL_BACKGROUND_COLOR)));
 }
