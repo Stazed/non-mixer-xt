@@ -342,8 +342,7 @@ JACK_Module::update_connection_status ( void )
     else
         size( w(), 24 );
         
-    /* parent()->parent()->redraw(); */
-    parent()->redraw();
+    parent()->parent()->redraw();
 }
 
 void
