@@ -355,7 +355,7 @@ void Mixer::cb_menu(Fl_Widget* o) {
     {
         fl_theme_chooser();
     }
-    else if ( ! strcmp( picked, "&Mixer/Swap &Fader//Signal View" ) )
+    else if ( ! strcmp( picked, "&Mixer/Toggle &Fader View" ) )
     {
         command_toggle_fader_view();
     }
@@ -528,7 +528,7 @@ Mixer::Mixer ( int X, int Y, int W, int H, const char *L ) :
             o->add( "&Mixer/&Import Strip" );
             o->add( "&Mixer/Paste", FL_CTRL + 'v', 0, 0 );
             o->add( "&Mixer/&Spatialization Console", FL_F + 8, 0, 0, FL_MENU_TOGGLE );
-            o->add( "&Mixer/Swap &Fader//Signal View", FL_ALT + 'f', 0, 0, FL_MENU_TOGGLE );
+            o->add( "&Mixer/Toggle &Fader View", FL_ALT + 'f', 0, 0, FL_MENU_TOGGLE );
 //            o->add( "&Mixer/&Signal View", FL_ALT + 's', 0, 0, FL_MENU_TOGGLE );
             o->add( "&Remote Control/Start Learning", FL_F + 9, 0, 0 );
             o->add( "&Remote Control/Stop Learning", FL_F + 10, 0, 0 );
