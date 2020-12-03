@@ -1037,14 +1037,19 @@ Mixer_Strip::maybe_auto_connect_output ( Module::Port *p )
     if ( ! _auto_input )
     {
         /* break any previous connection between this port and this module */
-        p->disconnect_from_strip(this);        
+        p->disconnect_from_strip(this);
     }
     
     if ( _auto_input && matches_pattern( _auto_input, p ) )
     {
+	/* FIXME: would be faster if we avoided breaking and remaking
+	 * the same connections, while still breaking connections that
+	 * will not be remade */
+	
         /* break any prior auto-connection */
         p->disconnect();
-        
+
+	
         // FIXME: Find a better way to get the port index.
         const char* jack_name = p->jack_port()->jack_name();
        

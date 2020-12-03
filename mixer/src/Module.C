@@ -285,17 +285,16 @@ Module::paste_before ( void )
 void
 Module::Port::disconnect_from_strip ( Mixer_Strip *o )
 {
-    for ( std::list<Port*>::iterator i = _connected.begin(); i != _connected.end(); i++ )
+    for ( std::list<Port*>::iterator i = _connected.begin(); i != _connected.end();  )
     {
         Port *p = *i;
 
+	i++;			/* iterator trick */
+	
         if ( p->module()->chain()->strip() == o )
         {
-            /* iterator about to be invalidated... */
-            i = _connected.erase(i);
-                        
             disconnect(p);
-        }
+	}
     }               
 }
 
