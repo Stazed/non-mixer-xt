@@ -218,10 +218,19 @@ main ( int argc, char **argv )
         char *name = strdup( argv[0] );
         char *n = basename( name );
 
-        if ( ! strcmp( n, "non-mixer-noui" ) )
+        if (  ! strcmp( n, "non-mixer-noui" ) )
+	{
+	    DMESSAGE("Not running UI: invoked as non-mixer-noui");
             no_ui = true;
-        
+	}
+
         free( name );
+
+	if ( NULL == getenv("DISPLAY") )
+	{
+	    DMESSAGE("Not running UI: $DISPLAY environment variable unset");
+	    no_ui = true;
+	}
     }
 
     if ( ! no_ui )
@@ -313,7 +322,6 @@ main ( int argc, char **argv )
     }
     else
     {
-        DMESSAGE( "Not Running UI..." );
         while ( ! got_sigterm )
         {
             Fl::wait(2147483.648);         /* magic number means forever */
