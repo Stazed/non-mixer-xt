@@ -821,8 +821,6 @@ void Mixer::remove ( Mixer_Strip *ms )
 
     mixer_strips->remove( ms );
     
-    ms->group()->remove( ms );
-
     if ( parent() )
         parent()->redraw();
 }

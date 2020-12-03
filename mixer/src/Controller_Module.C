@@ -96,8 +96,6 @@ Controller_Module::~Controller_Module ( )
 
     /* shutdown JACK port, if we have one */
     mode( GUI );
-
-//    disconnect();
 }
 
 void

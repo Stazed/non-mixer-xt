@@ -97,6 +97,8 @@ public:
     void add (Mixer_Strip*);
     void remove (Mixer_Strip*);
 
+    int children ( void ) const { return strips.size(); }
+    
     /* Engine *engine ( void ) { return _engine; } */
 };
 

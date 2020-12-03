@@ -173,6 +173,9 @@ public:
 
         virtual ~Port ( )
             {
+		/* FIXME: will this cause problems with cloning an instance? */
+		disconnect();
+		
                 if ( _by_number_path )
                     free( _by_number_path );
                 _by_number_path = NULL;
@@ -321,20 +324,10 @@ public:
         /* disconnect from *all* connected ports */
         void disconnect ( void )
             {
-                if ( _connected.size() )
-                {
-                    for ( std::list<Port*>::iterator i = _connected.begin(); i != _connected.end(); i++ )
-                    {
-                        Port *p = *i;
-
-                        /* iterator about to be invalidated... */
-                        i = _connected.erase(i);
-                        
-                        disconnect(p);
-                    }
-                }
-            }
-
+		while ( _connected.size() )
+		    disconnect(_connected.front());
+	    }
+	
         void jack_port ( JACK::Port *v ) { _jack_port = v; }
         JACK::Port *jack_port ( void ) const { return _jack_port; }
 

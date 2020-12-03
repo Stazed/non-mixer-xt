@@ -104,27 +104,36 @@ Module::~Module ( )
         if ( control_input[i].connected() )
         {
             Module *o = (Module*)control_input[i].connected_port()->module();
-            
-            if ( ! o->is_default() )
-            {
-                control_input[i].disconnect();
 
-                DMESSAGE( "Deleting connected module %s", o->label() );
-                
-                delete o;
-            }
-            else
-            {
-                control_input[i].disconnect();
-            }
-
-        }
-
+	    if ( !o )
+	    {
+		DWARNING( "Programming error. Connected port has null module. %s %s",
+			 
+			  label(),
+			  control_input[i].connected_port()->name());
+	    }
+	    
+	    control_input[i].disconnect();
+	    
+	    if ( o )
+	    {
+		if ( ! o->is_default() )
+		{
+		    DMESSAGE( "Deleting connected module %s", o->label() );
+		    
+		    delete o;
+		}
+	    }
+	}
+	
         control_input[i].destroy_osc_port();
     }
     for ( unsigned int i = 0; i < control_output.size(); ++i )
         control_output[i].disconnect();
 
+    aux_audio_output.clear();
+    aux_audio_input.clear();
+    
     audio_input.clear();
     audio_output.clear();
 
@@ -1180,7 +1189,19 @@ Module::freeze_ports ( void )
     for ( int i = 0; i < ncontrol_inputs(); ++i )
     {
         if ( control_input[i].connected() )
-            control_input[i].connected_port()->module()->freeze_ports();
+	{
+	    if ( ! control_input[i].connected_port()->module()  )
+	    {
+		DWARNING( "Programming error. Connected port has null module. %s %s",
+			 
+			 name(),
+			 control_input[i].connected_port()->name());
+	    }
+	    else
+	    {
+		control_input[i].connected_port()->module()->freeze_ports();
+	    }
+	}
     }
 
     for ( unsigned int i = 0; i < aux_audio_input.size(); ++i )

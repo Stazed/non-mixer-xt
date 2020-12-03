@@ -73,6 +73,7 @@ Mixer_Strip::Mixer_Strip( const char *strip_name ) : Fl_Group( 0, 0, 120, 600 )
 
     init();
 
+    /* create single member group */
     _group = new Group(strip_name, true);
 
     _group->add( this );
@@ -105,14 +106,30 @@ Mixer_Strip::~Mixer_Strip ( )
 //    _chain->engine()->lock();
 
     log_destroy();
-
+    
     mixer->remove( this );
 
     /* make sure this gets destroyed before the chain */
     fader_tab->clear();
 
-    delete _chain;
-    _chain = NULL;
+    if ( _group )
+    {
+	_group->remove( this );
+    }
+    
+    if ( _chain )
+    {
+	delete _chain;
+	_chain = NULL;
+    }
+
+    if ( _group )
+    {
+	if ( 0 == _group->children() )
+	    delete _group;
+	
+	_group = NULL;
+    }
 }
 
 
@@ -347,6 +364,7 @@ void Mixer_Strip::cb_handle(Fl_Widget* o, void* v) {
 void
 Mixer_Strip::group ( Group *g )
 {
+    /* FIXME: what is the intention here? */
     if ( !g && _group && _group->single() )
         return;
 

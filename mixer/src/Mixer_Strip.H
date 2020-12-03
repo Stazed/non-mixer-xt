@@ -169,7 +169,8 @@ public:
 
     Controller_Module *spatializer ( void );
 
-    Group *group ( void ) { return _group;}
+    Group *group ( void ) { return _group; }
+    void clear_group ( void ) { _group = NULL; }
 
     //  int group ( void ) const;
     void group ( Group * );

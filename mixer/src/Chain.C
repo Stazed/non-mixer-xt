@@ -174,7 +174,9 @@ Chain::~Chain ( )
 
     _deleting = true;
 
-    client()->lock();
+    /* FIXME: client may already be dead during teardown if group is destroyed first. */
+    if ( client() )
+	client()->lock();
 
     for ( unsigned int i = scratch_port.size(); i--; )
         free( (sample_t*)scratch_port[i].buffer() );
@@ -182,9 +184,12 @@ Chain::~Chain ( )
     /* if we leave this up to FLTK, it will happen after we've
      already destroyed the client */
     modules_pack->clear();
+    modules_pack = NULL;
     controls_pack->clear();
+    modules_pack = NULL;
 
-    client()->unlock();
+    if ( client() )
+	client()->unlock();
 }
 
 Group *
@@ -534,6 +539,8 @@ Chain::name ( const char *name )
     if ( strip()->group() )
     {
         if ( strip()->group()->single() )
+	    /* we are the owner of this group and its only member, so
+	     * rename it */
             strip()->group()->name(name);
     }
     
@@ -713,6 +720,8 @@ Chain::add_to_process_queue ( Module *m )
 void
 Chain::build_process_queue ( void )
 {
+    client()->lock();
+    
     process_queue.clear();
 
     for ( int i = 0; i < modules(); ++i )
@@ -780,6 +789,8 @@ Chain::build_process_queue ( void )
 /*             delete[] s; */
 /*         } */
 /*     } */
+
+    client()->unlock();
 }
 
 void
@@ -901,9 +912,9 @@ Chain::process ( nframes_t nframes )
 {
     for ( std::list<Module*>::const_iterator i = process_queue.begin(); i != process_queue.end(); ++i )
     {
-        Module *m = *i;
-
-        m->process( nframes );
+	Module *m = *i;
+	    
+	m->process( nframes );
     }
 }
 
