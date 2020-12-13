@@ -940,6 +940,9 @@ Mixer_Strip::menu_cb ( Fl_Widget *w, void *v )
 void
 Mixer_Strip::auto_input ( const char *s )
 {
+    /* break old connections */
+    disconnect_auto_inputs(s);
+    
     if ( _auto_input )
         free( _auto_input );
     
@@ -948,6 +951,7 @@ Mixer_Strip::auto_input ( const char *s )
     if ( s )
         _auto_input = strdup( s );
 
+    /* make new connections */
     mixer->auto_connect();
 }
 
@@ -1024,6 +1028,42 @@ Mixer_Strip::has_group_affinity ( void ) const
     return _auto_input && strncmp( _auto_input, "*/", 2 );
 }
 
+void
+Mixer_Strip::disconnect_auto_inputs ( const char *exclude_pattern )
+{
+    if ( chain() )
+    {
+	JACK_Module *m = (JACK_Module*)chain()->module(0);
+	
+	if ( m )
+	{
+	    for ( unsigned int i = 0; i < m->aux_audio_input.size(); ++i )
+	    {
+		Module::Port *p1 = &m->aux_audio_input[i];
+
+		if ( _auto_input && exclude_pattern )
+		{
+		    /* avoid disconnecting a port that we'll immediately be reconnecting */
+		    for ( unsigned int j = 0; j < p1->nconnected(); ++j )
+		    {
+			Module::Port *p2 = p1->connected_port( j );
+
+			if ( !matches_pattern( exclude_pattern, p2 ) )
+			{
+			    p1->disconnect( p2 );
+			    j--; /* keep our place in the iteration */
+			}
+		    }
+		}
+		else
+		{
+		    m->aux_audio_input[i].disconnect();
+		}
+	    }
+	}
+    }
+}
+
 bool
 Mixer_Strip::maybe_auto_connect_output ( Module::Port *p )
 {
@@ -1070,6 +1110,9 @@ Mixer_Strip::maybe_auto_connect_output ( Module::Port *p )
 //            DMESSAGE( "No port to connect to at this index");
             return false;
         }
+
+	if ( ! m->aux_audio_input[n].connected_to( p ) )
+	    m->aux_audio_input[n].connect_to( p );
 
         m->aux_audio_input[n].connect_to( p );
         

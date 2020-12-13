@@ -161,6 +161,7 @@ public:
 
     void manual_connection ( bool b );
     bool has_group_affinity ( void ) const;
+    void disconnect_auto_inputs ( const char *exclude_pattern );
     void auto_connect_outputs ( void );
     bool maybe_auto_connect_output ( Module::Port *p );
        

@@ -264,11 +264,25 @@ public:
                 /* control and external audio ports belong to a graph */
                 return _connected.size() > 0;
         }
+
+	unsigned int nconnected ( void ) const { return _connected.size(); }
+	    
         bool connected_osc ( void ) const;
 
         Port *connected_port ( void ) const
             {
                 return _connected.size() == 0 ? NULL : _connected.front();                
+            }
+
+	Port *connected_port ( int n ) const
+            {
+		int j = 0;
+		for ( std::list<Module::Port*>::const_iterator i = _connected.begin();
+		      i != _connected.end(); ++i, ++j )
+		    if ( j == n )
+			return *i;
+		
+		return NULL;
             }
 
         void connect_to ( Port *to )
