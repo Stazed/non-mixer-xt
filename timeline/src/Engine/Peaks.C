@@ -188,7 +188,10 @@ public:
             }
 
             if ( ! blocks.size() )
-                FATAL( "Peak file contains no blocks!" );
+	    {
+		DWARNING( "Peak file contains no blocks, maybe it's still being generated?");
+		return;
+	    }
 
             blocks.sort();
 
@@ -258,9 +261,19 @@ public:
 
             scan( chunksize );
 
-            assert( _chunksize );
+            /* assert( _chunksize ); */
 
-            return true;
+	    if ( blocks.size() )
+	    {
+		return true;
+	    }
+	    else
+	    {
+		DWARNING( "Peak file could not be opened: no blocks" );
+		fclose(_fp);
+		_fp = NULL;
+		return false;
+	    }
         }
 
     bool
