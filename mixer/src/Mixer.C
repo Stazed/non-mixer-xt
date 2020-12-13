@@ -1099,7 +1099,7 @@ int
 Mixer::handle ( int m )
 {
     /* if user presses certain keys when project is loading it can cause a crash. Don't respond to input. */
-    if ( Project::is_opening() )
+    if ( Project::is_opening_closing() )
 	return 0;
     
     if ( Fl_Group::handle( m ) )
@@ -1179,7 +1179,7 @@ Mixer::get_auto_connect_targets ( void )
 void
 Mixer::auto_connect ( void )
 {
-    if ( Project::is_opening() )
+    if ( Project::is_opening_closing() )
         /* it's more efficient to do this once at the end rather than as we go. */
         return;
     
@@ -1207,7 +1207,7 @@ Mixer::auto_connect ( void )
 void
 Mixer::maybe_auto_connect_output ( Module::Port *p )
 {
-    if ( Project::is_opening() )
+    if ( Project::is_opening_closing() )
         /* it's more efficient to do this once at the end rather than as we go. */
         return;
 
@@ -1223,7 +1223,7 @@ Mixer::maybe_auto_connect_output ( Module::Port *p )
                 return;
     }
 
-    /* now do that catch-alls, first one wins! */
+    /* now do the catch-alls, first one wins! */
     for ( int i = 0; i < mixer_strips->children(); i++ )
     {
         Mixer_Strip *s = ((Mixer_Strip*)mixer_strips->child(i));

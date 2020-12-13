@@ -27,7 +27,7 @@ class Project
 
     static int _lockfd;
     static bool _is_open;
-    static bool _is_opening;
+    static bool _is_opening_closing;
     static char _name[256];
     static char _path[512];
     static char _created_on[40];
@@ -62,5 +62,5 @@ public:
     
     static const char *path ( void ) { return _path; }
     static const char *created_on ( void ) { return _created_on; }
-    static const bool is_opening ( void ) { return _is_opening; }
+    static const bool is_opening_closing ( void ) { return _is_opening_closing; }
 };

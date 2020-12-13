@@ -1314,10 +1314,10 @@ Module::auto_disconnect_outputs ( void )
     {
         Module::Port *p = &aux_audio_output[i];
 
-        if ( p->connected_port() )
+        while ( p->connected() )
         {
-            p->connected_port()->jack_port()->disconnect( p->jack_port()->jack_name() );
-            p->disconnect();
+	    p->connected_port()->jack_port()->disconnect( p->jack_port()->jack_name() );
+            p->disconnect(p->connected_port());
         }
     }
 }

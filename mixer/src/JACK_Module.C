@@ -301,9 +301,9 @@ JACK_Module::update_connection_status ( void )
         return;
     }
 
-    /* causes a lot of unnecessary redraws to do this when loading */
-    if ( Project::is_opening() )
-	return;
+    /* /\* causes a lot of unnecessary redraws to do this when loading *\/ */
+    /* if ( Project::is_opening_closing() ) */
+    /* 	return; */
 
     /* FIXME: only do something if port list actually changed! */
     std::list<std::string> output_names = get_connections_for_ports( aux_audio_output );

@@ -58,7 +58,7 @@ char Project::_name[256];
 char Project::_created_on[40];
 char Project::_path[512];
 bool Project::_is_open = false;
-bool Project::_is_opening = false;
+bool Project::_is_opening_closing = false;
 int Project::_lockfd = 0;
 
 
@@ -193,6 +193,8 @@ Project::close ( void )
     if ( ! save() )
         return false;
 
+    Project::_is_opening_closing = true;
+
     Loggable::close();
 /* //    write_info(); */
 
@@ -203,6 +205,8 @@ Project::close ( void )
 
     release_lock( &_lockfd, ".lock" );
 
+    Project::_is_opening_closing = false;
+    
     return true;
 }
 
@@ -262,7 +266,7 @@ Project::open ( const char *name )
     if ( version != PROJECT_VERSION )
         return E_VERSION;
 
-    _is_opening = true;
+    _is_opening_closing = true;
     
     if ( ! Loggable::replay( "snapshot" ) )
         return E_INVALID;
@@ -282,7 +286,7 @@ Project::open ( const char *name )
 
     _is_open = true;
 
-    _is_opening = false;
+    _is_opening_closing = false;
 //    tle->load_timeline_settings();
 
 //    timeline->zoom_fit();
