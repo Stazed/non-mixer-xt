@@ -99,8 +99,12 @@ Meter_Module::update ( void )
     for ( int i = dpm_pack->children(); i--; )
     {
 	DPM* o = ((DPM*)dpm_pack->child( i ));
+
+	const float v = CO_DB( control_value[i] );
 	
-        o->value( CO_DB( control_value[i] ) );
+	if ( v > o->value() )
+	    o->value( v );
+
 	o->update();
 	
         control_value[i] = 0;
