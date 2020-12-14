@@ -186,7 +186,6 @@ DPM::draw ( void )
         draw_box( box(), X, Y, W, H, color() );
     }
     
-    fl_push_clip( X, Y, W, H );
 
     const int active = active_r();
 
@@ -195,12 +194,16 @@ DPM::draw ( void )
     /* only draw as many segments as necessary */
     if ( damage() == FL_DAMAGE_USER1 )
     {
-        if ( v > _last_drawn_hi_segment )
+	if ( v == _last_drawn_hi_segment )
+	{
+	    return;
+	}
+	else if ( v > _last_drawn_hi_segment )
         {
             hi = v;
             lo = _last_drawn_hi_segment;
         }
-        else
+        else if ( v < _last_drawn_hi_segment )
         {
             hi = _last_drawn_hi_segment;
             lo = v;
@@ -213,20 +216,20 @@ DPM::draw ( void )
     }
 
     _last_drawn_hi_segment = v;
-    
-    for ( int p = lo; p <= hi; p++ )
+
+    fl_push_clip( X, Y, W, H );
+
+    for ( int p = lo; p <= hi + 1; ++p )
     {
 	Fl_Color c;
 	
-	if ( p <= v )
+	if ( p <= v || p == pv )
 	{
-	    if (  p == clipv )
+	    if ( p == clipv )
 		c = fl_color_average( FL_YELLOW, div_color( p ), 0.40 );
 	    else
 		c = div_color( p );
 	}
-	else if ( p == pv )
-	    c = div_color( p );
 	else
 	    c = fl_darker( FL_BACKGROUND_COLOR );//FL_DARK1; // fl_color_average( FL_BACKGROUND_COLOR, FL_BLACK, 0.50f );// FL_BACKGROUND_COLOR; //dim_div_color( p );
 	
@@ -256,8 +259,8 @@ DPM::update ( void )
 {
     /* do falloff */
     float f = value() - 0.33f;
-    if ( f < -70.0f )
-	f = -78.0f;
+    if ( f < -80.0f )
+	f = -80.0f;
     
     value(f);
 }
