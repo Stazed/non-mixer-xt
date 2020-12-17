@@ -138,7 +138,10 @@ class NSM_Client : public Fl_Group
                 
                 if ( img )
                 {
-                    icon_box->image( img );
+		    if ( img->w() > 32 || img->h() > 32 )
+			WARNING("Client %s has stupidly large icon (%ix%i), ignoring.", _client_name, img->w(), img->h() );
+		    else
+			icon_box->image( img );
                 }
             }
 
