@@ -750,6 +750,8 @@ void Mixer::resize ( int X, int Y, int W, int H )
 {
     Fl_Group::resize( X, Y, W, H );
 
+    sm_blinker->resize( X + W - 40, Y + 5, 35, 15 );
+    
     scroll->resize( X, Y + 24, W, H - 24 - 18 );
 
     mixer_strips->resize( X, Y + 24, W, H - (18*2) - 24 );
