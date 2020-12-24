@@ -56,6 +56,8 @@ Group::~Group ( )
 {
     DMESSAGE( "Destroying group" );
 
+    mixer->remove_group(this);
+
     for ( std::list<Mixer_Strip*>::iterator i = strips.begin();
           i != strips.end();
           i++ )
