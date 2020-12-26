@@ -29,8 +29,6 @@ AUX_Module::AUX_Module ( ) : JACK_Module ( false )
 {
     is_default( false );
 
-    _number = 0;
-
     {
         Port p( this, Port::INPUT, Port::CONTROL, "Gain (dB)" );
         p.hints.type = Port::Hints::LINEAR;
@@ -49,8 +47,6 @@ AUX_Module::AUX_Module ( ) : JACK_Module ( false )
 
     color( FL_DARK1 );
 
-    copy_label( "Aux" );
-
     smoothing.sample_rate( sample_rate() );
 }
 
@@ -63,34 +59,9 @@ AUX_Module::~AUX_Module ( )
 
 
 void
-AUX_Module::get ( Log_Entry &e ) const
-{
-    e.add( ":number", number() );
-    JACK_Module::get(e);
-}
-
-void
-AUX_Module::set ( Log_Entry &e )
-{
-    for ( int i = 0; i < e.size(); ++i )
-    {
-        const char *s, *v;
-
-        e.get( i, &s, &v );
-
-        if ( ! ( strcmp( s, ":number" ) ) )
-        {
-            number( atoi(v) );
-        }
-    }
-
-    JACK_Module::set(e);
-}
-
-void
 AUX_Module::number ( int n )
 {
-    _number = n;
+    JACK_Module::number(n);
 
     char s[10];
     snprintf( s, sizeof(s), "aux-%c", 'A' + n ); 

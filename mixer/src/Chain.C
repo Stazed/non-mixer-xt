@@ -450,8 +450,8 @@ Chain::get_module_instance_number ( Module *m )
 {
     int n = 0;
 
-    for ( int i = 0; i < modules() && module(i) != m; ++i )
-        if ( ! strcmp( module(i)->label(), m->label() ) )
+    for ( int i = 0; i < modules(); ++i )
+        if ( ! strcmp( module(i)->base_label(), m->base_label() ) )
             n++;
 
     return n;
@@ -575,6 +575,10 @@ Chain::insert ( Module *m, Module *n )
 
     Module::sample_rate( client()->sample_rate() );
     n->resize_buffers( client()->nframes() );
+
+    /* inserting a new instance */
+    if ( -1 == n->number() ) 
+	n->number( get_module_instance_number( n ) );
     
     if ( !m )
     {

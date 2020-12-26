@@ -189,7 +189,6 @@ Controller_Module::set ( Log_Entry &e )
     {
         connect_to( &module->control_input[port] );
         module->chain()->add_control( this );
-        label( module->control_input[port].name() );
     }
 
     for ( int i = 0; i < e.size(); ++i )
@@ -220,8 +219,15 @@ Controller_Module::mode ( Mode m )
             Port *p = control_output[0].connected_port();
             
             char prefix[512];
-            snprintf( prefix, sizeof(prefix), "CV-%s", p->name() );
-            
+
+	    const Module *m = p->module();
+	    
+	    if ( m->number() >= 0 )
+		/* we do it this way now to ensure uniqueness */
+		snprintf( prefix, sizeof(prefix), "CV-%s/%s", m->label(), p->name() );
+	    else
+		snprintf( prefix, sizeof(prefix), "CV-%s", p->name() );
+
             add_aux_cv_input( prefix, 0 );
 
             chain()->client()->unlock();
@@ -405,6 +411,19 @@ Controller_Module::connect_spatializer_to ( Module *m )
 }
 
 void
+Controller_Module::apply_label ( Port *p, Fl_Widget *o )
+{
+    char path[256];
+
+    if ( is_default() )
+	snprintf( path, sizeof(path) - 1, "%s", p->name() );
+    else
+	snprintf( path, sizeof(path) - 1, "%s/%s", p->module()->label(), p->name() );
+
+    o->copy_label(path);
+}
+
+void
 Controller_Module::connect_to ( Port *p )
 {
     control_output[0].connect_to( p );
@@ -415,7 +434,7 @@ Controller_Module::connect_to ( Port *p )
 
     if ( p->hints.type == Module::Port::Hints::BOOLEAN )
     {
-        Fl_Button *o = new Fl_Button( 0, 0, 40, 40, p->name() );
+        Fl_Button *o = new Fl_Button( 0, 0, 40, 40 );
         w = o;
         o->type( FL_TOGGLE_BUTTON );
         o->value( p->control_value() );
@@ -429,7 +448,8 @@ Controller_Module::connect_to ( Port *p )
     else if ( p->hints.type == Module::Port::Hints::INTEGER )
     {
 
-        Fl_Counter *o = new Fl_Counter(0, 0, 58, 24, p->name() );
+        Fl_Counter *o = new Fl_Counter(0, 0, 58, 24 );
+
         control = o;
         w = o;
 
@@ -449,7 +469,8 @@ Controller_Module::connect_to ( Port *p )
     //  else if ( p->hints.type == Module::Port::Hints::LOGARITHMIC )
     else
     {
-        Fl_Value_SliderX *o = new Fl_Value_SliderX(0, 0, 30, 250, p->name() );
+        Fl_Value_SliderX *o = new Fl_Value_SliderX(0, 0, 30, 250 );
+
         control = o;
         w = o;
 
@@ -513,6 +534,8 @@ Controller_Module::connect_to ( Port *p )
     /*     _type = KNOB; */
     /* } */
 
+    apply_label(p,control);
+    
     control_value = p->control_value();
 
     w->clear_visible_focus();

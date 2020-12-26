@@ -24,16 +24,11 @@
 
 class AUX_Module : public JACK_Module
 {
-    int _number;
-
     Value_Smoothing_Filter smoothing;
 
-protected:
-
-    virtual void get ( Log_Entry &e ) const;
-    virtual void set ( Log_Entry &e );
-
 public:
+
+    virtual void number ( int v );
 
     virtual const char *name ( void ) const { return "AUX"; }
 
@@ -41,9 +36,6 @@ public:
 
     virtual bool configure_outputs ( int n );
     virtual bool configure_inputs ( int n );
-
-    void number ( int n );
-    int number ( void ) const { return _number; }
 
     AUX_Module ( );
     virtual ~AUX_Module ( );

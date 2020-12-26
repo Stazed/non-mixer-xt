@@ -170,6 +170,8 @@ Module::init ( void )
     _instances = 1;
     _bypass = 0;
     _pending_feedback = false;
+    _base_label = NULL;
+    _number = -2;	/* magic number indicates old instance, before numbering */
     
     box( FL_UP_BOX );
     labeltype( FL_NO_LABEL );
@@ -208,6 +210,8 @@ Module::get ( Log_Entry &e ) const
     e.add( ":is_default", is_default() );
     e.add( ":chain", chain() );
     e.add( ":active", ! bypass() );
+    if ( number() >= 0 )
+	e.add( ":number", number() );
 }
 
 bool
@@ -238,7 +242,8 @@ Module::copy ( void ) const
             /* we don't want this module to get added to the current
                chain... */
             if ( !( !strcmp( s, ":chain" ) ||
-                    !strcmp( s, ":is_default" ) ) )
+                    !strcmp( s, ":is_default" ) ||
+		    !strcmp( s, ":number" ) ) )
             {
                 DMESSAGE( "%s = %s", s, v );
                 ne->add_raw( s, v );
@@ -251,6 +256,7 @@ Module::copy ( void ) const
     return true;
 }
 
+    
 void
 Module::paste_before ( void )
 {
@@ -267,6 +273,8 @@ Module::paste_before ( void )
 
     m->set( le );
 
+    m->number(-1);
+
     if ( ! chain()->insert( this, m ) )
     {
         fl_alert( "Copied module cannot be inserted at this point in the chain" );
@@ -278,6 +286,33 @@ Module::paste_before ( void )
 
     /* set up for another paste */
     m->copy();
+}
+
+void
+Module::number ( int v )
+{
+    _number = v;
+
+    char s[255];
+
+    if ( v > 0 && !is_default() )
+	snprintf( s, sizeof(s), "%s.%i", base_label(), v );
+    else
+	snprintf( s, sizeof(s), "%s", base_label() );
+    
+    copy_label( s );
+}
+
+void
+Module::base_label ( const char *s )
+{
+    if ( _base_label )
+	free( _base_label );
+
+    _base_label = NULL;
+
+    if ( s )
+	_base_label = strdup(s);
 }
 
 
@@ -430,12 +465,7 @@ Module::Port::generate_osc_path ()
         return NULL;
     }
 
-    int n = module()->chain()->get_module_instance_number( module() );
-
-    if ( n > 0 )        
-        asprintf( &path, "/strip/%s/%s.%i/%s", module()->chain()->name(), p->module()->label(), n, p->name() );
-    else
-        asprintf( &path, "/strip/%s/%s/%s", module()->chain()->name(), p->module()->label(), p->name() );
+    asprintf( &path, "/strip/%s/%s/%s", module()->chain()->name(), p->module()->label(), p->name() );
 
     char *s = escape_url( path );
     
@@ -574,6 +604,24 @@ Module::Port::osc_control_change_cv ( float v, void *user_data )
 void
 Module::set ( Log_Entry &e )
 {
+    /* have to do this before adding to chain... */
+
+    int n = -2;
+    
+    for ( int i = 0; i < e.size(); ++i )
+    {
+        const char *s, *v;
+
+        e.get( i, &s, &v );
+
+    	if ( ! strcmp(s, ":number" ) )
+	{
+	    n = atoi(v);
+	}
+    }
+    
+    number(n);
+    
     for ( int i = 0; i < e.size(); ++i )
     {
         const char *s, *v;
@@ -901,19 +949,7 @@ Module::insert_menu_cb ( const Fl_Menu_ *m )
     
     if ( !strcmp( picked, "Aux" ) )
     {
-        int n = 0;
-        for ( int i = 0; i < chain()->modules(); i++ )
-        {
-            if ( !strcmp( chain()->module(i)->name(), "AUX" ) )
-                n++;
-        }
-
         AUX_Module *jm = new AUX_Module();
-        jm->chain( chain() );
-        jm->number( n );
-        jm->configure_inputs( ninputs() );
-        jm->configure_outputs( ninputs() );
-        jm->initialize();
      
         mod = jm;
     }
@@ -931,9 +967,6 @@ Module::insert_menu_cb ( const Fl_Menu_ *m )
             Spatializer_Module *jm = new Spatializer_Module();
             
             jm->chain( chain() );
-//        jm->number( n );
-//        jm->configure_inputs( ninputs() );
-//        jm->configure_outputs( ninputs() );
             jm->initialize();
             
             mod = jm;
@@ -941,8 +974,6 @@ Module::insert_menu_cb ( const Fl_Menu_ *m )
     }
     else if ( !strcmp( picked, "Gain" ) )
             mod = new Gain_Module();
-    /* else if ( !strcmp( picked, "Spatializer" ) ) */
-    /*         mod = new Spatializer_Module(); */
     else if ( !strcmp( picked, "Meter" ) )
         mod = new Meter_Module();
     else if ( !strcmp( picked, "Mono Pan" ))
@@ -963,6 +994,8 @@ Module::insert_menu_cb ( const Fl_Menu_ *m )
 
     if ( mod )
     {
+	mod->number(-1);
+	
         if ( ! chain()->insert( this, mod ) )
         {
             fl_alert( "Cannot insert this module at this point in the chain" );

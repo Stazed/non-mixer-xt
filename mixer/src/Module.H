@@ -49,12 +49,15 @@ class Module : public Fl_Group, public Loggable {
     Chain *_chain;
     bool _is_default;
     bool _pending_feedback;
+    char *_base_label;
     
     nframes_t _nframes;
     static nframes_t _sample_rate;
     static Module *_copied_module_empty;
     static char *_copied_module_settings;
 
+    int _number;
+    
     void init ( void );
 
     void insert_menu_cb ( const Fl_Menu_ *m );
@@ -75,6 +78,13 @@ protected:
 
 public:
 
+    
+    virtual int number ( void ) const { return _number; }
+    virtual void number ( int v );
+
+    virtual const char * base_label ( void ) const { return _base_label ? _base_label : name(); }
+    virtual void base_label ( const char * );
+    
     virtual nframes_t get_module_latency ( void ) const { return 0; }
 
     virtual void get_latency ( JACK::Port::direction_e dir, nframes_t *min, nframes_t *max ) const;

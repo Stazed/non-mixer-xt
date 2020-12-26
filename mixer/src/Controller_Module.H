@@ -119,6 +119,7 @@ protected:
 
 private:
 
+    void apply_label ( Port *p, Fl_Widget *o );
     void maybe_create_panner ( void );
     char *generate_osc_path ( void );
     void change_osc_path ( char *path );
