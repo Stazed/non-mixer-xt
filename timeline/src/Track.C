@@ -1059,7 +1059,10 @@ Track::draw ( void )
 int
 Track::handle ( int m )
 {
-
+    if ( !active_r() )
+	/* don't mess with anything while recording... */
+	return 0;
+    
 /*     if ( m != FL_NO_EVENT ) */
 /*         DMESSAGE( "%s", event_name( m ) ); */
     static Fl_Widget *dragging = NULL;

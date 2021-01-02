@@ -822,6 +822,10 @@ Audio_Region::handle ( int m )
     static bool copied = false;
     static nframes_t os;
 
+    if ( !active_r() )
+	/* don't mess with anything while recording... */
+	return 0;
+    
     int X = Fl::event_x();
     int Y = Fl::event_y();
     

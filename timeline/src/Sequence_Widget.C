@@ -391,6 +391,10 @@ Sequence_Widget::handle ( int m )
     int X = Fl::event_x();
     int Y = Fl::event_y();
 
+    if ( !active_r() )
+	/* don't mess with anything while recording... */
+	return 0;
+    
     Logger _log( this );
 
     switch ( m )
