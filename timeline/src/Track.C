@@ -1182,6 +1182,7 @@ Track::handle ( int m )
             return Fl_Group::handle( m );
             break;
         case FL_DND_RELEASE:
+	    dragging = NULL;
             receptive_to_drop = 0;
             redraw();
             Fl::selection_owner(0);
