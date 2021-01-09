@@ -307,7 +307,7 @@ namespace OSC
 
     public:
 
-        void send_feedback ( const char *path, float v );
+        void send_feedback ( const char *path, float v, bool force );
         void learn ( const char *path, void (*callback)(void*), void *userdata );
 
         lo_address address ( void )

@@ -176,7 +176,8 @@ public:
 
     //  int group ( void ) const;
     void group ( Group * );
-    void send_feedback ( void );
+    void send_feedback ( bool force );
+    void schedule_feedback ( void );
     int number ( void ) const;
     void number ( int );
     static bool import_strip ( const char *filename );

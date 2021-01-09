@@ -1279,10 +1279,17 @@ Mixer_Strip::handle ( int m )
 }
 
 void
-Mixer_Strip::send_feedback ( void )
+Mixer_Strip::send_feedback ( bool force )
 {
     if ( _chain )
-        _chain->send_feedback();
+        _chain->send_feedback(force);
+}
+
+void
+Mixer_Strip::schedule_feedback ( void )
+{
+    if ( _chain )
+        _chain->schedule_feedback();
 }
 
 /* called to inform the strip its number has changed. */

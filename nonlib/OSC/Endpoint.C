@@ -24,6 +24,7 @@
 #include <string.h>
 #include <assert.h>
 #include <unistd.h>
+#include <math.h>
 
 #include "Endpoint.H"
 
@@ -1206,7 +1207,7 @@ namespace OSC
 
     /** if there's a translation with a destination of 'path', then send feedback for it */
     void
-    Endpoint::send_feedback ( const char *path, float v )
+    Endpoint::send_feedback ( const char *path, float v, bool force )
     {
         for ( std::map<std::string,TranslationDestination>::iterator i = _translations.begin();
               i != _translations.end();
@@ -1215,7 +1216,7 @@ namespace OSC
             if ( path && ! strcmp( i->second.path.c_str(), path ) )
             {
                 /* found it */
-                if ( !i->second.suppress_feedback && i->second.current_value != v )
+                if ( !i->second.suppress_feedback && ( force || fabsf(i->second.current_value - v ) > 0.001f ))
                 {
                     const char *spath = i->first.c_str();
 

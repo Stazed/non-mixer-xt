@@ -169,7 +169,6 @@ Module::init ( void )
     _chain = 0;
     _instances = 1;
     _bypass = 0;
-    _pending_feedback = false;
     _base_label = NULL;
     _number = -2;	/* magic number indicates old instance, before numbering */
     
@@ -371,7 +370,7 @@ Module::Port::osc_number_path ( void )
 void
 Module::Port::send_feedback ( bool force )
 {
-    if ( !_pending_feedback )
+    if ( !force && !_pending_feedback )
 	return;
     
     float f = control_value();
@@ -403,18 +402,17 @@ Module::Port::send_feedback ( bool force )
 		 
     if ( _scaled_signal )
     {
-
-	if ( fabsf( _feedback_value - f ) > (1.0f / 128.0f) )
+	/* if ( fabsf( _feedback_value - f ) > (1.0f / 128.0f) ) */
 	{
-/* only send feedback if value has changed significantly since the last time we sent it. */
+            /* only send feedback if value has changed significantly since the last time we sent it. */
 	    /* DMESSAGE( "signal value: %f, controL_value: %f", _scaled_signal->value(), f ); */
 	    /* send feedback for by_name signal */
-	    mixer->osc_endpoint->send_feedback( _scaled_signal->path(), f );
+	    mixer->osc_endpoint->send_feedback( _scaled_signal->path(), f, force );
 	
 	    /* send feedback for by number signal */
-	    mixer->osc_endpoint->send_feedback( osc_number_path(), f  );
+	    mixer->osc_endpoint->send_feedback( osc_number_path(), f, force );
 	
-	    _feedback_value = f;
+	    /* _feedback_value = f; */
 
 	    _pending_feedback = false;
 	    /* _scaled_signal->value( f ); */
@@ -423,10 +421,17 @@ Module::Port::send_feedback ( bool force )
 }
 
 void
-Module::send_feedback ( void )
+Module::schedule_feedback ( void )
 {
     for ( int i = 0; i < ncontrol_inputs(); i++ )
-        control_input[i].send_feedback(true);
+        control_input[i].schedule_feedback();
+}
+
+void
+Module::send_feedback ( bool force )
+{
+    for ( int i = 0; i < ncontrol_inputs(); i++ )
+        control_input[i].send_feedback(force);
 }
 
 void

@@ -309,7 +309,7 @@ void Mixer::cb_menu(Fl_Widget* o) {
     }
     else if ( !strcmp( picked, "&Remote Control/Send State" ) )
     {
-        send_feedback();
+	send_feedback(true);
     }
     else if ( ! strcmp( picked, "&Remote Control/Clear All Mappings" ) )
     {
@@ -804,6 +804,7 @@ Mixer::insert ( Mixer_Strip *ms, Mixer_Strip *before )
 //    mixer_strips->remove( ms );
     mixer_strips->insert( *ms, before );
     renumber_strips();
+    schedule_feedback();
 //    scroll->redraw();
 }
 void
@@ -852,6 +853,7 @@ void Mixer::remove ( Mixer_Strip *ms )
         parent()->redraw();
 
     renumber_strips();
+    schedule_feedback();
 }
 
 
@@ -1078,21 +1080,24 @@ Mixer::send_feedback_cb ( void *v )
 {
     Mixer *m = (Mixer*)v;
     
-    m->send_feedback();
+    m->send_feedback(false);
 
     /* just to it once at the start... */
     Fl::repeat_timeout( FEEDBACK_UPDATE_FREQ, send_feedback_cb, v );
 }
 
-/** unconditionally send feedback to all mapped controls. This is
- * useful for updating the state of an external controller. */
 void
-Mixer::send_feedback ( void )
+Mixer::send_feedback ( bool force )
 {
     for ( int i = 0; i < mixer_strips->children(); i++ )
-    {
-        ((Mixer_Strip*)mixer_strips->child(i))->send_feedback();
-    }
+        ((Mixer_Strip*)mixer_strips->child(i))->send_feedback(force);
+}
+
+void
+Mixer::schedule_feedback ( void )
+{
+    for ( int i = 0; i < mixer_strips->children(); i++ )
+        ((Mixer_Strip*)mixer_strips->child(i))->schedule_feedback();
 }
 
 

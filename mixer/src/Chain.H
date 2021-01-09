@@ -100,8 +100,9 @@ public:
     const char *name ( void ) const { return _name; }
     void name ( const char *name );
 
-    void send_feedback ( void );
-
+    void send_feedback ( bool force );
+    void schedule_feedback ( void );
+    
     int get_module_instance_number ( Module *m );
 
     void configure_ports ( void );

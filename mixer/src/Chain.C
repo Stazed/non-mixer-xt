@@ -327,10 +327,17 @@ Chain::remove ( Controller_Module *m )
 }
 
 void
-Chain::send_feedback ( void )
+Chain::send_feedback ( bool force )
 {
     for ( int i = 0; i < modules(); i++ )
-        module(i)->send_feedback();
+        module(i)->send_feedback( force );
+}
+
+void
+Chain::schedule_feedback ( void )
+{
+    for ( int i = 0; i < modules(); i++ )
+        module(i)->schedule_feedback();
 }
 
 /* remove a module from the chain. this isn't guaranteed to succeed,

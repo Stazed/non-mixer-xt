@@ -78,7 +78,8 @@ private:
     void load_translations ( void );
 
     static void send_feedback_cb ( void *v );
-    void send_feedback ( void );
+    void send_feedback ( bool force );
+    void schedule_feedback ( void );
     void redraw_windows ( void );
 
     static void handle_dirty ( int, void *v );

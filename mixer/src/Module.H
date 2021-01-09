@@ -48,7 +48,6 @@ class Module : public Fl_Group, public Loggable {
     int _instances;
     Chain *_chain;
     bool _is_default;
-    bool _pending_feedback;
     char *_base_label;
     
     nframes_t _nframes;
@@ -165,7 +164,7 @@ public:
                 _by_number_path = 0;
                 _by_number_number = -1;
                 _jack_port = 0;
-		_feedback_value = -2;
+		/* _feedback_value = -2; */
 		_pending_feedback = false;
 		_feedback_milliseconds = 0;
             }
@@ -184,7 +183,7 @@ public:
                 _by_number_path = 0;
                 _by_number_number = -1;
                 _jack_port = p._jack_port;
-		_feedback_value = p._feedback_value;
+		/* _feedback_value = p._feedback_value; */
             }
 
         virtual ~Port ( )
@@ -382,7 +381,7 @@ public:
         OSC::Signal *_scaled_signal;
         OSC::Signal *_unscaled_signal;
 
-	float _feedback_value;
+	/* float _feedback_value; */
 	bool _pending_feedback;
 	unsigned long long _feedback_milliseconds;
 	
@@ -525,7 +524,8 @@ public:
 
     bool show_analysis_window ( void );
 
-    void send_feedback ( void );
+    void send_feedback ( bool force );
+    void schedule_feedback ( void );
     virtual bool initialize ( void ) { return true; }
 
     /* for the given number of inputs, return how many outputs this
