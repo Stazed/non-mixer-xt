@@ -590,20 +590,30 @@ Loggable::snapshot ( const char *name )
 {
     FILE *fp;
 
-    char *tmpname;
+    char *tmp  = NULL;
+    
+    {
+	const char *filename = basename(name);
+	char *dir = (char*)malloc( (strlen(name) - strlen(filename)) + 1 );
+	strncpy( dir, name, strlen(name) - strlen(filename) );
+	
+	asprintf( &tmp, "%s#%s", dir, filename );
+	free(dir);
+    }
 
-    asprintf( &tmpname, ".#%s", name );
-
-    if ( ! ( fp = fopen( tmpname, "w" ) ))
+    if ( ! ( fp = fopen( tmp, "w" ) ))
+    {
+	DWARNING( "Could not open file for writing: %s", tmp );
         return false;
+    }
 
     bool r = snapshot( fp );
 
     fclose( fp );
 
-    rename( tmpname, name );
+    rename( tmp, name );
 
-    free(tmpname);
+    free(tmp);
 
     return r;
 }
