@@ -420,7 +420,7 @@ Audio_Region::draw_fade ( const Fade &fade, Fade::fade_dir_e dir, bool line, int
         fx = curve_x();
      
         if ( fx + width < X ||
-                          fx > X + W )
+	     fx > X + W )
             /* clipped */
             return;
     }
@@ -676,21 +676,8 @@ Audio_Region::draw ( void )
             ;
 //            WARNING( "Pbuf == %p, peaks = %lu", pbuf, (unsigned long)peaks );
 
-
-        
-        if ( _loop )
-        {
-            const int lx = sequence()->drawable_x() + timeline->ts_to_x( ( this->start() + _loop ) - timeline->xoffset );
-            
-            if ( lx < X + W )
-            {
-                fl_color( fl_darker( FL_CYAN ) );
-                fl_line( lx, y(), lx, y() + h() );
-                fl_line( lx - 3, y(), lx + 3, y() );
-                fl_line( lx - 3, y() + h() - 1, lx + 3, y() + h() - 1 );
-               
-            }
-        }
+       
+	
         
         if ( peaks < loop_peaks_needed )
         {
@@ -702,6 +689,31 @@ Audio_Region::draw ( void )
     }
     while ( _loop && fo < total_frames_needed );
 
+    if ( _loop )
+    {
+	/* draw loop point indicator */
+	const int lx = sequence()->drawable_x() + timeline->ts_to_x( ( this->start() + _loop ) - timeline->xoffset );
+
+	const int pw = 8;
+
+	fl_color( fl_color_add_alpha( fl_color_average( FL_CYAN, FL_WHITE, 0.80f ), 127 ) );
+		
+	fl_begin_polygon();
+		
+	fl_vertex( lx + Fl::box_dx(box()), 
+		   y() + Fl::box_dy(box()) );
+		
+	fl_vertex( pw + lx + Fl::box_dx(box()), 
+		   y() + Fl::box_dy(box()) );
+		
+	fl_vertex( lx + Fl::box_dx(box()), 
+		   pw + y() + Fl::box_dy(box()) );
+		
+	fl_end_polygon();
+
+
+	fl_line( lx, y() + Fl::box_dy(box()), lx, y() + h() - Fl::box_dy(box()) * 2 );
+    }
     
 
     if ( _adjusting_gain > 0.0f )
@@ -742,7 +754,7 @@ Audio_Region::draw ( void )
 		   y() + Fl::box_dy(box()) );
 
 	fl_vertex( line_x() + Fl::box_dx(box()), 
-		  pw + y() + Fl::box_dy(box()) );
+		   pw + y() + Fl::box_dy(box()) );
 
 	fl_end_polygon();
     }
@@ -772,7 +784,7 @@ Audio_Region::draw ( void )
 void
 Audio_Region::draw_label ( void )
 {
-  if ( _clip->dummy() )
+    if ( _clip->dummy() )
     {
         char pat[256];
         snprintf( pat, sizeof( pat ), "Missing Source!: %s", _clip->name() );
