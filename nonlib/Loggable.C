@@ -346,10 +346,18 @@ Loggable::update_id ( unsigned int id )
 const char *
 Loggable::escape ( const char *s )
 {
-    static char r[512];
+    static size_t rl = 256;
+    static char *r = new char[rl + 1];
+
+    if ( strlen(s) * 2 > rl )
+    {
+	delete []r;
+	rl = strlen(s) * 2;
+	r = new char[ rl + 1 ];
+    }
 
     size_t i = 0;
-    for ( ; *s && i < sizeof( r ); ++i, ++s )
+    for ( ; *s && i < rl; ++i, ++s )
     {
         if ( '\n' == *s )
         {

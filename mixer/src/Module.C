@@ -710,18 +710,21 @@ Module::chain ( Chain *v )
 char *
 Module::get_parameters ( void ) const
 {
-    char *s = new char[1024];
+    int len = control_input.size() * 50;
+    char *s = new char[ len ];
+    
     s[0] = 0;
     char *sp = s;
 
     if ( control_input.size() )
     {
         for ( unsigned int i = 0; i < control_input.size(); ++i )
-            sp += snprintf( sp, 1024 - (sp - s),"%f:", control_input[i].control_value() );
+            sp += snprintf( sp, len - (sp - s),"%f:", control_input[i].control_value() );
 
         *(sp - 1) = '\0';
     }
 
+    /* DMESSAGE("get_parameters: %s",s); */
     return s;
 }
 
