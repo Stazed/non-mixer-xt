@@ -86,7 +86,6 @@ get_program_icon ( const char *name )
         "/usr/local/share/pixmaps/%s.png",
         "/usr/local/share/pixmaps/%s.xpm",
         "/usr/share/icons/hicolor/32x32/apps/%s.png",
-        "/usr/share/icons/hicolor/128x128/apps/%s.png",
         "/usr/share/pixmaps/%s.png",
         "/usr/share/pixmaps/%s.xpm",
     };
@@ -97,7 +96,7 @@ get_program_icon ( const char *name )
         
         asprintf( &icon_p, tries[i], name );
         
-        Fl_Image *img = Fl_Shared_Image::get( icon_p, 32, 32 );
+        Fl_Image *img = Fl_Shared_Image::get( icon_p );
     
         free( icon_p );
 
