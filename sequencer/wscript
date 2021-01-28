@@ -5,7 +5,7 @@ import string
 import os
 
 # Version of this package (even if built as a child)
-PACKAGE_VERSION = '1.9.5'
+PACKAGE_VERSION = '1.10.0'
 
 # Variables for 'waf dist'
 APPNAME = 'non-sequencer'

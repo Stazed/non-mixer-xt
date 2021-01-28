@@ -48,7 +48,7 @@ const char *APP_NAME = "non-midi-mapper";
 #undef APP_TITLE
 const char *APP_TITLE = "Non-MIDI-Mapper";
 #undef VERSION
-const char *VERSION = "1.0";
+const char *VERSION = "1.1";
 
 const int FILE_VERSION = 1;
 
