@@ -261,7 +261,7 @@ namespace NSM
         NSM::Client *nsm = (NSM::Client*)user_data;
 
         nsm->command_session_is_loaded();
-
+        
         return 0;
     }
 
@@ -320,5 +320,29 @@ namespace NSM
         lo_send_from(address, nsm->_server, LO_TT_IMMEDIATE, "/nsm/client/gui_is_shown", "");
         lo_address_free(address);
         return 0;
+    }
+    
+    void
+    Client::nsm_send_is_hidden ( void *user_data )
+    {
+        NSM::Client *nsm = (NSM::Client*)user_data;
+        if ( nsm->is_active() )
+        {
+            lo_address address = lo_address_new_from_url(nsm_url);
+            lo_send_from(address, nsm->_server, LO_TT_IMMEDIATE, "/nsm/client/gui_is_hidden", "");
+            lo_address_free(address);
+        }
+    }
+    
+    void
+    Client::nsm_send_is_shown ( void *user_data )
+    {
+        NSM::Client *nsm = (NSM::Client*)user_data;
+        if ( nsm->is_active() )
+        {
+            lo_address address = lo_address_new_from_url(nsm_url);
+            lo_send_from(address, nsm->_server, LO_TT_IMMEDIATE, "/nsm/client/gui_is_shown", "");
+            lo_address_free(address);
+        }
     }
 };

@@ -151,6 +151,9 @@ Mixer::say_hello ( void )
     nsm->broadcast( m );
     
     lo_message_free( m );
+    
+    // needed to indicate that for raysession
+    nsm->nsm_send_is_hidden ( nsm );
 }
 
 
@@ -590,7 +593,7 @@ Mixer::Mixer ( int X, int Y, int W, int H, const char *L ) :
     }
     end();
 
-   resize( X,Y,W,H );
+    resize( X,Y,W,H );
 
     update_frequency( 24 );
 
@@ -708,7 +711,7 @@ Mixer::init_osc ( const char *osc_port )
   
     osc_endpoint->start();
 
-   osc_endpoint->add_method( NULL, NULL, osc_strip_by_number, osc_endpoint, "");
+    osc_endpoint->add_method( NULL, NULL, osc_strip_by_number, osc_endpoint, "");
     
     return 0;
 }
@@ -782,6 +785,8 @@ void
 Mixer::quit ( void )
 {
     /* TODO: save project? */
+    if ( nsm )
+        nsm->nsm_send_is_hidden ( nsm );
 
     while ( Fl::first_window() ) Fl::first_window()->hide();
 }

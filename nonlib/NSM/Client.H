@@ -81,6 +81,9 @@ namespace NSM
         /* or call these to start and stop a thread (must do your own locking in handler!) */
         void start ( void );
         void stop ( void );
+        
+        void nsm_send_is_hidden ( void *user_data );
+        void nsm_send_is_shown ( void *user_data );
 
     protected:
 
