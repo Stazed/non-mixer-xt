@@ -172,6 +172,9 @@ public:
     bool command_new ( const char *path, const char *display_name = 0 );
     void command_quit ( void );
 
+    void command_hide_gui ( void );
+    void command_show_gui ( void );
+
     void command_add_strip ( void );
 
 };

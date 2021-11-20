@@ -119,3 +119,16 @@ NSM_Client::command_active ( bool active )
 
     Fl::unlock();
 }
+
+void
+NSM_Client::command_hide_gui( void )
+{
+    mixer->command_hide_gui();
+}
+
+void
+NSM_Client::command_show_gui( void )
+{
+    mixer->command_show_gui();
+}
+

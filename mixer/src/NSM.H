@@ -37,4 +37,8 @@ protected:
     void command_active ( bool active );
 
     int command_broadcast ( const char *path, lo_message msg );
+
+    void command_hide_gui( void );
+    void command_show_gui( void );
+
 };

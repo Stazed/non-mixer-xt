@@ -244,6 +244,8 @@ main ( int argc, char **argv )
 
     Fl::lock();
 
+    char *nsm_url = getenv( "NSM_URL" );
+
     Fl_Double_Window *main_window;
 
     
@@ -263,7 +265,7 @@ main ( int argc, char **argv )
 
         o->callback( (Fl_Callback*)cb_main, main_window );
 
-        if ( ! no_ui )
+        if ( ! no_ui && !nsm_url)
         {
             o->show( 0,0 );
         }
@@ -273,8 +275,6 @@ main ( int argc, char **argv )
     Plugin_Module::spawn_discover_thread();
 
     mixer->init_osc( osc_port );
-
-    char *nsm_url = getenv( "NSM_URL" );
         
     if ( nsm_url )
     {
@@ -286,7 +286,7 @@ main ( int argc, char **argv )
             if ( optind < argc )
                 WARNING( "Loading files from the command-line is incompatible with session management, ignoring." );
 
-            nsm->announce( APP_NAME, ":switch:dirty:", argv[0] );
+            nsm->announce( APP_NAME, ":optional-gui:switch:dirty:", argv[0] );
 
             /* if ( ! no_ui ) */
             /* { */
@@ -314,7 +314,7 @@ main ( int argc, char **argv )
     Fl::add_timeout( 0.1f, check_sigterm );
     Fl::dnd_text_ops( 0 );
 
-    if ( ! no_ui )
+    if ( ! no_ui && !nsm_url)
     {
         DMESSAGE( "Running UI..." );
 

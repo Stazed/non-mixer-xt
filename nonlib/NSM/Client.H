@@ -88,6 +88,9 @@ namespace NSM
         virtual int command_open ( const char *name, const char *display_name, const char *client_id, char **out_msg ) = 0;
         virtual int command_save ( char **out_msg ) = 0;
 
+        virtual void command_hide_gui () { }
+        virtual void command_show_gui () { }
+
         virtual void command_active ( bool ) { }
 
         virtual void command_session_is_loaded ( void ) { }
@@ -104,6 +107,7 @@ namespace NSM
         static int osc_error ( const char *path, const char *types, lo_arg **argv, int argc, lo_message msg, void *user_data );
         static int osc_session_is_loaded ( const char *path, const char *types, lo_arg **argv, int argc, lo_message msg, void *user_data );
         static int osc_broadcast ( const char *path, const char *types, lo_arg **argv, int argc, lo_message msg, void *user_data );
-
+        static int osc_hide_gui ( const char *path, const char *types, lo_arg **argv, int argc, lo_message msg, void *user_data );
+        static int osc_show_gui ( const char *path, const char *types, lo_arg **argv, int argc, lo_message msg, void *user_data );
     };
 };

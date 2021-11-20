@@ -1349,3 +1349,19 @@ Mixer::command_add_strip ( void )
 {
     new_strip();
 }
+
+void
+Mixer::command_hide_gui( void )
+{
+    while ( Fl::first_window() )
+    {
+        Fl::first_window()->hide();
+    }
+}
+
+void
+Mixer::command_show_gui( void )
+{
+    window()->show();
+}
+
