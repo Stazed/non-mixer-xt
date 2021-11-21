@@ -49,10 +49,9 @@
 #include "string_util.h"
 
 #include "time.h"
-
-
 
 
+nframes_t Module::_buffer_size = 0;
 nframes_t Module::_sample_rate = 0;
 Module *Module::_copied_module_empty = 0;
 char *Module::_copied_module_settings = 0;
@@ -171,7 +170,7 @@ Module::init ( void )
     _bypass = 0;
     _base_label = NULL;
     _number = -2;	/* magic number indicates old instance, before numbering */
-    
+
     box( FL_UP_BOX );
     labeltype( FL_NO_LABEL );
     align( FL_ALIGN_CENTER | FL_ALIGN_INSIDE );
@@ -328,8 +327,8 @@ Module::Port::disconnect_from_strip ( Mixer_Strip *o )
         if ( p->module()->chain()->strip() == o )
         {
             disconnect(p);
-	}
-    }               
+        }
+    }
 }
 
 const char *
@@ -406,17 +405,17 @@ Module::Port::send_feedback ( bool force )
 	{
             /* only send feedback if value has changed significantly since the last time we sent it. */
 	    /* DMESSAGE( "signal value: %f, controL_value: %f", _scaled_signal->value(), f ); */
-	    /* send feedback for by_name signal */
+            /* send feedback for by_name signal */
 	    mixer->osc_endpoint->send_feedback( _scaled_signal->path(), f, force );
-	
-	    /* send feedback for by number signal */
+        
+            /* send feedback for by number signal */
 	    mixer->osc_endpoint->send_feedback( osc_number_path(), f, force );
 	
 	    /* _feedback_value = f; */
 
 	    _pending_feedback = false;
 	    /* _scaled_signal->value( f ); */
-	}
+        }
     }
 }
 
@@ -871,7 +870,7 @@ Module::draw_label ( int tx, int ty, int tw, int th )
 
     if ( bypass() )
 	c = fl_darker(c);
-    
+
     /* fl_color( active_r() && ! bypass() ? c : fl_inactive(c) ); */
 
     if ( !active_r() )
@@ -988,14 +987,14 @@ Module::insert_menu_cb ( const Fl_Menu_ *m )
         mod = new Mono_Pan_Module();
     else if ( !strcmp(picked, "Plugin" ))
     {
-        unsigned long id = Plugin_Chooser::plugin_chooser( this->ninputs() );
+        Picked picked = Plugin_Chooser::plugin_chooser( this->ninputs() );
         
-        if ( id == 0 )
+        if ( picked.unique_id == 0 )
             return;
         
         Plugin_Module *m = new Plugin_Module();
         
-        m->load( id );
+        m->load( picked );
         
         mod = m;
     }
@@ -1357,7 +1356,7 @@ Module::auto_disconnect_outputs ( void )
 
         while ( p->connected() )
         {
-	    p->connected_port()->jack_port()->disconnect( p->jack_port()->jack_name() );
+            p->connected_port()->jack_port()->disconnect( p->jack_port()->jack_name() );
             p->disconnect(p->connected_port());
         }
     }

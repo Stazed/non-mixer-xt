@@ -44,14 +44,14 @@ public:
         const char *type;
         bool favorite;
 
-        Plugin_Info ( )
+        Plugin_Info ( bool is_lv2 )
             {
                 path = 0;
                 id = 0;
                
                 audio_inputs = 0;
                 audio_outputs = 0;
-                type = "LADSPA";
+                type = is_lv2 ? "LV2" : "LADSPA";
                 favorite = 0;
             }
 
@@ -61,9 +61,12 @@ public:
         }
     };
 
-    bool load ( unsigned long id );
+    bool load ( Picked picked );
 
 private:
+
+    bool load_ladspa ( unsigned long id );
+    bool load_lv2 ( const char* uri );
 
     volatile nframes_t _latency;
     nframes_t _last_latency;
@@ -90,6 +93,7 @@ private:
     int _plugin_ins;
     int _plugin_outs;
     bool _crosswire;
+    bool _is_lv2;
 
     static void *discover_thread ( void * );
  
@@ -141,6 +145,8 @@ public:
     virtual void process ( nframes_t );
 
     void handle_port_connection_change ( void );
+    void handle_sample_rate_change ( nframes_t sample_rate );
+    void resize_buffers ( nframes_t buffer_size );
 
     LOG_CREATE_FUNC( Plugin_Module );
 

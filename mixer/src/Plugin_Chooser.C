@@ -32,9 +32,11 @@
 
 static    std::vector <Plugin_Module::Plugin_Info*> _plugin_rows;
 
-unsigned long 
+Module::Picked
 Plugin_Chooser::plugin_chooser ( int ninputs )
 {
+    Module::Picked picked = { false, 0 };
+
     Plugin_Chooser *o = new Plugin_Chooser( 0,0,735,500,"Plugin Chooser");
 
     o->ui->inputs_input->value( ninputs );
@@ -46,7 +48,16 @@ Plugin_Chooser::plugin_chooser ( int ninputs )
     while ( o->shown() )
         Fl::wait();
 
-    unsigned long picked = o->value();
+    if (const char* const uri = o->uri())
+    {
+        picked.is_lv2 = true;
+        picked.uri = uri;
+    }
+    else
+    {
+        picked.is_lv2 = false;
+        picked.unique_id = o->value();
+    }
 
     delete o;
 
@@ -250,7 +261,10 @@ Plugin_Chooser::cb_table ( Fl_Widget *w )
         }
         else
         {
-            _value = _plugin_rows[R]->id;
+            if (::strcmp(_plugin_rows[R]->type, "LV2") == 0)
+                _uri   = _plugin_rows[R]->path;
+            else
+                _value = _plugin_rows[R]->id;
             hide();
         }
     }
@@ -363,6 +377,7 @@ Plugin_Chooser::Plugin_Chooser ( int X,int Y,int W,int H, const char *L )
     : Fl_Double_Window ( X,Y,W,H,L )
 {
     set_modal();
+    _uri = NULL;
     _value = 0;
    
     _plugins = Plugin_Module::get_all_plugins();
