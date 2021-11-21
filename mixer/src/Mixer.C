@@ -784,8 +784,7 @@ Mixer::find_strip ( const Mixer_Strip *m ) const
 void
 Mixer::quit ( void )
 {
-    /* TODO: save project? */
-    if ( nsm )
+    if ( nsm->is_active() )
         nsm->nsm_send_is_hidden ( nsm );
 
     while ( Fl::first_window() ) Fl::first_window()->hide();
@@ -1336,14 +1335,17 @@ Mixer::command_new ( const char *path, const char *display_name )
 void
 Mixer::command_quit ( void )
 {
-    if ( Loggable::dirty() )
+    if ( !nsm->is_active() )
     {
-        int i = fl_choice( "There have been changes since the last save. Quitting now will discard them", "Discard", "Cancel", NULL );
+        if ( Loggable::dirty() )
+        {
+            int i = fl_choice( "There have been changes since the last save."
+            " Quitting now will discard them", "Discard", "Cancel", NULL );
 
-        if ( i != 0 )
-            return;
+            if ( i != 0 )
+                return;
+        }
     }
-
     quit();
 }
 
