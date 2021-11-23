@@ -67,12 +67,15 @@ public:
 
         Point ( float D, float A )
             {
+                radius_enabled = false;
+                x = 1;
+                y = 0;
+                z = 0;
                 radius( D );
                 azimuth( A );
                 label = 0;
                 visible = 1;
                 color = FL_WHITE;
-                radius_enabled = false;
             }
 
         static inline void spherical_to_cartesian (float a, float e, float &x, float &y, float &z )

@@ -754,7 +754,7 @@ namespace OSC
         const char *prefix = NULL;
 	int skip = 0;
 	bool batch_mode = true;
-	int start;
+	int start = 0;
 
 	const int count = SCAN_BATCH_SIZE;
 	

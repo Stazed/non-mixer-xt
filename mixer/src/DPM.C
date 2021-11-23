@@ -41,6 +41,8 @@ DPM::DPM ( int X, int Y, int W, int H, const char *L ) :
 {
     tooltip( peak_string );
 
+    _segments = 0;
+    _pixels_per_segment = 0;
     _last_drawn_hi_segment = 0;
 
     pixels_per_segment( 5 );
@@ -190,6 +192,7 @@ DPM::draw ( void )
     const int active = active_r();
 
     int hi, lo;
+    hi = lo = 0;
  
     /* only draw as many segments as necessary */
     if ( damage() == FL_DAMAGE_USER1 )
