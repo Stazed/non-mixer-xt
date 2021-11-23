@@ -826,10 +826,10 @@ Plugin_Module::plugin_instances ( unsigned int n )
                 {
                     if ( LV2_IS_PORT_CONTROL( _idata->lv2.rdf_data->Ports[k].Types ) )
                     {
-                        if ( LADSPA_IS_PORT_INPUT( _idata->lv2.rdf_data->Ports[k].Types ) )
-                            _idata->lv2.descriptor->connect_port( h, k, (LADSPA_Data*)control_input[ij++].buffer() );
-                        else if ( LADSPA_IS_PORT_OUTPUT( _idata->lv2.rdf_data->Ports[k].Types ) )
-                            _idata->lv2.descriptor->connect_port( h, k, (LADSPA_Data*)control_output[oj++].buffer() );
+                        if ( LV2_IS_PORT_INPUT( _idata->lv2.rdf_data->Ports[k].Types ) )
+                            _idata->lv2.descriptor->connect_port( h, k, (float*)control_input[ij++].buffer() );
+                        else if ( LV2_IS_PORT_OUTPUT( _idata->lv2.rdf_data->Ports[k].Types ) )
+                            _idata->lv2.descriptor->connect_port( h, k, (float*)control_output[oj++].buffer() );
                     }
                     // we need to connect non audio/control ports to NULL
                     else if ( ! LV2_IS_PORT_AUDIO( _idata->lv2.rdf_data->Ports[k].Types ) )
@@ -1173,13 +1173,17 @@ Plugin_Module::load_lv2 ( const char* uri )
     {
         /* unknown plugin URI */
         WARNING( "Unknown plugin URI: %s", uri );
-        label( "----" );
+	char s[25];
+
+	snprintf( s, 24, "! %s", uri );
+	
+        base_label( s );
         return false;
     }
 
     _idata->lv2.descriptor = lv2_lib_manager.get_descriptor_for_uri( _idata->lv2.rdf_data->Binary, uri );
 
-    label( _idata->lv2.rdf_data->Name );
+    base_label( _idata->lv2.rdf_data->Name );
 
     if ( _idata->lv2.descriptor )
     {
@@ -1268,7 +1272,7 @@ Plugin_Module::load_lv2 ( const char* uri )
                 }
 
                 Port p( this, d, Port::CONTROL, rdfport.Name );
-
+                
                 if ( LV2_HAVE_MINIMUM_PORT_POINT( rdfport.Points.Hints ) )
                 {
                     p.hints.ranged = true;
@@ -1308,11 +1312,18 @@ Plugin_Module::load_lv2 ( const char* uri )
                 }
 
                 if ( LV2_IS_PORT_TOGGLED( rdfport.Properties ) )
+                {
                     p.hints.type = Port::Hints::BOOLEAN;
+                }
                 if ( LV2_IS_PORT_INTEGER( rdfport.Properties ) )
-                    p.hints.type = Port::Hints::INTEGER;
+                {
+                    if( LV2_IS_PORT_ENUMERATION(rdfport.Properties) )
+                        p.hints.type = Port::Hints::INTEGER;
+                }
                 if ( LV2_IS_PORT_LOGARITHMIC( rdfport.Properties ) )
+                {
                     p.hints.type = Port::Hints::LOGARITHMIC;
+                }
 
                 if ( LV2_IS_PORT_DESIGNATION_FREEWHEELING (rdfport.Designation) ||
                      LV2_IS_PORT_DESIGNATION_SAMPLE_RATE (rdfport.Designation) ||
@@ -1666,6 +1677,7 @@ Plugin_Module::apply ( sample_t *buf, nframes_t nframes )
     {
         _idata->lv2.descriptor->run( h, tframes );
 
+        // FIXME crash from changing port connections with R+ reverb and others
         for ( unsigned int k = 0; k < _idata->lv2.rdf_data->PortCount; ++k )
             if ( LV2_IS_PORT_AUDIO( _idata->lv2.rdf_data->Ports[k].Types ) )
                 _idata->lv2.descriptor->connect_port( h, k, buf );
@@ -1682,7 +1694,7 @@ Plugin_Module::apply ( sample_t *buf, nframes_t nframes )
     /* run for real */
     if (_is_lv2)
     {
-        _idata->lv2.descriptor->run( h, nframes );
+        _idata->lv2.descriptor->run( h, nframes );  // FIXME this crashes r+ reverb and others if port changed
 
         if ( _idata->lv2.descriptor->deactivate )
             _idata->lv2.descriptor->deactivate( h );
