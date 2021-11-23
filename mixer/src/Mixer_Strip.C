@@ -68,6 +68,7 @@ extern Mixer *mixer;
 /* add a new mixer strip (with default configuration) */
 Mixer_Strip::Mixer_Strip( const char *strip_name ) : Fl_Group( 0, 0, 120, 600 )
 {
+    _number = 0;
     label( strdup( strip_name ) );
     labeltype( FL_NO_LABEL );
 

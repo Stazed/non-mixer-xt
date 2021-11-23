@@ -34,7 +34,7 @@ static const int ALIGNMENT = 16;
 sample_t *
 buffer_alloc ( nframes_t size )
 {
-    void *p;
+    void *p = NULL;
     
     posix_memalign( &p, ALIGNMENT, size * sizeof( sample_t ) );
 
