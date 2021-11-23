@@ -551,10 +551,10 @@ const LV2_RDF_Descriptor* lv2_rdf_new(const LV2_URI uri, const bool loadPresets)
             rdfDescriptor->Author = strdup(author);
 
         if (const char* const binary = lilvPlugin.get_library_uri().as_string())
-            rdfDescriptor->Binary = strdup(lilv_uri_to_path(binary));
+            rdfDescriptor->Binary = strdup(lilv_file_uri_parse(binary, NULL));
 
         if (const char* const bundle = lilvPlugin.get_bundle_uri().as_string())
-            rdfDescriptor->Bundle = strdup(lilv_uri_to_path(bundle));
+            rdfDescriptor->Bundle = strdup(lilv_file_uri_parse(bundle, NULL));
 
         Lilv::Nodes licenseNodes(lilvPlugin.get_value(lv2World.doap_license));
 
@@ -1289,10 +1289,10 @@ const LV2_RDF_Descriptor* lv2_rdf_new(const LV2_URI uri, const bool loadPresets)
                         rdfUI->URI = strdup(uiURI);
 
                     if (const char* const uiBinary = lilvUI.get_binary_uri().as_string())
-                        rdfUI->Binary = strdup(lilv_uri_to_path(uiBinary));
+                        rdfUI->Binary = strdup(lilv_file_uri_parse(uiBinary, NULL));
 
                     if (const char* const uiBundle = lilvUI.get_bundle_uri().as_string())
-                        rdfUI->Bundle = strdup(lilv_uri_to_path(uiBundle));
+                        rdfUI->Bundle = strdup(lilv_file_uri_parse(uiBundle, NULL));
                 }
 
 #if 0 /* needs custom lilv */

@@ -29,7 +29,7 @@ namespace Lilv {
 
 static inline const char*
 uri_to_path(const char* uri) {
-	return lilv_uri_to_path(uri);
+	return lilv_file_uri_parse(uri, NULL);
 }
 
 #define LILV_WRAP0(RT, prefix, name) \
