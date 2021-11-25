@@ -41,7 +41,7 @@ Plugin_Chooser::plugin_chooser ( int ninputs )
 
     o->ui->inputs_input->value( ninputs );
 
-    o->search( "", "", "Any", ninputs, 0, o->ui->favorites_button->value() );
+    o->search( "", "", "Any", ninputs, 0, o->ui->favorites_button->value(), o->ui->type_choice->text() );
 
     o->show();
     
@@ -65,7 +65,8 @@ Plugin_Chooser::plugin_chooser ( int ninputs )
 }
 
 void
-Plugin_Chooser::search ( const char *name, const char *author, const char *category, int ninputs, int noutputs, bool favorites )
+Plugin_Chooser::search ( const char *name, const char *author, const char *category,
+                        int ninputs, int noutputs, bool favorites, const char *plug_type )
 {
     _plugin_rows.clear();
     
@@ -82,23 +83,39 @@ Plugin_Chooser::search ( const char *name, const char *author, const char *categ
                   ( p->audio_inputs == 1 && p->audio_outputs == 1 ) ) )
                 continue;
 
-                if ( p->audio_outputs == 0 || p->audio_inputs == 0 )
+            if ( p->audio_outputs == 0 || p->audio_inputs == 0 )
                 /* we don't support these */
                 continue;
 
-                if ( favorites > 0 && ! p->favorite )
-                    continue;
-                
-                if ( strcmp( category, "Any" ) )
-                {
-                    if ( !p->category.c_str() && strcmp( category, "Unclassified" ))
-                        continue;
-                    
-                    if (strncmp( p->category.c_str(), category, strlen( category )))
-                        continue;
-                }
+            if ( favorites > 0 && ! p->favorite )
+                continue;
 
-                _plugin_rows.push_back( p );
+            if ( strcmp( category, "Any" ) )
+            {
+                if ( !p->category.c_str() && strcmp( category, "Unclassified" ))
+                    continue;
+
+                if (strncmp( p->category.c_str(), category, strlen( category )))
+                    continue;
+            }
+
+            // if we want LV2 types only
+            if( !strcmp( plug_type, "LV2" ) )
+            {
+                if( strcmp(p->type, "LV2") )
+                {
+                    continue;   // Not LV2 so skip it
+                }
+            }
+            else if( !strcmp( plug_type, "LADSPA" ) )   // if we want LADSPA only
+            {
+                if( strcmp( p->type, "LADSPA" ) )
+                {
+                    continue;   // Not LADSPA so skip it
+                }
+            }
+
+            _plugin_rows.push_back( p );
         }
     }
 
@@ -128,7 +145,8 @@ Plugin_Chooser::cb_handle ( Fl_Widget *w )
                 picked[0] == '/' ? &picked[1] : picked,
                 ui->inputs_input->value(), 
                 ui->outputs_input->value(),
-                ui->favorites_button->value() );
+                ui->favorites_button->value(),
+                ui->type_choice->text());
     }
 }
 
@@ -421,6 +439,9 @@ Plugin_Chooser::Plugin_Chooser ( int X,int Y,int W,int H, const char *L )
 
         o->category_choice->callback( &Plugin_Chooser::cb_handle, this );
         o->category_choice->when( FL_WHEN_CHANGED );
+        
+        o->type_choice->callback(&Plugin_Chooser::cb_handle, this );
+        o->type_choice->when( FL_WHEN_CHANGED );
 
         {
             Plugin_Table *o = new Plugin_Table(ui->table->x(),ui->table->y(),ui->table->w(),ui->table->h() );

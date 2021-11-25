@@ -1,16 +1,16 @@
 # data file for the Fltk User Interface Designer (fluid)
-version 1.0300 
-header_name {.h} 
+version 1.0307
+header_name {.h}
 code_name {.cxx}
 decl {\#include <FL/Fl_Scalepack.H>} {public global
-} 
+}
 
 decl {\#include <FL/Fl_Table_Row.H>} {public global
-} 
+}
 
 widget_class Plugin_Chooser_UI {
   label {Plugin Selector} open
-  xywh {825 389 735 500} type Double resizable size_range {740 0 740 0} visible
+  xywh {0 29 1920 1050} type Double hide resizable size_range {740 0 740 0}
 } {
   Fl_Group {} {open
     xywh {10 5 155 20}
@@ -29,7 +29,7 @@ widget_class Plugin_Chooser_UI {
     code0 {o->resizable(0);}
   } {
     Fl_Input name_input {
-      label {Name:} selected
+      label {Name:}
       xywh {75 38 300 24} labelsize 12 textsize 13
     }
     Fl_Input author_input {
@@ -61,8 +61,16 @@ widget_class Plugin_Chooser_UI {
     xywh {530 70 95 24} down_box BORDER_BOX labelsize 12 textsize 12
   } {
     MenuItem {} {
+      label ALL selected
+      xywh {20 -48 34 18}
+    }
+    MenuItem {} {
       label LADSPA
       xywh {0 -68 34 18}
     }
+    MenuItem {} {
+      label LV2
+      xywh {10 -58 34 18}
+    }
   }
-} 
+}
