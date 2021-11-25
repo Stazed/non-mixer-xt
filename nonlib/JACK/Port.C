@@ -199,8 +199,8 @@ namespace JACK
 #ifdef HAVE_JACK_METADATA
         if ( _type == CV )
         {
-                jack_uuid_t uuid = jack_port_uuid( _port );
-                jack_set_property( _client->jack_client(), uuid, "http://jackaudio.org/metadata/signal-type", "CV", "text/plain" );
+            jack_uuid_t uuid = jack_port_uuid( _port );
+            jack_set_property( _client->jack_client(), uuid, "http://jackaudio.org/metadata/signal-type", "CV", "text/plain" );
         }
 #endif
 
@@ -276,16 +276,16 @@ namespace JACK
     Port::deactivate ( void )
     {
         if ( _port )
-				{
+        {
 #ifdef HAVE_JACK_METADATA
             if ( _type == CV )
-						{
-                     jack_uuid_t uuid = jack_port_uuid(_port);
-										 jack_remove_property(_client->jack_client(), uuid, "http://jackaudio.org/metadata/signal-type");
-						}
+            {
+                jack_uuid_t uuid = jack_port_uuid(_port);
+                jack_remove_property(_client->jack_client(), uuid, "http://jackaudio.org/metadata/signal-type");
+            }
 #endif
             jack_port_unregister( _client->jack_client(), _port );
-				}
+        }
 
         _port = 0;
     }
@@ -320,7 +320,7 @@ namespace JACK
         snprintf( jackname, sizeof(jackname), "%s%s%s", _trackname ? _trackname : "", _trackname ? "/" : "", _name );
 
         if ( _port )
-            return 0 == jack_port_set_name( _port, jackname );
+            return 0 == jack_port_rename(_client->jack_client(), _port, jackname );
         else
             return false;
     }
