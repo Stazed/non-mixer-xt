@@ -735,7 +735,59 @@ Plugin_Module::get_all_plugins ( void )
         // base info done
         pi.path = strdup(lilvPlugin.get_uri().as_uri());
         pi.id = 0;
-        pi.category = "Unclassified";
+        pi.category = "Unclassified";   // Default
+        
+        struct catagory_match
+        {
+            std::string cat_type;
+            std::string LV2_type;
+        };
+        
+        /* To convert LV2 plugin class to LADSPA categories for plugin chooser consistency */
+        std::vector<catagory_match> type_matches
+        {
+            {"Amplitude/Amplifiers", "Amplifier Plugin"},
+            {"Amplitude/Distortions", "Distortion Plugin"},
+            {"Amplitude/Dynamics/Compressors", "Compressor Plugin" },
+            {"Amplitude/Dynamics/Envelope", "Envelope Plugin" },
+            {"Amplitude/Dynamics/Expander", "Expander Plugin" },
+            {"Amplitude/Dynamics/Gates", "Gate Plugin"},
+            {"Amplitude/Dynamics/Limiters", "Limiter Plugin"},
+            {"Amplitude/Dynamics", "Dynamics Plugin"},
+            {"Amplitude/Modulators", "Modulator Plugin"},
+            {"Amplitude/Waveshapers", "Waveshaper Plugin"},
+            {"Frequency/EQs/Multiband", "Multiband EQ Plugin"},
+            {"Frequency/EQs/Parametric", "Parametric EQ Plugin"},
+            {"Frequency/EQs", "Equaliser Plugin"},
+            {"Frequency/Filters/Allpass", "Allpass Filter Plugin"},
+            {"Frequency/Filters/Bandpass", "Bandpass Filter Plugin"},
+            {"Frequency/Filters/Comb", "Comb Filter Plugin"},
+            {"Frequency/Filters/Highpass", "Highpass Filter Plugin"},
+            {"Frequency/Filters/Lowpass", "Lowpass Filter Plugin"},
+            {"Frequency/Filters/Notch", "Notch Filter Plugin"},
+            {"Frequency/Filters", "Filter Plugin" },
+            {"Frequency/Pitch shifters", "Pitch Shifter Plugin"},
+            {"Generators/Oscillators", "Oscillator Plugin"},
+            {"Generators", "Generator Plugin"},
+            {"Simulators/Reverbs", "Reverb Plugin"},
+            {"Simulators", "Simulator Plugin"},
+            {"Spectral", "Spectral Plugin"},
+            {"Time/Delays", "Delay Plugin"},
+            {"Time/Flangers", "Flanger Plugin"},
+            {"Time/Phasers", "Phaser Plugin"},
+            {"Utilities", "Utility Plugin"}
+        };
+
+        /* Use existing LADSPA table categories for Plugin_Chooser lookup categories */
+        if (const char* const category = lilvPlugin.get_class().get_label().as_string())
+        {
+            pi.category = category;
+            for(unsigned i = 0; i < type_matches.size(); ++i)
+            {
+                if(!strcmp(type_matches[i].LV2_type.c_str(), pi.category.c_str()))
+                    pi.category = type_matches[i].cat_type;
+            }
+        }
 
         pr.push_back( pi );
     }
