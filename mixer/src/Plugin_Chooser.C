@@ -297,9 +297,10 @@ Plugin_Chooser::load_favorites ( void )
 
     unsigned long id;
     char *type;
+    char *path;
     int favorites = 0;
 
-    while ( 2 == fscanf( fp, "%m[^:]:%lu\n", &type, &id ) )
+    while ( 3 == fscanf( fp, "%m[^:]:%lu:%m[^]\n]\n", &type, &id, &path ) )
     {
         for ( std::list<Plugin_Module::Plugin_Info>::iterator i = _plugins.begin();
               i != _plugins.end();
@@ -308,12 +309,23 @@ Plugin_Chooser::load_favorites ( void )
             if ( !strcmp( (*i).type, type ) &&
                  (*i).id == id )
             {
-                (*i).favorite = 1;
-                
-                favorites++;
+                if( !strcmp(type, "LV2") )
+                {
+                    if( !strcmp(path, (*i).path) )
+                    {
+                        (*i).favorite = 1;
+                        favorites++;
+                    }
+                }
+                else
+                {
+                    (*i).favorite = 1;
+                    favorites++;
+                }
             }
         }
 
+        free(path);
         free(type);
     }
 
@@ -336,7 +348,7 @@ Plugin_Chooser::save_favorites ( void )
     {
         if ( (*i).favorite )
         {
-            fprintf( fp, "%s:%lu\n", i->type, i->id );
+            fprintf( fp, "%s:%lu:%s\n", i->type, i->id, i->path );
         }
     }
     
