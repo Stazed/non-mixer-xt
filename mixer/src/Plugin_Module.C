@@ -1372,8 +1372,16 @@ Plugin_Module::load_lv2 ( const char* uri )
                 }
                 if ( LV2_IS_PORT_INTEGER( rdfport.Properties ) )
                 {
-                    if( LV2_IS_PORT_ENUMERATION(rdfport.Properties) )
-                        p.hints.type = Port::Hints::INTEGER;
+                    p.hints.type = Port::Hints::LV2_INTEGER;
+                    // Some LV2s set toggled as integer as well
+                    if ( LV2_IS_PORT_TOGGLED( rdfport.Properties ) )
+                    {
+                        p.hints.type = Port::Hints::BOOLEAN;
+                    }
+                }
+                if( LV2_IS_PORT_ENUMERATION(rdfport.Properties) )
+                {
+                    p.hints.type = Port::Hints::INTEGER;
                 }
                 if ( LV2_IS_PORT_LOGARITHMIC( rdfport.Properties ) )
                 {

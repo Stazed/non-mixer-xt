@@ -312,22 +312,28 @@ Module_Parameter_Editor::make_controls ( void )
                 o->align(FL_ALIGN_TOP);
                 o->box( FL_FLAT_BOX );
 
-                /* a couple of plugins have ridiculously small units */
-                float r =  fabs( p->hints.maximum - p->hints.minimum );
+                if ( p->hints.type == Module::Port::Hints::LV2_INTEGER )
+                {
+                    o->precision(0);
+                }
+                else    // floats
+                {
+                    /* a couple of plugins have ridiculously small units */
+                    float r =  fabs( p->hints.maximum - p->hints.minimum );
 
-                if ( r  <= 0.01f )
-                    o->precision( 4 );
-                else if ( r <= 0.1f )
-                    o->precision( 3 );
-                else if ( r <= 100.0f )
-                    o->precision( 2 );
-                else if ( r <= 5000.0f )
-                    o->precision( 1 );
-                /* else if ( r <= 10000.0f ) */
-                /*     o->precision( 1 ); */
-                else
-                    o->precision( 0 );
-
+                    if ( r  <= 0.01f )
+                        o->precision( 4 );
+                    else if ( r <= 0.1f )
+                        o->precision( 3 );
+                    else if ( r <= 100.0f )
+                        o->precision( 2 );
+                    else if ( r <= 5000.0f )
+                        o->precision( 1 );
+                    /* else if ( r <= 10000.0f ) */
+                    /*     o->precision( 1 ); */
+                    else
+                        o->precision( 0 );
+                }
             }
             else
             {
@@ -360,22 +366,29 @@ Module_Parameter_Editor::make_controls ( void )
 		if ( p->hints.type & Module::Port::Hints::LOGARITHMIC )
 		    o->log(true);
 
-                o->precision( 2 );
-                /* a couple of plugins have ridiculously small units */
-                float r =  fabs( p->hints.maximum - p->hints.minimum );
-              
-                if ( r  <= 0.01f )
-                    o->precision( 4 );
-                else if ( r <= 0.1f )
-                    o->precision( 3 );
-                else if ( r <= 100.0f )
+                if ( p->hints.type == Module::Port::Hints::LV2_INTEGER )
+                {
+                    o->precision(0);
+                }
+                else    // floats
+                {
                     o->precision( 2 );
-                else if ( r <= 5000.0f )
-                    o->precision( 1 );
-                /* else if ( r <= 10000.0f ) */
-                /*     o->precision( 1 ); */
-                else
-                    o->precision( 0 );
+                    /* a couple of plugins have ridiculously small units */
+                    float r =  fabs( p->hints.maximum - p->hints.minimum );
+
+                    if ( r  <= 0.01f )
+                        o->precision( 4 );
+                    else if ( r <= 0.1f )
+                        o->precision( 3 );
+                    else if ( r <= 100.0f )
+                        o->precision( 2 );
+                    else if ( r <= 5000.0f )
+                        o->precision( 1 );
+                    /* else if ( r <= 10000.0f ) */
+                    /*     o->precision( 1 ); */
+                    else
+                        o->precision( 0 );
+                }
 
                 o->textsize( 8 );
 //                o->box( FL_NO_BOX );

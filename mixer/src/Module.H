@@ -131,7 +131,7 @@ public:
         /* hints for control ports (specifically control inputs) */
         struct Hints
         {
-            enum Type { LINEAR, LOGARITHMIC, BOOLEAN, INTEGER };
+            enum Type { LINEAR, LOGARITHMIC, BOOLEAN, INTEGER, LV2_INTEGER };
 
             Type type;
             bool ranged;

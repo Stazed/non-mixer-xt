@@ -507,7 +507,14 @@ Controller_Module::connect_to ( Port *p )
             }
         }
 
-        o->precision(2);
+        if ( p->hints.type == Module::Port::Hints::LV2_INTEGER )
+        {
+            o->precision(0);
+        }
+        else
+        {
+            o->precision(2);
+        }
 
         o->value( p->control_value() );
 
