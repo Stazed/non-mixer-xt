@@ -373,12 +373,12 @@ Chain::remove ( Module *m )
 void
 Chain::configure_ports ( void )
 {
-     int nouts = 0;
+    int nouts = 0;
 
     client()->lock();
 
     for ( int i = 0; i < modules(); ++i )
-    {	
+    {
         module( i )->configure_inputs( nouts );
         nouts = module( i )->noutputs();
     }
@@ -390,12 +390,12 @@ Chain::configure_ports ( void )
     if ( scratch_port.size() < req_buffers )
     {
 	for ( unsigned int i = req_buffers - scratch_port.size(); i--; )
-	{
-	    Module::Port p( NULL, Module::Port::OUTPUT, Module::Port::AUDIO );
+        {
+            Module::Port p( NULL, Module::Port::OUTPUT, Module::Port::AUDIO );
             p.set_buffer( buffer_alloc( client()->nframes() ) );
             buffer_fill_with_silence( (sample_t*)p.buffer(), client()->nframes() );
             scratch_port.push_back( p );
-	}
+        }
     }
     else if ( scratch_port.size() > req_buffers )
     {
@@ -946,6 +946,7 @@ Chain::buffer_size ( nframes_t nframes )
 
     configure_ports();
 
+    Module::set_buffer_size ( nframes );
     for ( int i = 0; i < modules(); ++i )
     {
         Module *m = module(i);

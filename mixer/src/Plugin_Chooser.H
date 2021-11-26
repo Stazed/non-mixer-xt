@@ -35,8 +35,10 @@ class Plugin_Chooser : public Fl_Double_Window
     static void cb_table ( Fl_Widget *w, void *v );
     void cb_table ( Fl_Widget *w );
 
-    void search ( const char *name, const char *author, const char *category, int ninputs, int noutputs, bool favorites );
+    void search ( const char *name, const char *author, const char *category,
+                    int ninputs, int noutputs, bool favorites, const char *plug_type );
 
+    const char* _uri;
     unsigned long _value;
     
     int load_favorites ( void );
@@ -46,13 +48,14 @@ class Plugin_Chooser : public Fl_Double_Window
     void load_categories ( void );
 public:
 
+    const char* uri ( void ) const { return _uri; }
     unsigned long value ( void ) const { return _value; }
    
     Plugin_Chooser ( int X,int Y,int W,int H, const char *L=0 );
 
     virtual ~Plugin_Chooser( );
 
-    static unsigned long plugin_chooser ( int ninputs );
+    static Module::Picked plugin_chooser ( int ninputs );
 };
 
 

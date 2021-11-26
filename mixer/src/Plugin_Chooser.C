@@ -32,21 +32,32 @@
 
 static    std::vector <Plugin_Module::Plugin_Info*> _plugin_rows;
 
-unsigned long 
+Module::Picked
 Plugin_Chooser::plugin_chooser ( int ninputs )
 {
+    Module::Picked picked = { false, 0 };
+
     Plugin_Chooser *o = new Plugin_Chooser( 0,0,735,500,"Plugin Chooser");
 
     o->ui->inputs_input->value( ninputs );
 
-    o->search( "", "", "Any", ninputs, 0, o->ui->favorites_button->value() );
+    o->search( "", "", "Any", ninputs, 0, o->ui->favorites_button->value(), o->ui->type_choice->text() );
 
     o->show();
     
     while ( o->shown() )
         Fl::wait();
 
-    unsigned long picked = o->value();
+    if (const char* const uri = o->uri())
+    {
+        picked.is_lv2 = true;
+        picked.uri = uri;
+    }
+    else
+    {
+        picked.is_lv2 = false;
+        picked.unique_id = o->value();
+    }
 
     delete o;
 
@@ -54,7 +65,8 @@ Plugin_Chooser::plugin_chooser ( int ninputs )
 }
 
 void
-Plugin_Chooser::search ( const char *name, const char *author, const char *category, int ninputs, int noutputs, bool favorites )
+Plugin_Chooser::search ( const char *name, const char *author, const char *category,
+                        int ninputs, int noutputs, bool favorites, const char *plug_type )
 {
     _plugin_rows.clear();
     
@@ -71,23 +83,39 @@ Plugin_Chooser::search ( const char *name, const char *author, const char *categ
                   ( p->audio_inputs == 1 && p->audio_outputs == 1 ) ) )
                 continue;
 
-                if ( p->audio_outputs == 0 || p->audio_inputs == 0 )
+            if ( p->audio_outputs == 0 || p->audio_inputs == 0 )
                 /* we don't support these */
                 continue;
 
-                if ( favorites > 0 && ! p->favorite )
-                    continue;
-                
-                if ( strcmp( category, "Any" ) )
-                {
-                    if ( !p->category.c_str() && strcmp( category, "Unclassified" ))
-                        continue;
-                    
-                    if (strncmp( p->category.c_str(), category, strlen( category )))
-                        continue;
-                }
+            if ( favorites > 0 && ! p->favorite )
+                continue;
 
-                _plugin_rows.push_back( p );
+            if ( strcmp( category, "Any" ) )
+            {
+                if ( !p->category.c_str() && strcmp( category, "Unclassified" ))
+                    continue;
+
+                if (strncmp( p->category.c_str(), category, strlen( category )))
+                    continue;
+            }
+
+            // if we want LV2 types only
+            if( !strcmp( plug_type, "LV2" ) )
+            {
+                if( strcmp(p->type, "LV2") )
+                {
+                    continue;   // Not LV2 so skip it
+                }
+            }
+            else if( !strcmp( plug_type, "LADSPA" ) )   // if we want LADSPA only
+            {
+                if( strcmp( p->type, "LADSPA" ) )
+                {
+                    continue;   // Not LADSPA so skip it
+                }
+            }
+
+            _plugin_rows.push_back( p );
         }
     }
 
@@ -117,7 +145,8 @@ Plugin_Chooser::cb_handle ( Fl_Widget *w )
                 picked[0] == '/' ? &picked[1] : picked,
                 ui->inputs_input->value(), 
                 ui->outputs_input->value(),
-                ui->favorites_button->value() );
+                ui->favorites_button->value(),
+                ui->type_choice->text());
     }
 }
 
@@ -250,7 +279,10 @@ Plugin_Chooser::cb_table ( Fl_Widget *w )
         }
         else
         {
-            _value = _plugin_rows[R]->id;
+            if (::strcmp(_plugin_rows[R]->type, "LV2") == 0)
+                _uri   = _plugin_rows[R]->path;
+            else
+                _value = _plugin_rows[R]->id;
             hide();
         }
     }
@@ -283,9 +315,10 @@ Plugin_Chooser::load_favorites ( void )
 
     unsigned long id;
     char *type;
+    char *path;
     int favorites = 0;
 
-    while ( 2 == fscanf( fp, "%m[^:]:%lu\n", &type, &id ) )
+    while ( 3 == fscanf( fp, "%m[^:]:%lu:%m[^]\n]\n", &type, &id, &path ) )
     {
         for ( std::list<Plugin_Module::Plugin_Info>::iterator i = _plugins.begin();
               i != _plugins.end();
@@ -294,12 +327,23 @@ Plugin_Chooser::load_favorites ( void )
             if ( !strcmp( (*i).type, type ) &&
                  (*i).id == id )
             {
-                (*i).favorite = 1;
-                
-                favorites++;
+                if( !strcmp(type, "LV2") )
+                {
+                    if( !strcmp(path, (*i).path) )
+                    {
+                        (*i).favorite = 1;
+                        favorites++;
+                    }
+                }
+                else
+                {
+                    (*i).favorite = 1;
+                    favorites++;
+                }
             }
         }
 
+        free(path);
         free(type);
     }
 
@@ -322,7 +366,7 @@ Plugin_Chooser::save_favorites ( void )
     {
         if ( (*i).favorite )
         {
-            fprintf( fp, "%s:%lu\n", i->type, i->id );
+            fprintf( fp, "%s:%lu:%s\n", i->type, i->id, i->path );
         }
     }
     
@@ -363,6 +407,7 @@ Plugin_Chooser::Plugin_Chooser ( int X,int Y,int W,int H, const char *L )
     : Fl_Double_Window ( X,Y,W,H,L )
 {
     set_modal();
+    _uri = NULL;
     _value = 0;
    
     _plugins = Plugin_Module::get_all_plugins();
@@ -394,6 +439,9 @@ Plugin_Chooser::Plugin_Chooser ( int X,int Y,int W,int H, const char *L )
 
         o->category_choice->callback( &Plugin_Chooser::cb_handle, this );
         o->category_choice->when( FL_WHEN_CHANGED );
+        
+        o->type_choice->callback(&Plugin_Chooser::cb_handle, this );
+        o->type_choice->when( FL_WHEN_CHANGED );
 
         {
             Plugin_Table *o = new Plugin_Table(ui->table->x(),ui->table->y(),ui->table->w(),ui->table->h() );
