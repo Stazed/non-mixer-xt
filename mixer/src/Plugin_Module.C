@@ -1366,18 +1366,16 @@ Plugin_Module::load_lv2 ( const char* uri )
                     p.hints.default_value *= sample_rate();
                 }
 
-                if ( LV2_IS_PORT_TOGGLED( rdfport.Properties ) )
-                {
-                    p.hints.type = Port::Hints::BOOLEAN;
-                }
                 if ( LV2_IS_PORT_INTEGER( rdfport.Properties ) )
                 {
                     p.hints.type = Port::Hints::LV2_INTEGER;
-                    // Some LV2s set toggled as integer as well
-                    if ( LV2_IS_PORT_TOGGLED( rdfport.Properties ) )
-                    {
-                        p.hints.type = Port::Hints::BOOLEAN;
-                    }
+                }
+
+                /* Should always check toggled and enumeration after integer since 
+                 some LV2s will have both */
+                if ( LV2_IS_PORT_TOGGLED( rdfport.Properties ) )
+                {
+                    p.hints.type = Port::Hints::BOOLEAN;
                 }
                 if( LV2_IS_PORT_ENUMERATION(rdfport.Properties) )
                 {
