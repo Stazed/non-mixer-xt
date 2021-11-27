@@ -1738,7 +1738,6 @@ Plugin_Module::apply ( sample_t *buf, nframes_t nframes )
     {
         _idata->lv2.descriptor->run( h, tframes );
 
-        // FIXME crash from changing port connections with R+ reverb and others
         for ( unsigned int k = 0; k < _idata->lv2.rdf_data->PortCount; ++k )
             if ( LV2_IS_PORT_AUDIO( _idata->lv2.rdf_data->Ports[k].Types ) )
                 _idata->lv2.descriptor->connect_port( h, k, buf );
@@ -1755,7 +1754,7 @@ Plugin_Module::apply ( sample_t *buf, nframes_t nframes )
     /* run for real */
     if (_is_lv2)
     {
-        _idata->lv2.descriptor->run( h, nframes );  // FIXME this crashes r+ reverb and others if port changed
+        _idata->lv2.descriptor->run( h, nframes );
 
         if ( _idata->lv2.descriptor->deactivate )
             _idata->lv2.descriptor->deactivate( h );
