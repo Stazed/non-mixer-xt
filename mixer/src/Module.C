@@ -178,6 +178,9 @@ Module::~Module ( )
 
     control_input.clear();
     control_output.clear();
+    
+    lilv_instance_free(m_instance);
+    lilv_world_free(m_lilvWorld);
 
     if ( parent() )
         parent()->remove( this );
@@ -826,7 +829,10 @@ Module::update_control_parameters(int choice)
     std::sort( vector_port_controls.begin(), vector_port_controls.end(), port_controls::before );
     
     if(control_input.size() > vector_port_controls.size())
-        m_preset_changes = "0.0:";  // first item is bypass FIXME check this
+    {
+        if ( !strcasecmp( "Bypass", control_input[0].name() ) )
+        m_preset_changes = "0.0:";
+    }
     
     /* Generate the semi-colon delimited string to set the parameters */
     for(unsigned i = 0; i < vector_port_controls.size(); ++i)
@@ -842,6 +848,8 @@ Module::update_control_parameters(int choice)
     DMESSAGE("Control String = %s", m_preset_changes.c_str());
     
     set_parameters(m_preset_changes.c_str());
+    
+    lilv_state_free(state);
 }
 
 
