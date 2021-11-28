@@ -67,12 +67,15 @@ class Module_Parameter_Editor : public Fl_Double_Window
             }
 
     };
+    
+    void set_preset_controls(int choice);
 
     void update_control_visibility ( void );
     static void cb_button_handle ( Fl_Widget *w, void *v );
     static void cb_value_handle ( Fl_Widget *w, void *v );
     static void cb_panner_value_handle ( Fl_Widget *w, void *v );
     static void cb_mode_handle ( Fl_Widget *w, void *v );
+    static void cb_preset_handle ( Fl_Widget *w, void *v );
     static void cb_bound_handle ( Fl_Widget *w, void *v );
     void set_value (int i, float value );
     void bind_control ( int i );
@@ -88,6 +91,7 @@ class Module_Parameter_Editor : public Fl_Double_Window
     Fl_Scroll *control_scroll;
     Fl_Flowpack *control_pack;
     Fl_Menu_Button *mode_choice;
+    Fl_Menu_Button *LV2_presets_choice;
     bool _resized;
     int _min_width;
     int _selected_control;

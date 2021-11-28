@@ -432,12 +432,12 @@ struct LV2_RDF_Preset {
     {
         if (URI != NULL)
         {
-            ::free((void*)URI);
+            //::free((void*)URI);   // FIXME the causes double free
             URI = NULL;
         }
         if (Label != NULL)
         {
-            ::free((void*)Label);
+            //::free((void*)Label); // FIXME the causes double free
             Label = NULL;
         }
     }
@@ -539,6 +539,7 @@ struct LV2_RDF_Descriptor {
 
     uint32_t PresetCount;
     LV2_RDF_Preset* Presets;
+    std::vector<LV2_RDF_Preset> PresetListStructs;
 
     uint32_t FeatureCount;
     LV2_RDF_Feature* Features;

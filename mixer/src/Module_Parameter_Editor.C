@@ -100,6 +100,22 @@ Module_Parameter_Editor::Module_Parameter_Editor ( Module *module ) : Fl_Double_
             o->when( FL_WHEN_CHANGED );
             o->callback( cb_mode_handle, this );
         }
+        
+        { Fl_Menu_Button *o = LV2_presets_choice = new Fl_Menu_Button( 100, 0, 25, 25 );
+        
+            for(unsigned i = 0; i < _module->PresetList.size(); ++i)
+            {
+                o->add( _module->PresetList[i].Label  );
+            }
+ 
+            o->label( "Presets" );
+            o->align(FL_ALIGN_RIGHT);
+            o->value( 1 );
+            o->when( FL_WHEN_CHANGED );
+            o->callback( cb_preset_handle,  this );
+        }
+        
+        
         o->resizable(0);
         o->end();
     }
@@ -465,6 +481,12 @@ Module_Parameter_Editor::make_controls ( void )
     update_control_visibility();
 }
 
+void
+Module_Parameter_Editor::set_preset_controls(int choice)
+{
+    DMESSAGE("ITEM = %d: URI = %s", choice, _module->PresetList[choice].URI);
+}
+
 void 
 Module_Parameter_Editor::update_control_visibility ( void )
 {
@@ -527,6 +549,13 @@ void
 Module_Parameter_Editor::cb_mode_handle ( Fl_Widget *, void *v )
 {
     ((Module_Parameter_Editor*)v)->make_controls();
+}
+
+void
+Module_Parameter_Editor::cb_preset_handle ( Fl_Widget *w, void *v )
+{
+    Fl_Menu_Button *m = (Fl_Menu_Button*)w;
+    ((Module_Parameter_Editor*)v)->set_preset_controls( (int) m->value());
 }
 
 void

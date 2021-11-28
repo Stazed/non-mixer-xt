@@ -31,6 +31,7 @@
 #include "Loggable.H"
 #include "JACK/Port.H"
 #include "OSC/Endpoint.H"
+#include "LV2_RDF_Utils.hpp"
 #include <list>
 #include <algorithm>
 
@@ -453,6 +454,8 @@ public:
     std::vector<Port> control_output;
     std::vector<Port> aux_audio_input;
     std::vector<Port> aux_audio_output;
+    
+    std::vector<LV2_RDF_Preset> PresetList;
 
     void add_port ( const Port &p )
         {

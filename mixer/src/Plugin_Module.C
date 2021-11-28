@@ -1220,7 +1220,9 @@ bool
 Plugin_Module::load_lv2 ( const char* uri )
 {
     _is_lv2 = true;
-    _idata->lv2.rdf_data = lv2_rdf_new( uri, false );
+    _idata->lv2.rdf_data = lv2_rdf_new( uri, true );
+
+   PresetList = _idata->lv2.rdf_data->PresetListStructs;
 
     _plugin_ins = _plugin_outs = 0;
 
