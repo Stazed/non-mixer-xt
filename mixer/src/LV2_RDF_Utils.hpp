@@ -418,8 +418,8 @@ public:
         return NULL;
     }
 
-#if 0 /* requires custom lilv */
-    LilvState* getStateFromURI(const LV2_URI uri, const LV2_URID_Map* const uridMap) const
+    /* requires custom lilv */
+    LilvState* getStateFromURI(const LV2_URI uri,  LV2_URID_Map* const uridMap) const
     {
         if (uri == NULL || uri[0] == '\0' || uridMap == NULL || needsInit)
             return NULL;
@@ -433,7 +433,7 @@ public:
 
         return NULL;
     }
-#endif
+
 };
 
 // -----------------------------------------------------------------------

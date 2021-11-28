@@ -1222,8 +1222,15 @@ Plugin_Module::load_lv2 ( const char* uri )
     _is_lv2 = true;
     _idata->lv2.rdf_data = lv2_rdf_new( uri, true );
 
-   PresetList = _idata->lv2.rdf_data->PresetListStructs;
-
+    /* This be preset loading stuff */
+    PresetList = _idata->lv2.rdf_data->PresetListStructs;
+    _uridMapFt =  (LV2_URID_Map*) _idata->lv2.features[Plugin_Feature_URID_Map]->data;
+    LilvNode* plugin_uri = lilv_new_uri(get_lilv_world(), uri);
+    m_plugin = lilv_plugins_get_by_uri(get_lilv_plugins(), plugin_uri);
+    lilv_node_free(plugin_uri);
+    m_instance = lilv_plugin_instantiate(m_plugin,  sample_rate(), nullptr);
+    /* End preset stuff */
+   
     _plugin_ins = _plugin_outs = 0;
 
     if ( ! _idata->lv2.rdf_data )

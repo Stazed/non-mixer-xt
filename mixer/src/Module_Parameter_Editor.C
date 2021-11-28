@@ -485,6 +485,7 @@ void
 Module_Parameter_Editor::set_preset_controls(int choice)
 {
     DMESSAGE("ITEM = %d: URI = %s", choice, _module->PresetList[choice].URI);
+    _module->update_control_parameters(choice);
 }
 
 void 
