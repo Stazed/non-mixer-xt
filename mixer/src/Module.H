@@ -460,8 +460,6 @@ public:
 #ifdef PRESET_SUPPORT
     /* Preset loading stuff */
     std::vector<LV2_RDF_Preset> PresetList;
-    LilvState *state;
-    const Lv2WorldClass& lv2World = Lv2WorldClass::getInstance();
     const LilvPlugin*     m_plugin;   /**< Plugin "class" (actually just a few strings) */
     LilvWorld* 	m_lilvWorld{};
     const LilvPlugins*	m_lilvPlugins{};

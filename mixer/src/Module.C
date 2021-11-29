@@ -823,7 +823,9 @@ Module::update_control_parameters(int choice)
     m_preset_changes.clear();
     vector_port_controls.clear();
     
-    state = lv2World.getStateFromURI(PresetList[choice].URI, _uridMapFt);
+    const Lv2WorldClass& lv2World = Lv2WorldClass::getInstance();
+    
+    LilvState *state = lv2World.getStateFromURI(PresetList[choice].URI, _uridMapFt);
     lilv_state_restore(state, m_instance,  mixer_lv2_set_port_value, this, 0, NULL);
 
     /* Sort the preset vector by port number to get correct order */
