@@ -39,7 +39,6 @@
 #include "Controller_Module.H"
 #include "Chain.H"
 #include "Panner.H"
-#include "Plugin_Module.H"
 #include <FL/fl_ask.H>
 #include "debug.h"
 #include <FL/Fl_Menu_Button.H>
@@ -486,12 +485,14 @@ Module_Parameter_Editor::make_controls ( void )
     update_control_visibility();
 }
 
+#ifdef PRESET_SUPPORT
 void
 Module_Parameter_Editor::set_preset_controls(int choice)
 {
     Plugin_Module *pm = static_cast<Plugin_Module *> (_module);
     pm->update_control_parameters(choice);
 }
+#endif
 
 void 
 Module_Parameter_Editor::update_control_visibility ( void )
@@ -557,12 +558,14 @@ Module_Parameter_Editor::cb_mode_handle ( Fl_Widget *, void *v )
     ((Module_Parameter_Editor*)v)->make_controls();
 }
 
+#ifdef PRESET_SUPPORT
 void
 Module_Parameter_Editor::cb_preset_handle ( Fl_Widget *w, void *v )
 {
     Fl_Menu_Button *m = (Fl_Menu_Button*)w;
     ((Module_Parameter_Editor*)v)->set_preset_controls( (int) m->value());
 }
+#endif
 
 void
 Module_Parameter_Editor::bind_control ( int i )

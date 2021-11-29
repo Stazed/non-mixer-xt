@@ -31,6 +31,7 @@ class SpectrumView;
 
 #include <vector>
 #include <list>
+#include "Plugin_Module.H"
 
 class Module_Parameter_Editor : public Fl_Double_Window
 {
@@ -67,15 +68,16 @@ class Module_Parameter_Editor : public Fl_Double_Window
             }
 
     };
-    
-    void set_preset_controls(int choice);
 
     void update_control_visibility ( void );
     static void cb_button_handle ( Fl_Widget *w, void *v );
     static void cb_value_handle ( Fl_Widget *w, void *v );
     static void cb_panner_value_handle ( Fl_Widget *w, void *v );
     static void cb_mode_handle ( Fl_Widget *w, void *v );
+#ifdef PRESET_SUPPORT
     static void cb_preset_handle ( Fl_Widget *w, void *v );
+    void set_preset_controls(int choice);
+#endif
     static void cb_bound_handle ( Fl_Widget *w, void *v );
     void set_value (int i, float value );
     void bind_control ( int i );
