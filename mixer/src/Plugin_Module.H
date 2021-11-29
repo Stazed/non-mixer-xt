@@ -21,6 +21,9 @@
 
 #include "Module.H"
 #include "Loggable.H"
+#include "LV2_RDF_Utils.hpp"
+
+#define PRESET_SUPPORT 1
 
 class Fl_Menu_Button;
 class Thread;
@@ -62,6 +65,35 @@ public:
     };
 
     bool load ( Picked picked );
+    
+#ifdef PRESET_SUPPORT
+    /* Preset loading stuff */
+    std::vector<LV2_RDF_Preset> PresetList;
+    const LilvPlugin*     m_plugin;   /**< Plugin "class" (actually just a few strings) */
+    LilvWorld* 	m_lilvWorld{};
+    const LilvPlugins*	m_lilvPlugins{};
+    LilvInstance*   m_instance{};      /**< Plugin "instance" (loaded shared lib) */
+    LV2_URID_Map* _uridMapFt;
+    LilvWorld* get_lilv_world() {return m_lilvWorld;}
+    const LilvPlugin* get_slv2_plugin() const {return m_plugin; }
+    const LilvPlugins* get_lilv_plugins() const {return m_lilvPlugins; };
+    
+    std::string m_preset_changes;
+    
+    struct port_controls
+    {
+        float value;
+        unsigned long port_index;
+        
+        static bool before( const port_controls& c1, const port_controls& c2 ) { return c1.port_index < c2.port_index; }
+    };
+    
+    std::vector<port_controls>vector_port_controls;
+    void generate_control_string(unsigned long port_index, float value);
+
+    void update_control_parameters(int choice);
+    /* End Preset loading */
+#endif
 
 private:
 
@@ -93,7 +125,6 @@ private:
     int _plugin_ins;
     int _plugin_outs;
     bool _crosswire;
-    bool _is_lv2;
 
     static void *discover_thread ( void * );
  

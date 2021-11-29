@@ -31,11 +31,8 @@
 #include "Loggable.H"
 #include "JACK/Port.H"
 #include "OSC/Endpoint.H"
-#include "LV2_RDF_Utils.hpp"
 #include <list>
 #include <algorithm>
-
-#define PRESET_SUPPORT 1
 
 class Chain;
 class Module_Parameter_Editor;
@@ -60,7 +57,7 @@ class Module : public Fl_Group, public Loggable {
     static char *_copied_module_settings;
 
     int _number;
-    
+
     void init ( void );
 
     void insert_menu_cb ( const Fl_Menu_ *m );
@@ -108,6 +105,8 @@ public:
             unsigned long unique_id;
         };
     };
+
+    bool _is_lv2;
 
     class Port
     {
@@ -456,35 +455,6 @@ public:
     std::vector<Port> control_output;
     std::vector<Port> aux_audio_input;
     std::vector<Port> aux_audio_output;
-
-#ifdef PRESET_SUPPORT
-    /* Preset loading stuff */
-    std::vector<LV2_RDF_Preset> PresetList;
-    const LilvPlugin*     m_plugin;   /**< Plugin "class" (actually just a few strings) */
-    LilvWorld* 	m_lilvWorld{};
-    const LilvPlugins*	m_lilvPlugins{};
-    LilvInstance*   m_instance{};      /**< Plugin "instance" (loaded shared lib) */
-    LV2_URID_Map* _uridMapFt;
-    LilvWorld* get_lilv_world() {return m_lilvWorld;}
-    const LilvPlugin* get_slv2_plugin() const {return m_plugin; }
-    const LilvPlugins* get_lilv_plugins() const {return m_lilvPlugins; };
-    
-    std::string m_preset_changes;
-    
-    struct port_controls
-    {
-        float value;
-        unsigned long port_index;
-        
-        static bool before( const port_controls& c1, const port_controls& c2 ) { return c1.port_index < c2.port_index; }
-    };
-    
-    std::vector<port_controls>vector_port_controls;
-    void generate_control_string(unsigned long port_index, float value);
-
-    void update_control_parameters(int choice);
-    /* End Preset loading */
-#endif
 
     void add_port ( const Port &p )
         {

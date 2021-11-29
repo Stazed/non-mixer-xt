@@ -56,43 +56,6 @@ nframes_t Module::_sample_rate = 0;
 Module *Module::_copied_module_empty = 0;
 char *Module::_copied_module_settings = 0;
 
-#ifdef PRESET_SUPPORT
-// LV2 Presets: port value setter.
-static void mixer_lv2_set_port_value ( const char *port_symbol,
-	void *user_data, const void *value, uint32_t size, uint32_t type )
-{
-    Module *pLv2Plugin = static_cast<Module *> (user_data);
-    if (pLv2Plugin == NULL)
-            return;
-
-    const LilvPlugin *plugin = pLv2Plugin->get_slv2_plugin();       // returns m_plugin
-
-    if (plugin == NULL)
-            return;
-
-    if (size != sizeof(float))
-            return;
-
-    LilvWorld* world = pLv2Plugin->get_lilv_world();
-
-    LilvNode *symbol = lilv_new_string(world, port_symbol);
-
-    const LilvPort *port = lilv_plugin_get_port_by_symbol(plugin, symbol);
-
-    if (port)
-    {
-        const float val = *(float *) value;
-        const unsigned long port_index = lilv_port_get_index(plugin, port);
-        
-        DMESSAGE("port Index = %lu: value = %f", port_index, val);
-        
-        pLv2Plugin->generate_control_string(port_index, val);
-    }
-
-    lilv_node_free(symbol);
-}
-#endif
-
 
 
 Module::Module ( int W, int H, const char *L ) : Fl_Group( 0, 0, W, H, L )
@@ -179,10 +142,7 @@ Module::~Module ( )
 
     control_input.clear();
     control_output.clear();
-#ifdef PRESET_SUPPORT
-    lilv_instance_free(m_instance);
-    lilv_world_free(m_lilvWorld);
-#endif
+
     if ( parent() )
         parent()->remove( this );
 }
@@ -201,11 +161,7 @@ Module::init ( void )
     control_output.reserve(16);
     aux_audio_input.reserve(16);
     aux_audio_output.reserve(16);
-#ifdef PRESET_SUPPORT
-    m_lilvWorld = lilv_world_new();
-    lilv_world_load_all(m_lilvWorld);
-    m_lilvPlugins = lilv_world_get_all_plugins(m_lilvWorld);
-#endif
+
 //    _latency = 0;
     _is_default = false;
     _editor = 0;
@@ -214,6 +170,7 @@ Module::init ( void )
     _bypass = 0;
     _base_label = NULL;
     _number = -2;	/* magic number indicates old instance, before numbering */
+    _is_lv2 = false;
 
     box( FL_UP_BOX );
     labeltype( FL_NO_LABEL );
@@ -807,60 +764,6 @@ Module::set_parameters ( const char *parameters )
 
     free( s );
 }
-#ifdef PRESET_SUPPORT
-void
-Module::generate_control_string(unsigned long port_index, float value)
-{
-    port_controls preset_item;
-    preset_item.port_index = port_index;
-    preset_item.value = value;
-    vector_port_controls.push_back(preset_item);
-}
-
-void 
-Module::update_control_parameters(int choice)
-{
-    m_preset_changes.clear();
-    vector_port_controls.clear();
-    
-    const Lv2WorldClass& lv2World = Lv2WorldClass::getInstance();
-    
-    LilvState *state = lv2World.getStateFromURI(PresetList[choice].URI, _uridMapFt);
-    lilv_state_restore(state, m_instance,  mixer_lv2_set_port_value, this, 0, NULL);
-
-    /* Sort the preset vector by port number to get correct order */
-    std::sort( vector_port_controls.begin(), vector_port_controls.end(), port_controls::before );
-    
-    if(control_input.size() > vector_port_controls.size())
-    {
-        if ( !strcasecmp( "Bypass", control_input[0].name() ) )
-        {
-            m_preset_changes = "0.0:";
-        }
-        else
-        {
-            // What to do here??
-        }
-    }
-    
-    /* Generate the semi-colon delimited string to set the parameters */
-    for(unsigned i = 0; i < vector_port_controls.size(); ++i)
-    {
-        std::string ss = to_string(vector_port_controls[i].value);
-        
-        m_preset_changes.append(ss);
-        
-        if( i != (vector_port_controls.size() - 1))
-            m_preset_changes.append(":");
-    }
-    
-    DMESSAGE("Control String = %s", m_preset_changes.c_str());
-    
-    set_parameters(m_preset_changes.c_str());
-    
-    lilv_state_free(state);
-}
-#endif
 
 
 

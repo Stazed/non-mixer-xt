@@ -39,6 +39,7 @@
 #include "Controller_Module.H"
 #include "Chain.H"
 #include "Panner.H"
+#include "Plugin_Module.H"
 #include <FL/fl_ask.H>
 #include "debug.h"
 #include <FL/Fl_Menu_Button.H>
@@ -101,17 +102,22 @@ Module_Parameter_Editor::Module_Parameter_Editor ( Module *module ) : Fl_Double_
             o->callback( cb_mode_handle, this );
         }
 #ifdef PRESET_SUPPORT
-        { Fl_Menu_Button *o = LV2_presets_choice = new Fl_Menu_Button( 100, 0, 25, 25 );
-            for(unsigned i = 0; i < _module->PresetList.size(); ++i)
-            {
-                o->add( _module->PresetList[i].Label  );
-            }
+        if (_module->_is_lv2)
+        {
+            Plugin_Module *pm = static_cast<Plugin_Module *> (_module);
 
-            o->label( "Presets" );
-            o->align(FL_ALIGN_RIGHT);
-            o->value( 0 );
-            o->when( FL_WHEN_CHANGED|FL_WHEN_NOT_CHANGED );
-            o->callback( cb_preset_handle,  this );
+            { Fl_Menu_Button *o = LV2_presets_choice = new Fl_Menu_Button( 100, 0, 25, 25 );
+                for(unsigned i = 0; i < pm->PresetList.size(); ++i)
+                {
+                    o->add( pm->PresetList[i].Label  );
+                }
+
+                o->label( "Presets" );
+                o->align(FL_ALIGN_RIGHT);
+                o->value( 0 );
+                o->when( FL_WHEN_CHANGED|FL_WHEN_NOT_CHANGED );
+                o->callback( cb_preset_handle,  this );
+            }
         }
 #endif
         
@@ -483,10 +489,8 @@ Module_Parameter_Editor::make_controls ( void )
 void
 Module_Parameter_Editor::set_preset_controls(int choice)
 {
-#ifdef PRESET_SUPPORT
-    DMESSAGE("ITEM = %d: URI = %s", choice, _module->PresetList[choice].URI);
-    _module->update_control_parameters(choice);
-#endif
+    Plugin_Module *pm = static_cast<Plugin_Module *> (_module);
+    pm->update_control_parameters(choice);
 }
 
 void 
