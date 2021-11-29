@@ -100,21 +100,20 @@ Module_Parameter_Editor::Module_Parameter_Editor ( Module *module ) : Fl_Double_
             o->when( FL_WHEN_CHANGED );
             o->callback( cb_mode_handle, this );
         }
-        
+#ifdef PRESET_SUPPORT
         { Fl_Menu_Button *o = LV2_presets_choice = new Fl_Menu_Button( 100, 0, 25, 25 );
-        
             for(unsigned i = 0; i < _module->PresetList.size(); ++i)
             {
                 o->add( _module->PresetList[i].Label  );
             }
- 
+
             o->label( "Presets" );
             o->align(FL_ALIGN_RIGHT);
-            o->value( 1 );
-            o->when( FL_WHEN_CHANGED );
+            o->value( 0 );
+            o->when( FL_WHEN_CHANGED|FL_WHEN_NOT_CHANGED );
             o->callback( cb_preset_handle,  this );
         }
-        
+#endif
         
         o->resizable(0);
         o->end();
@@ -484,8 +483,10 @@ Module_Parameter_Editor::make_controls ( void )
 void
 Module_Parameter_Editor::set_preset_controls(int choice)
 {
+#ifdef PRESET_SUPPORT
     DMESSAGE("ITEM = %d: URI = %s", choice, _module->PresetList[choice].URI);
     _module->update_control_parameters(choice);
+#endif
 }
 
 void 

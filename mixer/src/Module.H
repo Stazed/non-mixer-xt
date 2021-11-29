@@ -35,6 +35,8 @@
 #include <list>
 #include <algorithm>
 
+#define PRESET_SUPPORT 1
+
 class Chain;
 class Module_Parameter_Editor;
 class Fl_Menu_;
@@ -455,6 +457,7 @@ public:
     std::vector<Port> aux_audio_input;
     std::vector<Port> aux_audio_output;
 
+#ifdef PRESET_SUPPORT
     /* Preset loading stuff */
     std::vector<LV2_RDF_Preset> PresetList;
     LilvState *state;
@@ -483,7 +486,7 @@ public:
 
     void update_control_parameters(int choice);
     /* End Preset loading */
-
+#endif
 
     void add_port ( const Port &p )
         {

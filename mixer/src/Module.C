@@ -56,6 +56,7 @@ nframes_t Module::_sample_rate = 0;
 Module *Module::_copied_module_empty = 0;
 char *Module::_copied_module_settings = 0;
 
+#ifdef PRESET_SUPPORT
 // LV2 Presets: port value setter.
 static void mixer_lv2_set_port_value ( const char *port_symbol,
 	void *user_data, const void *value, uint32_t size, uint32_t type )
@@ -90,7 +91,7 @@ static void mixer_lv2_set_port_value ( const char *port_symbol,
 
     lilv_node_free(symbol);
 }
-
+#endif
 
 
 
@@ -178,10 +179,10 @@ Module::~Module ( )
 
     control_input.clear();
     control_output.clear();
-    
+#ifdef PRESET_SUPPORT
     lilv_instance_free(m_instance);
     lilv_world_free(m_lilvWorld);
-
+#endif
     if ( parent() )
         parent()->remove( this );
 }
@@ -200,11 +201,11 @@ Module::init ( void )
     control_output.reserve(16);
     aux_audio_input.reserve(16);
     aux_audio_output.reserve(16);
-    
+#ifdef PRESET_SUPPORT
     m_lilvWorld = lilv_world_new();
     lilv_world_load_all(m_lilvWorld);
     m_lilvPlugins = lilv_world_get_all_plugins(m_lilvWorld);
-    
+#endif
 //    _latency = 0;
     _is_default = false;
     _editor = 0;
@@ -806,7 +807,7 @@ Module::set_parameters ( const char *parameters )
 
     free( s );
 }
-
+#ifdef PRESET_SUPPORT
 void
 Module::generate_control_string(unsigned long port_index, float value)
 {
@@ -831,7 +832,13 @@ Module::update_control_parameters(int choice)
     if(control_input.size() > vector_port_controls.size())
     {
         if ( !strcasecmp( "Bypass", control_input[0].name() ) )
-        m_preset_changes = "0.0:";
+        {
+            m_preset_changes = "0.0:";
+        }
+        else
+        {
+            // What to do here??
+        }
     }
     
     /* Generate the semi-colon delimited string to set the parameters */
@@ -851,6 +858,7 @@ Module::update_control_parameters(int choice)
     
     lilv_state_free(state);
 }
+#endif
 
 
 
