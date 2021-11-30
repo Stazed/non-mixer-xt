@@ -103,7 +103,7 @@ public:
 
     virtual void update ( void );
 
-    void process ( nframes_t nframes );
+    virtual void process ( nframes_t nframes );
 
     void draw ( void );
 

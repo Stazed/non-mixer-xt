@@ -100,6 +100,29 @@ Module_Parameter_Editor::Module_Parameter_Editor ( Module *module ) : Fl_Double_
             o->when( FL_WHEN_CHANGED );
             o->callback( cb_mode_handle, this );
         }
+#ifdef PRESET_SUPPORT
+        if (_module->_is_lv2)
+        {
+            Plugin_Module *pm = static_cast<Plugin_Module *> (_module);
+            
+            if( !pm->PresetList.empty() )
+            {
+                { Fl_Menu_Button *o = LV2_presets_choice = new Fl_Menu_Button( 100, 0, 25, 25 );
+                    for(unsigned i = 0; i < pm->PresetList.size(); ++i)
+                    {
+                        o->add( pm->PresetList[i].Label.c_str() );
+                    }
+
+                    o->label( "Presets" );
+                    o->align(FL_ALIGN_RIGHT);
+                    o->value( 0 );
+                    o->when( FL_WHEN_CHANGED|FL_WHEN_NOT_CHANGED );
+                    o->callback( cb_preset_handle,  this );
+                }
+            }
+        }
+#endif
+        
         o->resizable(0);
         o->end();
     }
@@ -312,22 +335,28 @@ Module_Parameter_Editor::make_controls ( void )
                 o->align(FL_ALIGN_TOP);
                 o->box( FL_FLAT_BOX );
 
-                /* a couple of plugins have ridiculously small units */
-                float r =  fabs( p->hints.maximum - p->hints.minimum );
+                if ( p->hints.type == Module::Port::Hints::LV2_INTEGER )
+                {
+                    o->precision(0);
+                }
+                else    // floats
+                {
+                    /* a couple of plugins have ridiculously small units */
+                    float r =  fabs( p->hints.maximum - p->hints.minimum );
 
-                if ( r  <= 0.01f )
-                    o->precision( 4 );
-                else if ( r <= 0.1f )
-                    o->precision( 3 );
-                else if ( r <= 100.0f )
-                    o->precision( 2 );
-                else if ( r <= 5000.0f )
-                    o->precision( 1 );
-                /* else if ( r <= 10000.0f ) */
-                /*     o->precision( 1 ); */
-                else
-                    o->precision( 0 );
-
+                    if ( r  <= 0.01f )
+                        o->precision( 4 );
+                    else if ( r <= 0.1f )
+                        o->precision( 3 );
+                    else if ( r <= 100.0f )
+                        o->precision( 2 );
+                    else if ( r <= 5000.0f )
+                        o->precision( 1 );
+                    /* else if ( r <= 10000.0f ) */
+                    /*     o->precision( 1 ); */
+                    else
+                        o->precision( 0 );
+                }
             }
             else
             {
@@ -360,22 +389,29 @@ Module_Parameter_Editor::make_controls ( void )
 		if ( p->hints.type & Module::Port::Hints::LOGARITHMIC )
 		    o->log(true);
 
-                o->precision( 2 );
-                /* a couple of plugins have ridiculously small units */
-                float r =  fabs( p->hints.maximum - p->hints.minimum );
-              
-                if ( r  <= 0.01f )
-                    o->precision( 4 );
-                else if ( r <= 0.1f )
-                    o->precision( 3 );
-                else if ( r <= 100.0f )
+                if ( p->hints.type == Module::Port::Hints::LV2_INTEGER )
+                {
+                    o->precision(0);
+                }
+                else    // floats
+                {
                     o->precision( 2 );
-                else if ( r <= 5000.0f )
-                    o->precision( 1 );
-                /* else if ( r <= 10000.0f ) */
-                /*     o->precision( 1 ); */
-                else
-                    o->precision( 0 );
+                    /* a couple of plugins have ridiculously small units */
+                    float r =  fabs( p->hints.maximum - p->hints.minimum );
+
+                    if ( r  <= 0.01f )
+                        o->precision( 4 );
+                    else if ( r <= 0.1f )
+                        o->precision( 3 );
+                    else if ( r <= 100.0f )
+                        o->precision( 2 );
+                    else if ( r <= 5000.0f )
+                        o->precision( 1 );
+                    /* else if ( r <= 10000.0f ) */
+                    /*     o->precision( 1 ); */
+                    else
+                        o->precision( 0 );
+                }
 
                 o->textsize( 8 );
 //                o->box( FL_NO_BOX );
@@ -452,6 +488,15 @@ Module_Parameter_Editor::make_controls ( void )
     update_control_visibility();
 }
 
+#ifdef PRESET_SUPPORT
+void
+Module_Parameter_Editor::set_preset_controls(int choice)
+{
+    Plugin_Module *pm = static_cast<Plugin_Module *> (_module);
+    pm->update_control_parameters(choice);
+}
+#endif
+
 void 
 Module_Parameter_Editor::update_control_visibility ( void )
 {
@@ -515,6 +560,15 @@ Module_Parameter_Editor::cb_mode_handle ( Fl_Widget *, void *v )
 {
     ((Module_Parameter_Editor*)v)->make_controls();
 }
+
+#ifdef PRESET_SUPPORT
+void
+Module_Parameter_Editor::cb_preset_handle ( Fl_Widget *w, void *v )
+{
+    Fl_Menu_Button *m = (Fl_Menu_Button*)w;
+    ((Module_Parameter_Editor*)v)->set_preset_controls( (int) m->value());
+}
+#endif
 
 void
 Module_Parameter_Editor::bind_control ( int i )

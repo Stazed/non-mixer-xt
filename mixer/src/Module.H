@@ -57,7 +57,7 @@ class Module : public Fl_Group, public Loggable {
     static char *_copied_module_settings;
 
     int _number;
-    
+
     void init ( void );
 
     void insert_menu_cb ( const Fl_Menu_ *m );
@@ -106,6 +106,8 @@ public:
         };
     };
 
+    bool _is_lv2;
+
     class Port
     {
 
@@ -131,7 +133,7 @@ public:
         /* hints for control ports (specifically control inputs) */
         struct Hints
         {
-            enum Type { LINEAR, LOGARITHMIC, BOOLEAN, INTEGER };
+            enum Type { LINEAR, LOGARITHMIC, BOOLEAN, INTEGER, LV2_INTEGER };
 
             Type type;
             bool ranged;

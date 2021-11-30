@@ -161,7 +161,7 @@ Module::init ( void )
     control_output.reserve(16);
     aux_audio_input.reserve(16);
     aux_audio_output.reserve(16);
-    
+
 //    _latency = 0;
     _is_default = false;
     _editor = 0;
@@ -170,6 +170,7 @@ Module::init ( void )
     _bypass = 0;
     _base_label = NULL;
     _number = -2;	/* magic number indicates old instance, before numbering */
+    _is_lv2 = false;
 
     box( FL_UP_BOX );
     labeltype( FL_NO_LABEL );

@@ -418,8 +418,8 @@ public:
         return NULL;
     }
 
-#if 0 /* requires custom lilv */
-    LilvState* getStateFromURI(const LV2_URI uri, const LV2_URID_Map* const uridMap) const
+    /* requires custom lilv */
+    LilvState* getStateFromURI(const LV2_URI uri,  LV2_URID_Map* const uridMap) const
     {
         if (uri == NULL || uri[0] == '\0' || uridMap == NULL || needsInit)
             return NULL;
@@ -433,7 +433,7 @@ public:
 
         return NULL;
     }
-#endif
+
 };
 
 // -----------------------------------------------------------------------
@@ -1074,6 +1074,84 @@ const LV2_RDF_Descriptor* lv2_rdf_new(const LV2_URI uri, const bool loadPresets)
                 lilv_nodes_free(const_cast<LilvNodes*>(lilvScalePoints.me));
             }
         }
+    }
+
+    if (loadPresets)
+    {
+        Lilv::Nodes presetNodes(lilvPlugin.get_related(lv2World.preset_preset));
+
+        if (presetNodes.size() > 0)
+        {
+            std::vector<std::string> presetListURIs;
+
+            LILV_FOREACH(nodes, it, presetNodes)
+            {
+                Lilv::Node presetNode(presetNodes.get(it));
+
+                std::string presetURI(presetNode.as_uri());
+                
+                //DMESSAGE("Preset: %s", presetURI.c_str());                
+                if (! (presetURI.empty() )) 
+                {
+                    presetListURIs.push_back(presetURI);
+                }
+            }
+
+            rdfDescriptor->PresetCount = static_cast<uint32_t>(presetListURIs.size());
+            
+            // create presets with unique URIs
+            rdfDescriptor->Presets = new LV2_RDF_Preset[rdfDescriptor->PresetCount];
+
+            // set preset data
+            LILV_FOREACH(nodes, it, presetNodes)
+            {
+                Lilv::Node presetNode(presetNodes.get(it));
+
+                if (lv2World.load_resource(presetNode) == -1)
+                    continue;
+
+                if (const char* const presetURI = presetNode.as_uri())
+                {
+                    int index = -1;
+                    
+                    for (unsigned i = 0; i < presetListURIs.size(); ++i)
+                    {
+                        if (! strcmp( presetListURIs[i].c_str(), presetURI ))
+                            index = i;
+
+                        if (index < 0) continue;
+                    }
+                    
+                    LV2_RDF_Preset* const rdfPreset(&rdfDescriptor->Presets[index]);
+
+                    // ---------------------------------------------------
+                    // Set Preset Information
+                    {
+                        rdfPreset->URI = strdup(presetURI);
+
+                        Lilv::Nodes presetLabelNodes(lv2World.find_nodes(presetNode, lv2World.rdfs_label, NULL));
+
+                        if (presetLabelNodes.size() > 0)
+                        {
+                            if (const char* const label = presetLabelNodes.get_first().as_string())
+                                rdfPreset->Label = strdup(label);
+
+                            //DMESSAGE("Label = %s", rdfPreset->Label);
+                        }
+                        
+                        LV2_RDF_Preset Ppreset = *rdfPreset;
+
+                        rdfDescriptor->PresetListStructs.push_back(Ppreset);
+
+                        lilv_nodes_free(const_cast<LilvNodes*>(presetLabelNodes.me));
+                    }   
+                }
+            }
+            /* Sort alphabetic based on .Label */
+            std::sort( rdfDescriptor->PresetListStructs.begin(), rdfDescriptor->PresetListStructs.end(), LV2_RDF_Preset::before );
+        }
+
+        lilv_nodes_free(const_cast<LilvNodes*>(presetNodes.me));
     }
 
 #if 0

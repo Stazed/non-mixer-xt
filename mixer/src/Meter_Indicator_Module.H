@@ -63,7 +63,7 @@ public:
 
     LOG_CREATE_FUNC( Meter_Indicator_Module );
 
-    void process ( nframes_t );
+    virtual void process ( nframes_t );
 
 protected:
 

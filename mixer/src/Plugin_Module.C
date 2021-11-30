@@ -52,6 +52,43 @@
 
 
 
+#ifdef PRESET_SUPPORT
+// LV2 Presets: port value setter.
+static void mixer_lv2_set_port_value ( const char *port_symbol,
+	void *user_data, const void *value, uint32_t size, uint32_t type )
+{
+    Plugin_Module *pLv2Plugin = static_cast<Plugin_Module *> (user_data);
+    if (pLv2Plugin == NULL)
+            return;
+
+    const LilvPlugin *plugin = pLv2Plugin->get_slv2_plugin();
+
+    if (plugin == NULL)
+            return;
+
+    if (size != sizeof(float))
+            return;
+
+    LilvWorld* world = pLv2Plugin->get_lilv_world();
+
+    LilvNode *symbol = lilv_new_string(world, port_symbol);
+
+    const LilvPort *port = lilv_plugin_get_port_by_symbol(plugin, symbol);
+
+    if (port)
+    {
+        const float val = *(float *) value;
+        const unsigned long port_index = lilv_port_get_index(plugin, port);
+        
+        DMESSAGE("port Index = %lu: value = %f", port_index, val);
+        
+        pLv2Plugin->generate_control_string(port_index, val);
+    }
+
+    lilv_node_free(symbol);
+}
+#endif
+
 /* supported lv2 features */
 enum Plugin_Module_Supported_Features {
     Plugin_Feature_BufSize_Bounded = 0,
@@ -343,6 +380,11 @@ Plugin_Module::~Plugin_Module ( )
 {
     log_destroy();
     plugin_instances( 0 );
+    
+#ifdef PRESET_SUPPORT
+    lilv_instance_free(m_instance);
+    lilv_world_free(m_lilvWorld);
+#endif
 }
 
 
@@ -466,6 +508,12 @@ Plugin_Module::init ( void )
 
     _idata->lv2.features[Plugin_Feature_URID_Unmap]->URI  = LV2_URID__unmap;
     _idata->lv2.features[Plugin_Feature_URID_Unmap]->data = uridUnmapFt;
+    
+#ifdef PRESET_SUPPORT
+    m_lilvWorld = lilv_world_new();
+    lilv_world_load_all(m_lilvWorld);
+    m_lilvPlugins = lilv_world_get_all_plugins(m_lilvWorld);
+#endif
 }
 
 void
@@ -610,6 +658,62 @@ Plugin_Module::join_discover_thread ( void )
 {
     plugin_discover_thread->join();
 }
+
+#ifdef PRESET_SUPPORT
+void
+Plugin_Module::generate_control_string(unsigned long port_index, float value)
+{
+    port_controls preset_item;
+    preset_item.port_index = port_index;
+    preset_item.value = value;
+    vector_port_controls.push_back(preset_item);
+}
+
+void 
+Plugin_Module::update_control_parameters(int choice)
+{
+    m_preset_changes.clear();
+    vector_port_controls.clear();
+    
+    const Lv2WorldClass& lv2World = Lv2WorldClass::getInstance();
+    
+    LilvState *state = lv2World.getStateFromURI(PresetList[choice].URI, _uridMapFt);
+    lilv_state_restore(state, m_instance,  mixer_lv2_set_port_value, this, 0, NULL);
+
+    /* Sort the preset vector by port number to get correct order */
+    std::sort( vector_port_controls.begin(), vector_port_controls.end(), port_controls::before );
+    
+    if(control_input.size() > vector_port_controls.size())
+    {
+        if ( !strcasecmp( "Bypass", control_input[0].name() ) )
+        {
+            m_preset_changes = "0.0:";
+        }
+        else
+        {
+            // What to do here??
+        }
+    }
+    
+    /* Generate the semi-colon delimited string to set the parameters */
+    for(unsigned i = 0; i < vector_port_controls.size(); ++i)
+    {
+        std::string ss = std::to_string(vector_port_controls[i].value);
+        
+        m_preset_changes.append(ss);
+        
+        if( i != (vector_port_controls.size() - 1))
+            m_preset_changes.append(":");
+    }
+    
+    DMESSAGE("Control String = %s", m_preset_changes.c_str());
+    
+    set_parameters(m_preset_changes.c_str());
+    
+    lilv_state_free(state);
+}
+#endif
+
 
 /* return a list of available plugins */
 std::list<Plugin_Module::Plugin_Info>
@@ -1220,8 +1324,17 @@ bool
 Plugin_Module::load_lv2 ( const char* uri )
 {
     _is_lv2 = true;
-    _idata->lv2.rdf_data = lv2_rdf_new( uri, false );
-
+    _idata->lv2.rdf_data = lv2_rdf_new( uri, true );
+#ifdef PRESET_SUPPORT
+    /* This be preset loading stuff */
+    PresetList = _idata->lv2.rdf_data->PresetListStructs;
+    _uridMapFt =  (LV2_URID_Map*) _idata->lv2.features[Plugin_Feature_URID_Map]->data;
+    LilvNode* plugin_uri = lilv_new_uri(get_lilv_world(), uri);
+    m_plugin = lilv_plugins_get_by_uri(get_lilv_plugins(), plugin_uri);
+    lilv_node_free(plugin_uri);
+    m_instance = lilv_plugin_instantiate(m_plugin,  sample_rate(), nullptr);
+    /* End preset stuff */
+#endif
     _plugin_ins = _plugin_outs = 0;
 
     if ( ! _idata->lv2.rdf_data )
@@ -1366,14 +1479,20 @@ Plugin_Module::load_lv2 ( const char* uri )
                     p.hints.default_value *= sample_rate();
                 }
 
+                if ( LV2_IS_PORT_INTEGER( rdfport.Properties ) )
+                {
+                    p.hints.type = Port::Hints::LV2_INTEGER;
+                }
+
+                /* Should always check toggled and enumeration after integer since 
+                 some LV2s will have both */
                 if ( LV2_IS_PORT_TOGGLED( rdfport.Properties ) )
                 {
                     p.hints.type = Port::Hints::BOOLEAN;
                 }
-                if ( LV2_IS_PORT_INTEGER( rdfport.Properties ) )
+                if( LV2_IS_PORT_ENUMERATION(rdfport.Properties) )
                 {
-                    if( LV2_IS_PORT_ENUMERATION(rdfport.Properties) )
-                        p.hints.type = Port::Hints::INTEGER;
+                    p.hints.type = Port::Hints::INTEGER;
                 }
                 if ( LV2_IS_PORT_LOGARITHMIC( rdfport.Properties ) )
                 {
@@ -1732,7 +1851,6 @@ Plugin_Module::apply ( sample_t *buf, nframes_t nframes )
     {
         _idata->lv2.descriptor->run( h, tframes );
 
-        // FIXME crash from changing port connections with R+ reverb and others
         for ( unsigned int k = 0; k < _idata->lv2.rdf_data->PortCount; ++k )
             if ( LV2_IS_PORT_AUDIO( _idata->lv2.rdf_data->Ports[k].Types ) )
                 _idata->lv2.descriptor->connect_port( h, k, buf );
@@ -1749,7 +1867,7 @@ Plugin_Module::apply ( sample_t *buf, nframes_t nframes )
     /* run for real */
     if (_is_lv2)
     {
-        _idata->lv2.descriptor->run( h, nframes );  // FIXME this crashes r+ reverb and others if port changed
+        _idata->lv2.descriptor->run( h, nframes );
 
         if ( _idata->lv2.descriptor->deactivate )
             _idata->lv2.descriptor->deactivate( h );

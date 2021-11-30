@@ -422,23 +422,19 @@ struct LV2_RDF_Port {
 // Preset
 struct LV2_RDF_Preset {
     LV2_URI URI;
-    const char* Label;
+    std::string Label;
+    
+    static bool before( const LV2_RDF_Preset& c1, const LV2_RDF_Preset& c2 ) { return c1.Label < c2.Label; }
 
     LV2_RDF_Preset()
-        : URI(NULL),
-          Label(NULL) {}
+        : URI(NULL) {}
 
     ~LV2_RDF_Preset()
     {
         if (URI != NULL)
         {
-            ::free((void*)URI);
+            //::free((void*)URI);   // causes double free
             URI = NULL;
-        }
-        if (Label != NULL)
-        {
-            ::free((void*)Label);
-            Label = NULL;
         }
     }
 };
@@ -539,6 +535,7 @@ struct LV2_RDF_Descriptor {
 
     uint32_t PresetCount;
     LV2_RDF_Preset* Presets;
+    std::vector<LV2_RDF_Preset> PresetListStructs;
 
     uint32_t FeatureCount;
     LV2_RDF_Feature* Features;
