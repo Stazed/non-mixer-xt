@@ -104,18 +104,21 @@ Module_Parameter_Editor::Module_Parameter_Editor ( Module *module ) : Fl_Double_
         if (_module->_is_lv2)
         {
             Plugin_Module *pm = static_cast<Plugin_Module *> (_module);
+            
+            if( !pm->PresetList.empty() )
+            {
+                { Fl_Menu_Button *o = LV2_presets_choice = new Fl_Menu_Button( 100, 0, 25, 25 );
+                    for(unsigned i = 0; i < pm->PresetList.size(); ++i)
+                    {
+                        o->add( pm->PresetList[i].Label.c_str() );
+                    }
 
-            { Fl_Menu_Button *o = LV2_presets_choice = new Fl_Menu_Button( 100, 0, 25, 25 );
-                for(unsigned i = 0; i < pm->PresetList.size(); ++i)
-                {
-                    o->add( pm->PresetList[i].Label.c_str() );
+                    o->label( "Presets" );
+                    o->align(FL_ALIGN_RIGHT);
+                    o->value( 0 );
+                    o->when( FL_WHEN_CHANGED|FL_WHEN_NOT_CHANGED );
+                    o->callback( cb_preset_handle,  this );
                 }
-
-                o->label( "Presets" );
-                o->align(FL_ALIGN_RIGHT);
-                o->value( 0 );
-                o->when( FL_WHEN_CHANGED|FL_WHEN_NOT_CHANGED );
-                o->callback( cb_preset_handle,  this );
             }
         }
 #endif
