@@ -422,23 +422,19 @@ struct LV2_RDF_Port {
 // Preset
 struct LV2_RDF_Preset {
     LV2_URI URI;
-    const char* Label;
+    std::string Label;
+    
+    static bool before( const LV2_RDF_Preset& c1, const LV2_RDF_Preset& c2 ) { return c1.Label < c2.Label; }
 
     LV2_RDF_Preset()
-        : URI(NULL),
-          Label(NULL) {}
+        : URI(NULL) {}
 
     ~LV2_RDF_Preset()
     {
         if (URI != NULL)
         {
-            //::free((void*)URI);   // FIXME the causes double free
+            //::free((void*)URI);   // causes double free
             URI = NULL;
-        }
-        if (Label != NULL)
-        {
-            //::free((void*)Label); // FIXME the causes double free
-            Label = NULL;
         }
     }
 };

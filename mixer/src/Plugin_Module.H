@@ -69,10 +69,10 @@ public:
 #ifdef PRESET_SUPPORT
     /* Preset loading stuff */
     std::vector<LV2_RDF_Preset> PresetList;
-    const LilvPlugin*     m_plugin;   /**< Plugin "class" (actually just a few strings) */
+    const LilvPlugin*     m_plugin;     /**< Plugin "class" (actually just a few strings) */
     LilvWorld* 	m_lilvWorld{};
     const LilvPlugins*	m_lilvPlugins{};
-    LilvInstance*   m_instance{};      /**< Plugin "instance" (loaded shared lib) */
+    LilvInstance*   m_instance{};       /**< Plugin "instance" (loaded shared lib) */
     LV2_URID_Map* _uridMapFt;
     LilvWorld* get_lilv_world() {return m_lilvWorld;}
     const LilvPlugin* get_slv2_plugin() const {return m_plugin; }

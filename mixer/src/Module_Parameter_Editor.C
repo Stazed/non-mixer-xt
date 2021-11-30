@@ -108,7 +108,7 @@ Module_Parameter_Editor::Module_Parameter_Editor ( Module *module ) : Fl_Double_
             { Fl_Menu_Button *o = LV2_presets_choice = new Fl_Menu_Button( 100, 0, 25, 25 );
                 for(unsigned i = 0; i < pm->PresetList.size(); ++i)
                 {
-                    o->add( pm->PresetList[i].Label  );
+                    o->add( pm->PresetList[i].Label.c_str() );
                 }
 
                 o->label( "Presets" );

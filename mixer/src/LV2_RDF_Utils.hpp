@@ -1082,32 +1082,20 @@ const LV2_RDF_Descriptor* lv2_rdf_new(const LV2_URI uri, const bool loadPresets)
 
         if (presetNodes.size() > 0)
         {
-            // create a list of preset URIs (for checking appliesTo, sorting and unique-ness)
-            // FIXME - check appliesTo?
-
-
-            //QStringList presetListURIs;
             std::vector<std::string> presetListURIs;
 
             LILV_FOREACH(nodes, it, presetNodes)
             {
                 Lilv::Node presetNode(presetNodes.get(it));
-                
-                //QString presetURI(presetNode.as_uri());
+
                 std::string presetURI(presetNode.as_uri());
                 
-                //DMESSAGE("Preset: %s", presetURI.c_str());
-
-            //    if (! (presetURI.trimmed().isEmpty() || presetListURIs.contains(presetURI)))
-            //        presetListURIs.append(presetURI);
-                
-                if (! (presetURI.empty()  /* || check for duplicates */  )) // and trim FIXME
+                //DMESSAGE("Preset: %s", presetURI.c_str());                
+                if (! (presetURI.empty() )) 
                 {
                     presetListURIs.push_back(presetURI);
                 }
             }
-
-           // presetListURIs.sort();    // FIXME
 
             rdfDescriptor->PresetCount = static_cast<uint32_t>(presetListURIs.size());
             
@@ -1124,7 +1112,6 @@ const LV2_RDF_Descriptor* lv2_rdf_new(const LV2_URI uri, const bool loadPresets)
 
                 if (const char* const presetURI = presetNode.as_uri())
                 {
-                    //const int index(presetListURIs.indexOf(QString(presetURI)));
                     int index = -1;
                     
                     for (unsigned i = 0; i < presetListURIs.size(); ++i)
@@ -1160,6 +1147,8 @@ const LV2_RDF_Descriptor* lv2_rdf_new(const LV2_URI uri, const bool loadPresets)
                     }   
                 }
             }
+            /* Sort alphabetic based on .Label */
+            std::sort( rdfDescriptor->PresetListStructs.begin(), rdfDescriptor->PresetListStructs.end(), LV2_RDF_Preset::before );
         }
 
         lilv_nodes_free(const_cast<LilvNodes*>(presetNodes.me));
