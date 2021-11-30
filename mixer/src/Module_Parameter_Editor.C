@@ -296,6 +296,19 @@ Module_Parameter_Editor::make_controls ( void )
             o->value( p->control_value() );
             o->align(FL_ALIGN_TOP);
         }
+        else if ( p->hints.type == Module::Port::Hints::LV2_ENUMERATION )
+        {
+            Fl_Choice *o =  new Fl_Choice( 0, 0, 200, 25, p->name() );
+            w = o;
+            for(unsigned count = 0; count < module->control_input[i].hints.ScalePoints.size(); ++count)
+            {
+                o->add( module->control_input[i].hints.ScalePoints[count].c_str() );
+            }
+
+            o->align(FL_ALIGN_RIGHT);
+            o->value( p->control_value() );
+            o->selection_color( fc );
+        }
         else if ( p->hints.type == Module::Port::Hints::INTEGER )
         {
 
@@ -434,6 +447,8 @@ Module_Parameter_Editor::make_controls ( void )
 
         if ( p->hints.type == Module::Port::Hints::BOOLEAN )
             w->callback( cb_button_handle, &_callback_data.back() );
+        else if ( p->hints.type == Module::Port::Hints::LV2_ENUMERATION )
+            w->callback( cb_enumeration_handle, &_callback_data.back() );
         else
             w->callback( cb_value_handle, &_callback_data.back() );
 
@@ -525,6 +540,14 @@ Module_Parameter_Editor::update_control_visibility ( void )
     size( width, height );
     size_range( width, height, width, height );
 
+}
+
+void
+Module_Parameter_Editor::cb_enumeration_handle ( Fl_Widget *w, void *v )
+{
+    callback_data *cd = (callback_data*)v;
+
+    cd->base_widget->set_value( cd->port_number[0], ((Fl_Choice*)w)->value() );
 }
 
 void
@@ -622,6 +645,12 @@ Module_Parameter_Editor::handle_control_changed ( Module::Port *p )
 
         v->value( p->control_value() );
     }        
+    else if ( p->hints.type == Module::Port::Hints::LV2_ENUMERATION )
+    {
+        Fl_Choice *v = (Fl_Choice*)w;
+    
+        v->value( p->control_value() );
+    }
     else
     {
         Fl_Valuator *v = (Fl_Valuator*)w;

@@ -466,6 +466,18 @@ Controller_Module::connect_to ( Port *p )
 
         o->value( p->control_value() );
     }
+    else if ( p->hints.type == Module::Port::Hints::LV2_ENUMERATION )
+    {
+        Fl_Choice *o =  new Fl_Choice( 0, 0, 25, 25, p->name() );
+        o->selection_color( fl_color_average( FL_GRAY, FL_CYAN, 0.5 ) );
+        /* FIXME: hack */
+        control = (Fl_Valuator*)o;
+        w = o;
+ 
+        _type = CHOICE;
+            
+        o->value( p->control_value() );
+    }
     //  else if ( p->hints.type == Module::Port::Hints::LOGARITHMIC )
     else
     {
@@ -983,7 +995,13 @@ Controller_Module::handle_control_changed ( Port *p )
     else
     {
         if ( type() == TOGGLE )
+        {
             ((Fl_Button*)control)->value(control_value);
+        }
+        else if ( type() == CHOICE )
+        {
+            ((Fl_Choice*)control)->value(control_value);
+        }
         else
             control->value(control_value);
     }

@@ -133,7 +133,7 @@ public:
         /* hints for control ports (specifically control inputs) */
         struct Hints
         {
-            enum Type { LINEAR, LOGARITHMIC, BOOLEAN, INTEGER, LV2_INTEGER };
+            enum Type { LINEAR, LOGARITHMIC, BOOLEAN, INTEGER, LV2_INTEGER, LV2_ENUMERATION };
 
             Type type;
             bool ranged;
@@ -142,6 +142,7 @@ public:
             float default_value;
             int dimensions;
             bool visible;
+            std::vector<std::string>ScalePoints;
 
             Hints ( )
                 {

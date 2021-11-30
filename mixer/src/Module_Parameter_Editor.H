@@ -71,6 +71,7 @@ class Module_Parameter_Editor : public Fl_Double_Window
 
     void update_control_visibility ( void );
     static void cb_button_handle ( Fl_Widget *w, void *v );
+    static void cb_enumeration_handle ( Fl_Widget *w, void *v );
     static void cb_value_handle ( Fl_Widget *w, void *v );
     static void cb_panner_value_handle ( Fl_Widget *w, void *v );
     static void cb_mode_handle ( Fl_Widget *w, void *v );

@@ -65,7 +65,8 @@ public:
                 SLIDER,
                 SPINNER,
                 TOGGLE,
-                SPATIALIZATION };
+                CHOICE,
+                SPATIALIZATION, };
 
     Mode mode ( void ) const { return _mode; }
     void mode ( Mode v );

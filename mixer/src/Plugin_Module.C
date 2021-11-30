@@ -1492,7 +1492,12 @@ Plugin_Module::load_lv2 ( const char* uri )
                 }
                 if( LV2_IS_PORT_ENUMERATION(rdfport.Properties) )
                 {
-                    p.hints.type = Port::Hints::INTEGER;
+                    p.hints.type = Port::Hints::LV2_ENUMERATION;
+                    
+                    for( unsigned i = 0; i < rdfport.ScalePointCount; ++i )
+                    {
+                        p.hints.ScalePoints.push_back(rdfport.ScalePoints[i].Label);
+                    }
                 }
                 if ( LV2_IS_PORT_LOGARITHMIC( rdfport.Properties ) )
                 {
