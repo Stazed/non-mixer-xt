@@ -136,7 +136,6 @@ private:
     void deactivate ( void );
     
     bool apply ( sample_t *buf, nframes_t nframes );
-    void process ( unsigned long nframes );
 
     bool plugin_instances ( unsigned int );
 
