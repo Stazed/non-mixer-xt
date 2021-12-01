@@ -20,6 +20,7 @@
 #pragma once
 
 #include <FL/Fl_Double_Window.H>
+#include <FL/Fl_Choice.H>
 
 class Fl_Pack;
 class Fl_Flowpack;
@@ -94,7 +95,7 @@ class Module_Parameter_Editor : public Fl_Double_Window
     Fl_Scroll *control_scroll;
     Fl_Flowpack *control_pack;
     Fl_Menu_Button *mode_choice;
-    Fl_Menu_Button *LV2_presets_choice;
+    Fl_Choice *LV2_presets_choice;
     bool _resized;
     int _min_width;
     int _selected_control;

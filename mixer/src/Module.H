@@ -106,6 +106,16 @@ public:
         };
     };
 
+    struct EnumeratorScalePoints
+    {
+        std::string Label;
+        float Value;
+
+        static bool before( const EnumeratorScalePoints& c1, const EnumeratorScalePoints& c2 ) { return c1.Value < c2.Value; }
+        
+        EnumeratorScalePoints() : Value(0.0) {}
+    };
+
     bool _is_lv2;
 
     class Port
@@ -142,7 +152,7 @@ public:
             float default_value;
             int dimensions;
             bool visible;
-            std::vector<std::string>ScalePoints;
+            std::vector<EnumeratorScalePoints>ScalePoints;
 
             Hints ( )
                 {

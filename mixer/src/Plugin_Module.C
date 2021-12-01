@@ -1496,8 +1496,16 @@ Plugin_Module::load_lv2 ( const char* uri )
                     
                     for( unsigned i = 0; i < rdfport.ScalePointCount; ++i )
                     {
-                        p.hints.ScalePoints.push_back(rdfport.ScalePoints[i].Label);
+                        EnumeratorScalePoints item;
+                        item.Label = std::to_string( (int) rdfport.ScalePoints[i].Value);
+                        item.Label += " - ";
+                        item.Label += rdfport.ScalePoints[i].Label;
+                        item.Value = rdfport.ScalePoints[i].Value;
+                        p.hints.ScalePoints.push_back(item);
+                       // DMESSAGE("Label = %s: Value = %f", rdfport.ScalePoints[i].Label, rdfport.ScalePoints[i].Value);
                     }
+                    
+                    std::sort( p.hints.ScalePoints.begin(), p.hints.ScalePoints.end(), EnumeratorScalePoints::before );
                 }
                 if ( LV2_IS_PORT_LOGARITHMIC( rdfport.Properties ) )
                 {

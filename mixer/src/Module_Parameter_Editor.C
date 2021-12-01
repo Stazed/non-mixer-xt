@@ -107,7 +107,7 @@ Module_Parameter_Editor::Module_Parameter_Editor ( Module *module ) : Fl_Double_
             
             if( !pm->PresetList.empty() )
             {
-                { Fl_Menu_Button *o = LV2_presets_choice = new Fl_Menu_Button( 100, 0, 25, 25 );
+                { Fl_Choice *o = LV2_presets_choice = new Fl_Choice( 30, 0, 150, 25 );
                     for(unsigned i = 0; i < pm->PresetList.size(); ++i)
                     {
                         o->add( pm->PresetList[i].Label.c_str() );
@@ -302,7 +302,7 @@ Module_Parameter_Editor::make_controls ( void )
             w = o;
             for(unsigned count = 0; count < module->control_input[i].hints.ScalePoints.size(); ++count)
             {
-                o->add( module->control_input[i].hints.ScalePoints[count].c_str() );
+                o->add( module->control_input[i].hints.ScalePoints[count].Label.c_str() );
             }
 
             o->align(FL_ALIGN_RIGHT);
@@ -588,7 +588,7 @@ Module_Parameter_Editor::cb_mode_handle ( Fl_Widget *, void *v )
 void
 Module_Parameter_Editor::cb_preset_handle ( Fl_Widget *w, void *v )
 {
-    Fl_Menu_Button *m = (Fl_Menu_Button*)w;
+    Fl_Choice *m = (Fl_Choice*)w;
     ((Module_Parameter_Editor*)v)->set_preset_controls( (int) m->value());
 }
 #endif
