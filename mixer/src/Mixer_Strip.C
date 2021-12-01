@@ -817,7 +817,7 @@ Mixer_Strip::snapshot ( void )
 bool
 Mixer_Strip::export_strip ( const char *filename )
 {
-    MESSAGE( "Exporting chain state" );
+    MESSAGE( "Exporting chain state = %s", filename );
     Loggable::snapshot_callback( &Mixer_Strip::snapshot, this );
     return Loggable::snapshot( filename );
     }
@@ -825,7 +825,7 @@ Mixer_Strip::export_strip ( const char *filename )
 bool
 Mixer_Strip::import_strip ( const char *filename )
 {
-    MESSAGE( "Importing new chain state" );
+    MESSAGE( "Importing new chain state = %s", filename );
     Loggable::begin_relative_id_mode();
     int r = Loggable::replay( filename );
     Loggable::end_relative_id_mode();
@@ -866,7 +866,7 @@ Mixer_Strip::menu_cb ( const Fl_Menu_ *m )
         export_strip( "clipboard.strip" );
 
         char *s;
-        asprintf( &s, "file://%s/%s\r\n", Project::path(), "clipboard.strip" );
+        asprintf( &s, "file://%s/%s\r\n", Project::path(), "clipboard.strip" ); // FIXME what if no project saved yet
 
         Fl::copy( s, strlen(s), 0 );
 

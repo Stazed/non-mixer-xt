@@ -239,9 +239,7 @@ void Mixer::cb_menu(Fl_Widget* o) {
     }
     else if (! strcmp( picked, "&Project/&Open" ) )
     {
-        char *path = NULL;
-
-//        read_line( user_config_dir, "default_path", &path );
+        char *path = read_line( user_config_dir, "default_path");
 
         const char *name = fl_dir_chooser( "Open Project", path );
 
@@ -1139,7 +1137,7 @@ Mixer::handle ( int m )
 
             printf( "pasted file \"%s\"\n", file );
 
-            if (! Mixer_Strip::import_strip( file ) )
+            if (! Mixer_Strip::import_strip( file ) )       // FIXME won't work unless Project::path() is set
                 fl_alert( "%s", "Failed to import strip!" );
             
             return 1;
