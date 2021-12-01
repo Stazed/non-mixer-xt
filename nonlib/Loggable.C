@@ -195,11 +195,11 @@ Loggable::load_unjournaled_state ( void )
 
 /** replay journal or snapshot */
 bool
-Loggable::replay ( const char *file )
+Loggable::replay ( const char *file, bool need_clear )
 {
     if ( FILE *fp = fopen( file, "r" ) )
     {
-        bool r = replay( fp, false );
+        bool r = replay( fp, need_clear );
 
         fclose( fp );
 

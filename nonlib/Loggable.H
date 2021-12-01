@@ -160,7 +160,7 @@ public:
     
     static bool readonly ( void ) { return _readonly; }
 
-    static bool replay ( const char *name );
+    static bool replay ( const char *name, bool need_clear = true );
 
     static bool snapshot( FILE * fp );
     static bool snapshot( const char *name );

@@ -827,7 +827,7 @@ Mixer_Strip::import_strip ( const char *filename )
 {
     MESSAGE( "Importing new chain state = %s", filename );
     Loggable::begin_relative_id_mode();
-    int r = Loggable::replay( filename );
+    int r = Loggable::replay( filename, false );    // false = do not clear the dirty flag
     Loggable::end_relative_id_mode();
     return r;
 }
