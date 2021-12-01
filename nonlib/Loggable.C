@@ -199,7 +199,7 @@ Loggable::replay ( const char *file )
 {
     if ( FILE *fp = fopen( file, "r" ) )
     {
-        bool r = replay( fp );
+        bool r = replay( fp, false );
 
         fclose( fp );
 
@@ -209,9 +209,9 @@ Loggable::replay ( const char *file )
         return false;
 }
 
-/** replay journal or snapshot */
+/** replay journal or snapshot, or import strip, pasted strip */
 bool
-Loggable::replay ( FILE *fp )
+Loggable::replay ( FILE *fp, bool need_clear )
 {
     char *buf = NULL;
 
@@ -245,7 +245,9 @@ Loggable::replay ( FILE *fp )
     if ( _progress_callback )
         _progress_callback( 0, _progress_callback_arg );
 
-    clear_dirty();
+    /* Import strip and paste strip should not clear dirty */
+    if( need_clear )
+        clear_dirty();
 
     return true;
 }

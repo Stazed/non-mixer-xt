@@ -150,7 +150,7 @@ private:
     void record_unjournaled ( void ) const;
     static bool load_unjournaled_state ( void );
 
-    static bool replay ( FILE *fp );
+    static bool replay ( FILE *fp, bool need_clear = true );
 
     static void signal_dirty ( int v ) { if ( _dirty_callback ) _dirty_callback( v, _dirty_callback_arg ); }
     static void set_dirty ( void ) {  signal_dirty( ++_dirty ); }
