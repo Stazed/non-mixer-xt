@@ -103,6 +103,10 @@ Mixer_Strip::Mixer_Strip() : Fl_Group( 0, 0, 120, 600 )
 Mixer_Strip::~Mixer_Strip ( )
 {
     DMESSAGE( "Destroying mixer strip" );
+    if ( _chain )
+    {
+        _chain->_deleting = true;   // do this first to ensure process does not get called by group on deleting chain
+    }
 
 //    _chain->engine()->lock();
 
@@ -113,14 +117,13 @@ Mixer_Strip::~Mixer_Strip ( )
     /* make sure this gets destroyed before the chain */
     fader_tab->clear();
 
-//    if ( _group )
-//    {
-//	_group->remove( this );
-//    }
+    if ( _group )
+    {
+	_group->remove( this );
+    }
         
     if ( _chain )
     {
-        _chain->_deleting = true;
 	delete _chain;
 	_chain = NULL;
     }
