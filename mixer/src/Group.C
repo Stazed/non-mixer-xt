@@ -64,6 +64,7 @@ Group::~Group ( )
     {
 	/* avoid a use after free during project close when the group
 	 * may be destroyed before its member strips are */
+        (*i)->chain()->_deleting = true;
 	(*i)->clear_group();
     }
 

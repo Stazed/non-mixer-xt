@@ -52,7 +52,7 @@ class Chain : public Fl_Group, public Loggable {
 
     Fl_Callback *_configure_outputs_callback;
     void *_configure_outputs_userdata;
-    
+public:
     bool _deleting;
 
 private:

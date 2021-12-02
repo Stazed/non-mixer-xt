@@ -931,6 +931,9 @@ Chain::process ( nframes_t nframes )
 {
     for ( std::list<Module*>::const_iterator i = process_queue.begin(); i != process_queue.end(); ++i )
     {
+        if(_deleting)
+            return;
+        
 	Module *m = *i;
 	    
 	m->process( nframes );

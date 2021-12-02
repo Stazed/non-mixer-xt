@@ -113,13 +113,14 @@ Mixer_Strip::~Mixer_Strip ( )
     /* make sure this gets destroyed before the chain */
     fader_tab->clear();
 
-    if ( _group )
-    {
-	_group->remove( this );
-    }
-    
+//    if ( _group )
+//    {
+//	_group->remove( this );
+//    }
+        
     if ( _chain )
     {
+        _chain->_deleting = true;
 	delete _chain;
 	_chain = NULL;
     }
