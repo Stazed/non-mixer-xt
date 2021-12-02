@@ -85,11 +85,13 @@ Module_Parameter_Editor::Module_Parameter_Editor ( Module *module ) : Fl_Double_
     _min_width = 30 + fl_width( module->label() );
     
     { Fl_Group *o = new Fl_Group( 0, 0, w(), 25 );
-        o->label( module->label() );
-        o->labelfont( 2 );
-        o->labeltype( FL_SHADOW_LABEL );
-        o->labelsize( 14 );
-        o->align( FL_ALIGN_TOP | FL_ALIGN_RIGHT | FL_ALIGN_INSIDE );
+    /* Deleting this module_label. It is redundant to the window title and gets in the way
+       of the LV2 preset choice on small plugins */
+//        o->label( module->label() );
+//        o->labelfont( 2 );
+//        o->labeltype( FL_SHADOW_LABEL );
+//        o->labelsize( 14 );
+//        o->align( FL_ALIGN_TOP | FL_ALIGN_RIGHT | FL_ALIGN_INSIDE );
 
         { Fl_Menu_Button *o = mode_choice = new Fl_Menu_Button( 0, 0, 25, 25 );
             o->add( "Knobs" );
