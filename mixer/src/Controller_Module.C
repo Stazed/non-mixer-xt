@@ -468,8 +468,15 @@ Controller_Module::connect_to ( Port *p )
     }
     else if ( p->hints.type == Module::Port::Hints::LV2_ENUMERATION )
     {
-        Fl_Choice *o =  new Fl_Choice( 0, 0, 25, 25, p->name() );
+        Fl_Choice *o =  new Fl_Choice( 0, 0, 200, 20 );
         o->selection_color( fl_color_average( FL_GRAY, FL_CYAN, 0.5 ) );
+        
+        /* Add the choice labels */
+        for(unsigned count = 0; count < p->hints.ScalePoints.size(); ++count)
+        {
+            o->add( p->hints.ScalePoints[count].Label.c_str() );
+        }
+
         /* FIXME: hack */
         control = (Fl_Valuator*)o;
         w = o;
@@ -615,6 +622,10 @@ Controller_Module::cb_handle ( Fl_Widget *w )
     if ( type() == TOGGLE )
     {
         control_value = ((Fl_Button*)w)->value();
+    }
+    else if ( type() == CHOICE )
+    {
+        control_value = ((Fl_Choice*)w)->value();
     }
     else
         control_value = ((Fl_Valuator*)w)->value();
