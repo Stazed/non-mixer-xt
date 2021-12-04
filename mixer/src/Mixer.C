@@ -1135,9 +1135,18 @@ Mixer::handle ( int m )
             
             unescape_url( file );
 
-            printf( "pasted file \"%s\"\n", file );
+            std::string project_path(Project::path());
+            if ( project_path.empty() )
+            {
+                project_path = file;
+                project_path.erase(project_path.begin());   // remove leading '/'
+            }
+            else
+                project_path = file;
 
-            if (! Mixer_Strip::import_strip( file ) )       // FIXME won't work unless Project::path() is set
+            MESSAGE( "Pasted file \"%s\"\n", project_path.c_str() );
+
+            if (! Mixer_Strip::import_strip( project_path.c_str() ) )
                 fl_alert( "%s", "Failed to import strip!" );
             
             return 1;

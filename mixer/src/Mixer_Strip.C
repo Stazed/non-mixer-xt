@@ -870,7 +870,7 @@ Mixer_Strip::menu_cb ( const Fl_Menu_ *m )
         export_strip( "clipboard.strip" );
 
         char *s;
-        asprintf( &s, "file://%s/%s\r\n", Project::path(), "clipboard.strip" ); // FIXME what if no project saved yet
+        asprintf( &s, "file://%s/%s\r\n", Project::path(), "clipboard.strip" );
 
         Fl::copy( s, strlen(s), 0 );
 
