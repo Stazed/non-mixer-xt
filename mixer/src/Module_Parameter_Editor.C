@@ -549,7 +549,7 @@ Module_Parameter_Editor::cb_enumeration_handle ( Fl_Widget *w, void *v )
 {
     callback_data *cd = (callback_data*)v;
 
-    cd->base_widget->set_value( cd->port_number[0], ((Fl_Choice*)w)->value() );
+    cd->base_widget->set_value( cd->port_number[0], (float) ((Fl_Choice*)w)->value() );
 }
 
 void
@@ -650,8 +650,8 @@ Module_Parameter_Editor::handle_control_changed ( Module::Port *p )
     else if ( p->hints.type == Module::Port::Hints::LV2_ENUMERATION )
     {
         Fl_Choice *v = (Fl_Choice*)w;
-    
-        v->value( p->control_value() );
+
+        v->value( (int) p->control_value() );
     }
     else
     {
@@ -677,9 +677,16 @@ Module_Parameter_Editor::set_value (int i, float value )
 {
     if ( i >= 0 )
     {
-        _module->control_input[i].control_value( value );
+        /* Is the port connected to a controller for automation? */
         if ( _module->control_input[i].connected() )
-            _module->control_input[i].connected_port()->module()->handle_control_changed( _module->control_input[i].connected_port() );
+        {
+            /* This sets the port value buffer and calls both the Editor and
+               Controller_Module - parameter_control_changed() when connected  */
+            _module->control_input[i].connected_port()->control_value( value );
+        }
+        else /* This sets the port value buffer and only calls Editor
+                parameter_control_changed() when not connected */
+            _module->control_input[i].control_value( value );
     }
 
     update_spectrum();
