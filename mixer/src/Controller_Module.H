@@ -128,6 +128,6 @@ private:
     Mode _mode;
     Type _type;
 
-    Fl_Valuator *control;
+    Fl_Widget *control;
 
 };

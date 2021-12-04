@@ -442,8 +442,7 @@ Controller_Module::connect_to ( Port *p )
 
         _type = TOGGLE;
 
-        /* FIXME: hack */
-        control = (Fl_Valuator*)o;
+        control = (Fl_Button*)o;
     }
     else if ( p->hints.type == Module::Port::Hints::INTEGER )
     {
@@ -477,20 +476,19 @@ Controller_Module::connect_to ( Port *p )
             o->add( p->hints.ScalePoints[count].Label.c_str() );
         }
 
-        /* FIXME: hack */
-        control = (Fl_Valuator*)o;
+        control = (Fl_Choice*)o;
         w = o;
  
         _type = CHOICE;
             
         o->value( p->control_value() );
     }
-    //  else if ( p->hints.type == Module::Port::Hints::LOGARITHMIC )
+    //  else if ( p->hints.type == Module::Port::Hints::LOGARITHMIC || Module::Port::Hints::LV2_INTEGER )
     else
     {
         Fl_Value_SliderX *o = new Fl_Value_SliderX(0, 0, 30, 250 );
 
-        control = o;
+        control = ( Fl_Value_SliderX* )o;
         w = o;
 
         if ( ! _horizontal )
@@ -977,7 +975,12 @@ Controller_Module::handle_control_changed ( Port *p )
     if ( p )
         control_value = p->control_value();
 
-    if ( control->value() == control_value )
+    if ( type() == CHOICE )
+    {
+        if ( ((Fl_Choice*)control)->value() == control_value )
+            return;
+    }
+    else if ( ((Fl_Valuator*)control)->value() == control_value )
         return;
 
     /* if ( control->value() != control_value ) */
@@ -1014,7 +1017,7 @@ Controller_Module::handle_control_changed ( Port *p )
             ((Fl_Choice*)control)->value(control_value);
         }
         else
-            control->value(control_value);
+            ((Fl_Valuator*)control)->value(control_value);
     }
 }
 
