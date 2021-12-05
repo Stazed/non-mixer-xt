@@ -33,6 +33,12 @@
 
 // #include "types.h"
 
+/* On occasion, rapid CTRL-V paste would apply second paste before first was completed.
+   Giving a - FATAL "Attempt to create object with an ID (0x%X) that already exists"  error.
+   This _is_pasting flag is set when paste first occurs, and is unset when completed.
+   Any attempt by the user to paste when true is ignored - only applies to Mixer */
+extern bool _is_pasting;
+
 typedef void (progress_func)( int, void * );
 typedef void (snapshot_func)( void * );
 typedef void (dirty_func)( int, void * );

@@ -49,6 +49,8 @@ bool Loggable::_snapshotting = false;
 int Loggable::_snapshot_count = 0;
 #endif
 
+bool _is_pasting = false;   // Extern - see note in Loggable.H
+
 bool Loggable::_readonly = false;
 FILE *Loggable::_fp;
 unsigned int Loggable::_log_id = 0;
@@ -213,6 +215,9 @@ Loggable::replay ( const char *file, bool need_clear )
 bool
 Loggable::replay ( FILE *fp, bool need_clear )
 {
+    /* Set the pasting flag  */
+    _is_pasting = true;
+
     char *buf = NULL;
 
     struct stat st;
@@ -249,6 +254,9 @@ Loggable::replay ( FILE *fp, bool need_clear )
     if( need_clear )
         clear_dirty();
 
+    /* Unset the pasting flag since we are done */
+    _is_pasting = false;
+    
     return true;
 }
 

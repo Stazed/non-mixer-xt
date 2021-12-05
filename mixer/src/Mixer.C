@@ -1120,6 +1120,13 @@ Mixer::handle ( int m )
         {
             if ( ! Fl::event_inside( this ) )
                 return 0;
+            
+            /* Ignore this paste if previous one is not completed */
+            if ( _is_pasting )
+            {
+                WARNING("Previous paste not completed. SLOW DOWN!!!");
+                return 0;
+            }
 
 	    DMESSAGE( "Got paste into mixer, expecting strip file..." );
 	    
