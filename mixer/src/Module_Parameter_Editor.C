@@ -112,7 +112,20 @@ Module_Parameter_Editor::Module_Parameter_Editor ( Module *module ) : Fl_Double_
                 { Fl_Choice *o = LV2_presets_choice = new Fl_Choice( 30, 0, 150, 25 );
                     for(unsigned i = 0; i < pm->PresetList.size(); ++i)
                     {
-                        o->add( pm->PresetList[i].Label.c_str() );
+                        std::string temp = pm->PresetList[i].Label;
+
+                        /* FLTK assumes '/' to be sub-menu, so we have to search the Label and escape it */
+                        for (unsigned ii = 0; ii < temp.size(); ++ii)
+                        {
+                            if ( temp[ii] == '/' )
+                            {
+                                temp.insert(ii, "\\");
+                                ++ii;
+                                continue;
+                            }
+                        }
+
+                        o->add( temp.c_str() );
                     }
 
                     o->label( "Presets" );

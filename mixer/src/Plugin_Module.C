@@ -1499,7 +1499,21 @@ Plugin_Module::load_lv2 ( const char* uri )
                         EnumeratorScalePoints item;
                         item.Label = std::to_string( (int) rdfport.ScalePoints[i].Value);
                         item.Label += " - ";
-                        item.Label += rdfport.ScalePoints[i].Label;
+                        
+                        std::string temp = rdfport.ScalePoints[i].Label;
+
+                        /* FLTK assumes '/' to be sub-menu, so we have to search the Label and escape it */
+                        for (unsigned ii = 0; ii < temp.size(); ++ii)
+                        {
+                            if ( temp[ii] == '/' )
+                            {
+                                temp.insert(ii, "\\");
+                                ++ii;
+                                continue;
+                            }
+                        }
+
+                        item.Label += temp;
                         item.Value = rdfport.ScalePoints[i].Value;
                         p.hints.ScalePoints.push_back(item);
                        // DMESSAGE("Label = %s: Value = %f", rdfport.ScalePoints[i].Label, rdfport.ScalePoints[i].Value);
