@@ -1482,50 +1482,49 @@ Plugin_Module::load_lv2 ( const char* uri )
                 if ( LV2_IS_PORT_INTEGER( rdfport.Properties ) )
                 {
                     p.hints.type = Port::Hints::LV2_INTEGER;
-                }
+                    
+                    if( LV2_IS_PORT_ENUMERATION(rdfport.Properties) )
+                    {
+                        p.hints.type = Port::Hints::LV2_INTEGER_ENUMERATION;
 
-                /* Should always check toggled and enumeration after integer since 
-                 some LV2s will have both */
+                        if( rdfport.ScalePointCount )
+                        {
+                            for( unsigned i = 0; i < rdfport.ScalePointCount; ++i )
+                            {
+                                EnumeratorScalePoints item;
+                                item.Label = std::to_string( (int) rdfport.ScalePoints[i].Value);
+                                item.Label += " - ";
+
+                                std::string temp = rdfport.ScalePoints[i].Label;
+
+                                /* FLTK assumes '/' to be sub-menu, so we have to search the Label and escape it */
+                                for (unsigned ii = 0; ii < temp.size(); ++ii)
+                                {
+                                    if ( temp[ii] == '/' )
+                                    {
+                                        temp.insert(ii, "\\");
+                                        ++ii;
+                                        continue;
+                                    }
+                                }
+
+                                item.Label += temp;
+                                item.Value = rdfport.ScalePoints[i].Value;
+                                p.hints.ScalePoints.push_back(item);
+                               // DMESSAGE("Label = %s: Value = %f", rdfport.ScalePoints[i].Label, rdfport.ScalePoints[i].Value);
+                            }
+
+                            std::sort( p.hints.ScalePoints.begin(), p.hints.ScalePoints.end(), EnumeratorScalePoints::before );
+
+                            p.hints.minimum = p.hints.ScalePoints[0].Value;
+                            p.hints.maximum = p.hints.ScalePoints[ p.hints.ScalePoints.size() - 1 ].Value;
+                        }
+                    }
+                }
+                /* Should always check toggled after integer since some LV2s will have both */
                 if ( LV2_IS_PORT_TOGGLED( rdfport.Properties ) )
                 {
                     p.hints.type = Port::Hints::BOOLEAN;
-                }
-                if( LV2_IS_PORT_ENUMERATION(rdfport.Properties) )
-                {
-                    p.hints.type = Port::Hints::LV2_ENUMERATION;
-                    
-                    if( rdfport.ScalePointCount )
-                    {
-                        for( unsigned i = 0; i < rdfport.ScalePointCount; ++i )
-                        {
-                            EnumeratorScalePoints item;
-                            item.Label = std::to_string( (int) rdfport.ScalePoints[i].Value);
-                            item.Label += " - ";
-
-                            std::string temp = rdfport.ScalePoints[i].Label;
-
-                            /* FLTK assumes '/' to be sub-menu, so we have to search the Label and escape it */
-                            for (unsigned ii = 0; ii < temp.size(); ++ii)
-                            {
-                                if ( temp[ii] == '/' )
-                                {
-                                    temp.insert(ii, "\\");
-                                    ++ii;
-                                    continue;
-                                }
-                            }
-
-                            item.Label += temp;
-                            item.Value = rdfport.ScalePoints[i].Value;
-                            p.hints.ScalePoints.push_back(item);
-                           // DMESSAGE("Label = %s: Value = %f", rdfport.ScalePoints[i].Label, rdfport.ScalePoints[i].Value);
-                        }
-
-                        std::sort( p.hints.ScalePoints.begin(), p.hints.ScalePoints.end(), EnumeratorScalePoints::before );
-
-                        p.hints.minimum = p.hints.ScalePoints[0].Value;
-                        p.hints.maximum = p.hints.ScalePoints[ p.hints.ScalePoints.size() - 1 ].Value;
-                    }
                 }
                 if ( LV2_IS_PORT_LOGARITHMIC( rdfport.Properties ) )
                 {

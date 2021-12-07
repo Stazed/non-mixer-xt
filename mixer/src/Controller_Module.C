@@ -469,7 +469,7 @@ Controller_Module::connect_to ( Port *p )
 
         o->value( p->control_value() );
     }
-    else if ( p->hints.type == Module::Port::Hints::LV2_ENUMERATION )
+    else if ( p->hints.type == Module::Port::Hints::LV2_INTEGER_ENUMERATION )
     {
         Fl_Choice *o =  new Fl_Choice( 0, 0, 200, 20 );
         o->selection_color( fl_color_average( FL_GRAY, FL_CYAN, 0.5 ) );

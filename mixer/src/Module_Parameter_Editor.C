@@ -311,7 +311,7 @@ Module_Parameter_Editor::make_controls ( void )
             o->value( p->control_value() );
             o->align(FL_ALIGN_TOP);
         }
-        else if ( p->hints.type == Module::Port::Hints::LV2_ENUMERATION )
+        else if ( p->hints.type == Module::Port::Hints::LV2_INTEGER_ENUMERATION )
         {
             Fl_Choice *o =  new Fl_Choice( 0, 0, 200, 25, p->name() );
             w = o;
@@ -462,7 +462,7 @@ Module_Parameter_Editor::make_controls ( void )
 
         if ( p->hints.type == Module::Port::Hints::BOOLEAN )
             w->callback( cb_button_handle, &_callback_data.back() );
-        else if ( p->hints.type == Module::Port::Hints::LV2_ENUMERATION )
+        else if ( p->hints.type == Module::Port::Hints::LV2_INTEGER_ENUMERATION )
             w->callback( cb_enumeration_handle, &_callback_data.back() );
         else
             w->callback( cb_value_handle, &_callback_data.back() );
@@ -660,7 +660,7 @@ Module_Parameter_Editor::handle_control_changed ( Module::Port *p )
 
         v->value( p->control_value() );
     }        
-    else if ( p->hints.type == Module::Port::Hints::LV2_ENUMERATION )
+    else if ( p->hints.type == Module::Port::Hints::LV2_INTEGER_ENUMERATION )
     {
         Fl_Choice *v = (Fl_Choice*)w;
         
