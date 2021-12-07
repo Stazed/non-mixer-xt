@@ -81,6 +81,7 @@ class Module_Parameter_Editor : public Fl_Double_Window
     void set_preset_controls(int choice);
 #endif
     static void cb_bound_handle ( Fl_Widget *w, void *v );
+    void set_choice_value(int port, int menu);
     void set_value (int i, float value );
     void bind_control ( int i );
     void make_controls ( void );

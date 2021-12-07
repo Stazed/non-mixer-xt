@@ -200,6 +200,7 @@ public:
                 _nframes = p._nframes;
                 _module = p._module;
                 hints = p.hints;
+                hints.ScalePoints = p.hints.ScalePoints;
                 _scaled_signal = p._scaled_signal;
                 _unscaled_signal = p._unscaled_signal;
                 _by_number_path = 0;

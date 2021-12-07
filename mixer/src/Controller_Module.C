@@ -427,6 +427,10 @@ void
 Controller_Module::connect_to ( Port *p )
 {
     control_output[0].connect_to( p );
+    
+    /* The controller needs the ScalePoints vector to set the Fl_Choice menu based on 
+       ScalePoints Value since the Fl_Menu value may differ from the controller value */
+    control_output[0].hints.ScalePoints = p->hints.ScalePoints;
 
     clear();
 
@@ -480,8 +484,20 @@ Controller_Module::connect_to ( Port *p )
         w = o;
  
         _type = CHOICE;
+        
+        /* We set the Fl_Choice menu according to the position in the ScalePoints vector */
+        int menu = 0;
+        
+        for( unsigned i = 0; i < p->hints.ScalePoints.size(); ++i)
+        {
+            if ( (int) p->hints.ScalePoints[i].Value == (int) (p->control_value() + .5) )   // .5 for float rounding
+            {
+                menu = i;
+                break;
+            }
+        }
             
-        o->value( p->control_value() );
+        o->value( menu );
     }
     //  else if ( p->hints.type == Module::Port::Hints::LOGARITHMIC || Module::Port::Hints::LV2_INTEGER )
     else
@@ -623,7 +639,9 @@ Controller_Module::cb_handle ( Fl_Widget *w )
     }
     else if ( type() == CHOICE )
     {
-        control_value = ((Fl_Choice*)w)->value();
+        /* We set the control value according to the menu position in the ScalePoints vector */
+        int menu = (int) ((Fl_Choice*)w)->value();
+        control_value = control_output[0].hints.ScalePoints[menu].Value;
     }
     else
         control_value = ((Fl_Valuator*)w)->value();
@@ -977,8 +995,7 @@ Controller_Module::handle_control_changed ( Port *p )
 
     if ( type() == CHOICE )
     {
-        if ( ((Fl_Choice*)control)->value() == control_value )
-            return;
+        // We have to check this always since the control value may not be the same as the menu value
     }
     else if ( ((Fl_Valuator*)control)->value() == control_value )
         return;
@@ -1014,7 +1031,20 @@ Controller_Module::handle_control_changed ( Port *p )
         }
         else if ( type() == CHOICE )
         {
-            ((Fl_Choice*)control)->value(control_value);
+            // DMESSAGE("control_value = %f: size = %d", control_value, p->hints.ScalePoints.size());
+            /* We set the Fl_Choice menu according to the position in the ScalePoints vector */
+            int menu = 0;
+
+            for( unsigned i = 0; i < p->hints.ScalePoints.size(); ++i)
+            {
+                if ( (int) p->hints.ScalePoints[i].Value == (int) (control_value + .5 ))    // .5 for float rounding
+                {
+                    menu = i;
+                    break;
+                }
+            }
+            
+            ((Fl_Choice*)control)->value(menu);
         }
         else
             ((Fl_Valuator*)control)->value(control_value);

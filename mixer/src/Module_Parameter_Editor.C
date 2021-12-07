@@ -561,8 +561,8 @@ void
 Module_Parameter_Editor::cb_enumeration_handle ( Fl_Widget *w, void *v )
 {
     callback_data *cd = (callback_data*)v;
-
-    cd->base_widget->set_value( cd->port_number[0], (float) ((Fl_Choice*)w)->value() );
+    
+    cd->base_widget->set_choice_value( cd->port_number[0], (int) ((Fl_Choice*)w)->value() );
 }
 
 void
@@ -663,8 +663,20 @@ Module_Parameter_Editor::handle_control_changed ( Module::Port *p )
     else if ( p->hints.type == Module::Port::Hints::LV2_ENUMERATION )
     {
         Fl_Choice *v = (Fl_Choice*)w;
+        
+        /* We set the Fl_Choice menu according to the position in the ScalePoints vector */
+        int menu = 0;
+        
+        for( unsigned i = 0; i < p->hints.ScalePoints.size(); ++i)
+        {
+            if ( (int) p->hints.ScalePoints[i].Value == (int) (p->control_value() + .5) )   // .5 for float rounding
+            {
+                menu = i;
+                break;
+            }
+        }
 
-        v->value( (int) p->control_value() );
+        v->value( menu );
     }
     else
     {
@@ -683,6 +695,15 @@ Module_Parameter_Editor::reload ( void )
 //    make_controls();
     update_control_visibility();
     redraw();
+}
+
+void
+Module_Parameter_Editor::set_choice_value(int port, int menu)
+{
+    DMESSAGE("Menu = %d: ScalePoints Value = %f", menu, _module->control_input[port].hints.ScalePoints[menu]].Value);
+
+    /* We have to send the port ScalePoints value not menu choice value */
+    set_value( port, _module->control_input[port].hints.ScalePoints[menu].Value );
 }
 
 void
