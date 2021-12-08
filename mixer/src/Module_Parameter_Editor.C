@@ -321,7 +321,20 @@ Module_Parameter_Editor::make_controls ( void )
             }
 
             o->align(FL_ALIGN_RIGHT);
-            o->value( p->control_value() );
+            
+            /* We set the Fl_Choice menu according to the position in the ScalePoints vector */
+            int menu = 0;
+
+            for( unsigned i = 0; i < p->hints.ScalePoints.size(); ++i)
+            {
+                if ( (int) p->hints.ScalePoints[i].Value == (int) (p->control_value() + .5) )   // .5 for float rounding
+                {
+                    menu = i;
+                    break;
+                }
+            }
+            
+            o->value( menu );
             o->selection_color( fc );
         }
         else if ( p->hints.type == Module::Port::Hints::INTEGER )
