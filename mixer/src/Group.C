@@ -210,8 +210,8 @@ Group::process ( nframes_t nframes )
           i != strips.end();
           i++ )
     {
-        if ( (*i)->chain() && !(*i)->chain()->_deleting )   // under high DSP load we need to check if deleting
-            (*i)->chain()->process(nframes);                // since the chain can be deleted in the middle of jack process call
+        if ( (*i)->chain() )
+            (*i)->chain()->process(nframes);
     }
 
     unlock();

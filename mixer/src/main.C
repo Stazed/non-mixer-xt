@@ -111,6 +111,7 @@ static volatile int got_sigterm = 0;
 void
 sigterm_handler ( int )
 {
+    stop_process = true;    // if NSM, stop jack process calls
     got_sigterm = 1;
 }
 

@@ -700,7 +700,7 @@ Module_Parameter_Editor::reload ( void )
 void
 Module_Parameter_Editor::set_choice_value(int port, int menu)
 {
-    DMESSAGE("Menu = %d: ScalePoints Value = %f", menu, _module->control_input[port].hints.ScalePoints[menu]].Value);
+    DMESSAGE("Menu = %d: ScalePoints Value = %f", menu, _module->control_input[port].hints.ScalePoints[menu].Value);
 
     /* We have to send the port ScalePoints value not menu choice value */
     set_value( port, _module->control_input[port].hints.ScalePoints[menu].Value );

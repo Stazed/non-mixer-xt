@@ -783,7 +783,17 @@ void
 Mixer::quit ( void )
 {
     if ( nsm->is_active() )
+    {
         nsm->nsm_send_is_hidden ( nsm );
+    }
+    else    // we really are quitting, not just hiding
+    {
+        /* Under high DSP load, on quit the chain modules may get deleted before jack is deactivated.
+           The jack process callback would then be called on a deleted module and segfault.
+           This flag will tell jack to return on all process calls, rather than waiting for
+           the deactivation to occur, which may be too late.  */
+        stop_process = true;
+    }
 
     while ( Fl::first_window() ) Fl::first_window()->hide();
 }

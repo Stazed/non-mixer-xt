@@ -29,6 +29,9 @@
 typedef jack_nframes_t nframes_t;
 typedef jack_default_audio_sample_t sample_t;
 
+/* Needed by mixer to immediately stop jack processing on potentially deleted chain on quit */
+extern bool stop_process;
+
 #include <list>
 
 namespace JACK

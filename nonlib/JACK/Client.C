@@ -30,6 +30,8 @@
 #include <xmmintrin.h>
 #endif
 
+bool stop_process = false;  // extern
+
 namespace JACK
 {
 
@@ -68,6 +70,9 @@ namespace JACK
     int
     Client::process ( nframes_t nframes, void *arg )
     {
+        if ( stop_process )
+            return 0;
+
         Client *c = (Client*)arg;
      
         if ( ! c->_frozen.trylock() )
@@ -126,6 +131,9 @@ namespace JACK
     void
     Client::latency ( jack_latency_callback_mode_t mode, void *arg )
     {
+        if ( stop_process )
+            return;
+
         ((Client*)arg)->latency( mode );
     }
 
