@@ -45,7 +45,7 @@ install all of the non-* programs together.
 
 Typing:
 
-    ./waf configure --project=[timline|sequencer|mixer|session-manager]
+    ./waf configure --project=[timeline|sequencer|mixer|session-manager]
     ./waf
     su -c './waf install'
 
