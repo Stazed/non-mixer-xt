@@ -73,6 +73,8 @@ src/Group.C
 src/main.C
 src/SpectrumView.C
 src/Spatialization_Console.C
+src/worker.C
+src/zix/ring.C
 ''',
               target       = 'non-mixer',
               includes     = ['.', 'src', '..', '../nonlib'],
