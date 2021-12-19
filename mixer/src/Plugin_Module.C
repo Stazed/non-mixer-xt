@@ -1362,7 +1362,7 @@ Plugin_Module::load_lv2 ( const char* uri )
                 non_worker_init(this,  _idata->lv2.ext.worker, true);
 		if (_idata->safe_restore)
                 {
-                    fprintf(stderr, "jalv_open -- Plugin Has safe_restore\n");
+                    fprintf(stderr, "open -- Plugin Has safe_restore\n");
 			non_worker_init(this, _idata->lv2.ext.worker, false);
 		}
 #endif
@@ -1777,7 +1777,54 @@ Plugin_Module::non_worker_init(Plugin_Module* plug,
     plug->_idata->lv2.ext.response = malloc(4096);
     zix_ring_mlock(plug->_idata->lv2.ext.responses);
 }
-#endif
+
+void
+Plugin_Module::non_worker_emit_responses(Plugin_Module* worker, LilvInstance* instance)
+{
+    if (worker->_idata->lv2.ext.responses)
+    {
+        uint32_t read_space = zix_ring_read_space(worker->_idata->lv2.ext.responses);
+        while (read_space)
+        {
+            uint32_t size = 0;
+            zix_ring_read(worker->_idata->lv2.ext.responses, (char*)&size, sizeof(size));
+
+            zix_ring_read(worker->_idata->lv2.ext.responses, (char*)worker->_idata->lv2.ext.responses, size);
+
+            worker->_idata->lv2.ext.worker->work_response(
+                instance->lv2_handle, size, worker->_idata->lv2.ext.responses);
+
+            read_space -= sizeof(size) + size;
+        }
+    }
+}
+
+void
+Plugin_Module::non_worker_finish(Plugin_Module* worker)
+{
+    if (worker->_idata->lv2.ext.threaded) 
+    {
+        zix_sem_post(&worker->_idata->lv2.ext.sem);
+        zix_thread_join(worker->_idata->lv2.ext.thread, NULL);
+    }
+}
+
+void
+Plugin_Module::non_worker_destroy(Plugin_Module* worker)
+{
+    if (worker->_idata->lv2.ext.requests) 
+    {
+        if (worker->_idata->lv2.ext.threaded)
+        {
+            zix_ring_free(worker->_idata->lv2.ext.requests);
+        }
+
+        zix_ring_free(worker->_idata->lv2.ext.responses);
+        free(worker->_idata->lv2.ext.response);
+    }
+}
+
+#endif  // LV2_WORKER_SUPPORT
 
 
 
@@ -1957,6 +2004,29 @@ Plugin_Module::process ( nframes_t nframes )
     {
         if (_is_lv2)
         {
+#ifdef LV2_WORKER_SUPPORT
+            if ( _idata->lv2.ext.worker)
+            {
+                non_worker_emit_responses(this, m_instance);
+                if ( _idata->lv2.ext.worker && _idata->lv2.ext.worker->end_run)
+                {
+                    _idata->lv2.ext.worker->end_run(m_instance->lv2_handle);
+                }
+            }
+#endif
+            
+#if 0
+    	/* Process any worker replies. */
+	jalv_worker_emit_responses(&jalv->state_worker, jalv->instance);
+	jalv_worker_emit_responses(&jalv->worker, jalv->instance);
+
+	/* Notify the plugin the run() cycle is finished */
+	if (jalv->worker.iface && jalv->worker.iface->end_run) {
+		jalv->worker.iface->end_run(jalv->instance->lv2_handle);
+	}
+#endif
+            
+            
             for ( unsigned int i = 0; i < _idata->handle.size(); ++i )
                 _idata->lv2.descriptor->run( _idata->handle[i], nframes );
         }

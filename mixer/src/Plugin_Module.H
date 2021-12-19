@@ -433,6 +433,10 @@ public:
     void non_worker_init(Plugin_Module* plug,
                  const LV2_Worker_Interface* iface,
                  bool threaded);
+
+    void non_worker_emit_responses(Plugin_Module* worker, LilvInstance* instance);
+    void non_worker_finish(Plugin_Module* worker);
+    void non_worker_destroy(Plugin_Module* worker);
 #endif
 
     LOG_CREATE_FUNC( Plugin_Module );
