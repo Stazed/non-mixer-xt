@@ -22,11 +22,261 @@
 #include "Module.H"
 #include "Loggable.H"
 #include "LV2_RDF_Utils.hpp"
+#include <ladspa.h>
+#include "zix/ring.h"
+#include "zix/sem.h"
+#include "zix/thread.h"
 
 #define PRESET_SUPPORT 1
+#define LV2_WORKER_SUPPORT 1
 
 class Fl_Menu_Button;
 class Thread;
+
+
+/* supported lv2 features */
+enum Plugin_Module_Supported_Features {
+    Plugin_Feature_BufSize_Bounded = 0,
+    Plugin_Feature_BufSize_Fixed,
+    Plugin_Feature_Options,
+    Plugin_Feature_URI_Map,
+    Plugin_Feature_URID_Map,
+    Plugin_Feature_URID_Unmap,
+#ifdef LV2_WORKER_SUPPORT
+    Plugin_Feature_Worker_Schedule,
+#endif
+    Plugin_Features_Count
+};
+
+/* pre-mapped lv2 uris */
+enum Plugin_Module_URIs {
+    Plugin_Module_URI_Null = 0,
+    Plugin_Module_URI_Atom_Double,
+    Plugin_Module_URI_Atom_Int,
+    Plugin_Module_URI_BufSize_MaxLength,
+    Plugin_Module_URI_BufSize_MinLength,
+    Plugin_Module_URI_Parameter_SampleRate,
+#ifdef LV2_WORKER_SUPPORT
+    Plugin_Module_URI_Worker_Schedule,
+#endif
+    Plugin_Module_URI_Count
+};
+
+/* lv2 plugin options */
+/* mostly empty for now, plugins usually require it because of buf-size extension */
+struct Plugin_Module_Options {
+    enum OptIndex {
+        MaxBlockLenth = 0,
+        MinBlockLenth,
+        SampleRate,
+        Null,
+        Count
+    };
+
+    int maxBufferSize;
+    int minBufferSize;
+    double sampleRate;
+    LV2_Options_Option opts[Count];
+
+    Plugin_Module_Options()
+    {
+        maxBufferSize = 0;
+        minBufferSize = 0;
+        sampleRate = 0.0;
+
+        LV2_Options_Option& optMaxBlockLenth(opts[MaxBlockLenth]);
+        optMaxBlockLenth.context = LV2_OPTIONS_INSTANCE;
+        optMaxBlockLenth.subject = 0;
+        optMaxBlockLenth.key     = Plugin_Module_URI_BufSize_MaxLength;
+        optMaxBlockLenth.size    = sizeof(int);
+        optMaxBlockLenth.type    = Plugin_Module_URI_Atom_Int;
+        optMaxBlockLenth.value   = &maxBufferSize;
+
+        LV2_Options_Option& optMinBlockLenth(opts[MinBlockLenth]);
+        optMinBlockLenth.context = LV2_OPTIONS_INSTANCE;
+        optMinBlockLenth.subject = 0;
+        optMinBlockLenth.key     = Plugin_Module_URI_BufSize_MinLength;
+        optMinBlockLenth.size    = sizeof(int);
+        optMinBlockLenth.type    = Plugin_Module_URI_Atom_Int;
+        optMinBlockLenth.value   = &minBufferSize;
+
+        LV2_Options_Option& optSampleRate(opts[SampleRate]);
+        optSampleRate.context = LV2_OPTIONS_INSTANCE;
+        optSampleRate.subject = 0;
+        optSampleRate.key     = Plugin_Module_URI_Parameter_SampleRate;
+        optSampleRate.size    = sizeof(double);
+        optSampleRate.type    = Plugin_Module_URI_Atom_Double;
+        optSampleRate.value   = &sampleRate;
+
+        LV2_Options_Option& optNull(opts[Null]);
+        optNull.context = LV2_OPTIONS_INSTANCE;
+        optNull.subject = 0;
+        optNull.key     = Plugin_Module_URI_Null;
+        optNull.size    = 0;
+        optNull.type    = Plugin_Module_URI_Null;
+        optNull.value   = NULL;
+    }
+};
+
+struct ImplementationData
+{
+    const LADSPA_Descriptor      *descriptor;
+    struct {
+        const LV2_Descriptor     *descriptor;
+        const LV2_RDF_Descriptor *rdf_data;
+        LV2_Feature*              features[Plugin_Features_Count+1];
+        // extension data
+        Plugin_Module_Options     options;
+        std::vector<std::string>  mappedURIs;
+        // extensions
+        struct
+        {
+            const LV2_Options_Interface* options;
+            const LV2_State_Interface*   state;
+            const LV2_Worker_Interface*  worker;
+#ifdef LV2_WORKER_SUPPORT
+            ZixRing*                    requests;   ///< Requests to the worker
+            ZixRing*                    responses;  ///< Responses from the worker
+            void*                       response;   ///< Worker response buffer
+            ZixSem                      sem;        ///< Worker semaphore
+            ZixThread                   thread;     ///< Worker thread
+//	const LV2_Worker_Interface* iface;      ///< Plugin worker interface
+            bool                        threaded;   ///< Run work in another thread
+#endif
+        } ext;
+    } lv2;
+#ifdef LV2_WORKER_SUPPORT
+    ZixSem             work_lock;      ///< Lock for plugin work() method
+    LilvInstance*      instance;       ///< Plugin instance (shared library)
+//    JalvWorker         Worker;         ///< Worker thread implementation
+//    JalvWorker         state_worker;   ///< Synchronous worker for state restore
+    bool               exit;           ///< True iff execution is finished
+    bool               safe_restore;   ///< Plugin restore() is thread-safe
+#endif
+    std::vector<void*> handle;
+
+    ImplementationData()
+    {
+        descriptor     = NULL;
+        lv2.descriptor = NULL;
+        lv2.rdf_data   = NULL;
+
+        for (int i=0; i<Plugin_Features_Count; ++i)
+        {
+            lv2.features[i] = new LV2_Feature;
+            lv2.features[i]->URI = NULL;
+            lv2.features[i]->data = NULL;
+        }
+        lv2.features[Plugin_Features_Count] = NULL;
+
+        lv2.mappedURIs.push_back("");                           // Plugin_Module_URI_Null
+        lv2.mappedURIs.push_back(LV2_ATOM__Double);             // Plugin_Module_URI_Atom_Double
+        lv2.mappedURIs.push_back(LV2_ATOM__Int);                // Plugin_Module_URI_Atom_Int
+        lv2.mappedURIs.push_back(LV2_BUF_SIZE__maxBlockLength); // Plugin_Module_URI_BufSize_MaxLength
+        lv2.mappedURIs.push_back(LV2_BUF_SIZE__minBlockLength); // Plugin_Module_URI_BufSize_MinLength
+        lv2.mappedURIs.push_back(LV2_PARAMETERS__sampleRate);   // Plugin_Module_URI_Parameter_SampleRate
+#ifdef LV2_WORKER_SUPPORT
+        lv2.mappedURIs.push_back(LV2_ATOM__Sequence);
+        zix_sem_init(&work_lock, 1);
+        zix_sem_init(&lv2.ext.sem, 0);
+        
+        lv2.ext.threaded = false;
+        exit = false;
+        safe_restore = false;
+#endif
+        lv2.ext.options = NULL;
+        lv2.ext.state   = NULL;
+        lv2.ext.worker  = NULL;
+    }
+
+    ~ImplementationData()
+    {
+        if ( lv2.rdf_data )
+        {
+            delete lv2.rdf_data;
+            lv2.rdf_data = NULL;
+        }
+
+        if ( lv2.features[Plugin_Feature_URI_Map] && lv2.features[Plugin_Feature_URI_Map]->data )
+            delete (LV2_URI_Map_Feature*)lv2.features[Plugin_Feature_URI_Map]->data;
+
+        if ( lv2.features[Plugin_Feature_URID_Map] && lv2.features[Plugin_Feature_URID_Map]->data )
+            delete (LV2_URID_Map*)lv2.features[Plugin_Feature_URID_Map]->data;
+
+        if ( lv2.features[Plugin_Feature_URID_Unmap] && lv2.features[Plugin_Feature_URID_Unmap]->data )
+            delete (LV2_URID_Unmap*)lv2.features[Plugin_Feature_URID_Unmap]->data;
+#ifdef LV2_WORKER_SUPPORT
+ //       if ( lv2.features[Plugin_Feature_Worker] && lv2.features[Plugin_Feature_Worker]->data )
+ //           delete (LV2_WORKER__schedule*)lv2.features[Plugin_Feature_Worker]->data;
+#endif
+    }
+
+    // -------------------------------------------------------------------
+    // LV2 Features
+
+    static uint32_t _lv2_uri_to_id(LV2_URI_Map_Callback_Data data, const char*, const char* uri)
+    {
+        return _lv2_urid_map(data, uri);
+    }
+
+    static LV2_URID _lv2_urid_map(LV2_URID_Map_Handle handle, const char* uri)
+    {
+        if ( handle == NULL || ! uri )
+            return Plugin_Module_URI_Null;
+        if ( ::strcmp(uri, LV2_ATOM__Double) == 0 )
+            return Plugin_Module_URI_Atom_Double;
+        if ( ::strcmp(uri, LV2_ATOM__Int) == 0 )
+            return Plugin_Module_URI_Atom_Int;
+        if ( ::strcmp(uri, LV2_BUF_SIZE__maxBlockLength) == 0 )
+            return Plugin_Module_URI_BufSize_MaxLength;
+        if ( ::strcmp(uri, LV2_BUF_SIZE__minBlockLength) == 0 )
+            return Plugin_Module_URI_BufSize_MinLength;
+        if ( ::strcmp(uri, LV2_PARAMETERS__sampleRate) == 0 )
+            return Plugin_Module_URI_Parameter_SampleRate;
+#ifdef LV2_WORKER_SUPPORT
+        if ( ::strcmp(uri, LV2_ATOM__Sequence) == 0 )
+            return Plugin_Module_URI_Worker_Schedule;
+#endif
+
+        ImplementationData* self = (ImplementationData*)handle;
+
+        uint32_t ret = 0;
+        for (std::vector<std::string>::iterator it = self->lv2.mappedURIs.begin(), end = self->lv2.mappedURIs.end(); it != end; ++it)
+        {
+            if (ret == 0)
+            {
+                ret = 1;
+                continue;
+            }
+
+            const std::string& thisURI(*it);
+
+            if ( thisURI == uri )
+                return ret;
+
+            ++ret;
+        }
+
+        self->lv2.mappedURIs.push_back(uri);
+        return ret;
+    }
+
+    static const char* _lv2_urid_unmap(LV2_URID_Map_Handle handle, LV2_URID urid)
+    {
+        if ( handle == NULL || urid == 0 )
+            return NULL;
+
+        ImplementationData* self = (ImplementationData*)handle;
+
+        if ( urid <= self->lv2.mappedURIs.size() )
+            return self->lv2.mappedURIs[urid].c_str();
+
+        return NULL;
+    }
+};
+
+
+
 
 class Plugin_Module : public Module {
 
@@ -117,18 +367,19 @@ private:
     static void cb_handle(Fl_Widget*, void*);
 
     Fl_Button *close_button;
-
-    struct ImplementationData;
+public:
+//    struct ImplementationData;
 
     ImplementationData *_idata;
 
+private:
     int _plugin_ins;
     int _plugin_outs;
     bool _crosswire;
 
     static void *discover_thread ( void * );
  
-
+    
     void set_input_buffer ( int n, void *buf );
     void set_output_buffer ( int n, void *buf );
     void set_control_buffer ( int n, void *buf );
@@ -177,6 +428,12 @@ public:
     void handle_port_connection_change ( void );
     void handle_sample_rate_change ( nframes_t sample_rate );
     void resize_buffers ( nframes_t buffer_size );
+    
+#ifdef LV2_WORKER_SUPPORT
+    void non_worker_init(Plugin_Module* plug,
+                 const LV2_Worker_Interface* iface,
+                 bool threaded);
+#endif
 
     LOG_CREATE_FUNC( Plugin_Module );
 
