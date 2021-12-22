@@ -270,7 +270,7 @@ Plugin_Module::~Plugin_Module ( )
     plugin_instances( 0 );
     
 #ifdef PRESET_SUPPORT
-    lilv_instance_free(m_instance);
+//    lilv_instance_free(m_instance);
     lilv_world_free(m_lilvWorld);
 #endif
 }
@@ -715,7 +715,7 @@ Plugin_Module::get_all_plugins ( void )
 
         Lilv::Plugin lilvPlugin(cPlugin);
         if (! lilvPlugin.get_uri().is_uri()) continue;
-        
+
         bool supported = true;
         Lilv::Nodes featureNodes(lilvPlugin.get_required_features());
 
@@ -891,6 +891,13 @@ Plugin_Module::plugin_instances ( unsigned int n )
                     WARNING( "Failed to instantiate plugin" );
                     return false;
                 }
+                else
+                {
+                    // FIXME check this!!
+                    m_instance->lv2_descriptor = _idata->lv2.descriptor;
+                    m_instance->lv2_handle = h;
+                    _idata->instance = m_instance;
+                }
             }
             else
             {
@@ -930,15 +937,15 @@ Plugin_Module::plugin_instances ( unsigned int n )
                     {
                         if ( LV2_IS_PORT_INPUT( _idata->lv2.rdf_data->Ports[k].Types ) )
                         {
-                            DMESSAGE("GOT ATOM SEQUENCE -- INPUT");
                             // FIXME this is probably wrong
-                            _idata->lv2.descriptor->connect_port( h, k, (char*)control_input[ij++].buffer() );
+                          //  _idata->lv2.ext.requests
+                            _idata->lv2.descriptor->connect_port( h, k, _idata->lv2.ext.response );
                         }
                         else if ( LV2_IS_PORT_OUTPUT( _idata->lv2.rdf_data->Ports[k].Types ) )
                         {
-                            DMESSAGE("GOT ATOM SEQUENCE -- OUTPUT");
+                            //  _idata->lv2.ext.response
                             // FIXME this is probably wrong
-                            _idata->lv2.descriptor->connect_port( h, k, (char*)control_output[oj++].buffer() );
+                             _idata->lv2.descriptor->connect_port( h, k, _idata->lv2.ext.requests );
                         }
                     }
 #endif
@@ -1274,16 +1281,16 @@ Plugin_Module::load_lv2 ( const char* uri )
 {
     _is_lv2 = true;
     _idata->lv2.rdf_data = lv2_rdf_new( uri, true );
+
 #ifdef PRESET_SUPPORT
-    /* This be preset loading stuff */
     PresetList = _idata->lv2.rdf_data->PresetListStructs;
     _uridMapFt =  (LV2_URID_Map*) _idata->lv2.features[Plugin_Feature_URID_Map]->data;
     LilvNode* plugin_uri = lilv_new_uri(get_lilv_world(), uri);
     m_plugin = lilv_plugins_get_by_uri(get_lilv_plugins(), plugin_uri);
     lilv_node_free(plugin_uri);
-    m_instance = lilv_plugin_instantiate(m_plugin,  sample_rate(), nullptr);
-    /* End preset stuff */
+    m_instance = lilv_plugin_instantiate(m_plugin,  sample_rate(), _idata->lv2.features);
 #endif
+
     _plugin_ins = _plugin_outs = 0;
 
     if ( ! _idata->lv2.rdf_data )
@@ -1358,7 +1365,9 @@ Plugin_Module::load_lv2 ( const char* uri )
 			jalv_worker_init(jalv, &jalv->state_worker, iface, false);
 		}
 #else
-                DMESSAGE("Setting worker initialization");
+                DMESSAGE("Setting worker initialization -- FIXME");
+//                	zix_sem_init(&jalv->worker.sem, 0);
+//                        lv2_atom_forge_init(&jalv->forge, &jalv->map);
                 non_worker_init(this,  _idata->lv2.ext.worker, true);
 		if (_idata->safe_restore)
                 {
@@ -1390,6 +1399,11 @@ Plugin_Module::load_lv2 ( const char* uri )
                     _plugin_outs++;
                     add_port( Port( this, Port::OUTPUT, Port::AUDIO, _idata->lv2.rdf_data->Ports[i].Name ) );
                 }
+            }
+            else if (LV2_IS_PORT_ATOM_SEQUENCE ( _idata->lv2.rdf_data->Ports[i].Types ))
+            {
+                
+                DMESSAGE("GOT ATOM SEQUENCE PORT");
             }
         }
 
@@ -1888,15 +1902,13 @@ Plugin_Module::apply ( sample_t *buf, nframes_t nframes )
             {
                 if ( LV2_IS_PORT_INPUT( _idata->lv2.rdf_data->Ports[k].Types ) )
                 {
-                    DMESSAGE("GOT ATOM SEQUENCE -- INPUT");
+                    _idata->lv2.descriptor->connect_port( h, k, _idata->lv2.ext.response );
                     // FIXME this is probably wrong
-                    _idata->lv2.descriptor->connect_port( h, k, (char*)control_input[ij++].buffer() );
                 }
                 else if ( LV2_IS_PORT_OUTPUT( _idata->lv2.rdf_data->Ports[k].Types ) )
                 {
-                    DMESSAGE("GOT ATOM SEQUENCE -- OUTPUT");
+                     _idata->lv2.descriptor->connect_port( h, k, _idata->lv2.ext.requests );
                     // FIXME this is probably wrong
-                    _idata->lv2.descriptor->connect_port( h, k, (char*)control_output[oj++].buffer() );
                 }
             }
 #endif
