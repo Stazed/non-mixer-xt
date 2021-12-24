@@ -25,7 +25,6 @@
 #include <string.h>
 #include <vector>
 #include <string>
-//#include <ladspa.h>
 #include <stdlib.h>
 #include <math.h>
 #include <dlfcn.h>
@@ -41,10 +40,7 @@
 #define HAVE_LIBLRDF 1
 #include "LADSPAInfo.h"
 
-#include "LV2_RDF_Utils.hpp"
-
 #include "Chain.H"
-//#include "Client/Client.H"
 
 #include <dsp.h>
 
@@ -937,15 +933,13 @@ Plugin_Module::plugin_instances ( unsigned int n )
                     {
                         if ( LV2_IS_PORT_INPUT( _idata->lv2.rdf_data->Ports[k].Types ) )
                         {
-                            // FIXME this is probably wrong
-                          //  _idata->lv2.ext.requests
-                            _idata->lv2.descriptor->connect_port( h, k, _idata->lv2.ext.response );
+                            // FIXME need to check this
+                            _idata->lv2.descriptor->connect_port( h, k, _idata->lv2.ext.requests );
                         }
                         else if ( LV2_IS_PORT_OUTPUT( _idata->lv2.rdf_data->Ports[k].Types ) )
                         {
-                            //  _idata->lv2.ext.response
-                            // FIXME this is probably wrong
-                             _idata->lv2.descriptor->connect_port( h, k, _idata->lv2.ext.requests );
+                            // FIXME need to check this
+                             _idata->lv2.descriptor->connect_port( h, k, _idata->lv2.ext.response );
                         }
                     }
 #endif
@@ -1356,25 +1350,16 @@ Plugin_Module::load_lv2 ( const char* uri )
 #ifdef LV2_WORKER_SUPPORT
             else
             {
+                DMESSAGE("Setting worker initialization");
 
-#if 0
-                jalv_worker_init(jalv, &jalv->worker, iface, true);
-		if (jalv->safe_restore)
-                {
-                    fprintf(stderr, "jalv_open -- Plugin Has safe_restore\n");
-			jalv_worker_init(jalv, &jalv->state_worker, iface, false);
-		}
-#else
-                DMESSAGE("Setting worker initialization -- FIXME");
-//                	zix_sem_init(&jalv->worker.sem, 0);
-//                        lv2_atom_forge_init(&jalv->forge, &jalv->map);
+                zix_sem_init(&_idata->lv2.ext.sem, 0);
+                lv2_atom_forge_init(&_idata->lv2.ext.forge, _uridMapFt);
                 non_worker_init(this,  _idata->lv2.ext.worker, true);
 		if (_idata->safe_restore)
                 {
                     fprintf(stderr, "open -- Plugin Has safe_restore\n");
-			non_worker_init(this, _idata->lv2.ext.worker, false);
+                    non_worker_init(this, _idata->lv2.ext.worker, false);
 		}
-#endif
             }
 #endif
         }
@@ -1902,13 +1887,13 @@ Plugin_Module::apply ( sample_t *buf, nframes_t nframes )
             {
                 if ( LV2_IS_PORT_INPUT( _idata->lv2.rdf_data->Ports[k].Types ) )
                 {
-                    _idata->lv2.descriptor->connect_port( h, k, _idata->lv2.ext.response );
-                    // FIXME this is probably wrong
+                    _idata->lv2.descriptor->connect_port( h, k, _idata->lv2.ext.requests );
+                    // FIXME check this
                 }
                 else if ( LV2_IS_PORT_OUTPUT( _idata->lv2.rdf_data->Ports[k].Types ) )
                 {
-                     _idata->lv2.descriptor->connect_port( h, k, _idata->lv2.ext.requests );
-                    // FIXME this is probably wrong
+                     _idata->lv2.descriptor->connect_port( h, k, _idata->lv2.ext.responses );
+                    // FIXME check this
                 }
             }
 #endif

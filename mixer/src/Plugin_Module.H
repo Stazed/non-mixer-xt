@@ -26,6 +26,7 @@
 #include "zix/ring.h"
 #include "zix/sem.h"
 #include "zix/thread.h"
+#include "lv2/atom-forge.h"
 
 #define PRESET_SUPPORT 1
 #define LV2_WORKER_SUPPORT 1
@@ -121,7 +122,8 @@ struct Plugin_Module_Options {
 struct ImplementationData
 {
     const LADSPA_Descriptor      *descriptor;
-    struct {
+    struct 
+    {
         const LV2_Descriptor     *descriptor;
         const LV2_RDF_Descriptor *rdf_data;
         LV2_Feature*              features[Plugin_Features_Count+1];
@@ -140,11 +142,13 @@ struct ImplementationData
             void*                       response;   ///< Worker response buffer
             ZixSem                      sem;        ///< Worker semaphore
             ZixThread                   thread;     ///< Worker thread
+            LV2_Atom_Forge              forge;      ///< Atom forge
 //	const LV2_Worker_Interface* iface;      ///< Plugin worker interface
             bool                        threaded;   ///< Run work in another thread
 #endif
         } ext;
     } lv2;
+
 #ifdef LV2_WORKER_SUPPORT
     ZixSem             work_lock;      ///< Lock for plugin work() method
     LilvInstance*      instance;       ///< Plugin instance (shared library)
@@ -153,6 +157,7 @@ struct ImplementationData
     bool               exit;           ///< True iff execution is finished
     bool               safe_restore;   ///< Plugin restore() is thread-safe
 #endif
+
     std::vector<void*> handle;
 
     ImplementationData()
@@ -326,7 +331,7 @@ public:
     LV2_URID_Map* _uridMapFt;
     LilvWorld* get_lilv_world() {return m_lilvWorld;}
     const LilvPlugin* get_slv2_plugin() const {return m_plugin; }
-    const LilvPlugins* get_lilv_plugins() const {return m_lilvPlugins; };
+    const LilvPlugins* get_lilv_plugins() const {return m_lilvPlugins; }
     
     std::string m_preset_changes;
     
