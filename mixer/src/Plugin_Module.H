@@ -27,6 +27,7 @@
 #include "zix/sem.h"
 #include "zix/thread.h"
 #include "lv2/atom-forge.h"
+#include "lv2/lv2_evbuf.h"
 
 #define PRESET_SUPPORT 1
 #define LV2_WORKER_SUPPORT 1
@@ -142,6 +143,7 @@ struct ImplementationData
             void*                       response;   ///< Worker response buffer
             ZixSem                      sem;        ///< Worker semaphore
             ZixThread                   thread;     ///< Worker thread
+            LV2_Evbuf*                  evbuf;      ///< For MIDI ports, otherwise NULL
             LV2_Atom_Forge              forge;      ///< Atom forge
 //	const LV2_Worker_Interface* iface;      ///< Plugin worker interface
             bool                        threaded;   ///< Run work in another thread
@@ -192,6 +194,7 @@ struct ImplementationData
         lv2.ext.options = NULL;
         lv2.ext.state   = NULL;
         lv2.ext.worker  = NULL;
+        lv2.ext.evbuf   = NULL;
     }
 
     ~ImplementationData()

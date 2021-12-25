@@ -76,7 +76,7 @@ static void mixer_lv2_set_port_value ( const char *port_symbol,
         const float val = *(float *) value;
         const unsigned long port_index = lilv_port_get_index(plugin, port);
         
-        DMESSAGE("port Index = %lu: value = %f", port_index, val);
+      //  DMESSAGE("port Index = %lu: value = %f", port_index, val);
         
         pLv2Plugin->generate_control_string(port_index, val);
     }
@@ -108,12 +108,13 @@ worker_func(void* data)
     void*       buf    = NULL;
     while (true)
     {
+        DMESSAGE("worker_func - TOP");
         zix_sem_wait( &worker->_idata->lv2.ext.sem );
         if ( worker->_idata->exit )
         {
             break;
         }
-
+        DMESSAGE("worker_func - MIDDLE");
         uint32_t size = 0;
         zix_ring_read(worker->_idata->lv2.ext.requests, (char*)&size, sizeof(size));
 
@@ -126,11 +127,12 @@ worker_func(void* data)
         zix_ring_read(worker->_idata->lv2.ext.requests, (char*)buf, size);
 
         zix_sem_wait(&worker->_idata->work_lock);
-
+        DMESSAGE("worker_func - BOTTOM");
         worker->_idata->lv2.ext.worker->work(
                 worker->_idata->instance->lv2_handle, non_worker_respond, worker, size, buf);
 
         zix_sem_post(&worker->_idata->work_lock);
+        DMESSAGE("worker_func - END");
     }
 
     free(buf);
@@ -260,6 +262,9 @@ Plugin_Module::~Plugin_Module ( )
     
     	/* Destroy the worker */
 	jalv_worker_destroy(&jalv->worker);
+
+        zix_ring_free(jalv->ui_events);
+	zix_ring_free(jalv->plugin_events);
 #endif
 #endif
     log_destroy();
@@ -421,6 +426,17 @@ Plugin_Module::init ( void )
 		jalv->safe_restore = true;
 	}
 	lilv_node_free(state_threadSafeRestore);
+    
+            // EVENT BUFFERS
+        
+	/* Create Plugin <=> UI communication buffers */
+	jalv->ui_events     = zix_ring_new(jalv->opts.buffer_size);
+	jalv->plugin_events = zix_ring_new(jalv->opts.buffer_size);
+	zix_ring_mlock(jalv->ui_events);
+	zix_ring_mlock(jalv->plugin_events);
+    
+    
+    
 #endif
     
 #ifdef PRESET_SUPPORT
@@ -620,7 +636,7 @@ Plugin_Module::update_control_parameters(int choice)
             m_preset_changes.append(":");
     }
     
-    DMESSAGE("Control String = %s", m_preset_changes.c_str());
+   // DMESSAGE("Control String = %s", m_preset_changes.c_str());
     
     set_parameters(m_preset_changes.c_str());
     
@@ -933,13 +949,32 @@ Plugin_Module::plugin_instances ( unsigned int n )
                     {
                         if ( LV2_IS_PORT_INPUT( _idata->lv2.rdf_data->Ports[k].Types ) )
                         {
-                            // FIXME need to check this
-                            _idata->lv2.descriptor->connect_port( h, k, _idata->lv2.ext.requests );
+                            if ( _idata->lv2.ext.evbuf )
+                                lv2_evbuf_free(_idata->lv2.ext.evbuf);
+                            
+                            const size_t buf_size = 4096;
+                            _idata->lv2.ext.evbuf = lv2_evbuf_new(buf_size,
+                                                                  _uridMapFt->map(_uridMapFt->handle,
+                                                                                  LV2_ATOM__Chunk),
+                                                                  _uridMapFt->map(_uridMapFt->handle,
+                                                                                  LV2_ATOM__Sequence));
+
+                            lilv_instance_connect_port(
+				m_instance, k, lv2_evbuf_get_buffer(_idata->lv2.ext.evbuf));
                         }
                         else if ( LV2_IS_PORT_OUTPUT( _idata->lv2.rdf_data->Ports[k].Types ) )
                         {
-                            // FIXME need to check this
-                             _idata->lv2.descriptor->connect_port( h, k, _idata->lv2.ext.response );
+                            if ( _idata->lv2.ext.evbuf )
+                                lv2_evbuf_free(_idata->lv2.ext.evbuf);
+
+                            const size_t buf_size = 4096;
+                            _idata->lv2.ext.evbuf = lv2_evbuf_new(buf_size,
+                                                                  _uridMapFt->map(_uridMapFt->handle,
+                                                                                  LV2_ATOM__Chunk),
+                                                                  _uridMapFt->map(_uridMapFt->handle,
+                                                                                  LV2_ATOM__Sequence));
+                            lilv_instance_connect_port(
+				m_instance, k, lv2_evbuf_get_buffer(_idata->lv2.ext.evbuf));
                         }
                     }
 #endif
@@ -1785,6 +1820,7 @@ Plugin_Module::non_worker_emit_responses(Plugin_Module* worker, LilvInstance* in
         uint32_t read_space = zix_ring_read_space(worker->_idata->lv2.ext.responses);
         while (read_space)
         {
+            DMESSAGE("GOT responses read space");
             uint32_t size = 0;
             zix_ring_read(worker->_idata->lv2.ext.responses, (char*)&size, sizeof(size));
 
@@ -1846,6 +1882,9 @@ Plugin_Module::apply ( sample_t *buf, nframes_t nframes )
 // actually osc or UI    THREAD_ASSERT( UI );
 
     void* h;
+#ifdef LV2_WORKER_SUPPORT
+    LilvInstance*   temp_instance;
+#endif
 
     if (_is_lv2)
     {
@@ -1854,6 +1893,14 @@ Plugin_Module::apply ( sample_t *buf, nframes_t nframes )
             WARNING( "Failed to instantiate plugin" );
             return false;
         }
+#ifdef LV2_WORKER_SUPPORT
+        else
+        {
+            temp_instance = lilv_plugin_instantiate(m_plugin,  sample_rate(), _idata->lv2.features);
+            temp_instance->lv2_descriptor = _idata->lv2.descriptor;
+            temp_instance->lv2_handle = h;
+        }
+#endif
     }
     else
     {
@@ -1887,13 +1934,31 @@ Plugin_Module::apply ( sample_t *buf, nframes_t nframes )
             {
                 if ( LV2_IS_PORT_INPUT( _idata->lv2.rdf_data->Ports[k].Types ) )
                 {
-                    _idata->lv2.descriptor->connect_port( h, k, _idata->lv2.ext.requests );
-                    // FIXME check this
+                    if ( _idata->lv2.ext.evbuf )
+                        lv2_evbuf_free(_idata->lv2.ext.evbuf);
+
+                    const size_t buf_size = 4096;
+                    _idata->lv2.ext.evbuf = lv2_evbuf_new(buf_size,
+                                                          _uridMapFt->map(_uridMapFt->handle,
+                                                                          LV2_ATOM__Chunk),
+                                                          _uridMapFt->map(_uridMapFt->handle,
+                                                                          LV2_ATOM__Sequence));
+                    lilv_instance_connect_port(
+                        temp_instance, k, lv2_evbuf_get_buffer(_idata->lv2.ext.evbuf));
                 }
                 else if ( LV2_IS_PORT_OUTPUT( _idata->lv2.rdf_data->Ports[k].Types ) )
                 {
-                     _idata->lv2.descriptor->connect_port( h, k, _idata->lv2.ext.responses );
-                    // FIXME check this
+                    if ( _idata->lv2.ext.evbuf )
+                        lv2_evbuf_free(_idata->lv2.ext.evbuf);
+
+                    const size_t buf_size = 4096;
+                    _idata->lv2.ext.evbuf = lv2_evbuf_new(buf_size,
+                                                          _uridMapFt->map(_uridMapFt->handle,
+                                                                          LV2_ATOM__Chunk),
+                                                          _uridMapFt->map(_uridMapFt->handle,
+                                                                          LV2_ATOM__Sequence));
+                    lilv_instance_connect_port(
+                        temp_instance, k, lv2_evbuf_get_buffer(_idata->lv2.ext.evbuf));
                 }
             }
 #endif
