@@ -34,6 +34,12 @@
 #include <list>
 #include <algorithm>
 
+#define LV2_WORKER_SUPPORT 1
+
+#ifdef LV2_WORKER_SUPPORT
+#include "lv2/lv2_evbuf.h"
+#endif
+
 class Chain;
 class Module_Parameter_Editor;
 class Fl_Menu_;
@@ -138,7 +144,7 @@ public:
     public:
 
         enum Direction { INPUT, OUTPUT };
-        enum Type { AUDIO, CONTROL, AUX_AUDIO };
+        enum Type { AUDIO, CONTROL, AUX_AUDIO, ATOM };
 
         /* hints for control ports (specifically control inputs) */
         struct Hints
@@ -186,6 +192,9 @@ public:
                 _by_number_path = 0;
                 _by_number_number = -1;
                 _jack_port = 0;
+#ifdef LV2_WORKER_SUPPORT
+                _evbuf = NULL;
+#endif
 		/* _feedback_value = -2; */
 		_pending_feedback = false;
 		_feedback_milliseconds = 0;
@@ -206,6 +215,9 @@ public:
                 _by_number_path = 0;
                 _by_number_number = -1;
                 _jack_port = p._jack_port;
+#ifdef LV2_WORKER_SUPPORT
+                _evbuf = p._evbuf;
+#endif
 		/* _feedback_value = p._feedback_value; */
             }
 
@@ -217,6 +229,10 @@ public:
                 if ( _by_number_path )
                     free( _by_number_path );
                 _by_number_path = NULL;
+#ifdef LV2_WORKER_SUPPORT
+                if ( _evbuf )
+                    lv2_evbuf_free( _evbuf );
+#endif
             }
 
 
@@ -230,7 +246,10 @@ public:
 
         void buffer ( void *buf, nframes_t nframes ) { _buf = buf; _nframes = nframes; };
         void *buffer ( void ) const { return _buf; }
-
+#ifdef LV2_WORKER_SUPPORT
+        void event_buffer ( LV2_Evbuf * evbuf ) { _evbuf = evbuf; }
+        LV2_Evbuf* event_buffer ( void ) const { return _evbuf; }
+#endif
         OSC::Signal *scaled_signal ( void ) { return _scaled_signal; }
 
         int _by_number_number;
@@ -400,7 +419,9 @@ public:
         Module *_module;
         /* used for auxilliary I/Os */
         JACK::Port *_jack_port;
-
+#ifdef LV2_WORKER_SUPPORT
+        LV2_Evbuf* _evbuf;
+#endif
         OSC::Signal *_scaled_signal;
         OSC::Signal *_unscaled_signal;
 
@@ -467,6 +488,10 @@ public:
     std::vector<Port> control_output;
     std::vector<Port> aux_audio_input;
     std::vector<Port> aux_audio_output;
+#ifdef LV2_WORKER_SUPPORT
+    std::vector<Port> atom_input;
+    std::vector<Port> atom_output;
+#endif
 
     void add_port ( const Port &p )
         {
@@ -478,6 +503,13 @@ public:
                 control_input.push_back( p );
             else if ( p.type() == Port::CONTROL && p.direction() == Port::OUTPUT )
                 control_output.push_back( p );
+            
+#ifdef LV2_WORKER_SUPPORT
+            else if ( p.type() == Port::ATOM && p.direction() == Port::INPUT )
+                atom_input.push_back( p );
+            else if ( p.type() == Port::ATOM && p.direction() == Port::OUTPUT )
+                atom_output.push_back( p );
+#endif
         }
 
     int noutputs ( void ) const

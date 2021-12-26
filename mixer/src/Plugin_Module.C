@@ -928,6 +928,8 @@ Plugin_Module::plugin_instances ( unsigned int n )
 
             int ij = 0;
             int oj = 0;
+            int aji = 0;
+            int ajo = 0;
             if (_is_lv2)
             {
                 for ( unsigned int k = 0; k < _idata->lv2.rdf_data->PortCount; ++k )
@@ -949,32 +951,34 @@ Plugin_Module::plugin_instances ( unsigned int n )
                     {
                         if ( LV2_IS_PORT_INPUT( _idata->lv2.rdf_data->Ports[k].Types ) )
                         {
-                            if ( _idata->lv2.ext.evbuf )
-                                lv2_evbuf_free(_idata->lv2.ext.evbuf);
+                            if ( atom_input[aji].event_buffer() )
+                                lv2_evbuf_free( atom_input[aji].event_buffer() );
                             
                             const size_t buf_size = 4096;
-                            _idata->lv2.ext.evbuf = lv2_evbuf_new(buf_size,
+                            atom_input[aji].event_buffer( lv2_evbuf_new(buf_size,
                                                                   _uridMapFt->map(_uridMapFt->handle,
                                                                                   LV2_ATOM__Chunk),
                                                                   _uridMapFt->map(_uridMapFt->handle,
-                                                                                  LV2_ATOM__Sequence));
-
+                                                                                  LV2_ATOM__Sequence)) ); 
                             lilv_instance_connect_port(
-				m_instance, k, lv2_evbuf_get_buffer(_idata->lv2.ext.evbuf));
+				m_instance, k, lv2_evbuf_get_buffer(atom_input[aji].event_buffer()));
+
+                            aji++;
                         }
                         else if ( LV2_IS_PORT_OUTPUT( _idata->lv2.rdf_data->Ports[k].Types ) )
                         {
-                            if ( _idata->lv2.ext.evbuf )
-                                lv2_evbuf_free(_idata->lv2.ext.evbuf);
+                            if ( atom_output[ajo].event_buffer() )
+                                lv2_evbuf_free( atom_output[ajo].event_buffer() );
 
                             const size_t buf_size = 4096;
-                            _idata->lv2.ext.evbuf = lv2_evbuf_new(buf_size,
+                            atom_output[ajo].event_buffer( lv2_evbuf_new(buf_size,
                                                                   _uridMapFt->map(_uridMapFt->handle,
                                                                                   LV2_ATOM__Chunk),
                                                                   _uridMapFt->map(_uridMapFt->handle,
-                                                                                  LV2_ATOM__Sequence));
+                                                                                  LV2_ATOM__Sequence)) );
                             lilv_instance_connect_port(
-				m_instance, k, lv2_evbuf_get_buffer(_idata->lv2.ext.evbuf));
+				m_instance, k, lv2_evbuf_get_buffer( atom_output[ajo].event_buffer() ));
+                            ajo++;
                         }
                     }
 #endif
@@ -1321,6 +1325,9 @@ Plugin_Module::load_lv2 ( const char* uri )
 #endif
 
     _plugin_ins = _plugin_outs = 0;
+#ifdef LV2_WORKER_SUPPORT
+    _atom_ins = _atom_outs = 0;
+#endif
 
     if ( ! _idata->lv2.rdf_data )
     {
@@ -1420,13 +1427,28 @@ Plugin_Module::load_lv2 ( const char* uri )
                     add_port( Port( this, Port::OUTPUT, Port::AUDIO, _idata->lv2.rdf_data->Ports[i].Name ) );
                 }
             }
+#ifdef LV2_WORKER_SUPPORT
             else if (LV2_IS_PORT_ATOM_SEQUENCE ( _idata->lv2.rdf_data->Ports[i].Types ))
             {
-                
-                DMESSAGE("GOT ATOM SEQUENCE PORT");
+                if ( LV2_IS_PORT_INPUT( _idata->lv2.rdf_data->Ports[i].Types ) )
+                {
+                    add_port( Port( this, Port::INPUT, Port::ATOM, _idata->lv2.rdf_data->Ports[i].Name ) );
+                    _atom_ins++;
+                    
+                    DMESSAGE("GOT ATOM SEQUENCE PORT IN = %s", _idata->lv2.rdf_data->Ports[i].Name);
+                }
+                else if (LV2_IS_PORT_OUTPUT(_idata->lv2.rdf_data->Ports[i].Types))
+                {
+                    _atom_outs++;
+                    add_port( Port( this, Port::OUTPUT, Port::ATOM, _idata->lv2.rdf_data->Ports[i].Name ) );
+
+                    DMESSAGE("GOT ATOM SEQUENCE PORT OUT = %s", _idata->lv2.rdf_data->Ports[i].Name);
+                }
             }
+#endif
         }
 
+        DMESSAGE( "Plugin has %i atom inputs and %i atom outputs", _atom_ins, _atom_outs);
         MESSAGE( "Plugin has %i inputs and %i outputs", _plugin_ins, _plugin_outs);
 
         for ( unsigned int i = 0; i < _idata->lv2.rdf_data->PortCount; ++i )
@@ -1883,7 +1905,7 @@ Plugin_Module::apply ( sample_t *buf, nframes_t nframes )
 
     void* h;
 #ifdef LV2_WORKER_SUPPORT
-    LilvInstance*   temp_instance;
+    LilvInstance* temp_instance;
 #endif
 
     if (_is_lv2)
@@ -1913,6 +1935,9 @@ Plugin_Module::apply ( sample_t *buf, nframes_t nframes )
 
     int ij = 0;
     int oj = 0;
+    int aji = 0;
+    int ajo = 0;
+    
     if (_is_lv2)
     {
         for ( unsigned int k = 0; k < _idata->lv2.rdf_data->PortCount; ++k )
@@ -1934,31 +1959,33 @@ Plugin_Module::apply ( sample_t *buf, nframes_t nframes )
             {
                 if ( LV2_IS_PORT_INPUT( _idata->lv2.rdf_data->Ports[k].Types ) )
                 {
-                    if ( _idata->lv2.ext.evbuf )
-                        lv2_evbuf_free(_idata->lv2.ext.evbuf);
+                    if ( atom_input[aji].event_buffer() )
+                        lv2_evbuf_free( atom_input[aji].event_buffer() );
 
                     const size_t buf_size = 4096;
-                    _idata->lv2.ext.evbuf = lv2_evbuf_new(buf_size,
-                                                          _uridMapFt->map(_uridMapFt->handle,
-                                                                          LV2_ATOM__Chunk),
-                                                          _uridMapFt->map(_uridMapFt->handle,
-                                                                          LV2_ATOM__Sequence));
+                    atom_input[aji].event_buffer( lv2_evbuf_new(buf_size, _uridMapFt->map(_uridMapFt->handle,
+                                                    LV2_ATOM__Chunk),
+                                                    _uridMapFt->map(_uridMapFt->handle,
+                                                    LV2_ATOM__Sequence)) );
                     lilv_instance_connect_port(
-                        temp_instance, k, lv2_evbuf_get_buffer(_idata->lv2.ext.evbuf));
+                        temp_instance, k, lv2_evbuf_get_buffer( atom_input[aji].event_buffer() ));
+
+                    aji++;
                 }
                 else if ( LV2_IS_PORT_OUTPUT( _idata->lv2.rdf_data->Ports[k].Types ) )
                 {
-                    if ( _idata->lv2.ext.evbuf )
-                        lv2_evbuf_free(_idata->lv2.ext.evbuf);
+                    if ( atom_output[ajo].event_buffer() )
+                        lv2_evbuf_free( atom_output[ajo].event_buffer() );
 
                     const size_t buf_size = 4096;
-                    _idata->lv2.ext.evbuf = lv2_evbuf_new(buf_size,
-                                                          _uridMapFt->map(_uridMapFt->handle,
-                                                                          LV2_ATOM__Chunk),
-                                                          _uridMapFt->map(_uridMapFt->handle,
-                                                                          LV2_ATOM__Sequence));
+                    atom_output[ajo].event_buffer( lv2_evbuf_new(buf_size, _uridMapFt->map(_uridMapFt->handle,
+                                                    LV2_ATOM__Chunk),
+                                                    _uridMapFt->map(_uridMapFt->handle,
+                                                    LV2_ATOM__Sequence)) );
                     lilv_instance_connect_port(
-                        temp_instance, k, lv2_evbuf_get_buffer(_idata->lv2.ext.evbuf));
+                        temp_instance, k, lv2_evbuf_get_buffer( atom_output[ajo].event_buffer() ));
+
+                    ajo++;
                 }
             }
 #endif
