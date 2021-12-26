@@ -194,6 +194,7 @@ public:
                 _jack_port = 0;
 #ifdef LV2_WORKER_SUPPORT
                 _evbuf = NULL;
+                _tmpevbuf = NULL;
 #endif
 		/* _feedback_value = -2; */
 		_pending_feedback = false;
@@ -217,6 +218,7 @@ public:
                 _jack_port = p._jack_port;
 #ifdef LV2_WORKER_SUPPORT
                 _evbuf = p._evbuf;
+                _tmpevbuf = p._tmpevbuf;
 #endif
 		/* _feedback_value = p._feedback_value; */
             }
@@ -232,6 +234,8 @@ public:
 #ifdef LV2_WORKER_SUPPORT
                 if ( _evbuf )
                     lv2_evbuf_free( _evbuf );
+                if ( _tmpevbuf )
+                    lv2_evbuf_free( _tmpevbuf );
 #endif
             }
 
@@ -249,6 +253,9 @@ public:
 #ifdef LV2_WORKER_SUPPORT
         void event_buffer ( LV2_Evbuf * evbuf ) { _evbuf = evbuf; }
         LV2_Evbuf* event_buffer ( void ) const { return _evbuf; }
+        void tmp_event_buffer ( LV2_Evbuf * tmpevbuf ) { _tmpevbuf = tmpevbuf; }
+        LV2_Evbuf* tmp_event_buffer ( void ) const { return _tmpevbuf; }
+        
 #endif
         OSC::Signal *scaled_signal ( void ) { return _scaled_signal; }
 
@@ -421,6 +428,7 @@ public:
         JACK::Port *_jack_port;
 #ifdef LV2_WORKER_SUPPORT
         LV2_Evbuf* _evbuf;
+        LV2_Evbuf* _tmpevbuf;
 #endif
         OSC::Signal *_scaled_signal;
         OSC::Signal *_unscaled_signal;

@@ -129,7 +129,7 @@ worker_func(void* data)
         zix_sem_wait(&worker->_idata->work_lock);
         DMESSAGE("worker_func - BOTTOM");
         worker->_idata->lv2.ext.worker->work(
-                worker->_idata->instance->lv2_handle, non_worker_respond, worker, size, buf);
+                worker->m_instance->lv2_handle, non_worker_respond, worker, size, buf);
 
         zix_sem_post(&worker->_idata->work_lock);
         DMESSAGE("worker_func - END");
@@ -160,7 +160,7 @@ non_worker_schedule(LV2_Worker_Schedule_Handle handle,
         zix_sem_wait(&worker->_idata->work_lock);
 
         worker->_idata->lv2.ext.worker->work(
-        worker->_idata->instance->lv2_handle, non_worker_respond, worker, size, data);
+        worker->m_instance->lv2_handle, non_worker_respond, worker, size, data);
 
         zix_sem_post(&worker->_idata->work_lock);
     }
@@ -271,7 +271,6 @@ Plugin_Module::~Plugin_Module ( )
     plugin_instances( 0 );
     
 #ifdef PRESET_SUPPORT
-//    lilv_instance_free(m_instance);
     lilv_world_free(m_lilvWorld);
 #endif
 }
@@ -898,17 +897,17 @@ Plugin_Module::plugin_instances ( unsigned int n )
 
             if (_is_lv2)
             {
-                if ( ! (h = _idata->lv2.descriptor->instantiate( _idata->lv2.descriptor, sample_rate(), _idata->lv2.rdf_data->Bundle, _idata->lv2.features ) ) )
+                m_instance = lilv_plugin_instantiate(m_plugin,  sample_rate(), _idata->lv2.features);
+
+                if ( ! m_instance )
                 {
                     WARNING( "Failed to instantiate plugin" );
                     return false;
                 }
                 else
                 {
-                    // FIXME check this!!
-                    m_instance->lv2_descriptor = _idata->lv2.descriptor;
-                    m_instance->lv2_handle = h;
-                    _idata->instance = m_instance;
+                    h = m_instance->lv2_handle;
+                    _idata->lv2.descriptor = m_instance->lv2_descriptor;    // probably not necessary
                 }
             }
             else
@@ -962,6 +961,8 @@ Plugin_Module::plugin_instances ( unsigned int n )
                                                                                   LV2_ATOM__Sequence)) ); 
                             lilv_instance_connect_port(
 				m_instance, k, lv2_evbuf_get_buffer(atom_input[aji].event_buffer()));
+                            
+                            DMESSAGE("ATOM IN event_buffer = %p", lv2_evbuf_get_buffer(atom_input[aji].event_buffer()));
 
                             aji++;
                         }
@@ -978,6 +979,12 @@ Plugin_Module::plugin_instances ( unsigned int n )
                                                                                   LV2_ATOM__Sequence)) );
                             lilv_instance_connect_port(
 				m_instance, k, lv2_evbuf_get_buffer( atom_output[ajo].event_buffer() ));
+                            
+                            /* This sets the capacity */
+                            lv2_evbuf_reset(atom_output[ajo].event_buffer(), false);
+
+                            DMESSAGE("ATOM OUT event_buffer = %p", lv2_evbuf_get_buffer( atom_output[ajo].event_buffer() ) );
+
                             ajo++;
                         }
                     }
@@ -1321,7 +1328,6 @@ Plugin_Module::load_lv2 ( const char* uri )
     LilvNode* plugin_uri = lilv_new_uri(get_lilv_world(), uri);
     m_plugin = lilv_plugins_get_by_uri(get_lilv_plugins(), plugin_uri);
     lilv_node_free(plugin_uri);
-    m_instance = lilv_plugin_instantiate(m_plugin,  sample_rate(), _idata->lv2.features);
 #endif
 
     _plugin_ins = _plugin_outs = 0;
@@ -1904,25 +1910,22 @@ Plugin_Module::apply ( sample_t *buf, nframes_t nframes )
 // actually osc or UI    THREAD_ASSERT( UI );
 
     void* h;
-#ifdef LV2_WORKER_SUPPORT
     LilvInstance* temp_instance;
-#endif
 
     if (_is_lv2)
     {
-        if ( ! (h = _idata->lv2.descriptor->instantiate( _idata->lv2.descriptor, sample_rate(), _idata->lv2.rdf_data->Bundle, _idata->lv2.features ) ) )
+        temp_instance = lilv_plugin_instantiate(m_plugin,  sample_rate(), _idata->lv2.features);
+
+        if ( !temp_instance )
         {
             WARNING( "Failed to instantiate plugin" );
             return false;
         }
-#ifdef LV2_WORKER_SUPPORT
         else
         {
-            temp_instance = lilv_plugin_instantiate(m_plugin,  sample_rate(), _idata->lv2.features);
-            temp_instance->lv2_descriptor = _idata->lv2.descriptor;
-            temp_instance->lv2_handle = h;
+            h = temp_instance->lv2_handle;
+            _idata->lv2.descriptor = temp_instance->lv2_descriptor;
         }
-#endif
     }
     else
     {
@@ -1959,31 +1962,31 @@ Plugin_Module::apply ( sample_t *buf, nframes_t nframes )
             {
                 if ( LV2_IS_PORT_INPUT( _idata->lv2.rdf_data->Ports[k].Types ) )
                 {
-                    if ( atom_input[aji].event_buffer() )
-                        lv2_evbuf_free( atom_input[aji].event_buffer() );
+                    if ( atom_input[aji].tmp_event_buffer() )
+                        lv2_evbuf_free( atom_input[aji].tmp_event_buffer() );
 
                     const size_t buf_size = 4096;
-                    atom_input[aji].event_buffer( lv2_evbuf_new(buf_size, _uridMapFt->map(_uridMapFt->handle,
+                    atom_input[aji].tmp_event_buffer( lv2_evbuf_new(buf_size, _uridMapFt->map(_uridMapFt->handle,
                                                     LV2_ATOM__Chunk),
                                                     _uridMapFt->map(_uridMapFt->handle,
                                                     LV2_ATOM__Sequence)) );
                     lilv_instance_connect_port(
-                        temp_instance, k, lv2_evbuf_get_buffer( atom_input[aji].event_buffer() ));
+                        temp_instance, k, lv2_evbuf_get_buffer( atom_input[aji].tmp_event_buffer() ));
 
                     aji++;
                 }
                 else if ( LV2_IS_PORT_OUTPUT( _idata->lv2.rdf_data->Ports[k].Types ) )
                 {
-                    if ( atom_output[ajo].event_buffer() )
-                        lv2_evbuf_free( atom_output[ajo].event_buffer() );
+                    if ( atom_output[ajo].tmp_event_buffer() )
+                        lv2_evbuf_free( atom_output[ajo].tmp_event_buffer() );
 
                     const size_t buf_size = 4096;
-                    atom_output[ajo].event_buffer( lv2_evbuf_new(buf_size, _uridMapFt->map(_uridMapFt->handle,
+                    atom_output[ajo].tmp_event_buffer( lv2_evbuf_new(buf_size, _uridMapFt->map(_uridMapFt->handle,
                                                     LV2_ATOM__Chunk),
                                                     _uridMapFt->map(_uridMapFt->handle,
                                                     LV2_ATOM__Sequence)) );
                     lilv_instance_connect_port(
-                        temp_instance, k, lv2_evbuf_get_buffer( atom_output[ajo].event_buffer() ));
+                        temp_instance, k, lv2_evbuf_get_buffer( atom_output[ajo].tmp_event_buffer() ));
 
                     ajo++;
                 }
@@ -2102,6 +2105,42 @@ Plugin_Module::process ( nframes_t nframes )
                     _idata->lv2.ext.worker->end_run(m_instance->lv2_handle);
                 }
             }
+
+            unsigned int ao = 0;
+
+            for ( unsigned int k = 0; k < _idata->lv2.rdf_data->PortCount; ++k )
+            {
+                if (LV2_IS_PORT_ATOM_SEQUENCE ( _idata->lv2.rdf_data->Ports[k].Types ))
+                {
+                    if ( LV2_IS_PORT_OUTPUT( _idata->lv2.rdf_data->Ports[k].Types ) )
+                    {   
+                        for (LV2_Evbuf_Iterator i = lv2_evbuf_begin(atom_output[ao].event_buffer());
+                            lv2_evbuf_is_valid(i);
+                            i = lv2_evbuf_next(i))
+                        {
+                            // Get event from LV2 buffer
+                            uint32_t frames    = 0;
+                            uint32_t subframes = 0;
+                            uint32_t type      = 0;
+                            uint32_t size      = 0;
+                            uint8_t* body      = NULL;
+                            lv2_evbuf_get(i, &frames, &subframes, &type, &size, &body);
+
+                            DMESSAGE("GOT ATOM EVENT BUFFER");
+
+                        //    if (jalv->has_ui)
+                        //    {
+                                // Forward event to UI
+                        //        jalv_send_to_ui(jalv, p, type, size, body);
+                        //    }
+                        }
+
+                        /* Clear event output for plugin to write to */
+                        lv2_evbuf_reset(atom_output[ao].event_buffer(), false);
+                        ao++;
+                    }
+                }
+            }            
 #endif
             
 #if 0

@@ -58,6 +58,7 @@ enum Plugin_Module_URIs {
     Plugin_Module_URI_Parameter_SampleRate,
 #ifdef LV2_WORKER_SUPPORT
     Plugin_Module_URI_Worker_Schedule,
+    Plugin_Module_URI_Atom_Chunk,
 #endif
     Plugin_Module_URI_Count
 };
@@ -150,7 +151,6 @@ struct ImplementationData
 
 #ifdef LV2_WORKER_SUPPORT
     ZixSem             work_lock;      ///< Lock for plugin work() method
-    LilvInstance*      instance;       ///< Plugin instance (shared library)
 //    JalvWorker         Worker;         ///< Worker thread implementation
 //    JalvWorker         state_worker;   ///< Synchronous worker for state restore
     bool               exit;           ///< True iff execution is finished
@@ -181,6 +181,7 @@ struct ImplementationData
         lv2.mappedURIs.push_back(LV2_PARAMETERS__sampleRate);   // Plugin_Module_URI_Parameter_SampleRate
 #ifdef LV2_WORKER_SUPPORT
         lv2.mappedURIs.push_back(LV2_ATOM__Sequence);
+        lv2.mappedURIs.push_back(LV2_ATOM__Chunk);
         zix_sem_init(&work_lock, 1);
         zix_sem_init(&lv2.ext.sem, 0);
         
@@ -240,6 +241,8 @@ struct ImplementationData
 #ifdef LV2_WORKER_SUPPORT
         if ( ::strcmp(uri, LV2_ATOM__Sequence) == 0 )
             return Plugin_Module_URI_Worker_Schedule;
+        if ( ::strcmp(uri, LV2_ATOM__Chunk) == 0 )
+            return Plugin_Module_URI_Atom_Chunk;
 #endif
 
         ImplementationData* self = (ImplementationData*)handle;
