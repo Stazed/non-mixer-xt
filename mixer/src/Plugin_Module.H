@@ -59,6 +59,9 @@ enum Plugin_Module_URIs {
 #ifdef LV2_WORKER_SUPPORT
     Plugin_Module_URI_Worker_Schedule,
     Plugin_Module_URI_Atom_Chunk,
+    Plugin_Module_URI_Atom_eventTransfer,
+    Plugin_Module_URI_patch_Set,
+    Plugin_Module_URI_patch_Put,
 #endif
     Plugin_Module_URI_Count
 };
@@ -139,6 +142,8 @@ struct ImplementationData
 #ifdef LV2_WORKER_SUPPORT
             ZixRing*                    requests;   ///< Requests to the worker
             ZixRing*                    responses;  ///< Responses from the worker
+            ZixRing*                    plugin_events;  ///< Port events from plugin
+            void*                       ui_event_buf;   ///< Buffer for reading UI port events
             void*                       response;   ///< Worker response buffer
             ZixSem                      sem;        ///< Worker semaphore
             ZixThread                   thread;     ///< Worker thread
@@ -182,6 +187,9 @@ struct ImplementationData
 #ifdef LV2_WORKER_SUPPORT
         lv2.mappedURIs.push_back(LV2_ATOM__Sequence);
         lv2.mappedURIs.push_back(LV2_ATOM__Chunk);
+        lv2.mappedURIs.push_back(LV2_ATOM__eventTransfer);
+        lv2.mappedURIs.push_back(LV2_PATCH__Set);
+        lv2.mappedURIs.push_back(LV2_PATCH__Put);
         zix_sem_init(&work_lock, 1);
         zix_sem_init(&lv2.ext.sem, 0);
         
@@ -213,6 +221,8 @@ struct ImplementationData
 #ifdef LV2_WORKER_SUPPORT
  //       if ( lv2.features[Plugin_Feature_Worker] && lv2.features[Plugin_Feature_Worker]->data )
  //           delete (LV2_WORKER__schedule*)lv2.features[Plugin_Feature_Worker]->data;
+ 
+        free(lv2.ext.ui_event_buf);
 #endif
     }
 
@@ -243,6 +253,13 @@ struct ImplementationData
             return Plugin_Module_URI_Worker_Schedule;
         if ( ::strcmp(uri, LV2_ATOM__Chunk) == 0 )
             return Plugin_Module_URI_Atom_Chunk;
+
+        if ( ::strcmp(uri, LV2_ATOM__eventTransfer) == 0 )
+            return Plugin_Module_URI_Atom_eventTransfer;
+        if ( ::strcmp(uri, LV2_PATCH__Set) == 0 )
+            return Plugin_Module_URI_patch_Set;
+        if ( ::strcmp(uri, LV2_PATCH__Put) == 0 )
+            return Plugin_Module_URI_patch_Put;
 #endif
 
         ImplementationData* self = (ImplementationData*)handle;
@@ -315,7 +332,6 @@ public:
                 favorite = 0;
             }
 
-        
         bool operator< ( const Plugin_Info &rhs ) {
             return strcmp( name.c_str(), rhs.name.c_str() ) < 1;
         }
@@ -448,6 +464,9 @@ public:
     void non_worker_emit_responses(Plugin_Module* worker, LilvInstance* instance);
     void non_worker_finish(Plugin_Module* worker);
     void non_worker_destroy(Plugin_Module* worker);
+    bool send_to_ui( uint32_t port_index, uint32_t type, uint32_t size, const void* body );
+    int update_ui( void );
+    void ui_port_event( uint32_t port_index, uint32_t buffer_size, uint32_t protocol, const void* buffer );
 #endif
 
     LOG_CREATE_FUNC( Plugin_Module );

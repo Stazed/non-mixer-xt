@@ -644,6 +644,9 @@ Module_Parameter_Editor::bind_control ( int i )
 void
 Module_Parameter_Editor::handle_control_changed ( Module::Port *p )
 {
+    Plugin_Module *pm = static_cast<Plugin_Module *> (_module);
+    pm->update_ui();
+    
     int i = _module->control_input_port_index( p );
    
     Fl_Widget *w = controls_by_port[i];

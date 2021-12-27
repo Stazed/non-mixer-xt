@@ -166,7 +166,55 @@ non_worker_schedule(LV2_Worker_Schedule_Handle handle,
     }
     return LV2_WORKER_SUCCESS;
 }
-#endif
+
+static int
+patch_set_get(Plugin_Module* plugin,
+              const LV2_Atom_Object* obj,
+              const LV2_Atom_URID**  property,
+              const LV2_Atom**       value)
+{
+    lv2_atom_object_get(obj, plugin->_idata->_lv2_urid_map(plugin->_idata, LV2_PATCH__property),
+                        (const LV2_Atom*)property,
+                        plugin->_idata->_lv2_urid_map(plugin->_idata, LV2_PATCH__value),
+                        value,
+                        0);
+    if (!*property)
+    {
+        WARNING( "patch:Set message with no property" );
+        return 1;
+    }
+    else if ((*property)->atom.type != plugin->_idata->lv2.ext.forge.URID)
+    {
+        WARNING( "patch:Set property is not a URID" );
+        return 1;
+    }
+
+    return 0;
+}
+
+static int
+patch_put_get(Plugin_Module*  plugin,
+              const LV2_Atom_Object*  obj,
+              const LV2_Atom_Object** body)
+{
+    lv2_atom_object_get(obj, plugin->_idata->_lv2_urid_map(plugin->_idata, LV2_PATCH__body),
+                        (const LV2_Atom*)body,
+                        0);
+    if (!*body)
+    {
+        WARNING( "patch:Put message with no body" );
+        return 1;
+    }
+    else if (!lv2_atom_forge_is_object_type(&plugin->_idata->lv2.ext.forge, (*body)->atom.type))
+    {
+        WARNING( "patch:Put body is not an object" );
+        return 1;
+    }
+
+    return 0;
+}
+
+#endif  // LV2_WORKER_SUPPORT
 
 /* handy class to handle lv2 open/close */
 class LV2_Lib_Manager
@@ -1333,6 +1381,8 @@ Plugin_Module::load_lv2 ( const char* uri )
     _plugin_ins = _plugin_outs = 0;
 #ifdef LV2_WORKER_SUPPORT
     _atom_ins = _atom_outs = 0;
+    /* Create Plugin <=> UI communication buffers */
+    _idata->lv2.ext.plugin_events = zix_ring_new(4096  /*jalv->opts.buffer_size*/ );    // FIXME
 #endif
 
     if ( ! _idata->lv2.rdf_data )
@@ -1405,7 +1455,7 @@ Plugin_Module::load_lv2 ( const char* uri )
                 non_worker_init(this,  _idata->lv2.ext.worker, true);
 		if (_idata->safe_restore)
                 {
-                    fprintf(stderr, "open -- Plugin Has safe_restore\n");
+                    MESSAGE( "open -- Plugin Has safe_restore" );
                     non_worker_init(this, _idata->lv2.ext.worker, false);
 		}
             }
@@ -1887,6 +1937,101 @@ Plugin_Module::non_worker_destroy(Plugin_Module* worker)
     }
 }
 
+bool
+Plugin_Module::send_to_ui( uint32_t port_index, uint32_t type, uint32_t size, const void* body)
+{
+    /* TODO: Be more discriminate about what to send */
+    char evbuf[sizeof(ControlChange) + sizeof(LV2_Atom)];
+    ControlChange* ev = (ControlChange*)evbuf;
+    ev->index    = port_index;
+    ev->protocol = _idata->_lv2_urid_map(_idata, LV2_ATOM__eventTransfer);
+    ev->size     = sizeof(LV2_Atom) + size;
+
+    LV2_Atom* atom = (LV2_Atom*)ev->body;
+    atom->type = type;
+    atom->size = size;
+
+    if (zix_ring_write_space( _idata->lv2.ext.plugin_events ) >= sizeof(evbuf) + size)
+    {
+        zix_ring_write(_idata->lv2.ext.plugin_events, evbuf, sizeof(evbuf));
+        zix_ring_write(_idata->lv2.ext.plugin_events, (const char*)body, size);
+        return true;
+    }
+    else
+    {
+        WARNING( "Plugin => UI buffer overflow!" );
+        return false;
+    }
+}
+
+/**
+ * Called from ui timeout
+ * @return 
+ *      Not used.
+ */
+int 
+Plugin_Module::update_ui( void )
+{
+    /* Emit UI events. */
+    ControlChange ev;
+    const size_t  space = zix_ring_read_space( _idata->lv2.ext.plugin_events );
+    for (size_t i = 0;
+         i + sizeof(ev) < space;
+         i += sizeof(ev) + ev.size)
+    {
+        /* Read event header to get the size */
+        zix_ring_read( _idata->lv2.ext.plugin_events, (char*)&ev, sizeof(ev));
+
+        /* Resize read buffer if necessary */
+        _idata->lv2.ext.ui_event_buf = realloc(_idata->lv2.ext.ui_event_buf, ev.size);
+        void* const buf = _idata->lv2.ext.ui_event_buf;
+
+        /* Read event body */
+        zix_ring_read( _idata->lv2.ext.plugin_events, (char*)buf, ev.size);
+
+        ui_port_event( ev.index, ev.size, ev.protocol, buf );
+    }
+
+    return 1;
+}
+
+void
+Plugin_Module::ui_port_event( uint32_t port_index, uint32_t buffer_size, uint32_t protocol, const void* buffer )
+{
+    const LV2_Atom* atom = (const LV2_Atom*)buffer;
+    if (lv2_atom_forge_is_object_type( &_idata->lv2.ext.forge, atom->type))
+    {
+//        updating = true;  // FIXME
+        const LV2_Atom_Object* obj = (const LV2_Atom_Object*)buffer;
+        if (obj->body.otype ==  _idata->_lv2_urid_map(_idata, LV2_PATCH__Set))
+        {
+            const LV2_Atom_URID* property = NULL;
+            const LV2_Atom*      value    = NULL;
+            if (!patch_set_get(this, obj, &property, &value))
+            {
+                DMESSAGE("Value received = %s", (char *) (value + 1) );
+               // property_changed(jalv, property->body, value);    // FIXME
+            }
+        } 
+        else if (obj->body.otype == _idata->_lv2_urid_map(_idata, LV2_PATCH__Put))
+        {
+            const LV2_Atom_Object* body = NULL;
+            if (!patch_put_get(this, obj, &body))
+            {
+                LV2_ATOM_OBJECT_FOREACH(body, prop)
+                {
+                    //property_changed(jalv, prop->key, &prop->value);  // FIXME
+                }
+            }
+        }
+        else
+        {
+            WARNING("Unknown object type?");
+        }
+      //  updating = false; // FIXME
+    }
+}
+
 #endif  // LV2_WORKER_SUPPORT
 
 
@@ -2128,14 +2273,10 @@ Plugin_Module::process ( nframes_t nframes )
 
                             DMESSAGE("GOT ATOM EVENT BUFFER");
 
-                        //    if (jalv->has_ui)
-                        //    {
-                                // Forward event to UI
-                        //        jalv_send_to_ui(jalv, p, type, size, body);
-                        //    }
+                            send_to_ui(k, type, size, body);
                         }
 
-                        /* Clear event output for plugin to write to */
+                        /* Clear event output for plugin to write to on next cycle */
                         lv2_evbuf_reset(atom_output[ao].event_buffer(), false);
                         ao++;
                     }
