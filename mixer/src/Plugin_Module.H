@@ -461,9 +461,9 @@ public:
                  const LV2_Worker_Interface* iface,
                  bool threaded);
 
-    void non_worker_emit_responses(Plugin_Module* worker, LilvInstance* instance);
-    void non_worker_finish(Plugin_Module* worker);
-    void non_worker_destroy(Plugin_Module* worker);
+    void non_worker_emit_responses( LilvInstance* instance );
+    void non_worker_finish( void );
+    void non_worker_destroy( void );
     bool send_to_ui( uint32_t port_index, uint32_t type, uint32_t size, const void* body );
     int update_ui( void );
     void ui_port_event( uint32_t port_index, uint32_t buffer_size, uint32_t protocol, const void* buffer );

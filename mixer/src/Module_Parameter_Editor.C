@@ -644,7 +644,7 @@ Module_Parameter_Editor::bind_control ( int i )
 void
 Module_Parameter_Editor::handle_control_changed ( Module::Port *p )
 {
-    Plugin_Module *pm = static_cast<Plugin_Module *> (_module);
+    Plugin_Module *pm = static_cast<Plugin_Module *> (_module); // FIXME this may not be the place for this!!!
     pm->update_ui();
     
     int i = _module->control_input_port_index( p );

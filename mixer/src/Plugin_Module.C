@@ -304,16 +304,14 @@ Plugin_Module::Plugin_Module ( ) : Module( 50, 35, name() )
 Plugin_Module::~Plugin_Module ( )
 {
 #ifdef LV2_WORKER_SUPPORT
-#if 0
-    	/* Terminate the worker */
-	jalv_worker_finish(&jalv->worker);
-    
-    	/* Destroy the worker */
-	jalv_worker_destroy(&jalv->worker);
+ //   non_worker_finish();  // FIXME
+ //   non_worker_destroy();
 
+    zix_ring_free(_idata->lv2.ext.plugin_events);
+#if 0
         zix_ring_free(jalv->ui_events);
-	zix_ring_free(jalv->plugin_events);
 #endif
+
 #endif
     log_destroy();
     plugin_instances( 0 );
@@ -1891,21 +1889,21 @@ Plugin_Module::non_worker_init(Plugin_Module* plug,
 }
 
 void
-Plugin_Module::non_worker_emit_responses(Plugin_Module* worker, LilvInstance* instance)
+Plugin_Module::non_worker_emit_responses( LilvInstance* instance)
 {
-    if (worker->_idata->lv2.ext.responses)
+    if (_idata->lv2.ext.responses)
     {
-        uint32_t read_space = zix_ring_read_space(worker->_idata->lv2.ext.responses);
+        uint32_t read_space = zix_ring_read_space(_idata->lv2.ext.responses);
         while (read_space)
         {
             DMESSAGE("GOT responses read space");
             uint32_t size = 0;
-            zix_ring_read(worker->_idata->lv2.ext.responses, (char*)&size, sizeof(size));
+            zix_ring_read(_idata->lv2.ext.responses, (char*)&size, sizeof(size));
 
-            zix_ring_read(worker->_idata->lv2.ext.responses, (char*)worker->_idata->lv2.ext.responses, size);
+            zix_ring_read(_idata->lv2.ext.responses, (char*)_idata->lv2.ext.responses, size);
 
-            worker->_idata->lv2.ext.worker->work_response(
-                instance->lv2_handle, size, worker->_idata->lv2.ext.responses);
+            _idata->lv2.ext.worker->work_response(
+                instance->lv2_handle, size, _idata->lv2.ext.responses);
 
             read_space -= sizeof(size) + size;
         }
@@ -1913,27 +1911,27 @@ Plugin_Module::non_worker_emit_responses(Plugin_Module* worker, LilvInstance* in
 }
 
 void
-Plugin_Module::non_worker_finish(Plugin_Module* worker)
+Plugin_Module::non_worker_finish( void )
 {
-    if (worker->_idata->lv2.ext.threaded) 
+    if (_idata->lv2.ext.threaded) 
     {
-        zix_sem_post(&worker->_idata->lv2.ext.sem);
-        zix_thread_join(worker->_idata->lv2.ext.thread, NULL);
+        zix_sem_post(&_idata->lv2.ext.sem);
+        zix_thread_join(_idata->lv2.ext.thread, NULL);
     }
 }
 
 void
-Plugin_Module::non_worker_destroy(Plugin_Module* worker)
+Plugin_Module::non_worker_destroy( void )
 {
-    if (worker->_idata->lv2.ext.requests) 
+    if (_idata->lv2.ext.requests) 
     {
-        if (worker->_idata->lv2.ext.threaded)
+        if (_idata->lv2.ext.threaded)
         {
-            zix_ring_free(worker->_idata->lv2.ext.requests);
+            zix_ring_free(_idata->lv2.ext.requests);
         }
 
-        zix_ring_free(worker->_idata->lv2.ext.responses);
-        free(worker->_idata->lv2.ext.response);
+        zix_ring_free(_idata->lv2.ext.responses);
+        free(_idata->lv2.ext.response);
     }
 }
 
@@ -2244,7 +2242,7 @@ Plugin_Module::process ( nframes_t nframes )
 #ifdef LV2_WORKER_SUPPORT
             if ( _idata->lv2.ext.worker)
             {
-                non_worker_emit_responses(this, m_instance);
+                non_worker_emit_responses(m_instance);
                 if ( _idata->lv2.ext.worker && _idata->lv2.ext.worker->end_run)
                 {
                     _idata->lv2.ext.worker->end_run(m_instance->lv2_handle);
