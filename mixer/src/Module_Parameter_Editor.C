@@ -50,6 +50,10 @@
 #include "SpectrumView.H"
 #include "string.h"
 
+#ifdef LV2_WORKER_SUPPORT
+#include <FL/Fl_File_Chooser.H>
+#endif
+
 bool
 Module_Parameter_Editor::is_probably_eq ( void )
 {
@@ -490,6 +494,32 @@ Module_Parameter_Editor::make_controls ( void )
 
     }
 
+#ifdef LV2_WORKER_SUPPORT
+    for ( unsigned int i = 0; i < module->atom_input.size(); ++i )
+    {
+        Module::Port *p = &module->atom_input[i];
+        
+    //    if ( p->hints.type == Module::Port::Hints::SOMETHING )
+        
+        Fl_Widget *w;
+        
+        Fl_Button *o = new Fl_Button( 0, 0, 200, 24, "Select File" );   // need to get the filename type - FIXME
+        w = o;
+        o->selection_color( fc );
+        o->type( FL_NORMAL_BUTTON );
+    //    o->value( p->control_value() );
+        o->align(FL_ALIGN_RIGHT);
+        
+        _callback_data.push_back( callback_data( this, i ) );
+        w->callback( cb_filechooser_handle, &_callback_data.back() );
+
+        Fl_Labelpad_Group *flg = new Fl_Labelpad_Group( o );
+
+        flg->set_visible_focus();
+        control_pack->add( flg );
+    }
+#endif
+
     if ( azimuth_port_number >= 0 && elevation_port_number >= 0 )
     {
         Panner *o = new Panner( 0,0, 502,502 );
@@ -570,6 +600,27 @@ Module_Parameter_Editor::update_control_visibility ( void )
 
 }
 
+#ifdef LV2_WORKER_SUPPORT
+void
+Module_Parameter_Editor::cb_filechooser_handle ( Fl_Widget *w, void *v )
+{
+    callback_data *cd = (callback_data*)v;
+
+    std::string chooser_start_location = "";    // FIXME
+
+    char *filename;
+
+ #define EXT ".fixme"                           // FIXME set file type
+    filename = fl_file_chooser("Select File:", "(*" EXT")", chooser_start_location.c_str (), 0);
+    if (filename == NULL)
+        return;
+
+#undef EXT
+
+    cd->base_widget->set_plugin_file( cd->port_number[0], filename );
+}
+#endif
+
 void
 Module_Parameter_Editor::cb_enumeration_handle ( Fl_Widget *w, void *v )
 {
@@ -644,9 +695,11 @@ Module_Parameter_Editor::bind_control ( int i )
 void
 Module_Parameter_Editor::handle_control_changed ( Module::Port *p )
 {
+#ifdef LV2_WORKER_SUPPORT
     Plugin_Module *pm = static_cast<Plugin_Module *> (_module); // FIXME this may not be the place for this!!!
     pm->update_ui();
-    
+#endif
+
     int i = _module->control_input_port_index( p );
    
     Fl_Widget *w = controls_by_port[i];
@@ -713,6 +766,15 @@ Module_Parameter_Editor::reload ( void )
     redraw();
 }
 
+#ifdef LV2_WORKER_SUPPORT
+void
+Module_Parameter_Editor::set_plugin_file(int port, std::string filename )
+{
+    Plugin_Module *pm = static_cast<Plugin_Module *> (_module);
+    pm->send_file_to_plugin(port, filename);
+}
+#endif
+
 void
 Module_Parameter_Editor::set_choice_value(int port, int menu)
 {
@@ -734,9 +796,12 @@ Module_Parameter_Editor::set_value (int i, float value )
                Controller_Module - parameter_control_changed() when connected  */
             _module->control_input[i].connected_port()->control_value( value );
         }
-        else /* This sets the port value buffer and only calls Editor
+        else
+        {
+            /* This sets the port value buffer and only calls Editor
                 parameter_control_changed() when not connected */
             _module->control_input[i].control_value( value );
+        }
     }
 
     update_spectrum();
