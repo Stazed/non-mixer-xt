@@ -499,7 +499,8 @@ Module_Parameter_Editor::make_controls ( void )
     {
         Module::Port *p = &module->atom_input[i];
         
-    //    if ( p->hints.type == Module::Port::Hints::SOMETHING )
+        if ( p->hints.type != Module::Port::Hints::PATCH_MESSAGE )
+            continue;
         
         Fl_Widget *w;
         
