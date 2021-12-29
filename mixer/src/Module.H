@@ -38,6 +38,7 @@
 
 #ifdef LV2_WORKER_SUPPORT
 #include "lv2/lv2_evbuf.h"
+#include "lilv/lilvmm.hpp"
 #endif
 
 class Chain;
@@ -158,6 +159,7 @@ public:
             float default_value;
             int dimensions;
             bool visible;
+            uint32_t control_index;     ///< plugin Index of port control
             std::vector<EnumeratorScalePoints>ScalePoints;
 
             Hints ( )
@@ -171,6 +173,7 @@ public:
                     default_value = 0.0f;
                     dimensions = 1;
                     visible = true;
+                    control_index = 0;
                 }
         };
 
@@ -195,6 +198,8 @@ public:
 #ifdef LV2_WORKER_SUPPORT
                 _evbuf = NULL;
                 _tmpevbuf = NULL;
+                _property = NULL;
+                _clear_input_buffer = false;
 #endif
 		/* _feedback_value = -2; */
 		_pending_feedback = false;
@@ -219,6 +224,9 @@ public:
 #ifdef LV2_WORKER_SUPPORT
                 _evbuf = p._evbuf;
                 _tmpevbuf = p._tmpevbuf;
+                _property = p._property;
+                _clear_input_buffer = p._clear_input_buffer;
+                
 #endif
 		/* _feedback_value = p._feedback_value; */
             }
@@ -429,6 +437,11 @@ public:
 #ifdef LV2_WORKER_SUPPORT
         LV2_Evbuf* _evbuf;
         LV2_Evbuf* _tmpevbuf;
+    public:
+        // FIXME encapsulate
+        const LilvNode* _property;
+        bool _clear_input_buffer;
+    private:
 #endif
         OSC::Signal *_scaled_signal;
         OSC::Signal *_unscaled_signal;

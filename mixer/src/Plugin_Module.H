@@ -143,6 +143,7 @@ struct ImplementationData
             ZixRing*                    requests;   ///< Requests to the worker
             ZixRing*                    responses;  ///< Responses from the worker
             ZixRing*                    plugin_events;  ///< Port events from plugin
+            ZixRing*                    ui_events;      ///< Port events from UI
             void*                       ui_event_buf;   ///< Buffer for reading UI port events
             void*                       response;   ///< Worker response buffer
             ZixSem                      sem;        ///< Worker semaphore
@@ -468,6 +469,7 @@ public:
     int update_ui( void );
     void ui_port_event( uint32_t port_index, uint32_t buffer_size, uint32_t protocol, const void* buffer );
     void send_file_to_plugin( int port, std::string filename );
+    void apply_ui_events( uint32_t nframes, unsigned int port );
 #endif
 
     LOG_CREATE_FUNC( Plugin_Module );

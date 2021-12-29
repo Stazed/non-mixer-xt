@@ -308,10 +308,7 @@ Plugin_Module::~Plugin_Module ( )
  //   non_worker_destroy();
 
     zix_ring_free(_idata->lv2.ext.plugin_events);
-#if 0
-        zix_ring_free(jalv->ui_events);
-#endif
-
+    zix_ring_free(_idata->lv2.ext.ui_events);
 #endif
     log_destroy();
     plugin_instances( 0 );
@@ -427,7 +424,7 @@ Plugin_Module::init ( void )
     
 #ifdef LV2_WORKER_SUPPORT
     LV2_Worker_Schedule* const m_lv2_schedule  = new LV2_Worker_Schedule;
-    m_lv2_schedule->handle              = _idata;
+    m_lv2_schedule->handle              = this;
     m_lv2_schedule->schedule_work       = non_worker_schedule;
 #endif
 
@@ -1380,7 +1377,11 @@ Plugin_Module::load_lv2 ( const char* uri )
 #ifdef LV2_WORKER_SUPPORT
     _atom_ins = _atom_outs = 0;
     /* Create Plugin <=> UI communication buffers */
+    _idata->lv2.ext.ui_events = zix_ring_new(4096  /*jalv->opts.buffer_size*/ );    // FIXME
     _idata->lv2.ext.plugin_events = zix_ring_new(4096  /*jalv->opts.buffer_size*/ );    // FIXME
+    
+    zix_ring_mlock(_idata->lv2.ext.ui_events);
+    zix_ring_mlock(_idata->lv2.ext.plugin_events);
 #endif
 
     if ( ! _idata->lv2.rdf_data )
@@ -1451,7 +1452,7 @@ Plugin_Module::load_lv2 ( const char* uri )
                 zix_sem_init(&_idata->lv2.ext.sem, 0);
                 lv2_atom_forge_init(&_idata->lv2.ext.forge, _uridMapFt);
                 non_worker_init(this,  _idata->lv2.ext.worker, true);
-		if (_idata->safe_restore)
+		if (_idata->safe_restore)   // FIXME
                 {
                     MESSAGE( "open -- Plugin Has safe_restore" );
                     non_worker_init(this, _idata->lv2.ext.worker, false);
@@ -1492,6 +1493,50 @@ Plugin_Module::load_lv2 ( const char* uri )
                     {
                         DMESSAGE(" LV2_PORT_SUPPORTS_PATCH_MESSAGE - INPUT ");
                         atom_input[_atom_ins].hints.type = Port::Hints::PATCH_MESSAGE;
+                        atom_input[_atom_ins].hints.control_index = i;
+                        
+                        bool writable = false;   // FIXME
+
+                        const LilvPlugin* plugin         = m_plugin;
+                        LilvWorld*        world          = m_lilvWorld;
+                        LilvNode*         patch_writable = lilv_new_uri(world, LV2_PATCH__writable);
+                        LilvNode*         patch_readable = lilv_new_uri(world, LV2_PATCH__readable);
+                        
+                        DMESSAGE("patch_writable = %s", lilv_node_as_string(patch_writable));
+                        DMESSAGE("Plugin URI = %s", lilv_node_as_string(lilv_plugin_get_uri(plugin)));
+
+                        // This checks for control type -- in our case the patch__writable is returned as properties
+                        // FIXME for some reason this fails and returns NULL!!!!!
+                        LilvNodes* properties = lilv_world_find_nodes(
+                        world,
+                        lilv_plugin_get_uri(plugin),
+                        patch_writable,
+                        NULL);
+                        
+                        // FIXME remove this when you get it to work!!!
+                        if( properties )
+                            DMESSAGE(" GOT PROPERTIES");
+                        
+                        LILV_FOREACH(nodes, p, properties)
+                        {
+                            const LilvNode* property = lilv_nodes_get(properties, p);
+                            
+                            DMESSAGE("Property = %s", lilv_node_as_string(property));
+
+                            if (lilv_world_ask(world,
+                                                            lilv_plugin_get_uri(plugin),
+                                                            patch_writable,
+                                                            property))
+                            {
+                                atom_input[_atom_ins]._property = property;
+                                break;
+                            }
+                        }
+
+                        lilv_nodes_free(properties);
+
+                        lilv_node_free(patch_readable);
+                        lilv_node_free(patch_writable);
                     }
                     _atom_ins++;
                     
@@ -1903,6 +1948,16 @@ Plugin_Module::non_worker_init(Plugin_Module* plug,
 void
 Plugin_Module::non_worker_emit_responses( LilvInstance* instance)
 {
+    // FIXME is this the place for this??
+    for (unsigned int i = 0; i < atom_input.size(); ++i)
+    {
+        if ( atom_input[i]._clear_input_buffer )
+        {
+            atom_input[i]._clear_input_buffer = false;
+            lv2_evbuf_reset(atom_input[i].event_buffer(), true);
+        }
+    }
+    
     if (_idata->lv2.ext.responses)
     {
         uint32_t read_space = zix_ring_read_space(_idata->lv2.ext.responses);
@@ -2046,7 +2101,82 @@ void
 Plugin_Module::send_file_to_plugin( int port, std::string filename )
 {
     DMESSAGE("File = %s", filename.c_str());
-    // TODO
+    
+    uint32_t size = filename.size() + 1;
+    
+    // Copy forge since it is used by process thread
+    LV2_Atom_Forge       forge =  _idata->lv2.ext.forge;
+    LV2_Atom_Forge_Frame frame;
+    uint8_t              buf[1024];
+    lv2_atom_forge_set_buffer(&forge, buf, sizeof(buf));
+
+    lv2_atom_forge_object(&forge, &frame, 0, _idata->_lv2_urid_map(_idata, LV2_PATCH__Set) );
+    lv2_atom_forge_key(&forge, _idata->_lv2_urid_map(_idata, LV2_PATCH__property) );
+    lv2_atom_forge_urid(&forge, 30);    // FIXME    -- hard coded because lilv_world_find_nodes() always fails!!!!
+    
+    //lv2_atom_forge_urid(&forge, _idata->_lv2_urid_map(_idata, atom_input[port]._property) );    // property should be URID, from node
+//    lv2_atom_forge_urid(&forge, control->property);
+
+    lv2_atom_forge_key(&forge, _idata->_lv2_urid_map(_idata, LV2_PATCH__value));
+    lv2_atom_forge_atom(&forge, size, _idata->lv2.ext.forge.Path);
+    lv2_atom_forge_write(&forge, (const void*)filename.c_str(), size);
+
+    const LV2_Atom* atom = lv2_atom_forge_deref(&forge, frame.ref);
+    uint32_t       buffer_size = lv2_atom_total_size(atom);
+    
+    char buf2[sizeof(ControlChange) + buffer_size];
+    ControlChange* ev = (ControlChange*)buf2;
+    ev->index    =   atom_input[port].hints.control_index; 
+    ev->protocol =  _idata->_lv2_urid_map(_idata, LV2_ATOM__eventTransfer);
+    ev->size     =  buffer_size;
+    memcpy(ev->body, (const void*) atom, buffer_size);
+    zix_ring_write( _idata->lv2.ext.ui_events, buf2, sizeof(buf2));
+
+    /*jalv_ui_write(jalv,
+                jalv->control_in,   // port atom_input[port].hints.control_in;
+                lv2_atom_total_size(atom),
+                jalv->urids.atom_eventTransfer,
+                atom);*/
+}
+
+// jalv_apply_ui_events
+void
+Plugin_Module::apply_ui_events( uint32_t nframes, unsigned int port )
+{
+    ControlChange ev;
+    const size_t  space = zix_ring_read_space(_idata->lv2.ext.ui_events);
+
+    for (size_t i = 0; i < space; i += sizeof(ev) + ev.size)
+    {
+        zix_ring_read(_idata->lv2.ext.ui_events, (char*)&ev, sizeof(ev));
+        char body[ev.size];
+        if (zix_ring_read(_idata->lv2.ext.ui_events, body, ev.size) != ev.size)
+        {
+            DMESSAGE("error: Error reading from UI ring buffer");
+            break;
+        }
+        
+/*        assert(ev.index < jalv->num_ports);
+        struct Port* const port = &jalv->ports[ev.index];
+        if (ev.protocol == 0)
+        {
+                assert(ev.size == sizeof(float));
+                port->control = *(float*)body;
+        }
+*/
+        else if (ev.protocol == _idata->_lv2_urid_map(_idata, LV2_ATOM__eventTransfer))
+        {
+            DMESSAGE("LV2 ATOM eventTransfer");
+            LV2_Evbuf_Iterator    e    = lv2_evbuf_end( atom_input[port].event_buffer() ); 
+            const LV2_Atom* const atom = (const LV2_Atom*)body;
+            lv2_evbuf_write(&e, nframes, 0, atom->type, atom->size,
+                            (const uint8_t*)LV2_ATOM_BODY_CONST(atom));
+        }
+        else
+        {
+            DMESSAGE("error: Unknown control change protocol %u", ev.protocol);
+        }
+    }
 }
 
 #endif  // LV2_WORKER_SUPPORT
@@ -2259,16 +2389,9 @@ Plugin_Module::process ( nframes_t nframes )
         if (_is_lv2)
         {
 #ifdef LV2_WORKER_SUPPORT
-            if ( _idata->lv2.ext.worker)
-            {
-                non_worker_emit_responses(m_instance);
-                if ( _idata->lv2.ext.worker && _idata->lv2.ext.worker->end_run)
-                {
-                    _idata->lv2.ext.worker->end_run(m_instance->lv2_handle);
-                }
-            }
-
+            // FIXME move to function
             unsigned int ao = 0;
+            unsigned int ai = 0;
 
             for ( unsigned int k = 0; k < _idata->lv2.rdf_data->PortCount; ++k )
             {
@@ -2297,26 +2420,37 @@ Plugin_Module::process ( nframes_t nframes )
                         lv2_evbuf_reset(atom_output[ao].event_buffer(), false);
                         ao++;
                     }
+                    
+                    if ( LV2_IS_PORT_INPUT( _idata->lv2.rdf_data->Ports[k].Types ) )
+                    {
+                        apply_ui_events(  nframes, ai );
+
+                        atom_input[ai]._clear_input_buffer = true;
+                        ai++;
+                    }
                 }
             }            
 #endif
-            
-#if 0
-    	/* Process any worker replies. */
-	jalv_worker_emit_responses(&jalv->state_worker, jalv->instance);
-	jalv_worker_emit_responses(&jalv->worker, jalv->instance);
-
-	/* Notify the plugin the run() cycle is finished */
-	if (jalv->worker.iface && jalv->worker.iface->end_run) {
-		jalv->worker.iface->end_run(jalv->instance->lv2_handle);
-	}
-#endif
-            
-            
+            // Run the plugin for LV2
             for ( unsigned int i = 0; i < _idata->handle.size(); ++i )
                 _idata->lv2.descriptor->run( _idata->handle[i], nframes );
+
+#ifdef LV2_WORKER_SUPPORT
+            /* Process any worker replies. */
+            if ( _idata->lv2.ext.worker)
+            {
+                // FIXME
+                // jalv_worker_emit_responses(&jalv->state_worker, jalv->instance);
+                // non_worker_emit_responses(&jalv->state_worker, jalv->instance);
+                non_worker_emit_responses(m_instance);
+                if ( _idata->lv2.ext.worker && _idata->lv2.ext.worker->end_run)
+                {
+                    _idata->lv2.ext.worker->end_run(m_instance->lv2_handle);
+                }
+            }
+#endif
         }
-        else
+        else    // ladspa
         {
             for ( unsigned int i = 0; i < _idata->handle.size(); ++i )
                 _idata->descriptor->run( _idata->handle[i], nframes );
