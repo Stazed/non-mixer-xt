@@ -440,6 +440,9 @@ public:
     public:
         // FIXME encapsulate
         const LilvNode* _property;
+        LilvNode*   _symbol;          ///< Symbol
+	LilvNode*   _label;           ///< Human readable label
+        LV2_URID    _property_mapped;        ///< Iff type == PROPERTY
         bool _clear_input_buffer;
     private:
 #endif

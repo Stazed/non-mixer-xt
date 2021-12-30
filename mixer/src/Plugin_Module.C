@@ -1494,49 +1494,6 @@ Plugin_Module::load_lv2 ( const char* uri )
                         DMESSAGE(" LV2_PORT_SUPPORTS_PATCH_MESSAGE - INPUT ");
                         atom_input[_atom_ins].hints.type = Port::Hints::PATCH_MESSAGE;
                         atom_input[_atom_ins].hints.control_index = i;
-                        
-                        bool writable = false;   // FIXME
-
-                        const LilvPlugin* plugin         = m_plugin;
-                        LilvWorld*        world          = m_lilvWorld;
-                        LilvNode*         patch_writable = lilv_new_uri(world, LV2_PATCH__writable);
-                        LilvNode*         patch_readable = lilv_new_uri(world, LV2_PATCH__readable);
-                        
-                        DMESSAGE("patch_writable = %s", lilv_node_as_string(patch_writable));
-                        DMESSAGE("Plugin URI = %s", lilv_node_as_string(lilv_plugin_get_uri(plugin)));
-
-                        // This checks for control type -- in our case the patch__writable is returned as properties
-                        // FIXME for some reason this fails and returns NULL!!!!!
-                        LilvNodes* properties = lilv_world_find_nodes(
-                        world,
-                        lilv_plugin_get_uri(plugin),
-                        patch_writable,
-                        NULL);
-                        
-                        // FIXME remove this when you get it to work!!!
-                        if( properties )
-                            DMESSAGE(" GOT PROPERTIES");
-                        
-                        LILV_FOREACH(nodes, p, properties)
-                        {
-                            const LilvNode* property = lilv_nodes_get(properties, p);
-                            
-                            DMESSAGE("Property = %s", lilv_node_as_string(property));
-
-                            if (lilv_world_ask(world,
-                                                            lilv_plugin_get_uri(plugin),
-                                                            patch_writable,
-                                                            property))
-                            {
-                                atom_input[_atom_ins]._property = property;
-                                break;
-                            }
-                        }
-
-                        lilv_nodes_free(properties);
-
-                        lilv_node_free(patch_readable);
-                        lilv_node_free(patch_writable);
                     }
                     _atom_ins++;
                     
@@ -1709,6 +1666,18 @@ Plugin_Module::load_lv2 ( const char* uri )
     {
         bypass( false );
     }
+
+#ifdef LV2_WORKER_SUPPORT
+    for (unsigned int i = 0; i < atom_input.size(); ++i)
+    {
+        set_lv2_port_properties( &atom_input[i] );
+    }
+    
+    for (unsigned int i = 0; i < atom_output.size(); ++i)
+    {
+        set_lv2_port_properties( &atom_output[i] );
+    }
+#endif
 
     return instances;
 }
@@ -2112,11 +2081,7 @@ Plugin_Module::send_file_to_plugin( int port, std::string filename )
 
     lv2_atom_forge_object(&forge, &frame, 0, _idata->_lv2_urid_map(_idata, LV2_PATCH__Set) );
     lv2_atom_forge_key(&forge, _idata->_lv2_urid_map(_idata, LV2_PATCH__property) );
-    lv2_atom_forge_urid(&forge, 30);    // FIXME    -- hard coded because lilv_world_find_nodes() always fails!!!!
-    
-    //lv2_atom_forge_urid(&forge, _idata->_lv2_urid_map(_idata, atom_input[port]._property) );    // property should be URID, from node
-//    lv2_atom_forge_urid(&forge, control->property);
-
+    lv2_atom_forge_urid(&forge, atom_input[port]._property_mapped);
     lv2_atom_forge_key(&forge, _idata->_lv2_urid_map(_idata, LV2_PATCH__value));
     lv2_atom_forge_atom(&forge, size, _idata->lv2.ext.forge.Path);
     lv2_atom_forge_write(&forge, (const void*)filename.c_str(), size);
@@ -2177,6 +2142,56 @@ Plugin_Module::apply_ui_events( uint32_t nframes, unsigned int port )
             DMESSAGE("error: Unknown control change protocol %u", ev.protocol);
         }
     }
+}
+
+void
+Plugin_Module::set_lv2_port_properties (Port * port )
+{
+    bool writable = false;   // FIXME
+
+    const LilvPlugin* plugin         = m_plugin;
+    LilvWorld*        world          = m_lilvWorld;
+    LilvNode*         patch_writable = lilv_new_uri(world, LV2_PATCH__writable);
+    LilvNode*         patch_readable = lilv_new_uri(world, LV2_PATCH__readable);
+
+    // This checks for control type -- in our case the patch__writable is returned as properties
+    LilvNodes* properties = lilv_world_find_nodes(
+    world,
+    lilv_plugin_get_uri(plugin),
+    patch_writable,
+    NULL);
+
+    LILV_FOREACH(nodes, p, properties)
+    {
+        const LilvNode* property = lilv_nodes_get(properties, p);
+
+        DMESSAGE("Property = %s", lilv_node_as_string(property));
+
+        if (lilv_world_ask(world,
+                        lilv_plugin_get_uri(plugin),
+                        patch_writable,
+                        property))
+        {
+            port->_property = property;
+            break;
+        }
+    }
+    
+    LilvNode* rdfs_label;
+    rdfs_label = lilv_new_uri(world, LILV_NS_RDFS "label");
+    
+    port->_label  = lilv_world_get(world, port->_property, rdfs_label, NULL);
+    port->_symbol = lilv_world_get_symbol(world, port->_property);
+    port->_property_mapped = _idata->_lv2_urid_map(_idata, lilv_node_as_uri( port->_property ));
+    
+    DMESSAGE("Properties label = %s", lilv_node_as_string(port->_label));
+    DMESSAGE("Properties symbol = %s", lilv_node_as_string(port->_symbol));
+    DMESSAGE("Property mapped = %u", port->_property_mapped);
+
+    lilv_nodes_free(properties);
+
+    lilv_node_free(patch_readable);
+    lilv_node_free(patch_writable);
 }
 
 #endif  // LV2_WORKER_SUPPORT

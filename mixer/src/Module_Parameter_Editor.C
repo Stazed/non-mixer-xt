@@ -698,7 +698,8 @@ Module_Parameter_Editor::handle_control_changed ( Module::Port *p )
 {
 #ifdef LV2_WORKER_SUPPORT
     Plugin_Module *pm = static_cast<Plugin_Module *> (_module); // FIXME this may not be the place for this!!!
-    pm->update_ui();
+    if ( pm->_idata->lv2.ext.plugin_events )
+        pm->update_ui();
 #endif
 
     int i = _module->control_input_port_index( p );
