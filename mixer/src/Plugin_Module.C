@@ -2171,6 +2171,12 @@ Plugin_Module::set_lv2_port_properties (Port * port )
     lilv_plugin_get_uri(plugin),
     patch_writable,
     NULL);
+    
+    if( ! properties )
+    {
+        DMESSAGE("Atom port has no properties");
+        return;
+    }
 
     LILV_FOREACH(nodes, p, properties)
     {
