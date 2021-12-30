@@ -409,6 +409,7 @@ Plugin_Module::init ( void )
     _idata->lv2.options.maxBufferSize = buffer_size();
     _idata->lv2.options.minBufferSize = buffer_size();
     _idata->lv2.options.sampleRate    = sample_rate();
+     _idata->lv2.ext.ui_event_buf     = malloc(4096);
 
     LV2_URI_Map_Feature* const uriMapFt = new LV2_URI_Map_Feature;
     uriMapFt->callback_data             = _idata;
@@ -855,13 +856,21 @@ Plugin_Module::get_all_plugins ( void )
             continue;
         
         // get name and author
-        const char* const name = lilv_node_as_string( lilv_plugin_get_name(lilvPlugin) );
+        LilvNode* name_node = lilv_plugin_get_name(lilvPlugin);
+        const char* const name = lilv_node_as_string( name_node );
         if( name )
+        {
             pi.name = name;
+        }
+        lilv_node_free(name_node);
 
-        const char* const author = lilv_node_as_string( lilv_plugin_get_author_name(lilvPlugin) );
+        LilvNode* author_node = lilv_plugin_get_author_name(lilvPlugin);
+        const char* const author = lilv_node_as_string( author_node );
         if ( author )
+        {
             pi.author = author;
+        }
+        lilv_node_free(author_node);
 
         // base info done
         pi.path = strdup(lilvPlugin.get_uri().as_uri());
@@ -2018,7 +2027,6 @@ Plugin_Module::update_ui( void )
         /* Read event header to get the size */
         zix_ring_read( _idata->lv2.ext.plugin_events, (char*)&ev, sizeof(ev));
 
-        // FIXME this realloc is causing segfaults!!!
         /* Resize read buffer if necessary */
         _idata->lv2.ext.ui_event_buf = realloc(_idata->lv2.ext.ui_event_buf, ev.size);
         void* const buf = _idata->lv2.ext.ui_event_buf;
