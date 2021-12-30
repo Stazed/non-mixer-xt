@@ -855,10 +855,12 @@ Plugin_Module::get_all_plugins ( void )
             continue;
         
         // get name and author
-        if (const char* const name = lilvPlugin.get_name().as_string())
+        const char* const name = lilv_node_as_string( lilv_plugin_get_name(lilvPlugin) );
+        if( name )
             pi.name = name;
 
-        if (const char* const author = lilvPlugin.get_author_name().as_string())
+        const char* const author = lilv_node_as_string( lilv_plugin_get_author_name(lilvPlugin) );
+        if ( author )
             pi.author = author;
 
         // base info done
@@ -2016,6 +2018,7 @@ Plugin_Module::update_ui( void )
         /* Read event header to get the size */
         zix_ring_read( _idata->lv2.ext.plugin_events, (char*)&ev, sizeof(ev));
 
+        // FIXME this realloc is causing segfaults!!!
         /* Resize read buffer if necessary */
         _idata->lv2.ext.ui_event_buf = realloc(_idata->lv2.ext.ui_event_buf, ev.size);
         void* const buf = _idata->lv2.ext.ui_event_buf;
