@@ -30,6 +30,8 @@
 
 #define PRESET_SUPPORT 1
 
+#define ATOM_BUFFER_SIZE 4096   // FIXME  /*jalv->opts.buffer_size*/ 
+
 class Fl_Menu_Button;
 class Thread;
 

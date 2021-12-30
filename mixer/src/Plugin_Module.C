@@ -409,7 +409,7 @@ Plugin_Module::init ( void )
     _idata->lv2.options.maxBufferSize = buffer_size();
     _idata->lv2.options.minBufferSize = buffer_size();
     _idata->lv2.options.sampleRate    = sample_rate();
-     _idata->lv2.ext.ui_event_buf     = malloc(4096);
+     _idata->lv2.ext.ui_event_buf     = malloc(ATOM_BUFFER_SIZE);
 
     LV2_URI_Map_Feature* const uriMapFt = new LV2_URI_Map_Feature;
     uriMapFt->callback_data             = _idata;
@@ -1007,7 +1007,7 @@ Plugin_Module::plugin_instances ( unsigned int n )
                             if ( atom_input[aji].event_buffer() )
                                 lv2_evbuf_free( atom_input[aji].event_buffer() );
                             
-                            const size_t buf_size = 4096;
+                            const size_t buf_size = ATOM_BUFFER_SIZE;
                             atom_input[aji].event_buffer( lv2_evbuf_new(buf_size,
                                                                   _uridMapFt->map(_uridMapFt->handle,
                                                                                   LV2_ATOM__Chunk),
@@ -1025,7 +1025,7 @@ Plugin_Module::plugin_instances ( unsigned int n )
                             if ( atom_output[ajo].event_buffer() )
                                 lv2_evbuf_free( atom_output[ajo].event_buffer() );
 
-                            const size_t buf_size = 4096;
+                            const size_t buf_size = ATOM_BUFFER_SIZE;
                             atom_output[ajo].event_buffer( lv2_evbuf_new(buf_size,
                                                                   _uridMapFt->map(_uridMapFt->handle,
                                                                                   LV2_ATOM__Chunk),
@@ -1388,8 +1388,8 @@ Plugin_Module::load_lv2 ( const char* uri )
 #ifdef LV2_WORKER_SUPPORT
     _atom_ins = _atom_outs = 0;
     /* Create Plugin <=> UI communication buffers */
-    _idata->lv2.ext.ui_events = zix_ring_new(4096  /*jalv->opts.buffer_size*/ );    // FIXME
-    _idata->lv2.ext.plugin_events = zix_ring_new(4096  /*jalv->opts.buffer_size*/ );    // FIXME
+    _idata->lv2.ext.ui_events = zix_ring_new(ATOM_BUFFER_SIZE);
+    _idata->lv2.ext.plugin_events = zix_ring_new(ATOM_BUFFER_SIZE);
     
     zix_ring_mlock(_idata->lv2.ext.ui_events);
     zix_ring_mlock(_idata->lv2.ext.plugin_events);
@@ -1916,13 +1916,13 @@ Plugin_Module::non_worker_init(Plugin_Module* plug,
 
     if (threaded)
     {
-        zix_thread_create(&plug->_idata->lv2.ext.thread, 4096, worker_func, plug);
-        plug->_idata->lv2.ext.requests = zix_ring_new(4096);
+        zix_thread_create(&plug->_idata->lv2.ext.thread, ATOM_BUFFER_SIZE, worker_func, plug);
+        plug->_idata->lv2.ext.requests = zix_ring_new(ATOM_BUFFER_SIZE);
         zix_ring_mlock(plug->_idata->lv2.ext.requests);
     }
     
-    plug->_idata->lv2.ext.responses = zix_ring_new(4096);
-    plug->_idata->lv2.ext.response = malloc(4096);
+    plug->_idata->lv2.ext.responses = zix_ring_new(ATOM_BUFFER_SIZE);
+    plug->_idata->lv2.ext.response = malloc(ATOM_BUFFER_SIZE);
     zix_ring_mlock(plug->_idata->lv2.ext.responses);
 }
 
@@ -2317,7 +2317,7 @@ Plugin_Module::apply ( sample_t *buf, nframes_t nframes )
                     if ( atom_input[aji].tmp_event_buffer() )
                         lv2_evbuf_free( atom_input[aji].tmp_event_buffer() );
 
-                    const size_t buf_size = 4096;
+                    const size_t buf_size = ATOM_BUFFER_SIZE;
                     atom_input[aji].tmp_event_buffer( lv2_evbuf_new(buf_size, _uridMapFt->map(_uridMapFt->handle,
                                                     LV2_ATOM__Chunk),
                                                     _uridMapFt->map(_uridMapFt->handle,
@@ -2332,7 +2332,7 @@ Plugin_Module::apply ( sample_t *buf, nframes_t nframes )
                     if ( atom_output[ajo].tmp_event_buffer() )
                         lv2_evbuf_free( atom_output[ajo].tmp_event_buffer() );
 
-                    const size_t buf_size = 4096;
+                    const size_t buf_size = ATOM_BUFFER_SIZE;
                     atom_output[ajo].tmp_event_buffer( lv2_evbuf_new(buf_size, _uridMapFt->map(_uridMapFt->handle,
                                                     LV2_ATOM__Chunk),
                                                     _uridMapFt->map(_uridMapFt->handle,
