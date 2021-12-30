@@ -471,6 +471,7 @@ public:
     void send_file_to_plugin( int port, std::string filename );
     void apply_ui_events( uint32_t nframes, unsigned int port );
     void set_lv2_port_properties ( Port * port );
+    void get_atom_output_events( void );
 #endif
 
     LOG_CREATE_FUNC( Plugin_Module );

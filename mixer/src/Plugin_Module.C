@@ -1518,6 +1518,7 @@ Plugin_Module::load_lv2 ( const char* uri )
                     {
                         DMESSAGE(" LV2_PORT_SUPPORTS_PATCH_MESSAGE - OUTPUT ");
                         atom_output[_atom_outs].hints.type = Port::Hints::PATCH_MESSAGE;
+                        atom_output[_atom_outs].hints.control_index = i;
                     }
                     _atom_outs++;
 
@@ -2211,6 +2212,33 @@ Plugin_Module::set_lv2_port_properties (Port * port )
     lilv_node_free(patch_writable);
 }
 
+void
+Plugin_Module::get_atom_output_events( void )
+{
+    for ( unsigned int k = 0; k < atom_output.size(); ++k )
+    {
+        for (LV2_Evbuf_Iterator i = lv2_evbuf_begin(atom_output[k].event_buffer());
+            lv2_evbuf_is_valid(i);
+            i = lv2_evbuf_next(i))
+        {
+            // Get event from LV2 buffer
+            uint32_t frames    = 0;
+            uint32_t subframes = 0;
+            uint32_t type      = 0;
+            uint32_t size      = 0;
+            uint8_t* body      = NULL;
+            lv2_evbuf_get(i, &frames, &subframes, &type, &size, &body);
+
+            DMESSAGE("GOT ATOM EVENT BUFFER");
+
+            send_to_ui(atom_output[k].hints.control_index, type, size, body);
+        }
+
+        /* Clear event output for plugin to write to on next cycle */
+        lv2_evbuf_reset(atom_output[k].event_buffer(), false);
+    }            
+}
+
 #endif  // LV2_WORKER_SUPPORT
 
 
@@ -2421,51 +2449,19 @@ Plugin_Module::process ( nframes_t nframes )
         if (_is_lv2)
         {
 #ifdef LV2_WORKER_SUPPORT
-            // FIXME move to function
-            unsigned int ao = 0;
-            unsigned int ai = 0;
-
-            for ( unsigned int k = 0; k < _idata->lv2.rdf_data->PortCount; ++k )
+            get_atom_output_events();
+            
+            for( unsigned int i = 0; i < atom_input.size(); ++i )
             {
-                if (LV2_IS_PORT_ATOM_SEQUENCE ( _idata->lv2.rdf_data->Ports[k].Types ))
-                {
-                    if ( LV2_IS_PORT_OUTPUT( _idata->lv2.rdf_data->Ports[k].Types ) )
-                    {   
-                        for (LV2_Evbuf_Iterator i = lv2_evbuf_begin(atom_output[ao].event_buffer());
-                            lv2_evbuf_is_valid(i);
-                            i = lv2_evbuf_next(i))
-                        {
-                            // Get event from LV2 buffer
-                            uint32_t frames    = 0;
-                            uint32_t subframes = 0;
-                            uint32_t type      = 0;
-                            uint32_t size      = 0;
-                            uint8_t* body      = NULL;
-                            lv2_evbuf_get(i, &frames, &subframes, &type, &size, &body);
-
-                            DMESSAGE("GOT ATOM EVENT BUFFER");
-
-                            send_to_ui(k, type, size, body);
-                        }
-
-                        /* Clear event output for plugin to write to on next cycle */
-                        lv2_evbuf_reset(atom_output[ao].event_buffer(), false);
-                        ao++;
-                    }
-                    
-                    if ( LV2_IS_PORT_INPUT( _idata->lv2.rdf_data->Ports[k].Types ) )
-                    {
-                        apply_ui_events(  nframes, ai );
-
-                        atom_input[ai]._clear_input_buffer = true;
-                        ai++;
-                    }
-                }
-            }            
+                apply_ui_events(  nframes, i );
+                atom_input[i]._clear_input_buffer = true;
+            }
 #endif
             // Run the plugin for LV2
             for ( unsigned int i = 0; i < _idata->handle.size(); ++i )
+            {
                 _idata->lv2.descriptor->run( _idata->handle[i], nframes );
+            }
 
 #ifdef LV2_WORKER_SUPPORT
             /* Process any worker replies. */
