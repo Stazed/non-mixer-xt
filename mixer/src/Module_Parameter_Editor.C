@@ -504,20 +504,21 @@ Module_Parameter_Editor::make_controls ( void )
         
         Fl_Widget *w;
         
-        Fl_Button *o = new Fl_Button( 0, 0, 200, 24, "Select File" );   // need to get the filename type - FIXME
+        Fl_Button *o = new Fl_Button( 0, 0, 200, 24, lilv_node_as_string(p->_symbol) );
         w = o;
         o->selection_color( fc );
         o->type( FL_NORMAL_BUTTON );
-    //    o->value( p->control_value() );
-        o->align(FL_ALIGN_RIGHT);
+        o->align(FL_ALIGN_INSIDE | FL_ALIGN_BOTTOM);
         
         _callback_data.push_back( callback_data( this, i ) );
         w->callback( cb_filechooser_handle, &_callback_data.back() );
 
-        Fl_Labelpad_Group *flg = new Fl_Labelpad_Group( o );
+        {
+            Fl_Labelpad_Group *flg = new Fl_Labelpad_Group( o );
 
-        flg->set_visible_focus();
-        control_pack->add( flg );
+            flg->set_visible_focus();
+            control_pack->add( flg );
+        }
     }
 #endif
 
@@ -606,17 +607,14 @@ void
 Module_Parameter_Editor::cb_filechooser_handle ( Fl_Widget *w, void *v )
 {
     callback_data *cd = (callback_data*)v;
-
-    std::string chooser_start_location = "";    // FIXME
+    
+    std::string title = lilv_node_as_string(cd->base_widget->_module->atom_input[cd->port_number[0]]._label);
 
     char *filename;
 
- #define EXT ".fixme"                           // FIXME set file type
-    filename = fl_file_chooser("Select File:", "(*" EXT")", chooser_start_location.c_str (), 0);
+    filename = fl_file_chooser(title.c_str(),"","", 0);
     if (filename == NULL)
         return;
-
-#undef EXT
 
     cd->base_widget->set_plugin_file( cd->port_number[0], filename );
 }
