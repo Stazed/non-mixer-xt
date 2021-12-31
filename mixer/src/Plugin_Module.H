@@ -406,6 +406,7 @@ private:
 #ifdef LV2_WORKER_SUPPORT
     int _atom_ins;
     int _atom_outs;
+    bool _loading_from_file;
 #endif
     bool _crosswire;
 

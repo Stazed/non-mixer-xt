@@ -80,7 +80,7 @@ static void mixer_lv2_set_port_value ( const char *port_symbol,
         
         pLv2Plugin->generate_control_string(port_index, val);
     }
-
+    
     lilv_node_free(symbol);
 }
 #endif
@@ -370,6 +370,7 @@ Plugin_Module::set ( Log_Entry &e )
         }
         else if ( ! strcmp( s, ":lv2_plugin_uri" ) )
         {
+            _loading_from_file = true;
             load_lv2( v );
         }
         else if ( ! strcmp( s, ":plugin_ins" ) )
@@ -404,6 +405,7 @@ Plugin_Module::init ( void )
     _idata = new ImplementationData();
     /* module will be bypassed until plugin is loaded */
     _bypass = true;
+    _loading_from_file = false;
     _crosswire = false;
     _is_lv2 = false;
 
@@ -693,7 +695,7 @@ Plugin_Module::update_control_parameters(int choice)
    // DMESSAGE("Control String = %s", m_preset_changes.c_str());
     
     set_parameters(m_preset_changes.c_str());
-    
+
     lilv_state_free(state);
 }
 #endif
@@ -1699,6 +1701,25 @@ Plugin_Module::load_lv2 ( const char* uri )
     {
         set_lv2_port_properties( &atom_output[i] );
     }
+    
+    if ( _atom_ins || _atom_outs )
+    {
+        /* Not restoring state, load the plugin as a preset to get default */
+        if ( ! _loading_from_file  )
+        {
+            _loading_from_file = false;
+            const LilvPlugin* plugin         = m_plugin;
+            LilvWorld*        world          = m_lilvWorld;
+
+            LilvState* state = lilv_state_new_from_world(world, _uridMapFt, lilv_plugin_get_uri(plugin));
+            lilv_state_restore(state, m_instance,  mixer_lv2_set_port_value, this, 0, NULL);
+
+            lilv_state_free(state);
+        }
+    }
+    else
+        _loading_from_file = false;
+    
 #endif
 
     return instances;
@@ -2035,6 +2056,7 @@ Plugin_Module::update_ui( void )
          i + sizeof(ev) < space;
          i += sizeof(ev) + ev.size)
     {
+        DMESSAGE("Processing plugin events");
         /* Read event header to get the size */
         zix_ring_read( _idata->lv2.ext.plugin_events, (char*)&ev, sizeof(ev));
 
@@ -2501,6 +2523,8 @@ Plugin_Module::process ( nframes_t nframes )
                 {
                     _idata->lv2.ext.worker->end_run(m_instance->lv2_handle);
                 }
+                
+                update_ui();
             }
 #endif
         }

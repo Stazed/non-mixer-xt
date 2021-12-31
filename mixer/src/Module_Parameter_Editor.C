@@ -498,18 +498,25 @@ Module_Parameter_Editor::make_controls ( void )
     for ( unsigned int i = 0; i < module->atom_input.size(); ++i )
     {
         Module::Port *p = &module->atom_input[i];
-        
+
         if ( p->hints.type != Module::Port::Hints::PATCH_MESSAGE )
             continue;
-        
+
         Fl_Widget *w;
-        
+
         Fl_Button *o = new Fl_Button( 0, 0, 200, 24, lilv_node_as_string(p->_symbol) );
         w = o;
         o->selection_color( fc );
         o->type( FL_NORMAL_BUTTON );
         o->align(FL_ALIGN_INSIDE | FL_ALIGN_BOTTOM);
-        
+
+        /* Put the filename on the button */
+        if ( !p->_file.empty() )
+        {
+            std::string base_filename  = p->_file.substr(p->_file.find_last_of("/\\") + 1);
+            o->copy_label( base_filename.c_str() );
+        }
+
         _callback_data.push_back( callback_data( this, i ) );
         w->callback( cb_filechooser_handle, &_callback_data.back() );
 
@@ -607,7 +614,7 @@ void
 Module_Parameter_Editor::cb_filechooser_handle ( Fl_Widget *w, void *v )
 {
     callback_data *cd = (callback_data*)v;
-    
+
     std::string title = lilv_node_as_string(cd->base_widget->_module->atom_input[cd->port_number[0]]._label);
 
     char *filename;
@@ -616,6 +623,13 @@ Module_Parameter_Editor::cb_filechooser_handle ( Fl_Widget *w, void *v )
     if (filename == NULL)
         return;
 
+    /* Put the file name on the button */
+    std::string strfilepath (filename);
+    std::string base_filename  = strfilepath.substr(strfilepath.find_last_of("/\\") + 1);
+
+    ((Fl_Button*)w)->copy_label(base_filename.c_str());
+
+    /* Send the file to the plugin */
     cd->base_widget->set_plugin_file( cd->port_number[0], filename );
 }
 #endif
@@ -694,12 +708,6 @@ Module_Parameter_Editor::bind_control ( int i )
 void
 Module_Parameter_Editor::handle_control_changed ( Module::Port *p )
 {
-#ifdef LV2_WORKER_SUPPORT
-    Plugin_Module *pm = static_cast<Plugin_Module *> (_module); // FIXME this may not be the place for this!!!
-    if ( pm->_idata->lv2.ext.plugin_events )
-        pm->update_ui();
-#endif
-
     int i = _module->control_input_port_index( p );
    
     Fl_Widget *w = controls_by_port[i];
