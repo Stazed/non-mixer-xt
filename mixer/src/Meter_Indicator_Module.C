@@ -175,8 +175,11 @@ Meter_Indicator_Module::update ( void )
     {
         // A little hack to detect that the connected module's number
         // of control outs has changed.
+_Pragma("GCC diagnostic push")
+_Pragma("GCC diagnostic ignored \"-Wunused-variable\"")
         Port *p = control_input[0].connected_port();
-	
+_Pragma("GCC diagnostic pop")
+        
 	for ( int i = 0; i < dpm_pack->children(); ++i )
 	{
 	    DPM *o = (DPM*)dpm_pack->child(i);

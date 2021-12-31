@@ -212,10 +212,11 @@ struct ImplementationData
             delete lv2.rdf_data;
             lv2.rdf_data = NULL;
         }
-
+_Pragma("GCC diagnostic push")
+_Pragma("GCC diagnostic ignored \"-Wdeprecated-declarations\"")
         if ( lv2.features[Plugin_Feature_URI_Map] && lv2.features[Plugin_Feature_URI_Map]->data )
             delete (LV2_URI_Map_Feature*)lv2.features[Plugin_Feature_URI_Map]->data;
-
+_Pragma("GCC diagnostic pop")
         if ( lv2.features[Plugin_Feature_URID_Map] && lv2.features[Plugin_Feature_URID_Map]->data )
             delete (LV2_URID_Map*)lv2.features[Plugin_Feature_URID_Map]->data;
 
@@ -231,12 +232,13 @@ struct ImplementationData
 
     // -------------------------------------------------------------------
     // LV2 Features
-
+_Pragma("GCC diagnostic push")
+_Pragma("GCC diagnostic ignored \"-Wdeprecated-declarations\"")
     static uint32_t _lv2_uri_to_id(LV2_URI_Map_Callback_Data data, const char*, const char* uri)
     {
         return _lv2_urid_map(data, uri);
     }
-
+_Pragma("GCC diagnostic pop")
     static LV2_URID _lv2_urid_map(LV2_URID_Map_Handle handle, const char* uri)
     {
         if ( handle == NULL || ! uri )

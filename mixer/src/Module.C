@@ -206,7 +206,7 @@ Module::get ( Log_Entry &e ) const
             e.add( ":parameter_values", s );
         delete[] s;
     }
-    
+#ifdef LV2_WORKER_SUPPORT
     {
         for ( unsigned int i = 0; i < atom_input.size(); ++i )
         {
@@ -223,7 +223,7 @@ Module::get ( Log_Entry &e ) const
             }
         }
     }
-    
+#endif
     e.add( ":is_default", is_default() );
     e.add( ":chain", chain() );
     e.add( ":active", ! bypass() );
@@ -684,13 +684,13 @@ Module::set ( Log_Entry &e )
         {
             set_parameters( v );
         }
-        
+#ifdef LV2_WORKER_SUPPORT
         else if ( ! strcmp( s, ":filename" ) )
         {
             set_file( v , ai, true );
             ai++;
         }
-        
+#endif
         else if ( ! ( strcmp( s, ":active" ) ) )
         {
             bypass( ! atoi( v ) );

@@ -383,7 +383,7 @@ Plugin_Module::set ( Log_Entry &e )
     }
 
     Module::set( e );
-    
+#ifdef LV2_WORKER_SUPPORT
     for ( unsigned int i = 0; i < atom_input.size(); ++i )
     {
         if ( atom_input[i]._need_file_update )
@@ -391,6 +391,7 @@ Plugin_Module::set ( Log_Entry &e )
             send_file_to_plugin( i, get_file( i ) );
         }
     }
+#endif
 }
 
 
@@ -417,9 +418,10 @@ Plugin_Module::init ( void )
     _idata->lv2.options.maxBufferSize = buffer_size();
     _idata->lv2.options.minBufferSize = buffer_size();
     _idata->lv2.options.sampleRate    = sample_rate();
-     _idata->lv2.ext.ui_event_buf     = malloc(ATOM_BUFFER_SIZE);
-
+_Pragma("GCC diagnostic push")
+_Pragma("GCC diagnostic ignored \"-Wdeprecated-declarations\"")
     LV2_URI_Map_Feature* const uriMapFt = new LV2_URI_Map_Feature;
+_Pragma("GCC diagnostic pop")
     uriMapFt->callback_data             = _idata;
     uriMapFt->uri_to_id                 = ImplementationData::_lv2_uri_to_id;
 
@@ -432,6 +434,7 @@ Plugin_Module::init ( void )
     uridUnmapFt->unmap                  = ImplementationData::_lv2_urid_unmap;
     
 #ifdef LV2_WORKER_SUPPORT
+    _idata->lv2.ext.ui_event_buf     = malloc(ATOM_BUFFER_SIZE);
     LV2_Worker_Schedule* const m_lv2_schedule  = new LV2_Worker_Schedule;
     m_lv2_schedule->handle              = this;
     m_lv2_schedule->schedule_work       = non_worker_schedule;
@@ -1536,7 +1539,6 @@ Plugin_Module::load_lv2 ( const char* uri )
 #endif
         }
 
-        DMESSAGE( "Plugin has %i atom inputs and %i atom outputs", _atom_ins, _atom_outs);
         MESSAGE( "Plugin has %i inputs and %i outputs", _plugin_ins, _plugin_outs);
 
         for ( unsigned int i = 0; i < _idata->lv2.rdf_data->PortCount; ++i )
@@ -2444,6 +2446,11 @@ Plugin_Module::apply ( sample_t *buf, nframes_t nframes )
             _idata->descriptor->deactivate( h );
         if ( _idata->descriptor->cleanup )
             _idata->descriptor->cleanup( h );
+    }
+    
+    if (_is_lv2)
+    {
+        lilv_instance_free(temp_instance);
     }
 
     return true;
