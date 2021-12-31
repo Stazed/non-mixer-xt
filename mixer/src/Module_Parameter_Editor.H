@@ -95,6 +95,8 @@ class Module_Parameter_Editor : public Fl_Double_Window
 
     static void menu_cb ( Fl_Widget *w, void *v );
     void menu_cb ( Fl_Menu_ *m );
+    
+    void refresh_file_button_label();
 
     SpectrumView *spectrum_view;
     Fl_Scroll *control_scroll;
@@ -110,7 +112,8 @@ class Module_Parameter_Editor : public Fl_Double_Window
     int radius_port_number;
 
     std::list<callback_data> _callback_data;
-    std::vector<Fl_Widget*> controls_by_port;  
+    std::vector<Fl_Widget*> controls_by_port;
+    std::vector<Fl_Widget*> atom_port_controller;
 
     Fl_Menu_Button &menu ( void ) const;
 

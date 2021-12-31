@@ -201,6 +201,7 @@ public:
                 _property = NULL;
                 _clear_input_buffer = false;
                 _need_file_update = false;
+                _port_controller = -1;
 #endif
 		/* _feedback_value = -2; */
 		_pending_feedback = false;
@@ -228,7 +229,7 @@ public:
                 _property = p._property;
                 _clear_input_buffer = p._clear_input_buffer;
                 _need_file_update = p._need_file_update;
-                
+                _port_controller = p._port_controller;
 #endif
 		/* _feedback_value = p._feedback_value; */
             }
@@ -447,6 +448,7 @@ public:
         LV2_URID    _property_mapped;        ///< Iff type == PROPERTY
         bool _clear_input_buffer;
         bool _need_file_update;
+        int _port_controller;
         std::string _file;
     private:
 #endif
