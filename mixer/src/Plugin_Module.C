@@ -2447,11 +2447,6 @@ Plugin_Module::apply ( sample_t *buf, nframes_t nframes )
         if ( _idata->descriptor->cleanup )
             _idata->descriptor->cleanup( h );
     }
-    
-    if (_is_lv2)
-    {
-        lilv_instance_free(temp_instance);
-    }
 
     return true;
 }
