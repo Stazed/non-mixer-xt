@@ -383,6 +383,14 @@ Plugin_Module::set ( Log_Entry &e )
     }
 
     Module::set( e );
+    
+    for ( unsigned int i = 0; i < atom_input.size(); ++i )
+    {
+        if ( atom_input[i]._need_file_update )
+        {
+            send_file_to_plugin( i, get_file( i ) );
+        }
+    }
 }
 
 
@@ -2044,6 +2052,19 @@ Plugin_Module::update_ui( void )
 void
 Plugin_Module::ui_port_event( uint32_t port_index, uint32_t buffer_size, uint32_t protocol, const void* buffer )
 {
+    /* The incoming port_index is the index from the plugin .ttl port order.
+       We need the corresponding atom_input index so we have to look up
+       the saved port_index in hints.control_index - ai == atom_input index */
+    unsigned int ai = 0;    // used by set_file()
+    for (unsigned int i = 0; i < atom_input.size(); ++i)
+    {
+        if ( atom_input[i].hints.control_index == port_index )
+        {
+            ai = i;
+            break;
+        }
+    }
+
     const LV2_Atom* atom = (const LV2_Atom*)buffer;
     if (lv2_atom_forge_is_object_type( &_idata->lv2.ext.forge, atom->type))
     {
@@ -2055,8 +2076,8 @@ Plugin_Module::ui_port_event( uint32_t port_index, uint32_t buffer_size, uint32_
             const LV2_Atom*      value    = NULL;
             if (!patch_set_get(this, obj, &property, &value))
             {
-                DMESSAGE("Value received = %s", (char *) (value + 1) );
-               // property_changed(jalv, property->body, value);    // FIXME
+                DMESSAGE("atom_input_index = %u: Value received = %s",ai , (char *) (value + 1) );
+                set_file ((char *) (value + 1), ai, false ); // false means don't update, since this IS the update
             }
         } 
         else if (obj->body.otype == _idata->_lv2_urid_map(_idata, LV2_PATCH__Put))
@@ -2082,6 +2103,9 @@ void
 Plugin_Module::send_file_to_plugin( int port, std::string filename )
 {
     DMESSAGE("File = %s", filename.c_str());
+    
+    /* Set the file for non-mixer here - may be redundant some times */
+    atom_input[port]._file = filename;
     
     uint32_t size = filename.size() + 1;
     

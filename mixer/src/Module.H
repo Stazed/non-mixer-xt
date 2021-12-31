@@ -200,6 +200,7 @@ public:
                 _tmpevbuf = NULL;
                 _property = NULL;
                 _clear_input_buffer = false;
+                _need_file_update = false;
 #endif
 		/* _feedback_value = -2; */
 		_pending_feedback = false;
@@ -226,6 +227,7 @@ public:
                 _tmpevbuf = p._tmpevbuf;
                 _property = p._property;
                 _clear_input_buffer = p._clear_input_buffer;
+                _need_file_update = p._need_file_update;
                 
 #endif
 		/* _feedback_value = p._feedback_value; */
@@ -444,6 +446,8 @@ public:
 	LilvNode*   _label;           ///< Human readable label
         LV2_URID    _property_mapped;        ///< Iff type == PROPERTY
         bool _clear_input_buffer;
+        bool _need_file_update;
+        std::string _file;
     private:
 #endif
         OSC::Signal *_scaled_signal;
@@ -600,7 +604,10 @@ public:
 
     char *get_parameters ( void ) const;
     void set_parameters ( const char * );
-
+#ifdef LV2_WORKER_SUPPORT
+    char *get_file ( int port_index ) const;
+    void set_file (std::string file, int port_index, bool need_update = false );
+#endif
     bool show_analysis_window ( void );
 
     void send_feedback ( bool force );

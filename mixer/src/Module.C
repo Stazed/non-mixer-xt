@@ -206,6 +206,24 @@ Module::get ( Log_Entry &e ) const
             e.add( ":parameter_values", s );
         delete[] s;
     }
+    
+    {
+        for ( unsigned int i = 0; i < atom_input.size(); ++i )
+        {
+            if ( atom_input[i]._file.empty() )
+                continue;
+
+            char *s = get_file(i);
+            
+            DMESSAGE("File to save = %s", s);
+
+            if ( strlen ( s ) )
+            {
+                e.add(":filename", s );
+            }
+        }
+    }
+    
     e.add( ":is_default", is_default() );
     e.add( ":chain", chain() );
     e.add( ":active", ! bypass() );
@@ -650,6 +668,9 @@ Module::set ( Log_Entry &e )
             chain( t );
         }
     }
+    
+    // atom_input port counter
+    unsigned int ai = 0;
 
     for ( int i = 0; i < e.size(); ++i )
     {
@@ -663,6 +684,13 @@ Module::set ( Log_Entry &e )
         {
             set_parameters( v );
         }
+        
+        else if ( ! strcmp( s, ":filename" ) )
+        {
+            set_file( v , ai, true );
+            ai++;
+        }
+        
         else if ( ! ( strcmp( s, ":active" ) ) )
         {
             bypass( ! atoi( v ) );
@@ -764,6 +792,31 @@ Module::set_parameters ( const char *parameters )
 
     free( s );
 }
+
+#ifdef LV2_WORKER_SUPPORT
+/**
+ * Gets the pluging file name and path if applicable.
+ * The caller should ensure a valid atom_input[] index and file exists.
+ * 
+ * @param port_index
+ *      The atom_input[] index. NOT the plugin .ttl port index.
+ * 
+ * @return 
+ *      The file if there is one. The returned value should not be freed.
+ */
+char *
+Module::get_file ( int port_index ) const
+{
+    return (char *) atom_input[port_index]._file.c_str();
+}
+
+void
+Module::set_file (std::string file, int port_index, bool need_update )
+{
+    atom_input[port_index]._file = file;
+    atom_input[port_index]._need_file_update = need_update;
+}
+#endif
 
 
 
