@@ -781,7 +781,7 @@ Module_Parameter_Editor::refresh_file_button_label()
             for ( unsigned int k = 0; k < _module->atom_input.size(); ++k )
             {
                 Module::Port *p =  &_module->atom_input[k];
-                if ( p->_port_controller == i )
+                if ( p->_port_controller ==  (int) i )
                 {
                     std::string base_filename  = p->_file.substr(p->_file.find_last_of("/\\") + 1);
                     

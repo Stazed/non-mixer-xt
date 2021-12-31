@@ -668,9 +668,11 @@ Module::set ( Log_Entry &e )
             chain( t );
         }
     }
-    
+
+#ifdef LV2_WORKER_SUPPORT
     // atom_input port counter
     unsigned int ai = 0;
+#endif
 
     for ( int i = 0; i < e.size(); ++i )
     {

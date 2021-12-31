@@ -370,7 +370,9 @@ Plugin_Module::set ( Log_Entry &e )
         }
         else if ( ! strcmp( s, ":lv2_plugin_uri" ) )
         {
+#ifdef LV2_WORKER_SUPPORT
             _loading_from_file = true;
+#endif
             load_lv2( v );
         }
         else if ( ! strcmp( s, ":plugin_ins" ) )
@@ -405,7 +407,6 @@ Plugin_Module::init ( void )
     _idata = new ImplementationData();
     /* module will be bypassed until plugin is loaded */
     _bypass = true;
-    _loading_from_file = false;
     _crosswire = false;
     _is_lv2 = false;
 
@@ -436,6 +437,7 @@ _Pragma("GCC diagnostic pop")
     uridUnmapFt->unmap                  = ImplementationData::_lv2_urid_unmap;
     
 #ifdef LV2_WORKER_SUPPORT
+    _loading_from_file = false;
     _idata->lv2.ext.ui_event_buf     = malloc(ATOM_BUFFER_SIZE);
     LV2_Worker_Schedule* const m_lv2_schedule  = new LV2_Worker_Schedule;
     m_lv2_schedule->handle              = this;
@@ -994,8 +996,10 @@ Plugin_Module::plugin_instances ( unsigned int n )
 
             int ij = 0;
             int oj = 0;
+#ifdef LV2_WORKER_SUPPORT
             int aji = 0;
             int ajo = 0;
+#endif
             if (_is_lv2)
             {
                 for ( unsigned int k = 0; k < _idata->lv2.rdf_data->PortCount; ++k )
@@ -2207,7 +2211,7 @@ Plugin_Module::apply_ui_events( uint32_t nframes, unsigned int port )
 void
 Plugin_Module::set_lv2_port_properties (Port * port )
 {
-    bool writable = false;   // FIXME
+//    bool writable = false;   // FIXME
 
     const LilvPlugin* plugin         = m_plugin;
     LilvWorld*        world          = m_lilvWorld;
@@ -2338,8 +2342,10 @@ Plugin_Module::apply ( sample_t *buf, nframes_t nframes )
 
     int ij = 0;
     int oj = 0;
+#ifdef LV2_WORKER_SUPPORT
     int aji = 0;
     int ajo = 0;
+#endif
     
     if (_is_lv2)
     {
