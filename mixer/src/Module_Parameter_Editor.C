@@ -620,11 +620,17 @@ Module_Parameter_Editor::cb_filechooser_handle ( Fl_Widget *w, void *v )
 {
     callback_data *cd = (callback_data*)v;
 
+    /* Set file chooser location based on previous selected file path */
+    std::string previous_file = cd->base_widget->_module->atom_input[cd->port_number[0]]._file;
+    size_t found = previous_file.find_last_of("/\\");
+    std::string file_chooser_location = previous_file.substr(0, found);
+
+    /* File chooser window title */
     std::string title = lilv_node_as_string(cd->base_widget->_module->atom_input[cd->port_number[0]]._label);
 
     char *filename;
 
-    filename = fl_file_chooser(title.c_str(),"","", 0);
+    filename = fl_file_chooser(title.c_str(), "", file_chooser_location.c_str(), 0);
     if (filename == NULL)
         return;
 
