@@ -495,6 +495,9 @@ Module_Parameter_Editor::make_controls ( void )
     }
 
 #ifdef LV2_WORKER_SUPPORT
+    atom_port_controller.clear();
+    atom_port_controller.resize( module->atom_input.size() );
+
     for ( unsigned int i = 0; i < module->atom_input.size(); ++i )
     {
         Module::Port *p = &module->atom_input[i];
@@ -520,8 +523,7 @@ Module_Parameter_Editor::make_controls ( void )
         _callback_data.push_back( callback_data( this, i ) );
         w->callback( cb_filechooser_handle, &_callback_data.back() );
 
-        p->_port_controller = i;
-        atom_port_controller.push_back(w);
+        atom_port_controller[i] = w;    // so we can update the button label
 
         {
             Fl_Labelpad_Group *flg = new Fl_Labelpad_Group( o );
@@ -780,21 +782,15 @@ void
 Module_Parameter_Editor::refresh_file_button_label()
 {
 #ifdef LV2_WORKER_SUPPORT
-    if ( !atom_port_controller.empty() )
+
+    for ( unsigned int k = 0; k < _module->atom_input.size(); ++k )
     {
-        for ( unsigned int i = 0; i < atom_port_controller.size(); ++i )
+        Module::Port *p =  &_module->atom_input[k];
+        if ( p->hints.type == Module::Port::Hints::PATCH_MESSAGE )
         {
-            for ( unsigned int k = 0; k < _module->atom_input.size(); ++k )
-            {
-                Module::Port *p =  &_module->atom_input[k];
-                if ( p->_port_controller ==  (int) i )
-                {
-                    std::string base_filename  = p->_file.substr(p->_file.find_last_of("/\\") + 1);
-                    
-                    Fl_Button *w =  (Fl_Button *) atom_port_controller[i];
-                    w->copy_label( base_filename.c_str() );
-                }
-            }
+            std::string base_filename  = p->_file.substr(p->_file.find_last_of("/\\") + 1);
+            Fl_Button *w =  (Fl_Button *) atom_port_controller[k];
+            w->copy_label( base_filename.c_str() );
         }
     }
 #endif
