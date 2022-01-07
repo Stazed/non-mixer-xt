@@ -355,19 +355,8 @@ public:
     LilvWorld* get_lilv_world() {return m_lilvWorld;}
     const LilvPlugin* get_slv2_plugin() const {return m_plugin; }
     const LilvPlugins* get_lilv_plugins() const {return m_lilvPlugins; }
-    
-    std::string m_preset_changes;
-    
-    struct port_controls
-    {
-        float value;
-        unsigned long port_index;
-        
-        static bool before( const port_controls& c1, const port_controls& c2 ) { return c1.port_index < c2.port_index; }
-    };
-    
-    std::vector<port_controls>vector_port_controls;
-    void generate_control_string(unsigned long port_index, float value);
+
+    void set_control_value(unsigned long port_index, float value);
 
     void update_control_parameters(int choice);
     /* End Preset loading */

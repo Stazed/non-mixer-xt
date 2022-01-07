@@ -78,7 +78,7 @@ static void mixer_lv2_set_port_value ( const char *port_symbol,
         
       //  DMESSAGE("port Index = %lu: value = %f", port_index, val);
         
-        pLv2Plugin->generate_control_string(port_index, val);
+        pLv2Plugin->set_control_value(port_index, val);
     }
     
     lilv_node_free(symbol);
@@ -649,54 +649,27 @@ Plugin_Module::join_discover_thread ( void )
 
 #ifdef PRESET_SUPPORT
 void
-Plugin_Module::generate_control_string(unsigned long port_index, float value)
+Plugin_Module::set_control_value(unsigned long port_index, float value)
 {
-    port_controls preset_item;
-    preset_item.port_index = port_index;
-    preset_item.value = value;
-    vector_port_controls.push_back(preset_item);
+    for ( unsigned int i = 0; i < control_input.size(); ++i )
+    {
+        if ( port_index == control_input[i].hints.control_index )
+        {
+            control_input[i].control_value(value);
+            DMESSAGE("Port Index = %d: Value = %f", port_index, value);
+        }
+    }
 }
 
 void 
 Plugin_Module::update_control_parameters(int choice)
-{
-    m_preset_changes.clear();
-    vector_port_controls.clear();
-    
+{    
     const Lv2WorldClass& lv2World = Lv2WorldClass::getInstance();
+    
+    DMESSAGE("PresetList[%d].URI = %s", choice, PresetList[choice].URI);
     
     LilvState *state = lv2World.getStateFromURI(PresetList[choice].URI, _uridMapFt);
     lilv_state_restore(state, m_instance,  mixer_lv2_set_port_value, this, 0, NULL);
-
-    /* Sort the preset vector by port number to get correct order */
-    std::sort( vector_port_controls.begin(), vector_port_controls.end(), port_controls::before );
-    
-    if(control_input.size() > vector_port_controls.size())
-    {
-        if ( !strcasecmp( "Bypass", control_input[0].name() ) )
-        {
-            m_preset_changes = "0.0:";
-        }
-        else
-        {
-            // What to do here??
-        }
-    }
-    
-    /* Generate the semi-colon delimited string to set the parameters */
-    for(unsigned i = 0; i < vector_port_controls.size(); ++i)
-    {
-        std::string ss = std::to_string(vector_port_controls[i].value);
-        
-        m_preset_changes.append(ss);
-        
-        if( i != (vector_port_controls.size() - 1))
-            m_preset_changes.append(":");
-    }
-    
-   // DMESSAGE("Control String = %s", m_preset_changes.c_str());
-    
-    set_parameters(m_preset_changes.c_str());
 
     lilv_state_free(state);
 }
@@ -1502,12 +1475,14 @@ Plugin_Module::load_lv2 ( const char* uri )
                 if ( LV2_IS_PORT_INPUT( _idata->lv2.rdf_data->Ports[i].Types ) )
                 {
                     add_port( Port( this, Port::INPUT, Port::AUDIO, _idata->lv2.rdf_data->Ports[i].Name ) );
+                    control_input[_plugin_ins].hints.control_index = i;
                     _plugin_ins++;
                 }
                 else if (LV2_IS_PORT_OUTPUT(_idata->lv2.rdf_data->Ports[i].Types))
                 {
-                    _plugin_outs++;
                     add_port( Port( this, Port::OUTPUT, Port::AUDIO, _idata->lv2.rdf_data->Ports[i].Name ) );
+                    control_output[_plugin_outs].hints.control_index = i;
+                    _plugin_outs++;
                 }
             }
 #ifdef LV2_WORKER_SUPPORT
@@ -1673,6 +1648,8 @@ Plugin_Module::load_lv2 ( const char* uri )
                 *control_value = p.hints.default_value;
 
                 p.connect_to( control_value );
+                
+                p.hints.control_index = i;
 
                 add_port( p );
 
