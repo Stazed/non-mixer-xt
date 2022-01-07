@@ -159,7 +159,7 @@ public:
             float default_value;
             int dimensions;
             bool visible;
-            uint32_t control_index;     ///< plugin Index of port control
+            uint32_t plug_port_index;     ///< plugin Index of port control
             std::vector<EnumeratorScalePoints>ScalePoints;
 
             Hints ( )
@@ -173,7 +173,7 @@ public:
                     default_value = 0.0f;
                     dimensions = 1;
                     visible = true;
-                    control_index = 0;
+                    plug_port_index = 0;
                 }
         };
 

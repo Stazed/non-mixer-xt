@@ -653,7 +653,7 @@ Plugin_Module::set_control_value(unsigned long port_index, float value)
 {
     for ( unsigned int i = 0; i < control_input.size(); ++i )
     {
-        if ( port_index == control_input[i].hints.control_index )
+        if ( port_index == control_input[i].hints.plug_port_index )
         {
             control_input[i].control_value(value);
             DMESSAGE("Port Index = %d: Value = %f", port_index, value);
@@ -1475,13 +1475,13 @@ Plugin_Module::load_lv2 ( const char* uri )
                 if ( LV2_IS_PORT_INPUT( _idata->lv2.rdf_data->Ports[i].Types ) )
                 {
                     add_port( Port( this, Port::INPUT, Port::AUDIO, _idata->lv2.rdf_data->Ports[i].Name ) );
-                    control_input[_plugin_ins].hints.control_index = i;
+                    control_input[_plugin_ins].hints.plug_port_index = i;
                     _plugin_ins++;
                 }
                 else if (LV2_IS_PORT_OUTPUT(_idata->lv2.rdf_data->Ports[i].Types))
                 {
                     add_port( Port( this, Port::OUTPUT, Port::AUDIO, _idata->lv2.rdf_data->Ports[i].Name ) );
-                    control_output[_plugin_outs].hints.control_index = i;
+                    control_output[_plugin_outs].hints.plug_port_index = i;
                     _plugin_outs++;
                 }
             }
@@ -1496,7 +1496,7 @@ Plugin_Module::load_lv2 ( const char* uri )
                     {
                         DMESSAGE(" LV2_PORT_SUPPORTS_PATCH_MESSAGE - INPUT ");
                         atom_input[_atom_ins].hints.type = Port::Hints::PATCH_MESSAGE;
-                        atom_input[_atom_ins].hints.control_index = i;
+                        atom_input[_atom_ins].hints.plug_port_index = i;
                     }
                     _atom_ins++;
                     
@@ -1510,7 +1510,7 @@ Plugin_Module::load_lv2 ( const char* uri )
                     {
                         DMESSAGE(" LV2_PORT_SUPPORTS_PATCH_MESSAGE - OUTPUT ");
                         atom_output[_atom_outs].hints.type = Port::Hints::PATCH_MESSAGE;
-                        atom_output[_atom_outs].hints.control_index = i;
+                        atom_output[_atom_outs].hints.plug_port_index = i;
                     }
                     _atom_outs++;
 
@@ -1649,7 +1649,7 @@ Plugin_Module::load_lv2 ( const char* uri )
 
                 p.connect_to( control_value );
                 
-                p.hints.control_index = i;
+                p.hints.plug_port_index = i;
 
                 add_port( p );
 
@@ -2059,11 +2059,11 @@ Plugin_Module::ui_port_event( uint32_t port_index, uint32_t buffer_size, uint32_
 {
     /* The incoming port_index is the index from the plugin .ttl port order.
        We need the corresponding atom_input index so we have to look up
-       the saved port_index in hints.control_index - ai == atom_input index */
+       the saved port_index in hints.plug_port_index - ai == atom_input index */
     unsigned int ai = 0;    // used by set_file()
     for (unsigned int i = 0; i < atom_input.size(); ++i)
     {
-        if ( atom_input[i].hints.control_index == port_index )
+        if ( atom_input[i].hints.plug_port_index == port_index )
         {
             ai = i;
             break;
@@ -2132,7 +2132,7 @@ Plugin_Module::send_file_to_plugin( int port, std::string filename )
     
     char buf2[sizeof(ControlChange) + buffer_size];
     ControlChange* ev = (ControlChange*)buf2;
-    ev->index    =   atom_input[port].hints.control_index; 
+    ev->index    =   atom_input[port].hints.plug_port_index; 
     ev->protocol =  _idata->_lv2_urid_map(_idata, LV2_ATOM__eventTransfer);
     ev->size     =  buffer_size;
     memcpy(ev->body, (const void*) atom, buffer_size);
@@ -2260,7 +2260,7 @@ Plugin_Module::get_atom_output_events( void )
 
             DMESSAGE("GOT ATOM EVENT BUFFER");
 
-            send_to_ui(atom_output[k].hints.control_index, type, size, body);
+            send_to_ui(atom_output[k].hints.plug_port_index, type, size, body);
         }
 
         /* Clear event output for plugin to write to on next cycle */
