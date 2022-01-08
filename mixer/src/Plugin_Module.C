@@ -1642,6 +1642,18 @@ Plugin_Module::load_lv2 ( const char* uri )
                             p.hints.minimum = p.hints.ScalePoints[0].Value;
                             p.hints.maximum = p.hints.ScalePoints[ p.hints.ScalePoints.size() - 1 ].Value;
                         }
+                        else    // Integer enumerator with no scale points
+                        {
+                            p.hints.minimum = rdfport.Points.Minimum;
+                            p.hints.maximum = rdfport.Points.Maximum;
+                            
+                            if ( p.hints.ranged &&
+                                 0 == (int)p.hints.minimum &&
+                                 1 == (int)p.hints.maximum )
+                                p.hints.type = Port::Hints::BOOLEAN;
+                            else
+                                p.hints.type = Port::Hints::INTEGER;
+                        }
                     }
                 }
                 /* Should always check toggled after integer since some LV2s will have both */
