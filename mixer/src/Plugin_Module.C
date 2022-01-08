@@ -333,12 +333,16 @@ Plugin_Module::Plugin_Module ( ) : Module( 50, 35, name() )
 Plugin_Module::~Plugin_Module ( )
 {
 #ifdef LV2_WORKER_SUPPORT
- //   non_worker_finish();  // FIXME
- //   non_worker_destroy();
+    if ( _idata->lv2.ext.worker )
+    {
+        non_worker_finish();
+        non_worker_destroy();
+    }
 
     zix_ring_free(_idata->lv2.ext.plugin_events);
     zix_ring_free(_idata->lv2.ext.ui_events);
 #endif
+
     log_destroy();
     plugin_instances( 0 );
     
