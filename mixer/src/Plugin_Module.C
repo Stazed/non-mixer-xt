@@ -73,12 +73,41 @@ static void mixer_lv2_set_port_value ( const char *port_symbol,
 
     if (port)
     {
-        const float val = *(float *) value;
+        float paramValue = 0.0;
+
+        switch (type)
+        {
+            case Plugin_Module_URI_Atom_Bool:
+            //CARLA_SAFE_ASSERT_RETURN(size == sizeof(int32_t),);
+            paramValue = *(const int32_t*)value != 0 ? 1.0f : 0.0f;
+            break;
+            case Plugin_Module_URI_Atom_Double:
+            //CARLA_SAFE_ASSERT_RETURN(size == sizeof(double),);
+            paramValue = static_cast<float>((*(const double*)value));
+            break;
+            case Plugin_Module_URI_Atom_Int:
+            //CARLA_SAFE_ASSERT_RETURN(size == sizeof(int32_t),);
+            paramValue = static_cast<float>(*(const int32_t*)value);
+            break;
+            case Plugin_Module_URI_Atom_Float:
+            //CARLA_SAFE_ASSERT_RETURN(size == sizeof(float),);
+            paramValue = *(const float*)value;
+            break;
+            case Plugin_Module_URI_Atom_Long:
+            //CARLA_SAFE_ASSERT_RETURN(size == sizeof(int64_t),);
+            paramValue = static_cast<float>(*(const int64_t*)value);
+            break;
+            default:
+            DMESSAGE("(\"%s\", %p, %i, %i:\"%s\") - unknown port type",
+                         port_symbol, value, size, type, pLv2Plugin->_idata->_lv2_urid_unmap(pLv2Plugin->_idata, type));
+            return;
+        }
+
         const unsigned long port_index = lilv_port_get_index(plugin, port);
-        
-      //  DMESSAGE("port Index = %lu: value = %f", port_index, val);
-        
-        pLv2Plugin->set_control_value(port_index, val);
+
+        DMESSAGE("PORT INDEX = %lu: paramValue = %f: VALUE = %p", port_index, paramValue, value);
+
+        pLv2Plugin->set_control_value(port_index, paramValue);
     }
     
     lilv_node_free(symbol);
@@ -1694,7 +1723,7 @@ Plugin_Module::load_lv2 ( const char* uri )
             LilvState* const state = Lv2WorldClass::getInstance().getStateFromURI(uri, (LV2_URID_Map*) uridMap);
 
             /* Set any files for the plugin - no need to update control parameters since they are already set */
-            lilv_state_restore(state, m_instance,  NULL, this, 0, _idata->lv2.features);
+            lilv_state_restore(state, m_instance,  mixer_lv2_set_port_value, this, 0, _idata->lv2.features);
 
             lilv_state_free(state);
         }

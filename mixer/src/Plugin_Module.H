@@ -53,8 +53,11 @@ enum Plugin_Module_Supported_Features {
 /* pre-mapped lv2 uris */
 enum Plugin_Module_URIs {
     Plugin_Module_URI_Null = 0,
+    Plugin_Module_URI_Atom_Bool,
     Plugin_Module_URI_Atom_Double,
     Plugin_Module_URI_Atom_Int,
+    Plugin_Module_URI_Atom_Float,
+    Plugin_Module_URI_Atom_Long,
     Plugin_Module_URI_BufSize_MaxLength,
     Plugin_Module_URI_BufSize_MinLength,
     Plugin_Module_URI_Parameter_SampleRate,
@@ -243,10 +246,16 @@ _Pragma("GCC diagnostic pop")
     {
         if ( handle == NULL || ! uri )
             return Plugin_Module_URI_Null;
+        if (::strcmp(uri, LV2_ATOM__Bool) == 0)
+            return Plugin_Module_URI_Atom_Bool;
         if ( ::strcmp(uri, LV2_ATOM__Double) == 0 )
             return Plugin_Module_URI_Atom_Double;
         if ( ::strcmp(uri, LV2_ATOM__Int) == 0 )
             return Plugin_Module_URI_Atom_Int;
+        if ( ::strcmp(uri, LV2_ATOM__Float) == 0 )
+            return Plugin_Module_URI_Atom_Float;
+        if (::strcmp(uri, LV2_ATOM__Long) == 0)
+            return Plugin_Module_URI_Atom_Long;
         if ( ::strcmp(uri, LV2_BUF_SIZE__maxBlockLength) == 0 )
             return Plugin_Module_URI_BufSize_MaxLength;
         if ( ::strcmp(uri, LV2_BUF_SIZE__minBlockLength) == 0 )
