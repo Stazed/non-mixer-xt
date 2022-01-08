@@ -785,6 +785,9 @@ void
 Module_Parameter_Editor::refresh_file_button_label()
 {
 #ifdef LV2_WORKER_SUPPORT
+    if ( ! _module->atom_input.size() )
+        return;
+
     int count = 0;
 
     /* This count is to get the button label to update. Since we send the preset to 
