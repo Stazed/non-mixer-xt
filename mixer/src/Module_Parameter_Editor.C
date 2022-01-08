@@ -787,7 +787,7 @@ Module_Parameter_Editor::refresh_file_button_label()
 #ifdef LV2_WORKER_SUPPORT
     int count = 0;
 
-    /* This count is hack to get the button label to update. Since we send the preset to 
+    /* This count is to get the button label to update. Since we send the preset to 
        the plugin, and then the plugin must send us back the file name, we have to wait
        until we get the need_refresh() flag after receiving the file. The count is to
        ensure we don't end up frozen if no file is sent. */
@@ -808,11 +808,17 @@ Module_Parameter_Editor::refresh_file_button_label()
                 }
             }
             _module->set_refresh(false);
+            count = -1;     // To indicate that we have processed the file
             break;
         }
 
         Fl::wait(1);
         ++count;
+    }
+    
+    if( count != -1 )
+    {
+        WARNING( "File was not received from plugin! Count = %d", count );
     }
 #endif
 }

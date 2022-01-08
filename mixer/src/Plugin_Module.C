@@ -98,7 +98,7 @@ static void mixer_lv2_set_port_value ( const char *port_symbol,
             paramValue = static_cast<float>(*(const int64_t*)value);
             break;
             default:
-            DMESSAGE("(\"%s\", %p, %i, %i:\"%s\") - unknown port type",
+            WARNING("(\"%s\", %p, %i, %i:\"%s\") - unknown port type",
                          port_symbol, value, size, type, pLv2Plugin->_idata->_lv2_urid_unmap(pLv2Plugin->_idata, type));
             return;
         }
