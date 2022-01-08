@@ -335,8 +335,8 @@ Plugin_Module::~Plugin_Module ( )
 #ifdef LV2_WORKER_SUPPORT
     if ( _idata->lv2.ext.worker )
     {
-        non_worker_finish();
-        non_worker_destroy();
+       // non_worker_finish();  // FIXME this freezes
+       // non_worker_destroy();
     }
 
     zix_ring_free(_idata->lv2.ext.plugin_events);
@@ -1473,7 +1473,7 @@ Plugin_Module::load_lv2 ( const char* uri )
             {
                 DMESSAGE("Setting worker initialization");
 
-                zix_sem_init(&_idata->lv2.ext.sem, 0);
+              //  zix_sem_init(&_idata->lv2.ext.sem, 0);
                 lv2_atom_forge_init(&_idata->lv2.ext.forge, _uridMapFt);
                 non_worker_init(this,  _idata->lv2.ext.worker, true);
 		if (_idata->safe_restore)   // FIXME
