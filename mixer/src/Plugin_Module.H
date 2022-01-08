@@ -84,7 +84,7 @@ struct Plugin_Module_Options {
 
     int maxBufferSize;
     int minBufferSize;
-    double sampleRate;
+    float sampleRate;
     LV2_Options_Option opts[Count];
 
     Plugin_Module_Options()
@@ -113,8 +113,8 @@ struct Plugin_Module_Options {
         optSampleRate.context = LV2_OPTIONS_INSTANCE;
         optSampleRate.subject = 0;
         optSampleRate.key     = Plugin_Module_URI_Parameter_SampleRate;
-        optSampleRate.size    = sizeof(double);
-        optSampleRate.type    = Plugin_Module_URI_Atom_Double;
+        optSampleRate.size    = sizeof(float);
+        optSampleRate.type    = Plugin_Module_URI_Atom_Float;
         optSampleRate.value   = &sampleRate;
 
         LV2_Options_Option& optNull(opts[Null]);
