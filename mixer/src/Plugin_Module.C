@@ -493,6 +493,13 @@ _Pragma("GCC diagnostic pop")
 #ifdef LV2_WORKER_SUPPORT
     _idata->lv2.features[Plugin_Feature_Worker_Schedule]->URI  = LV2_WORKER__schedule;
     _idata->lv2.features[Plugin_Feature_Worker_Schedule]->data = m_lv2_schedule;
+
+    /* Create Plugin <=> UI communication buffers */
+    _idata->lv2.ext.ui_events = zix_ring_new(ATOM_BUFFER_SIZE);
+    _idata->lv2.ext.plugin_events = zix_ring_new(ATOM_BUFFER_SIZE);
+    
+    zix_ring_mlock(_idata->lv2.ext.ui_events);
+    zix_ring_mlock(_idata->lv2.ext.plugin_events);
 #endif
     
 #if 0
@@ -512,18 +519,7 @@ _Pragma("GCC diagnostic pop")
 	if (lilv_plugin_has_feature(jalv->plugin, state_threadSafeRestore)) {
 		jalv->safe_restore = true;
 	}
-	lilv_node_free(state_threadSafeRestore);
-    
-            // EVENT BUFFERS
-        
-	/* Create Plugin <=> UI communication buffers */
-	jalv->ui_events     = zix_ring_new(jalv->opts.buffer_size);
-	jalv->plugin_events = zix_ring_new(jalv->opts.buffer_size);
-	zix_ring_mlock(jalv->ui_events);
-	zix_ring_mlock(jalv->plugin_events);
-    
-    
-    
+	lilv_node_free(state_threadSafeRestore);    
 #endif
     
 #ifdef PRESET_SUPPORT
@@ -1406,12 +1402,6 @@ Plugin_Module::load_lv2 ( const char* uri )
     _plugin_ins = _plugin_outs = 0;
 #ifdef LV2_WORKER_SUPPORT
     _atom_ins = _atom_outs = 0;
-    /* Create Plugin <=> UI communication buffers */
-    _idata->lv2.ext.ui_events = zix_ring_new(ATOM_BUFFER_SIZE);
-    _idata->lv2.ext.plugin_events = zix_ring_new(ATOM_BUFFER_SIZE);
-    
-    zix_ring_mlock(_idata->lv2.ext.ui_events);
-    zix_ring_mlock(_idata->lv2.ext.plugin_events);
 #endif
 
     if ( ! _idata->lv2.rdf_data )
