@@ -579,6 +579,9 @@ Module_Parameter_Editor::make_controls ( void )
 void
 Module_Parameter_Editor::set_preset_controls(int choice)
 {
+    /* set false here to clear any previous */
+    _module->set_refresh(false);
+
     Plugin_Module *pm = static_cast<Plugin_Module *> (_module);
     pm->update_control_parameters(choice);
     
@@ -782,16 +785,34 @@ void
 Module_Parameter_Editor::refresh_file_button_label()
 {
 #ifdef LV2_WORKER_SUPPORT
+    int count = 0;
 
-    for ( unsigned int k = 0; k < _module->atom_input.size(); ++k )
+    /* This count is hack to get the button label to update. Since we send the preset to 
+       the plugin, and then the plugin must send us back the file name, we have to wait
+       until we get the need_refresh() flag after receiving the file. The count is to
+       ensure we don't end up frozen if no file is sent. */
+    while ( count < 10 )
     {
-        Module::Port *p =  &_module->atom_input[k];
-        if ( p->hints.type == Module::Port::Hints::PATCH_MESSAGE )
+        if( _module->need_refresh() )
         {
-            std::string base_filename  = p->_file.substr(p->_file.find_last_of("/\\") + 1);
-            Fl_Button *w =  (Fl_Button *) atom_port_controller[k];
-            w->copy_label( base_filename.c_str() );
+            DMESSAGE("Updating file from preset - count = %d", count);
+
+            for ( unsigned int k = 0; k < _module->atom_input.size(); ++k )
+            {
+                Module::Port *p =  &_module->atom_input[k];
+                if ( p->hints.type == Module::Port::Hints::PATCH_MESSAGE )
+                {
+                    std::string base_filename  = p->_file.substr(p->_file.find_last_of("/\\") + 1);
+                    Fl_Button *w =  (Fl_Button *) atom_port_controller[k];
+                    w->copy_label( base_filename.c_str() );
+                }
+            }
+            _module->set_refresh(false);
+            break;
         }
+
+        Fl::wait(1);
+        ++count;
     }
 #endif
 }

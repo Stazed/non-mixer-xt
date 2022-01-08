@@ -665,9 +665,9 @@ void
 Plugin_Module::update_control_parameters(int choice)
 {    
     const Lv2WorldClass& lv2World = Lv2WorldClass::getInstance();
-    
+
     DMESSAGE("PresetList[%d].URI = %s", choice, PresetList[choice].URI);
-    
+
     LilvState *state = lv2World.getStateFromURI(PresetList[choice].URI, _uridMapFt);
     lilv_state_restore(state, m_instance,  mixer_lv2_set_port_value, this, 0, NULL);
 
@@ -1685,15 +1685,16 @@ Plugin_Module::load_lv2 ( const char* uri )
     
     if ( _atom_ins || _atom_outs )
     {
-        /* Not restoring state, load the plugin as a preset to get default */
+        /* Not restoring state, load the plugin as a preset to get default files if any */
         if ( ! _loading_from_file  )
         {
             _loading_from_file = false;
-            const LilvPlugin* plugin         = m_plugin;
-            LilvWorld*        world          = m_lilvWorld;
 
-            LilvState* state = lilv_state_new_from_world(world, _uridMapFt, lilv_plugin_get_uri(plugin));
-            lilv_state_restore(state, m_instance,  mixer_lv2_set_port_value, this, 0, NULL);
+            const LV2_URID_Map* const uridMap = (const LV2_URID_Map*)_idata->lv2.features[Plugin_Feature_URID_Map]->data;
+            LilvState* const state = Lv2WorldClass::getInstance().getStateFromURI(uri, (LV2_URID_Map*) uridMap);
+
+            /* Set any files for the plugin - no need to update control parameters since they are already set */
+            lilv_state_restore(state, m_instance,  NULL, this, 0, _idata->lv2.features);
 
             lilv_state_free(state);
         }
@@ -2011,6 +2012,7 @@ Plugin_Module::send_to_ui( uint32_t port_index, uint32_t type, uint32_t size, co
 
     if (zix_ring_write_space( _idata->lv2.ext.plugin_events ) >= sizeof(evbuf) + size)
     {
+        DMESSAGE("Write to .plugin_events");
         zix_ring_write(_idata->lv2.ext.plugin_events, evbuf, sizeof(evbuf));
         zix_ring_write(_idata->lv2.ext.plugin_events, (const char*)body, size);
         return true;
@@ -2037,7 +2039,7 @@ Plugin_Module::update_ui( void )
          i + sizeof(ev) < space;
          i += sizeof(ev) + ev.size)
     {
-        DMESSAGE("Processing plugin events");
+        DMESSAGE("Reading .plugin_events");
         /* Read event header to get the size */
         zix_ring_read( _idata->lv2.ext.plugin_events, (char*)&ev, sizeof(ev));
 
@@ -2081,7 +2083,7 @@ Plugin_Module::ui_port_event( uint32_t port_index, uint32_t buffer_size, uint32_
             const LV2_Atom*      value    = NULL;
             if (!patch_set_get(this, obj, &property, &value))
             {
-                DMESSAGE("atom_input_index = %u: Value received = %s",ai , (char *) (value + 1) );
+                DMESSAGE("To set_file(): atom_input_index = %u: Value received = %s",ai , (char *) (value + 1) );
                 set_file ((char *) (value + 1), ai, false ); // false means don't update, since this IS the update
             }
         } 
