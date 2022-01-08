@@ -185,8 +185,11 @@ struct ImplementationData
         lv2.features[Plugin_Features_Count] = NULL;
 
         lv2.mappedURIs.push_back("");                           // Plugin_Module_URI_Null
+        lv2.mappedURIs.push_back(LV2_ATOM__Bool);               // Plugin_Module_URI_Atom_Bool
         lv2.mappedURIs.push_back(LV2_ATOM__Double);             // Plugin_Module_URI_Atom_Double
         lv2.mappedURIs.push_back(LV2_ATOM__Int);                // Plugin_Module_URI_Atom_Int
+        lv2.mappedURIs.push_back(LV2_ATOM__Float);              // Plugin_Module_URI_Atom_Float
+        lv2.mappedURIs.push_back(LV2_ATOM__Long);               // Plugin_Module_URI_Atom_Long
         lv2.mappedURIs.push_back(LV2_BUF_SIZE__maxBlockLength); // Plugin_Module_URI_BufSize_MaxLength
         lv2.mappedURIs.push_back(LV2_BUF_SIZE__minBlockLength); // Plugin_Module_URI_BufSize_MinLength
         lv2.mappedURIs.push_back(LV2_PARAMETERS__sampleRate);   // Plugin_Module_URI_Parameter_SampleRate
