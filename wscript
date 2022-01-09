@@ -74,6 +74,13 @@ def configure(conf):
                define_name='HAVE_JACK_METADATA',
                uselib='JACK',
                mandatory=False)
+           
+    conf.check(function_name= 'mlock',
+               header_name = 'sys/mman.h',
+               define_name = 'HAVE_MLOCK',
+               return_type = 'int',
+               arg_types   = 'const void*,size_t',
+               mandatory   = False)               
 
     conf.check_cfg(package='x11', uselib_store='XLIB',args="--cflags --libs",
                       mandatory=True)
