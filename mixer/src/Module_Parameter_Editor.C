@@ -821,7 +821,7 @@ Module_Parameter_Editor::refresh_file_button_label()
     
     if( count != -1 )
     {
-        WARNING( "File was not received from plugin! Count = %d", count );
+        MESSAGE( "File was not received from plugin: Count = %d", count );
     }
 #endif
 }
