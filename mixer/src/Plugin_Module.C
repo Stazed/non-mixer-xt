@@ -2003,6 +2003,8 @@ Plugin_Module::non_worker_emit_responses( LilvInstance* instance)
 
             read_space -= sizeof(size) + size;
         }
+        // FIXME is this correct?
+        zix_ring_reset( _idata->lv2.ext.responses );
     }
 }
 
@@ -2543,7 +2545,7 @@ Plugin_Module::process ( nframes_t nframes )
                 {
                     _idata->lv2.ext.worker->end_run(m_instance->lv2_handle);
                 }
-                
+
                 update_ui();
             }
 #endif
