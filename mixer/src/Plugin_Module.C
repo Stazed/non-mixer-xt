@@ -2244,6 +2244,7 @@ Plugin_Module::set_lv2_port_properties (Port * port )
     if( ! properties )
     {
         DMESSAGE("Atom port has no properties");
+        port->hints.visible = false;
         return;
     }
 

@@ -504,6 +504,9 @@ Module_Parameter_Editor::make_controls ( void )
 
         if ( p->hints.type != Module::Port::Hints::PATCH_MESSAGE )
             continue;
+        
+        if ( !p->hints.visible )
+            continue;
 
         Fl_Widget *w;
 
