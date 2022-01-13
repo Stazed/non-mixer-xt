@@ -1464,8 +1464,15 @@ Plugin_Module::load_lv2 ( const char* uri )
                 _idata->lv2.ext.options = NULL;
 
             if ( _idata->lv2.ext.state != NULL && ( _idata->lv2.ext.state->save == NULL || _idata->lv2.ext.state->restore == NULL ))
+            {
                 _idata->lv2.ext.state = NULL;
-
+            }
+#ifdef LV2_WORKER_SUPPORT
+            else
+            {
+                _idata->safe_restore = true;
+            }
+#endif
             if ( _idata->lv2.ext.worker != NULL && _idata->lv2.ext.worker->work == NULL )
             {
                 _idata->lv2.ext.worker = NULL;
@@ -1475,18 +1482,18 @@ Plugin_Module::load_lv2 ( const char* uri )
             {
                 DMESSAGE("Setting worker initialization");
 
-              //  zix_sem_init(&_idata->lv2.ext.sem, 0);
                 lv2_atom_forge_init(&_idata->lv2.ext.forge, _uridMapFt);
                 non_worker_init(this,  _idata->lv2.ext.worker, true);
+
 		if (_idata->safe_restore)   // FIXME
                 {
-                    MESSAGE( "open -- Plugin Has safe_restore" );
-                    non_worker_init(this, _idata->lv2.ext.worker, false);
+                    MESSAGE( "Plugin Has safe_restore - TODO" );
+                   // non_worker_init(this, _idata->lv2.ext.state, false);
 		}
             }
 #endif
         }
-        else
+        else    // Extension data
         {
             _idata->lv2.ext.options = NULL;
             _idata->lv2.ext.state   = NULL;
