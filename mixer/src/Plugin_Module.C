@@ -141,6 +141,7 @@ worker_func(void* data)
         zix_sem_wait( &worker->_idata->lv2.ext.sem );
         if ( worker->_idata->exit )
         {
+            DMESSAGE ("EXIT");
             break;
         }
         DMESSAGE("worker_func - MIDDLE");
@@ -335,8 +336,9 @@ Plugin_Module::~Plugin_Module ( )
 #ifdef LV2_WORKER_SUPPORT
     if ( _idata->lv2.ext.worker )
     {
-       // non_worker_finish();  // FIXME this freezes
-       // non_worker_destroy();
+        _idata->exit = true;
+        non_worker_finish();
+        non_worker_destroy();
     }
 
     zix_ring_free(_idata->lv2.ext.plugin_events);
