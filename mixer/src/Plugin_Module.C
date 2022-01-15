@@ -362,6 +362,7 @@ Plugin_Module::Plugin_Module ( ) : Module( 50, 35, name() )
 Plugin_Module::~Plugin_Module ( )
 {
 #ifdef LV2_WORKER_SUPPORT
+    Fl::remove_timeout(update_ui);
     if ( _idata->lv2.ext.worker )
     {
         _idata->exit = true;
@@ -2128,7 +2129,7 @@ Plugin_Module::ui_port_event( uint32_t port_index, uint32_t buffer_size, uint32_
             if (!patch_set_get(this, obj, &property, &value))
             {
                 DMESSAGE("To set_file(): atom_input_index = %u: Value received = %s",ai , (char *) (value + 1) );
-                set_file ((char *) (value + 1), ai, false ); // false means don't update, since this IS the update
+                set_file ((char *) (value + 1), ai, false ); // false means don't update the plugin, since this comes from the plugin
             }
         } 
         else if (obj->body.otype == _idata->_lv2_urid_map(_idata, LV2_PATCH__Put))

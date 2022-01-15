@@ -95,8 +95,6 @@ class Module_Parameter_Editor : public Fl_Double_Window
 
     static void menu_cb ( Fl_Widget *w, void *v );
     void menu_cb ( Fl_Menu_ *m );
-    
-    void refresh_file_button_label();
 
     SpectrumView *spectrum_view;
     Fl_Scroll *control_scroll;
@@ -121,7 +119,9 @@ public:
 
     void reload ( void );
     void handle_control_changed ( Module::Port *p );
-
+#ifdef LV2_WORKER_SUPPORT
+    void refresh_file_button_label(int index);
+#endif
     int handle ( int m );
     Module_Parameter_Editor ( Module *module );
     virtual ~Module_Parameter_Editor ( );

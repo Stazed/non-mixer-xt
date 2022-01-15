@@ -170,7 +170,6 @@ Module::init ( void )
     _bypass = 0;
     _base_label = NULL;
     _number = -2;	/* magic number indicates old instance, before numbering */
-    _refresh_needed = false;
     _is_lv2 = false;
 
     box( FL_UP_BOX );
@@ -820,7 +819,8 @@ Module::set_file (std::string file, int port_index, bool need_update )
     atom_input[port_index]._need_file_update = need_update;
 
     /* To refresh the button label in the parameter editor */
-    _refresh_needed = true;
+    if ( _editor )
+        _editor->refresh_file_button_label(port_index);
 }
 #endif
 

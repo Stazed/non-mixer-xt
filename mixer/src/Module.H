@@ -105,9 +105,6 @@ public:
     virtual void update ( void ) {}
 
     virtual void update_tooltip ( void );
-    
-    bool need_refresh ( void ) { return _refresh_needed; }
-    void set_refresh ( bool set ) { _refresh_needed = set; }
 
     struct Picked {
         bool is_lv2;
