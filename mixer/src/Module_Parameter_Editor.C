@@ -818,7 +818,7 @@ Module_Parameter_Editor::refresh_file_button_label()
             break;
         }
 
-        Fl::wait(1);
+        Fl::wait(10);
         ++count;
     }
     

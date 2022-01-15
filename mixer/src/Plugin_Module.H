@@ -472,7 +472,6 @@ public:
     void non_worker_finish( void );
     void non_worker_destroy( void );
     bool send_to_ui( uint32_t port_index, uint32_t type, uint32_t size, const void* body );
-    int update_ui( void );
     void ui_port_event( uint32_t port_index, uint32_t buffer_size, uint32_t protocol, const void* buffer );
     void send_file_to_plugin( int port, std::string filename );
     void apply_ui_events( uint32_t nframes, unsigned int port );

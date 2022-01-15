@@ -116,6 +116,34 @@ static void mixer_lv2_set_port_value ( const char *port_symbol,
 
 #ifdef LV2_WORKER_SUPPORT
 
+static void
+update_ui( void *data)
+{
+    Plugin_Module* plug_ui =  static_cast<Plugin_Module *> (data);
+    /* Emit UI events. */
+    ControlChange ev;
+    const size_t  space = zix_ring_read_space( plug_ui->_idata->lv2.ext.plugin_events );
+    for (size_t i = 0;
+         i + sizeof(ev) < space;
+         i += sizeof(ev) + ev.size)
+    {
+        DMESSAGE("Reading .plugin_events");
+        /* Read event header to get the size */
+        zix_ring_read( plug_ui->_idata->lv2.ext.plugin_events, (char*)&ev, sizeof(ev));
+
+        /* Resize read buffer if necessary */
+        plug_ui->_idata->lv2.ext.ui_event_buf = realloc(plug_ui->_idata->lv2.ext.ui_event_buf, ev.size);
+        void* const buf = plug_ui->_idata->lv2.ext.ui_event_buf;
+
+        /* Read event body */
+        zix_ring_read( plug_ui->_idata->lv2.ext.plugin_events, (char*)buf, ev.size);
+
+        plug_ui->ui_port_event( ev.index, ev.size, ev.protocol, buf );
+    }
+
+    Fl::repeat_timeout( 0.1f, update_ui, data );
+}
+
 static LV2_Worker_Status
 non_worker_respond(LV2_Worker_Respond_Handle handle,
                     uint32_t                  size,
@@ -133,7 +161,7 @@ static void*
 worker_func(void* data)
 {
     DMESSAGE("worker_func");
-    Plugin_Module* worker = (Plugin_Module*)data;
+    Plugin_Module* worker = static_cast<Plugin_Module *> (data);
     void*       buf    = NULL;
     while (true)
     {
@@ -1742,6 +1770,8 @@ Plugin_Module::load_lv2 ( const char* uri )
 
             lilv_state_free(state);
         }
+
+        Fl::add_timeout( 0.1f, update_ui, this );
     }
     else
         _loading_from_file = false;
@@ -2070,38 +2100,6 @@ Plugin_Module::send_to_ui( uint32_t port_index, uint32_t type, uint32_t size, co
     }
 }
 
-/**
- * Called from ui timeout
- * @return 
- *      Not used.
- */
-int 
-Plugin_Module::update_ui( void )
-{
-    /* Emit UI events. */
-    ControlChange ev;
-    const size_t  space = zix_ring_read_space( _idata->lv2.ext.plugin_events );
-    for (size_t i = 0;
-         i + sizeof(ev) < space;
-         i += sizeof(ev) + ev.size)
-    {
-        DMESSAGE("Reading .plugin_events");
-        /* Read event header to get the size */
-        zix_ring_read( _idata->lv2.ext.plugin_events, (char*)&ev, sizeof(ev));
-
-        /* Resize read buffer if necessary */
-        _idata->lv2.ext.ui_event_buf = realloc(_idata->lv2.ext.ui_event_buf, ev.size);
-        void* const buf = _idata->lv2.ext.ui_event_buf;
-
-        /* Read event body */
-        zix_ring_read( _idata->lv2.ext.plugin_events, (char*)buf, ev.size);
-
-        ui_port_event( ev.index, ev.size, ev.protocol, buf );
-    }
-
-    return 1;
-}
-
 void
 Plugin_Module::ui_port_event( uint32_t port_index, uint32_t buffer_size, uint32_t protocol, const void* buffer )
 {
@@ -2372,7 +2370,7 @@ Plugin_Module::apply ( sample_t *buf, nframes_t nframes )
     int aji = 0;
     int ajo = 0;
 #endif
-    
+
     if (_is_lv2)
     {
         for ( unsigned int k = 0; k < _idata->lv2.rdf_data->PortCount; ++k )
@@ -2555,8 +2553,6 @@ Plugin_Module::process ( nframes_t nframes )
                 {
                     _idata->lv2.ext.worker->end_run(m_instance->lv2_handle);
                 }
-
-                update_ui();
             }
 #endif
         }
