@@ -1,12 +1,12 @@
 # data file for the Fltk User Interface Designer (fluid)
-version 1.0307
-header_name {.h}
+version 1.0300 
+header_name {.h} 
 code_name {.cxx}
-decl {\#include <FL/Fl_Scalepack.H>} {public global
-}
+decl {\#include <FL/Fl_Scalepack.H>} {selected public global
+} 
 
 decl {\#include <FL/Fl_Table_Row.H>} {public global
-}
+} 
 
 widget_class Plugin_Chooser_UI {
   label {Plugin Selector} open
@@ -61,7 +61,7 @@ widget_class Plugin_Chooser_UI {
     xywh {530 70 95 24} down_box BORDER_BOX labelsize 12 textsize 12
   } {
     MenuItem {} {
-      label ALL selected
+      label ALL
       xywh {20 -48 34 18}
     }
     MenuItem {} {
@@ -73,4 +73,4 @@ widget_class Plugin_Chooser_UI {
       xywh {10 -58 34 18}
     }
   }
-}
+} 
