@@ -1062,10 +1062,10 @@ Plugin_Module::plugin_instances ( unsigned int n )
                                                                   _uridMapFt->map(_uridMapFt->handle,
                                                                                   LV2_ATOM__Chunk),
                                                                   _uridMapFt->map(_uridMapFt->handle,
-                                                                                  LV2_ATOM__Sequence)) ); 
-                            lilv_instance_connect_port(
-				m_instance, k, lv2_evbuf_get_buffer(atom_input[aji].event_buffer()));
-                            
+                                                                                  LV2_ATOM__Sequence)) );
+
+                            _idata->lv2.descriptor->connect_port( h, k, lv2_evbuf_get_buffer(atom_input[aji].event_buffer()));
+
                             DMESSAGE("ATOM IN event_buffer = %p", lv2_evbuf_get_buffer(atom_input[aji].event_buffer()));
 
                             aji++;
@@ -1081,9 +1081,9 @@ Plugin_Module::plugin_instances ( unsigned int n )
                                                                                   LV2_ATOM__Chunk),
                                                                   _uridMapFt->map(_uridMapFt->handle,
                                                                                   LV2_ATOM__Sequence)) );
-                            lilv_instance_connect_port(
-				m_instance, k, lv2_evbuf_get_buffer( atom_output[ajo].event_buffer() ));
-                            
+
+                            _idata->lv2.descriptor->connect_port( h, k, lv2_evbuf_get_buffer( atom_output[ajo].event_buffer() ));
+
                             /* This sets the capacity */
                             lv2_evbuf_reset(atom_output[ajo].event_buffer(), false);
 
@@ -2401,8 +2401,8 @@ Plugin_Module::apply ( sample_t *buf, nframes_t nframes )
                                                     LV2_ATOM__Chunk),
                                                     _uridMapFt->map(_uridMapFt->handle,
                                                     LV2_ATOM__Sequence)) );
-                    lilv_instance_connect_port(
-                        temp_instance, k, lv2_evbuf_get_buffer( atom_input[aji].tmp_event_buffer() ));
+
+                    _idata->lv2.descriptor->connect_port( h, k, lv2_evbuf_get_buffer( atom_input[aji].tmp_event_buffer() ));
 
                     aji++;
                 }
@@ -2416,8 +2416,8 @@ Plugin_Module::apply ( sample_t *buf, nframes_t nframes )
                                                     LV2_ATOM__Chunk),
                                                     _uridMapFt->map(_uridMapFt->handle,
                                                     LV2_ATOM__Sequence)) );
-                    lilv_instance_connect_port(
-                        temp_instance, k, lv2_evbuf_get_buffer( atom_output[ajo].tmp_event_buffer() ));
+
+                    _idata->lv2.descriptor->connect_port( h, k, lv2_evbuf_get_buffer( atom_output[ajo].tmp_event_buffer() ));
 
                     ajo++;
                 }
