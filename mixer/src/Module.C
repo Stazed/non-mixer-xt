@@ -1088,7 +1088,7 @@ Module::menu_cb ( const Fl_Menu_ *m )
     if ( ! m->mvalue() || m->mvalue()->flags & FL_SUBMENU_POINTER || m->mvalue()->flags & FL_SUBMENU )
         return;
 
-    strncpy( picked, m->mvalue()->label(), sizeof( picked ) );
+    strncpy( picked, m->mvalue()->label(), sizeof( picked ) -1 );
 
 //    m->item_pathname( picked, sizeof( picked ) );
 
