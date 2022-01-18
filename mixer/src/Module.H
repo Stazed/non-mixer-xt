@@ -244,8 +244,10 @@ public:
 #ifdef LV2_WORKER_SUPPORT
                 if ( _evbuf )
                     lv2_evbuf_free( _evbuf );
+                _evbuf = NULL;
                 if ( _tmpevbuf )
                     lv2_evbuf_free( _tmpevbuf );
+                _tmpevbuf = NULL;
 #endif
             }
 
