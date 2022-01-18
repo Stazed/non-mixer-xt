@@ -166,9 +166,9 @@ Fl_Menu_Settings::find_item_x ( const char *name, const Fl_Menu_Item *item )
                 // IT'S A SUBMENU
                 // we do not support searches through FL_SUBMENU_POINTER links
                 if ( menupath[0] )
-                    strlcat( menupath, "/", sizeof( menupath ) );
+                    strlcat( menupath, "/", sizeof( menupath ) -1 );
 
-                strlcat( menupath, m->label(), sizeof( menupath ) );
+                strlcat( menupath, m->label(), sizeof( menupath ) -1 );
 
                 remove_ampersands( menupath, strlen( menupath ) );
 
@@ -202,9 +202,9 @@ Fl_Menu_Settings::find_item_x ( const char *name, const Fl_Menu_Item *item )
                 strcpy( itempath, menupath );
 
                 if ( itempath[0] )
-                    strlcat( itempath, "/", sizeof( itempath ) );
+                    strlcat( itempath, "/", sizeof( itempath ) -1 );
 
-                strlcat( itempath, m->label(), sizeof( itempath ) );
+                strlcat( itempath, m->label(), sizeof( itempath ) -1 );
 
                 remove_ampersands( itempath, strlen( itempath ) );
 
