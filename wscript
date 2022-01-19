@@ -135,7 +135,7 @@ def configure(conf):
 
     conf.env.append_value('CFLAGS',['-Wall'])
 #    conf.env.append_value('CXXFLAGS',['-Wall','-fno-exceptions', '-fno-rtti'])
-    conf.env.append_value('CXXFLAGS',['-Wall','-fno-rtti'])
+    conf.env.append_value('CXXFLAGS',['-Wall','-fno-rtti', '-Wno-unused-result'])
 
     global_flags = [ '-pthread',
                      '-D_LARGEFILE64_SOURCE',
