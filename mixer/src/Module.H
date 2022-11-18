@@ -202,7 +202,6 @@ public:
                 _property = NULL;
                 _symbol = NULL;
                 _label = NULL;
-                _name = NULL;
                 _clear_input_buffer = false;
                 _need_file_update = false;
 #endif
