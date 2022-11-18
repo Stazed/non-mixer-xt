@@ -176,10 +176,9 @@ worker_func(void* data)
         uint32_t size = 0;
         zix_ring_read(worker->_idata->lv2.ext.requests, (char*)&size, sizeof(size));
 
-        if (!(buf = realloc(buf, size))) {
-                fprintf(stderr, "error: realloc() failed\n");
-                free(buf);
-                return NULL;
+        if (!(buf = malloc(size))) {
+            fprintf(stderr, "error: realloc() failed\n");
+            return NULL;
         }
 
         zix_ring_read(worker->_idata->lv2.ext.requests, (char*)buf, size);
@@ -282,9 +281,9 @@ public:
 
     ~LV2_Lib_Manager()
     {
-        for (std::vector<LibraryInfo>::iterator it=libraries.begin(), end=libraries.end(); it != end; ++it)
+        for (std::vector<LV2LibraryInfo>::iterator it=libraries.begin(), end=libraries.end(); it != end; ++it)
         {
-            LibraryInfo& libinfo (*it);
+            LV2LibraryInfo& libinfo (*it);
 
             if ( libinfo.handle )
                 dlclose( libinfo.handle );
@@ -298,9 +297,9 @@ public:
 #if 0
         // We need to check each time even if binary is the same
         // in case of multiple plugins bundled in the same binary
-        for (std::vector<LibraryInfo>::iterator it=libraries.begin(), end=libraries.end(); it != end; ++it)
+        for (std::vector<LV2LibraryInfo>::iterator it=libraries.begin(), end=libraries.end(); it != end; ++it)
         {
-            const LibraryInfo& libinfo(*it);
+            const LV2LibraryInfo& libinfo(*it);
 
             if (libinfo.binary == binary)
                 return libinfo.desc;
@@ -319,7 +318,7 @@ public:
                 }
                 if ( ! desc ) return NULL;
 
-                LibraryInfo info;
+                LV2LibraryInfo info;
                 info.binary = binary;
                 info.handle = handle;
                 info.desc   = desc;
@@ -333,12 +332,12 @@ public:
     }
 
 private:
-    struct LibraryInfo {
+    struct LV2LibraryInfo {
         std::string binary;
         void*       handle;
         const LV2_Descriptor* desc;
     };
-    std::vector<LibraryInfo> libraries;
+    std::vector<LV2LibraryInfo> libraries;
 };
 
 static LV2_Lib_Manager lv2_lib_manager;

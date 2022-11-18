@@ -586,12 +586,24 @@ JACK_Module::handle ( int m )
                       i < aux_audio_output.size() && i < _connection_handle_outputs[connection_handle][1]; ++i )
                 {
                     char *s2;
+                    char *tmp;
                     asprintf(&s2, "jack.port://%s\r\n", 
                              aux_audio_output[i].jack_port()->jack_name() );
                     
-                    s = (char*)realloc( s, strlen( s ) + strlen( s2 ) + 1 ); 
-                    strcat( s, s2 );
-
+                    tmp = (char*)realloc( s, strlen( s ) + strlen( s2 ) + 1 ); 
+                    
+                    if(tmp)
+                    {
+                        s = tmp;
+                        strcat( s, s2 );
+                    }
+                    else
+                    {
+                        WARNING( "Unable to complete drag - realloc failed" );
+                        free( s );
+                        free( s2 );
+                        return 1;
+                    }
                     free( s2 );
                 }
                
@@ -602,7 +614,7 @@ JACK_Module::handle ( int m )
                 free( s );
 
                 Fl::dnd();
-
+                
                 return 1;
             }
             
