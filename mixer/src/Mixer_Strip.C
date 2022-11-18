@@ -202,7 +202,7 @@ Mixer_Strip::set ( Log_Entry &e )
         }
         else if ( ! strcmp( s, ":group" ) )
         {
-            int i;
+            unsigned int i;
             sscanf( v, "%X", &i );
 
             if ( i )

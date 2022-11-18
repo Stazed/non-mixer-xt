@@ -60,6 +60,7 @@ public:
             y = 0;
             z = 0;
             label = 0;
+            userdata = NULL;
             visible = 1;
             color = FL_WHITE;
             radius_enabled = false;
@@ -74,6 +75,7 @@ public:
                 radius( D );
                 azimuth( A );
                 label = 0;
+                userdata = NULL;
                 visible = 1;
                 color = FL_WHITE;
             }

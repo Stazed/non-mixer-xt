@@ -31,6 +31,7 @@ Group::Group ( )
     _single =false;
     _name = NULL;
     _dsp_load = _load_coef = 0;
+    _buffers_dropped = 0;
 }
 
 Group::Group ( const char *name, bool single ) : Loggable ( !single )

@@ -659,7 +659,7 @@ Module::set ( Log_Entry &e )
         {
             /* This trickiness is because we may need to know the name of
                our chain before we actually get added to it. */
-            int i;
+            unsigned int i;
             sscanf( v, "%X", &i );
             Chain *t = (Chain*)Loggable::find( i );
 
@@ -699,7 +699,7 @@ Module::set ( Log_Entry &e )
         }
         else if ( ! strcmp( s, ":chain" ) )
         {
-            int i;
+            unsigned int i;
             sscanf( v, "%X", &i );
             Chain *t = (Chain*)Loggable::find( i );
 

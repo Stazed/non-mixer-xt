@@ -175,7 +175,7 @@ Controller_Module::set ( Log_Entry &e )
         }
         else if ( ! strcmp( s, ":module" ) )
         {
-            int i;
+            unsigned int i;
             sscanf( v, "%X", &i );
             Module *t = (Module*)Loggable::find( i );
 

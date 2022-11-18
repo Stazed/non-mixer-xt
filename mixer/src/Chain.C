@@ -224,7 +224,7 @@ Chain::set ( Log_Entry &e )
         }
         else if ( ! strcmp( s, ":strip" ) )
         {
-            int i;
+            unsigned int i;
             sscanf( v, "%X", &i );
             Mixer_Strip *t = (Mixer_Strip*)Loggable::find( i );
 

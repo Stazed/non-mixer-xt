@@ -200,6 +200,8 @@ public:
                 _evbuf = NULL;
                 _tmpevbuf = NULL;
                 _property = NULL;
+                _symbol = NULL;
+                _name = NULL;
                 _clear_input_buffer = false;
                 _need_file_update = false;
 #endif

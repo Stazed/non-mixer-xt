@@ -427,6 +427,7 @@ lv2_atom_object_get(const LV2_Atom_Object* object, ...)
 	va_start(args, object);
 	for (n_queries = 0; va_arg(args, uint32_t); ++n_queries) {
 		if (!va_arg(args, const LV2_Atom**)) {
+                        va_end(args);
 			return -1;
 		}
 	}
@@ -482,6 +483,7 @@ lv2_atom_object_get_typed(const LV2_Atom_Object* object, ...)
 	for (n_queries = 0; va_arg(args, uint32_t); ++n_queries) {
 		if (!va_arg(args, const LV2_Atom**) ||
 		    !va_arg(args, uint32_t)) {
+                        va_end(args);
 			return -1;
 		}
 	}
