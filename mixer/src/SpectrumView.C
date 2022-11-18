@@ -134,7 +134,7 @@ const char *
 plan_key ( unsigned int plan_size, unsigned int nframes )
 {
     static char s[256];
-    snprintf( s, sizeof(s), "%d:%d", plan_size, nframes );
+    snprintf( s, sizeof(s), "%X:%X", plan_size, nframes );
     return s;
 }
 

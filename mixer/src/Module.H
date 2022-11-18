@@ -201,6 +201,7 @@ public:
                 _tmpevbuf = NULL;
                 _property = NULL;
                 _symbol = NULL;
+                _label = NULL;
                 _name = NULL;
                 _clear_input_buffer = false;
                 _need_file_update = false;
@@ -225,10 +226,13 @@ public:
                 _by_number_path = 0;
                 _by_number_number = -1;
                 _jack_port = p._jack_port;
+                _feedback_milliseconds = 0;
 #ifdef LV2_WORKER_SUPPORT
                 _evbuf = p._evbuf;
                 _tmpevbuf = p._tmpevbuf;
                 _property = p._property;
+                _symbol = p._symbol;
+                _label = p._label;
                 _clear_input_buffer = p._clear_input_buffer;
                 _need_file_update = p._need_file_update;
 #endif
