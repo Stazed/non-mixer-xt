@@ -813,7 +813,7 @@ Module::get_file ( int port_index ) const
 }
 
 void
-Module::set_file (std::string file, int port_index, bool need_update )
+Module::set_file (const std::string &file, int port_index, bool need_update )
 {
     atom_input[port_index]._file = file;
     atom_input[port_index]._need_file_update = need_update;

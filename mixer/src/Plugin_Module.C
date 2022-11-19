@@ -2151,7 +2151,7 @@ Plugin_Module::ui_port_event( uint32_t port_index, uint32_t buffer_size, uint32_
 }
 
 void
-Plugin_Module::send_file_to_plugin( int port, std::string filename )
+Plugin_Module::send_file_to_plugin( int port, const std::string &filename )
 {
     DMESSAGE("File = %s", filename.c_str());
     

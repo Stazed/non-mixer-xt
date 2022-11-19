@@ -613,7 +613,7 @@ public:
     void set_parameters ( const char * );
 #ifdef LV2_WORKER_SUPPORT
     char *get_file ( int port_index ) const;
-    void set_file (std::string file, int port_index, bool need_update = false );
+    void set_file (const std::string &file, int port_index, bool need_update = false );
 #endif
     bool show_analysis_window ( void );
 

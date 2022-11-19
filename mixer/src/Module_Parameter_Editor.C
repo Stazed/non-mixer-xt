@@ -804,7 +804,7 @@ Module_Parameter_Editor::reload ( void )
 
 #ifdef LV2_WORKER_SUPPORT
 void
-Module_Parameter_Editor::set_plugin_file(int port, std::string filename )
+Module_Parameter_Editor::set_plugin_file(int port, const std::string &filename )
 {
     Plugin_Module *pm = static_cast<Plugin_Module *> (_module);
     pm->send_file_to_plugin(port, filename);
