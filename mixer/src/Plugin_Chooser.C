@@ -70,7 +70,7 @@ Plugin_Chooser::search ( const char *name, const char *author, const char *categ
 {
     _plugin_rows.clear();
     
-    for ( std::list<Plugin_Module::Plugin_Info>::iterator i = _plugins.begin(); i != _plugins.end(); i++ )
+    for ( std::list<Plugin_Module::Plugin_Info>::iterator i = _plugins.begin(); i != _plugins.end(); ++i )
     {
         Plugin_Module::Plugin_Info *p = &(*i);
 
@@ -322,7 +322,7 @@ Plugin_Chooser::load_favorites ( void )
     {
         for ( std::list<Plugin_Module::Plugin_Info>::iterator i = _plugins.begin();
               i != _plugins.end();
-              i++ )
+              ++i )
         {
             if ( !strcmp( (*i).type, type ) &&
                  (*i).id == id )
@@ -362,7 +362,7 @@ Plugin_Chooser::save_favorites ( void )
     
     for ( std::list<Plugin_Module::Plugin_Info>::iterator i = _plugins.begin();
           i != _plugins.end();
-          i++ )
+          ++i )
     {
         if ( (*i).favorite )
         {
@@ -382,7 +382,7 @@ Plugin_Chooser::load_categories ( void )
 
     for ( std::list<Plugin_Module::Plugin_Info>::iterator i = _plugins.begin();
           i != _plugins.end();
-          i++ )
+          ++i )
     {
         if ( i->category.c_str() )
         {
@@ -395,7 +395,7 @@ Plugin_Chooser::load_categories ( void )
 
     for ( std::list<std::string>::const_iterator i = categories.begin();
           i != categories.end();
-          i++ )
+          ++i )
     {
         ui->category_choice->add( i->c_str() );
     }

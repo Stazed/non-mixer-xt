@@ -269,7 +269,7 @@ get_connections_for_ports ( std::vector<Module::Port> ports )
             
             for ( std::list<std::string>::const_iterator j = names.begin();
                   j != names.end();
-                  j++ )
+                  ++j )
             {
                 if ( !strcmp( j->c_str(), strip_name ) )
                 {
@@ -320,14 +320,14 @@ JACK_Module::update_connection_status ( void )
 
     for ( std::list<std::string>::const_iterator j = input_names.begin();
           j != input_names.end();
-          j++ )
+          ++j )
     {
         connection_display->add( j->c_str() );
         n++;
     }
     for ( std::list<std::string>::const_iterator j = output_names.begin();
           j != output_names.end();
-          j++ )
+          ++j )
     {
         connection_display->add( j->c_str() );
         n++;

@@ -490,7 +490,7 @@ save_settings ( void )
     
     for ( std::map<int,std::string>::const_iterator i = sig_map_ordered.begin();
           i != sig_map_ordered.end();
-          i++ )
+          ++i )
     {
 	signal_mapping &m = sig_map[i->second.c_str()];
 	

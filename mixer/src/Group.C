@@ -61,7 +61,7 @@ Group::~Group ( )
 
     for ( std::list<Mixer_Strip*>::iterator i = strips.begin();
           i != strips.end();
-          i++ )
+          ++i )
     {
 	/* avoid a use after free during project close when the group
 	 * may be destroyed before its member strips are */
@@ -118,7 +118,7 @@ Group::latency ( jack_latency_callback_mode_t mode )
     {
 	for ( std::list<Mixer_Strip*>::iterator i = strips.begin();
 	      i != strips.end();
-	      i++ )
+	      ++i )
 	{
 	    if ( (*i)->chain() )            
 		(*i)->chain()->set_latency(mode == JackCaptureLatency ? JACK::Port::Input : JACK::Port::Output );
@@ -159,7 +159,7 @@ Group::buffer_size ( nframes_t nframes )
 
     for ( std::list<Mixer_Strip*>::iterator i = strips.begin();
           i != strips.end();
-          i++ )
+          ++i )
     {
         if ( (*i)->chain() )
             (*i)->chain()->buffer_size(nframes);
@@ -176,7 +176,7 @@ Group::port_connect( jack_port_id_t a, jack_port_id_t b, int connect )
 {
     for ( std::list<Mixer_Strip*>::iterator i = strips.begin();
           i != strips.end();
-          i++ )
+          ++i )
     {
         if ( (*i)->chain() )
             (*i)->chain()->port_connect( a, b, connect);
@@ -209,7 +209,7 @@ Group::process ( nframes_t nframes )
      * in */
     for ( std::list<Mixer_Strip*>::iterator i = strips.begin();
           i != strips.end();
-          i++ )
+          ++i )
     {
         if ( (*i)->chain() )
             (*i)->chain()->process(nframes);
@@ -235,7 +235,7 @@ Group::sample_rate_changed ( nframes_t srate )
 
     for ( std::list<Mixer_Strip*>::iterator i = strips.begin();
           i != strips.end();
-          i++ )
+          ++i )
     {
         if ( (*i)->chain() )            
             (*i)->chain()->sample_rate_change(srate);

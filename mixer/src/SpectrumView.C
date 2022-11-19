@@ -66,7 +66,7 @@ SpectrumView::clear_plans ( void )
 
     for ( std::map<std::string,float*>::iterator i = _cached_plan.begin();
           i != _cached_plan.end();
-          i++ )
+          ++i )
     {
         delete[] i->second;
     }

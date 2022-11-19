@@ -991,7 +991,7 @@ Mixer::group_by_name ( const char *name )
 {
     for ( std::list<Group*>::iterator i = groups.begin();
           i != groups.end();
-          i++ )
+          ++i )
         if ( !strcmp( (*i)->name(), name ))
             return *i;
 
@@ -1186,7 +1186,7 @@ Mixer::get_auto_connect_targets ( void )
         ((Mixer_Strip*)mixer_strips->child(i))->get_output_ports(sl);
     }
 
-    for ( std::list<std::string>::iterator i = sl.begin(); i != sl.end(); i++ )
+    for ( std::list<std::string>::iterator i = sl.begin(); i != sl.end(); ++i )
     {
         char *s = strdup( i->c_str() );
 

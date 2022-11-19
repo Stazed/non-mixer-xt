@@ -764,7 +764,7 @@ Mixer_Strip::update_group_choice ( void )
     {
         Group *g = *i;
 
-        i++;
+        ++i;
 
         if ( i == mixer->groups.end() )
         {
@@ -1157,7 +1157,7 @@ Mixer_Strip::menu ( void ) const
     m.add( "Auto Output/Off", 0, 0, 0, FL_MENU_RADIO | ( ! _manual_connection ? 0 : FL_MENU_VALUE )  );
     m.add( "Auto Input/Off", 0, 0, 0, FL_MENU_DIVIDER | FL_MENU_RADIO | ( _auto_input ? 0 : FL_MENU_VALUE )  );
 
-    for ( std::list<std::string>::iterator i = sl.begin(); i != sl.end(); i++ )
+    for ( std::list<std::string>::iterator i = sl.begin(); i != sl.end(); ++i )
     {
         char *s;
         asprintf( &s, "Auto Input/%s", i->c_str() );

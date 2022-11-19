@@ -753,7 +753,7 @@ Plugin_Module::get_all_plugins ( void )
 
     int j = 0;
     for (std::vector<LADSPAInfo::PluginInfo>::iterator i=plugins.begin();
-         i!=plugins.end(); i++, j++)
+         i!=plugins.end(); ++i, j++)
     {
         Plugin_Info pi(false);
 
@@ -943,9 +943,9 @@ Plugin_Module::get_all_plugins ( void )
     const std::vector<LADSPAInfo::PluginEntry> pe = ladspainfo->GetMenuList();
   
     for (std::vector<LADSPAInfo::PluginEntry>::const_iterator i= pe.begin();
-         i !=pe.end(); i++ )
+         i !=pe.end(); ++i )
     {
-        for ( std::list<Plugin_Info>::iterator j = pr.begin(); j != pr.end(); j++ )
+        for ( std::list<Plugin_Info>::iterator j = pr.begin(); j != pr.end(); ++j )
         {
             if ( j->id == i->UniqueID )
             {

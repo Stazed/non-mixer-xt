@@ -341,7 +341,7 @@ Module::Port::disconnect_from_strip ( Mixer_Strip *o )
     {
         Port *p = *i;
 
-	i++;			/* iterator trick */
+	++i;			/* iterator trick */
 	
         if ( p->module()->chain()->strip() == o )
         {

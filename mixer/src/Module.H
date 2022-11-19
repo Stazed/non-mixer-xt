@@ -572,7 +572,7 @@ public:
             int n = 0;
             for ( std::vector<Port>::const_iterator i = control_input.begin();
                   i != control_input.end();
-                  i++ )
+                  ++i )
                 if ( i->hints.visible )
                     n++;
 
