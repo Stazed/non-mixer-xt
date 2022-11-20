@@ -2353,6 +2353,14 @@ Plugin_Module::apply ( sample_t *buf, nframes_t nframes )
         {
             h = temp_instance->lv2_handle;
             _idata->lv2.descriptor = temp_instance->lv2_descriptor;
+#ifdef LV2_WORKER_SUPPORT
+            /* The impulse response stuff does not work well with atom port so punt.. */
+            for ( unsigned int k = 0; k < _idata->lv2.rdf_data->PortCount; ++k )
+            {
+                if (LV2_IS_PORT_ATOM_SEQUENCE ( _idata->lv2.rdf_data->Ports[k].Types ))
+                    return false;
+            }
+#endif
         }
     }
     else
@@ -2366,7 +2374,8 @@ Plugin_Module::apply ( sample_t *buf, nframes_t nframes )
 
     int ij = 0;
     int oj = 0;
-#ifdef LV2_WORKER_SUPPORT
+#if 0
+//#ifdef LV2_WORKER_SUPPORT
     int aji = 0;
     int ajo = 0;
 #endif
@@ -2383,11 +2392,15 @@ Plugin_Module::apply ( sample_t *buf, nframes_t nframes )
                     _idata->lv2.descriptor->connect_port( h, k, (float*)control_output[oj++].buffer() );
             }
             // we need to connect non audio/control ports to NULL
+            else if ( ! LV2_IS_PORT_AUDIO( _idata->lv2.rdf_data->Ports[k].Types ))
+                _idata->lv2.descriptor->connect_port( h, k, NULL );
+
+#if 0
+//#ifdef LV2_WORKER_SUPPORT
             else if ( ! LV2_IS_PORT_AUDIO( _idata->lv2.rdf_data->Ports[k].Types ) &&
                         !LV2_IS_PORT_ATOM_SEQUENCE ( _idata->lv2.rdf_data->Ports[k].Types ))
                 _idata->lv2.descriptor->connect_port( h, k, NULL );
 
-#ifdef LV2_WORKER_SUPPORT
             if (LV2_IS_PORT_ATOM_SEQUENCE ( _idata->lv2.rdf_data->Ports[k].Types ))
             {
                 if ( LV2_IS_PORT_INPUT( _idata->lv2.rdf_data->Ports[k].Types ) )
