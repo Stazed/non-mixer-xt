@@ -120,7 +120,7 @@ LADSPAInfo::RescanPlugins(void)
 		list<unsigned long> rdf_p;
 
 	// Get indices of plugins added to groups
-		for (vector<RDFURIInfo>::iterator ri = m_RDFURIs.begin(); ri != m_RDFURIs.end(); ri++) {
+		for (vector<RDFURIInfo>::iterator ri = m_RDFURIs.begin(); ri != m_RDFURIs.end(); ++ri) {
 			rdf_p.insert(rdf_p.begin(), ri->Plugins.begin(), ri->Plugins.end());
 		}
 
@@ -129,7 +129,7 @@ LADSPAInfo::RescanPlugins(void)
 		rdf_p.unique();
 		rdf_p.sort();
 		unsigned long last_p = 0;
-		for (list<unsigned long>::iterator p = rdf_p.begin(); p != rdf_p.end(); p++) {
+		for (list<unsigned long>::iterator p = rdf_p.begin(); p != rdf_p.end(); ++p) {
 			if ((*p - last_p) > 1) {
 				for (unsigned long i = last_p + 1; i < *p; i++) {
 				// URI 0 is top-level "LADSPA" group
@@ -167,12 +167,12 @@ LADSPAInfo::UnloadAllLibraries(void)
 {
 // Blank descriptors
 	for (vector<PluginInfo>::iterator i = m_Plugins.begin();
-		i != m_Plugins.end(); i++) {
+		i != m_Plugins.end(); ++i) {
 		if (i->Descriptor) i->Descriptor = NULL;
 	}
 // Unload DLLs,
 	for (vector<LibraryInfo>::iterator i = m_Libraries.begin();
-		i != m_Libraries.end(); i++) {
+		i != m_Libraries.end(); ++i) {
 		if (i->Handle) {
 			dlclose(i->Handle);
 			i->Handle = NULL;
@@ -243,7 +243,7 @@ LADSPAInfo::DiscardDescriptorByID(unsigned long unique_id)
 
 unsigned long
 LADSPAInfo::GetIDFromFilenameAndLabel(std::string filename,
-                                      std::string label)
+                                      std::string &label)
 {
 	bool library_loaded = false;
 
@@ -303,7 +303,7 @@ LADSPAInfo::GetPluginListEntryByID(unsigned long unique_id)
 {
 	unsigned long j = 0;
 	for (vector<PluginEntry>::iterator i = m_SSMMenuList.begin();
-		i != m_SSMMenuList.end(); i++, j++) {
+		i != m_SSMMenuList.end(); ++i, j++) {
 		if (i->UniqueID == unique_id) return j;
 	}
 	return m_SSMMenuList.size();
@@ -318,7 +318,7 @@ LADSPAInfo::GetPluginListEntryByID(unsigned long unique_id)
 
 void
 LADSPAInfo::DescendGroup(string prefix,
-                         const string group,
+                         const string &group,
                          unsigned int depth)
 {
 	list<string> groups = GetSubGroups(group);
@@ -328,7 +328,7 @@ LADSPAInfo::DescendGroup(string prefix,
 		prefix += "/";
 	}
 
-	for (list<string>::iterator g = groups.begin(); g != groups.end(); g++) {
+	for (list<string>::iterator g = groups.begin(); g != groups.end(); ++g) {
 		string name;
 
 		// Escape '/' and '|' characters
@@ -360,7 +360,7 @@ LADSPAInfo::DescendGroup(string prefix,
 		list<PluginEntry> plugins;
 
 		for (vector<unsigned long>::iterator p = m_RDFURIs[uri_index].Plugins.begin();
-			p != m_RDFURIs[uri_index].Plugins.end(); p++) {
+			p != m_RDFURIs[uri_index].Plugins.end(); ++p) {
 
 			PluginInfo *pi = &(m_Plugins[*p]);
 			string name;
@@ -397,20 +397,20 @@ LADSPAInfo::DescendGroup(string prefix,
 			i != plugins.end(); ) {
 			string name = i->Name;
 
-			i++;
+			++i;
 			unsigned long n = 2;
 			while ((i != plugins.end()) && (i->Name == name)) {
 				stringstream s;
 				s << n;
 				i->Name = name + " (" + s.str() + ")";
 				n++;
-				i++;
+				++i;
 			}
 		}
 
 	// Add all ordered entries to the Menu List
 	// This ensures that plugins appear after groups
-		for (list<PluginEntry>::iterator p = plugins.begin(); p != plugins.end(); p++) {
+		for (list<PluginEntry>::iterator p = plugins.begin(); p != plugins.end(); ++p) {
 			m_SSMMenuList.push_back(*p);
 		}
 	}
@@ -419,7 +419,7 @@ LADSPAInfo::DescendGroup(string prefix,
 // Get list of groups that are within given group. The root group is
 // always "LADSPA"
 list<string>
-LADSPAInfo::GetSubGroups(const string group)
+LADSPAInfo::GetSubGroups(const string &group)
 {
 	list<string> groups;
 	unsigned long uri_index;
@@ -431,7 +431,7 @@ LADSPAInfo::GetSubGroups(const string group)
 	}
 
 	for (vector<unsigned long>::iterator sg = m_RDFURIs[uri_index].Children.begin();
-		sg != m_RDFURIs[uri_index].Children.end(); sg++) {
+		sg != m_RDFURIs[uri_index].Children.end(); ++sg) {
 		groups.push_back(m_RDFURIs[*sg].Label);
 	}
 
@@ -451,7 +451,7 @@ LADSPAInfo::CleanUp(void)
 
 // Unload loaded dlls
 	for (vector<LibraryInfo>::iterator i = m_Libraries.begin();
-		i != m_Libraries.end(); i++) {
+		i != m_Libraries.end(); ++i) {
 		if (i->Handle) dlclose(i->Handle);
 	}
 
@@ -475,8 +475,8 @@ LADSPAInfo::CleanUp(void)
 //   ExamineRDFFile       - add plugin information from .rdf/.rdfs files
 void
 LADSPAInfo::ScanPathList(const char *path_list,
-                         void (LADSPAInfo::*ExamineFunc)(const string,
-                                                         const string))
+                         void (LADSPAInfo::*ExamineFunc)(const string &,
+                                                         const string &))
 {
 	const char *start;
 	const char *end;
@@ -532,8 +532,8 @@ LADSPAInfo::ScanPathList(const char *path_list,
 // to the m_Paths, m_Libraries and m_Plugins vectors.
 //
 void
-LADSPAInfo::ExaminePluginLibrary(const string path,
-                                 const string basename)
+LADSPAInfo::ExaminePluginLibrary(const string &path,
+                                 const string &basename)
 {
 	void *handle;
 	LADSPA_Descriptor_Function desc_func;
@@ -664,8 +664,8 @@ LADSPAInfo::ExaminePluginLibrary(const string path,
 #ifdef HAVE_LIBLRDF
 // Examine given RDF plugin meta-data file
 void
-LADSPAInfo::ExamineRDFFile(const std::string path,
-                           const std::string basename)
+LADSPAInfo::ExamineRDFFile(const std::string &path,
+                           const std::string &basename)
 {
 	string fileuri = "file://" + path + basename;
 

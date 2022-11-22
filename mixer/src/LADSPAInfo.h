@@ -82,7 +82,7 @@ public:
 // path and label of the plugin was stored in the configuration - current
 // versions store the Unique ID
 	unsigned long                   GetIDFromFilenameAndLabel(std::string filename,
-	                                                          std::string label);
+	                                                          std::string &label);
 
 // Struct for plugin information returned by queries
 	struct PluginEntry
@@ -131,22 +131,22 @@ public:
 private:
 // See LADSPAInfo.C for comments on these functions
 	void                            DescendGroup(std::string prefix,
-	                                             const std::string group,
+	                                             const std::string &group,
 	                                             unsigned int depth);
-	std::list<std::string>          GetSubGroups(const std::string group);
+	std::list<std::string>          GetSubGroups(const std::string &group);
 
 	void                            CleanUp(void);
 	void                            ScanPathList(const char *path_list,
-	                                             void (LADSPAInfo::*ExamineFunc)(const std::string,
-	                                                                             const std::string));
-	void                            ExaminePluginLibrary(const std::string path,
-	                                                     const std::string basename);
+	                                             void (LADSPAInfo::*ExamineFunc)(const std::string &,
+	                                                                             const std::string &));
+	void                            ExaminePluginLibrary(const std::string &path,
+	                                                     const std::string &basename);
 
 	bool                            CheckPlugin(const LADSPA_Descriptor *desc);
 	LADSPA_Descriptor_Function      GetDescriptorFunctionForLibrary(unsigned long library_index);
 #ifdef HAVE_LIBLRDF
-	void                            ExamineRDFFile(const std::string path,
-	                                               const std::string basename);
+	void                            ExamineRDFFile(const std::string &path,
+	                                               const std::string &basename);
 	void                            MetadataRDFDescend(const char *uri,
 	                                                   unsigned long parent);
 #endif
