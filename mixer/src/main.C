@@ -268,11 +268,12 @@ main ( int argc, char **argv )
 
         if ( ! no_ui && !nsm_url)
         {
-            o->show( 0,0 );
+            o->show();
         }
                       
     }
 
+    /* Gets the list of all available plugins for the plugin chooser */
     Plugin_Module::spawn_discover_thread();
 
     mixer->init_osc( osc_port );
