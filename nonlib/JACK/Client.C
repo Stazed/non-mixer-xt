@@ -307,9 +307,9 @@ namespace JACK
 
         s = init( s );
 
-        thaw_ports();
-        
         _frozen.unlock();
+
+        thaw_ports();
 
         return s;
     }
