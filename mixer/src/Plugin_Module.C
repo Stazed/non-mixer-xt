@@ -881,16 +881,21 @@ Plugin_Module::get_all_plugins ( void )
                 else
                     ++(pi.audio_outputs);
             }
+#ifdef LV2_WORKER_SUPPORT
+            else if (lilvPort.is_a(lv2World.port_atom))
+            {
+                if (lilvPort.supports_event(lv2World.midi_event) || lilvPort.supports_event(lv2World.time_position))
+                {
+                    supported = false;
+                    break;  
+                }
+                // supported or optional
+            }
+#endif
             else if (lilvPort.is_a(lv2World.port_control) || lilvPort.has_property(lv2World.pprop_optional))
             {
                 // supported or optional
             }
-#ifdef LV2_WORKER_SUPPORT
-            else if (lilvPort.is_a(lv2World.port_atom))
-            {
-                // supported of optional
-            }
-#endif
             else
             {
                 // not supported
