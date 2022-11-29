@@ -157,6 +157,8 @@ struct ImplementationData
 //	const LV2_Worker_Interface* iface;      ///< Plugin worker interface
             bool                        threaded;   ///< Run work in another thread
 #endif
+            const LilvUI*     ui;           ///< Plugin UI (RDF data)
+            const LilvNode*   ui_type;      ///< Plugin UI type (unwrapped)
         } ext;
     } lv2;
 
@@ -373,6 +375,11 @@ public:
     void update_control_parameters(int choice);
     /* End Preset loading */
 #endif
+    
+#ifdef USE_SUIL
+  SuilHost*     m_ui_host;     ///< Plugin UI host support
+  SuilInstance* m_ui_instance; ///< Plugin UI instance (shared library)
+#endif
 
 private:
 
@@ -477,6 +484,10 @@ public:
     void apply_ui_events( uint32_t nframes, unsigned int port );
     void set_lv2_port_properties ( Port * port );
     void get_atom_output_events( void );
+#endif
+    
+#ifdef USE_SUIL
+    void custom_ui_instantiate(const char* native_ui_type, void* parent);
 #endif
 
     LOG_CREATE_FUNC( Plugin_Module );

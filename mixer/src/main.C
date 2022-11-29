@@ -32,6 +32,7 @@
 #include <FL/fl_ask.H>
 #include <FL/Fl_Shared_Image.H>
 #include <FL/Fl_Pack.H>
+
 #include "Thread.H"
 #include "debug.h"
 
@@ -130,6 +131,9 @@ check_sigterm ( void * )
 int
 main ( int argc, char **argv )
 {
+#if USE_SUIL
+  suil_init(&argc, &argv, SUIL_ARG_NONE);
+#endif
     bool no_ui = false;
 
     fl_display = 0;

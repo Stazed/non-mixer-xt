@@ -35,10 +35,15 @@
 #include <algorithm>
 
 #define LV2_WORKER_SUPPORT 1
+#define USE_SUIL 1
 
 #ifdef LV2_WORKER_SUPPORT
 #include "lv2/lv2_evbuf.h"
 #include "lilv/lilvmm.hpp"
+#endif
+
+#if USE_SUIL
+#include <suil/suil.h>
 #endif
 
 class Chain;
