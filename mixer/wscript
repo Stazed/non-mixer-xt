@@ -34,6 +34,9 @@ def configure(conf):
     conf.check_cfg(package='lilv-0', uselib_store='LILV',args="--cflags --libs",
                       atleast_version='0.20.0', mandatory=True)
 
+    conf.check_cfg(package='suil-0', uselib_store='SUIL',args="--cflags --libs",
+                      atleast_version='0.10.0', mandatory=True)
+
     conf.define('VERSION', PACKAGE_VERSION)
     conf.define('SYSTEM_PATH', '/'.join( [ conf.env.DATADIR, APPNAME ] ) )
     conf.define('DOCUMENT_PATH', '/'.join( [ conf.env.DATADIR, 'doc' ] ) )
@@ -79,7 +82,7 @@ src/lv2/lv2_evbuf.c
               target       = 'non-mixer',
               includes     = ['.', 'src', '..', '../nonlib'],
               use = ['nonlib', 'fl_widgets'],
-              uselib = [ 'JACK', 'LIBLO', 'LRDF', 'LILV', 'NTK', 'NTK_IMAGES', 'PTHREAD', 'DL', 'M' ],
+              uselib = [ 'JACK', 'LIBLO', 'LRDF', 'LILV', 'SUIL', 'NTK', 'NTK_IMAGES', 'PTHREAD', 'DL', 'M' ],
               install_path = '${BINDIR}')
 
     bld.program( source = 'src/midi-mapper.C',
