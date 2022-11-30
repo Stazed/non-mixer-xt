@@ -23,6 +23,7 @@
 #include "Loggable.H"
 #include "LV2_RDF_Utils.hpp"
 #include <ladspa.h>
+#include <lv2/data-access/data-access.h>
 #include "zix/ring.h"
 #include "zix/sem.h"
 #include "zix/thread.h"
@@ -157,8 +158,12 @@ struct ImplementationData
 //	const LV2_Worker_Interface* iface;      ///< Plugin worker interface
             bool                        threaded;   ///< Run work in another thread
 #endif
+            LilvUIs*          uis;          ///< All plugin UIs (RDF data)
             const LilvUI*     ui;           ///< Plugin UI (RDF data)
             const LilvNode*   ui_type;      ///< Plugin UI type (unwrapped)
+            LV2_Extension_Data_Feature ext_data;
+          //  LV2_CORE__extensionData lv2_extensionData;
+           // LV2_UI__showInterface ui_showInterface;
         } ext;
     } lv2;
 
@@ -487,7 +492,7 @@ public:
 #endif
     
 #ifdef USE_SUIL
-    void custom_ui_instantiate(const char* native_ui_type, void* parent);
+    bool custom_ui_instantiate(const char* native_ui_type, void* parent);
 #endif
 
     LOG_CREATE_FUNC( Plugin_Module );

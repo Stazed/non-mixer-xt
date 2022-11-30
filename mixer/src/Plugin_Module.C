@@ -32,6 +32,7 @@
 #include <FL/fl_draw.H>
 #include <FL/Fl_Group.H>
 #include <FL/Fl_Menu_Button.H>
+#include <lv2/instance-access/instance-access.h>
 
 #include "Plugin_Module.H"
 
@@ -1783,11 +1784,15 @@ Plugin_Module::load_lv2 ( const char* uri )
 #endif  // LV2_WORKER_SUPPORT
     
 #ifdef USE_SUIL
+    
+    _idata->lv2.ext.ext_data.data_access =
+        lilv_instance_get_descriptor(m_instance)->extension_data;
     const LV2UI_Idle_Interface* idle_iface = NULL;
     const LV2UI_Show_Interface* show_iface = NULL;
 //    if (jalv->ui && jalv->opts.show_ui)
+    
+    if( custom_ui_instantiate("http://lv2plug.in/ns/extensions/ui#X11UI", NULL) )
     {
-//        custom_ui_instantiate(jalv_frontend_ui_type(), NULL);
         idle_iface = (const LV2UI_Idle_Interface*)suil_instance_extension_data(
           m_ui_instance, LV2_UI__idleInterface);
         show_iface = (const LV2UI_Show_Interface*)suil_instance_extension_data(
@@ -1799,10 +1804,10 @@ Plugin_Module::load_lv2 ( const char* uri )
         show_iface->show(suil_instance_get_handle(m_ui_instance));
 
         // Drive idle interface until interrupted
-//        while (zix_sem_try_wait(&jalv->done))
+      //  while (zix_sem_try_wait(&jalv->done))
         {
 //            jalv_update(jalv);
-            if (idle_iface->idle(suil_instance_get_handle(m_ui_instance)))
+           // if (idle_iface->idle(suil_instance_get_handle(m_ui_instance)))
             {
 //              break;
             }
@@ -1810,7 +1815,7 @@ Plugin_Module::load_lv2 ( const char* uri )
 //            usleep(33333);
         }
 
-        show_iface->hide(suil_instance_get_handle(m_ui_instance));
+       // show_iface->hide(suil_instance_get_handle(m_ui_instance));
   }
 #endif  // USE_SUIL
 
@@ -2355,21 +2360,57 @@ Plugin_Module::get_atom_output_events( void )
 
 
 #ifdef USE_SUIL
-void
+
+static uint32_t
+ui_port_index(void* const controller, const char* symbol)
+{
+    // TODO
+  //  Jalv* const  jalv = (Jalv*)controller;
+  //  struct Port* port = jalv_port_by_symbol(jalv, symbol);
+
+  //  return port ? port->index : LV2UI_INVALID_PORT_INDEX;
+    return LV2UI_INVALID_PORT_INDEX;
+}
+
+
+
+static void
+send_to_plugin(void* const handle,
+                    uint32_t    port_index,
+                    uint32_t    buffer_size,
+                    uint32_t    protocol,
+                    const void* buffer)
+{
+    // TODO
+}
+
+bool
 Plugin_Module::custom_ui_instantiate(const char* native_ui_type, void* parent)
 {
-  //  m_ui_host =
-  //  suil_host_new(jalv_send_to_plugin, jalv_ui_port_index, NULL, NULL);
+    m_ui_host = suil_host_new(send_to_plugin, ui_port_index, NULL, NULL);
 
     const LV2_Feature parent_feature = {LV2_UI__parent, parent};
 
-  //  const LV2_Feature instance_feature = {
-  //    LV2_INSTANCE_ACCESS_URI, lilv_instance_get_handle(m_instance)};
+    const LV2_Feature instance_feature = {
+        LV2_INSTANCE_ACCESS_URI, lilv_instance_get_handle(m_instance)};
 
-  //  const LV2_Feature data_feature = {LV2_DATA_ACCESS_URI,
-  //                                    &jalv->features.ext_data};
+    const LV2_Feature data_feature = {LV2_DATA_ACCESS_URI,
+                                      &_idata->lv2.ext.ext_data};
 
     const LV2_Feature idle_feature = {LV2_UI__idleInterface, NULL};
+
+    const LV2_Feature options_feature = {LV2_OPTIONS__options, NULL};   // FIXME
+
+    const LV2_Feature* ui_features[] = {_idata->lv2.features[Plugin_Feature_URID_Map],
+                                        _idata->lv2.features[Plugin_Feature_URID_Unmap],
+                                        &instance_feature,
+                                        &data_feature,
+                                      //  &jalv->features.log_feature,
+                                        &parent_feature,
+                                        &options_feature,
+                                        &idle_feature,
+                                       // &jalv->features.request_value_feature,
+                                        NULL};
 
   /*  const LV2_Feature* ui_features[] = {&jalv->features.map_feature,
                                         &jalv->features.unmap_feature,
@@ -2382,11 +2423,79 @@ Plugin_Module::custom_ui_instantiate(const char* native_ui_type, void* parent)
                                         &jalv->features.request_value_feature,
                                         NULL};
 */
+     // Get a plugin UI
+    _idata->lv2.ext.uis = lilv_plugin_get_uis(m_plugin);
+
+    LilvNode*   lv2_extensionData = lilv_new_uri(m_lilvWorld, LV2_CORE__extensionData);
+    LilvNode*   ui_showInterface = lilv_new_uri(m_lilvWorld, LV2_UI__showInterface);
+
+ //   if (!native_ui_type_uri && jalv->opts.show_ui)
+    {
+        // Try to find a UI with ui:showInterface
+        LILV_FOREACH (uis, u, _idata->lv2.ext.uis)
+        {
+            const LilvUI*   ui      = lilv_uis_get(_idata->lv2.ext.uis, u);
+            const LilvNode* ui_node = lilv_ui_get_uri(ui);
+
+            lilv_world_load_resource(m_lilvWorld, ui_node);
+
+            const bool supported = lilv_world_ask(m_lilvWorld,
+                                                  ui_node,
+                                                  lv2_extensionData,
+                                                  ui_showInterface);
+
+            lilv_world_unload_resource(m_lilvWorld, ui_node);
+
+            if (supported)
+            {
+                _idata->lv2.ext.ui = ui;
+                DMESSAGE("GOT _idata->lv2.ext.ui");
+               // return true;
+            }
+            else
+            {
+                WARNING("NO CUSTOM UI TOP");
+                return false;
+            }
+        }
+    }
+
+    const char* host_type_uri = "http://lv2plug.in/ns/extensions/ui#X11UI";
+    if (host_type_uri)
+    {
+        LilvNode* host_type = lilv_new_uri(m_lilvWorld, host_type_uri);
+
+        if (!lilv_ui_is_supported(
+              _idata->lv2.ext.ui, suil_ui_supported, host_type, &_idata->lv2.ext.ui_type))
+        {
+              _idata->lv2.ext.ui = NULL;
+        }
+
+        lilv_node_free(host_type);
+    }
+
+    if(!_idata->lv2.ext.ui)
+    {
+        WARNING("NO CUSTOM UI");
+        return false;
+    }
+
 
     const char* bundle_uri  = lilv_node_as_uri(lilv_ui_get_bundle_uri(_idata->lv2.ext.ui));
     const char* binary_uri  = lilv_node_as_uri(lilv_ui_get_binary_uri(_idata->lv2.ext.ui));
     char*       bundle_path = lilv_file_uri_parse(bundle_uri, NULL);
     char*       binary_path = lilv_file_uri_parse(binary_uri, NULL);
+
+    m_ui_instance =
+      suil_instance_new(m_ui_host,
+                        _idata,
+                        native_ui_type,
+                        lilv_node_as_uri(lilv_plugin_get_uri(m_plugin)),
+                        lilv_node_as_uri(lilv_ui_get_uri(_idata->lv2.ext.ui)),
+                        lilv_node_as_uri(_idata->lv2.ext.ui_type),
+                        bundle_path,
+                        binary_path,
+                        ui_features);
 /*
     m_ui_instance =
       suil_instance_new(m_ui_host,
@@ -2401,6 +2510,10 @@ Plugin_Module::custom_ui_instantiate(const char* native_ui_type, void* parent)
 */
     lilv_free(binary_path);
     lilv_free(bundle_path);
+    
+    DMESSAGE("GOT m_ui_instance");
+
+    return true;
 }
 #endif
 
