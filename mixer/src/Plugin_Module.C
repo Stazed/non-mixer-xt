@@ -1791,7 +1791,7 @@ Plugin_Module::load_lv2 ( const char* uri )
     const LV2UI_Show_Interface* show_iface = NULL;
 //    if (jalv->ui && jalv->opts.show_ui)
     
-    if( custom_ui_instantiate("http://lv2plug.in/ns/extensions/ui#X11UI", NULL) )
+    if( custom_ui_instantiate("http://lv2plug.in/ns/extensions/ui#X11UI", NULL) )   // FIXME parent = NULL
     {
         idle_iface = (const LV2UI_Idle_Interface*)suil_instance_extension_data(
           m_ui_instance, LV2_UI__idleInterface);
@@ -1801,7 +1801,8 @@ Plugin_Module::load_lv2 ( const char* uri )
 
     if (show_iface && idle_iface) 
     {
-        show_iface->show(suil_instance_get_handle(m_ui_instance));
+        DMESSAGE("GOT show_iface && idle_iface");
+      //  show_iface->show(suil_instance_get_handle(m_ui_instance));
 
         // Drive idle interface until interrupted
       //  while (zix_sem_try_wait(&jalv->done))
@@ -2362,26 +2363,58 @@ Plugin_Module::get_atom_output_events( void )
 #ifdef USE_SUIL
 
 static uint32_t
-ui_port_index(void* const controller, const char* symbol)
+ui_port_index(void* const controller, const char* port_symbol)
 {
-    // TODO
-  //  Jalv* const  jalv = (Jalv*)controller;
-  //  struct Port* port = jalv_port_by_symbol(jalv, symbol);
+    Plugin_Module *pLv2Plugin = static_cast<Plugin_Module *> (controller);
+    if (pLv2Plugin == NULL)
+        return LV2UI_INVALID_PORT_INDEX;
 
-  //  return port ? port->index : LV2UI_INVALID_PORT_INDEX;
-    return LV2UI_INVALID_PORT_INDEX;
+    const LilvPlugin *plugin = pLv2Plugin->get_slv2_plugin();
+    if (plugin == NULL)
+        return LV2UI_INVALID_PORT_INDEX;
+
+    LilvWorld* world = pLv2Plugin->get_lilv_world();
+
+    LilvNode *symbol = lilv_new_string(world, port_symbol);
+
+    const LilvPort *port = lilv_plugin_get_port_by_symbol(plugin, symbol);
+
+    const unsigned long port_index = lilv_port_get_index(plugin, port);
+
+    DMESSAGE("port_index = %U, port_symbol = %s", port_index, port_symbol);
+
+    return port ? port_index : LV2UI_INVALID_PORT_INDEX;
 }
 
-
-
 static void
-send_to_plugin(void* const handle,
-                    uint32_t    port_index,
-                    uint32_t    buffer_size,
-                    uint32_t    protocol,
-                    const void* buffer)
+send_to_plugin(void* const handle,              // Plugin_Module
+                    uint32_t    port_index,     // what port to send it to
+                    uint32_t    buffer_size,    // OU = float
+                    uint32_t    protocol,       // type of event 
+                    const void* buffer)         // param value sizeof(float) or atom event  (sizeof(LV2_Atom))
 {
-    // TODO
+    Plugin_Module *pLv2Plugin = static_cast<Plugin_Module *> (handle);
+    if (pLv2Plugin == NULL)
+        return;
+
+    if (protocol == 0U)
+    {
+        if (buffer_size != sizeof(float))
+        {
+            DMESSAGE("ERROR invalid buffer size for control");
+            return;
+        }
+        pLv2Plugin->set_control_value(port_index, *(const float*)buffer);
+    }
+    else if (protocol == pLv2Plugin->_idata->_lv2_urid_map(pLv2Plugin->_idata, LV2_ATOM__eventTransfer)) 
+    {
+        pLv2Plugin->ui_port_event( port_index, buffer_size, protocol, buffer );
+    }
+    else
+    {
+        DMESSAGE("UI wrote with unsupported protocol %u (%s)\n", protocol);
+        return;
+    }
 }
 
 bool
@@ -2397,7 +2430,7 @@ Plugin_Module::custom_ui_instantiate(const char* native_ui_type, void* parent)
     const LV2_Feature data_feature = {LV2_DATA_ACCESS_URI,
                                       &_idata->lv2.ext.ext_data};
 
-    const LV2_Feature idle_feature = {LV2_UI__idleInterface, NULL};
+    const LV2_Feature idle_feature = {LV2_UI__idleInterface, NULL};     // FIXME
 
     const LV2_Feature options_feature = {LV2_OPTIONS__options, NULL};   // FIXME
 
@@ -2428,9 +2461,10 @@ Plugin_Module::custom_ui_instantiate(const char* native_ui_type, void* parent)
 
     LilvNode*   lv2_extensionData = lilv_new_uri(m_lilvWorld, LV2_CORE__extensionData);
     LilvNode*   ui_showInterface = lilv_new_uri(m_lilvWorld, LV2_UI__showInterface);
+    LilvNode*   ui_idleInterface = lilv_new_uri(m_lilvWorld, LV2_UI__idleInterface);
 
  //   if (!native_ui_type_uri && jalv->opts.show_ui)
-    {
+ //   {
         // Try to find a UI with ui:showInterface
         LILV_FOREACH (uis, u, _idata->lv2.ext.uis)
         {
@@ -2442,7 +2476,7 @@ Plugin_Module::custom_ui_instantiate(const char* native_ui_type, void* parent)
             const bool supported = lilv_world_ask(m_lilvWorld,
                                                   ui_node,
                                                   lv2_extensionData,
-                                                  ui_showInterface);
+                                                  ui_idleInterface);    // FIXME s/b ui_showInterface
 
             lilv_world_unload_resource(m_lilvWorld, ui_node);
 
@@ -2458,7 +2492,7 @@ Plugin_Module::custom_ui_instantiate(const char* native_ui_type, void* parent)
                 return false;
             }
         }
-    }
+  //  }
 
     const char* host_type_uri = "http://lv2plug.in/ns/extensions/ui#X11UI";
     if (host_type_uri)
@@ -2488,7 +2522,7 @@ Plugin_Module::custom_ui_instantiate(const char* native_ui_type, void* parent)
 
     m_ui_instance =
       suil_instance_new(m_ui_host,
-                        _idata,
+                        this,
                         native_ui_type,
                         lilv_node_as_uri(lilv_plugin_get_uri(m_plugin)),
                         lilv_node_as_uri(lilv_ui_get_uri(_idata->lv2.ext.ui)),
@@ -2511,7 +2545,15 @@ Plugin_Module::custom_ui_instantiate(const char* native_ui_type, void* parent)
     lilv_free(binary_path);
     lilv_free(bundle_path);
     
-    DMESSAGE("GOT m_ui_instance");
+    if( !m_ui_instance )
+    {
+        DMESSAGE("m_ui_instance == NULL");
+        return false;
+    }
+    else
+    {
+        DMESSAGE("Got valid m_ui_instance");
+    }
 
     return true;
 }
