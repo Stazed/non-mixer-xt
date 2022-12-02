@@ -458,6 +458,21 @@ Module::handle_control_changed ( Port *p )
     if ( _editor )
         _editor->handle_control_changed ( p );
 
+#ifdef USE_SUIL
+    Module *m = p->module();
+    if (m->_is_lv2)
+    {
+        Plugin_Module *pm = static_cast<Plugin_Module *> (m);
+
+        if(pm->m_ui_instance)
+        {
+            int i = m->control_input_port_index( p );
+            float value = p->control_value();
+            DMESSAGE("Port_index = %d: Value = %f", i, value);
+            pm->send_to_custom_ui(i, sizeof(float), 0, &value); // 0 = float type
+        }
+    }
+#endif
 
     p->schedule_feedback();
     

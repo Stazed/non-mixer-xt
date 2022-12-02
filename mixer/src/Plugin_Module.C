@@ -735,6 +735,7 @@ Plugin_Module::set_control_value(unsigned long port_index, float value)
         {
             control_input[i].control_value(value);
             DMESSAGE("Port Index = %d: Value = %f", port_index, value);
+            break;
         }
     }
 }
@@ -2488,6 +2489,8 @@ Plugin_Module::custom_ui_instantiate(const char* native_ui_type, void* parent)
  //   if (!native_ui_type_uri && jalv->opts.show_ui)
  //   {
         // Try to find a UI with ui:showInterface
+    if(_idata->lv2.ext.uis)
+    {
         LILV_FOREACH (uis, u, _idata->lv2.ext.uis)
         {
             const LilvUI*   ui      = lilv_uis_get(_idata->lv2.ext.uis, u);
@@ -2514,7 +2517,12 @@ Plugin_Module::custom_ui_instantiate(const char* native_ui_type, void* parent)
                 return false;
             }
         }
-  //  }
+    }
+    else
+    {
+        WARNING("NO CUSTOM UI TOP");
+        return false;
+    }
 
     const char* host_type_uri = "http://lv2plug.in/ns/extensions/ui#X11UI";
     if (host_type_uri)
