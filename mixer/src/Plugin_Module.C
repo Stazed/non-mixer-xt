@@ -274,6 +274,19 @@ patch_put_get(Plugin_Module*  plugin,
 
 #endif  // LV2_WORKER_SUPPORT
 
+static void     // FIXME
+custom_update_ui( void *data)
+{
+    Plugin_Module* plug_ui =  static_cast<Plugin_Module *> (data);
+    
+    if (plug_ui->_idata->lv2.ext.idle_iface->idle(suil_instance_get_handle(plug_ui->m_ui_instance)))
+    {
+        DMESSAGE("INTERFACE CLOSED");
+    }
+
+    Fl::repeat_timeout( 0.1f, custom_update_ui, data );
+}
+
 /* handy class to handle lv2 open/close */
 class LV2_Lib_Manager
 {
@@ -561,6 +574,11 @@ _Pragma("GCC diagnostic pop")
     m_lilvWorld = lilv_world_new();
     lilv_world_load_all(m_lilvWorld);
     m_lilvPlugins = lilv_world_get_all_plugins(m_lilvWorld);
+#endif
+
+#ifdef USE_SUIL
+    m_ui_host = NULL;
+    m_ui_instance = NULL;
 #endif
 }
 
@@ -1801,23 +1819,27 @@ Plugin_Module::load_lv2 ( const char* uri )
 
     if (show_iface && idle_iface) 
     {
+       // Fl::add_timeout( 0.1f, custom_update_ui, this );
         DMESSAGE("GOT show_iface && idle_iface");
+      //  zix_sem_init(&_idata->lv2.ext.done, 0);
       //  show_iface->show(suil_instance_get_handle(m_ui_instance));
 
         // Drive idle interface until interrupted
-      //  while (zix_sem_try_wait(&jalv->done))
-        {
+      //  while (zix_sem_try_wait(&_idata->lv2.ext.done))
+      //  {
+       //     DMESSAGE("ZIX");
 //            jalv_update(jalv);
-           // if (idle_iface->idle(suil_instance_get_handle(m_ui_instance)))
-            {
-//              break;
-            }
+       //     if (idle_iface->idle(suil_instance_get_handle(m_ui_instance)))
+       //     {
+       //         DMESSAGE("GOT IDLE INTERFACE");
+        //        break;
+        //    }
 
-//            usleep(33333);
-        }
+          //  usleep(33333);
+  //      }
 
        // show_iface->hide(suil_instance_get_handle(m_ui_instance));
-  }
+    }
 #endif  // USE_SUIL
 
     return instances;
@@ -2389,7 +2411,7 @@ ui_port_index(void* const controller, const char* port_symbol)
 static void
 send_to_plugin(void* const handle,              // Plugin_Module
                     uint32_t    port_index,     // what port to send it to
-                    uint32_t    buffer_size,    // OU = float
+                    uint32_t    buffer_size,    // OU = float or atom port
                     uint32_t    protocol,       // type of event 
                     const void* buffer)         // param value sizeof(float) or atom event  (sizeof(LV2_Atom))
 {
@@ -2530,18 +2552,7 @@ Plugin_Module::custom_ui_instantiate(const char* native_ui_type, void* parent)
                         bundle_path,
                         binary_path,
                         ui_features);
-/*
-    m_ui_instance =
-      suil_instance_new(m_ui_host,
-                        jalv,
-                        native_ui_type,
-                        lilv_node_as_uri(lilv_plugin_get_uri(jalv->plugin)),
-                        lilv_node_as_uri(lilv_ui_get_uri(_idata->lv2.ext.ui)),
-                        lilv_node_as_uri(_idata->lv2.ext.ui_type),
-                        bundle_path,
-                        binary_path,
-                        ui_features);
-*/
+
     lilv_free(binary_path);
     lilv_free(bundle_path);
     
@@ -2557,6 +2568,20 @@ Plugin_Module::custom_ui_instantiate(const char* native_ui_type, void* parent)
 
     return true;
 }
+
+bool
+Plugin_Module::send_to_custom_ui( uint32_t port_index, uint32_t size, uint32_t protocol, const void* buf )
+{
+    /* port_index coming in is internal number - so convert to plugin .ttl number */
+    port_index = control_input[port_index].hints.plug_port_index;
+
+    DMESSAGE("Send to custom UI: port_index = %u: Value = %f", port_index, *(const float*)buf);
+    suil_instance_port_event(
+        m_ui_instance, port_index, size, protocol, buf );
+
+    return true;
+}
+
 #endif
 
 

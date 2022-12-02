@@ -838,6 +838,13 @@ Module_Parameter_Editor::set_value (int i, float value )
                 parameter_control_changed() when not connected */
             _module->control_input[i].control_value( value );
         }
+
+        Plugin_Module *pm = static_cast<Plugin_Module *> (_module);
+
+        if(pm->m_ui_instance)
+        {
+            pm->send_to_custom_ui(i, sizeof(float), 0, &value); // 0 = float type
+        }
     }
 
     update_spectrum();

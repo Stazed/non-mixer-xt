@@ -162,6 +162,7 @@ struct ImplementationData
             const LilvUI*     ui;           ///< Plugin UI (RDF data)
             const LilvNode*   ui_type;      ///< Plugin UI type (unwrapped)
             LV2_Extension_Data_Feature ext_data;
+            const LV2UI_Idle_Interface* idle_iface;
           //  LV2_CORE__extensionData lv2_extensionData;
            // LV2_UI__showInterface ui_showInterface;
         } ext;
@@ -493,6 +494,7 @@ public:
     
 #ifdef USE_SUIL
     bool custom_ui_instantiate(const char* native_ui_type, void* parent);
+    bool send_to_custom_ui( uint32_t port_index, uint32_t size, uint32_t type, const void* buf );
 #endif
 
     LOG_CREATE_FUNC( Plugin_Module );
