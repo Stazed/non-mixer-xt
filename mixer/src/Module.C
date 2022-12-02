@@ -171,6 +171,7 @@ Module::init ( void )
     _base_label = NULL;
     _number = -2;	/* magic number indicates old instance, before numbering */
     _is_lv2 = false;
+    _is_from_custom_ui = false;
 
     box( FL_UP_BOX );
     labeltype( FL_NO_LABEL );
@@ -462,14 +463,22 @@ Module::handle_control_changed ( Port *p )
     Module *m = p->module();
     if (m->_is_lv2)
     {
-        Plugin_Module *pm = static_cast<Plugin_Module *> (m);
-
-        if(pm->m_ui_instance)
+        if(m->_is_from_custom_ui)
         {
-            int i = m->control_input_port_index( p );
-            float value = p->control_value();
-            DMESSAGE("Port_index = %d: Value = %f", i, value);
-            pm->send_to_custom_ui(i, sizeof(float), 0, &value); // 0 = float type
+            DMESSAGE("Received control from custom UI");
+            m->_is_from_custom_ui = false;
+        }
+        else
+        {
+            Plugin_Module *pm = static_cast<Plugin_Module *> (m);
+
+            if(pm->m_ui_instance)
+            {
+                int i = m->control_input_port_index( p );
+                float value = p->control_value();
+                DMESSAGE("Port_index = %d: Value = %f", i, value);
+                pm->send_to_custom_ui(i, sizeof(float), 0, &value); // 0 = float type
+            }
         }
     }
 #endif

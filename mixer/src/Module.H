@@ -130,6 +130,7 @@ public:
     };
 
     bool _is_lv2;
+    bool _is_from_custom_ui;
 
     class Port
     {

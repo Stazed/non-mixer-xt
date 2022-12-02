@@ -2427,6 +2427,11 @@ send_to_plugin(void* const handle,              // Plugin_Module
             DMESSAGE("ERROR invalid buffer size for control");
             return;
         }
+
+        /* Set flag to tell set_control_value() that custom ui does not need update */
+        pLv2Plugin->_is_from_custom_ui = true;
+
+        /* Pass the control information to the plugin and other generic ui widgets */
         pLv2Plugin->set_control_value(port_index, *(const float*)buffer);
     }
     else if (protocol == pLv2Plugin->_idata->_lv2_urid_map(pLv2Plugin->_idata, LV2_ATOM__eventTransfer)) 
@@ -2583,7 +2588,7 @@ Plugin_Module::send_to_custom_ui( uint32_t port_index, uint32_t size, uint32_t p
     /* port_index coming in is internal number - so convert to plugin .ttl number */
     port_index = control_input[port_index].hints.plug_port_index;
 
-    DMESSAGE("Send to custom UI: port_index = %u: Value = %f", port_index, *(const float*)buf);
+    DMESSAGE("Port_index = %u: Value = %f", port_index, *(const float*)buf);
     suil_instance_port_event(
         m_ui_instance, port_index, size, protocol, buf );
 
