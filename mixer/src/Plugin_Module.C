@@ -1801,47 +1801,6 @@ Plugin_Module::load_lv2 ( const char* uri )
     else
         _loading_from_file = false;
 #endif  // LV2_WORKER_SUPPORT
-    
-#ifdef USE_SUIL
-    
-    _idata->lv2.ext.ext_data.data_access =
-        lilv_instance_get_descriptor(m_instance)->extension_data;
-    const LV2UI_Idle_Interface* idle_iface = NULL;
-    const LV2UI_Show_Interface* show_iface = NULL;
-//    if (jalv->ui && jalv->opts.show_ui)
-    
-    if( custom_ui_instantiate("http://lv2plug.in/ns/extensions/ui#X11UI", NULL) )   // FIXME parent = NULL
-    {
-        idle_iface = (const LV2UI_Idle_Interface*)suil_instance_extension_data(
-          m_ui_instance, LV2_UI__idleInterface);
-        show_iface = (const LV2UI_Show_Interface*)suil_instance_extension_data(
-          m_ui_instance, LV2_UI__showInterface);
-    }
-
-    if (show_iface && idle_iface) 
-    {
-       // Fl::add_timeout( 0.1f, custom_update_ui, this );
-        DMESSAGE("GOT show_iface && idle_iface");
-      //  zix_sem_init(&_idata->lv2.ext.done, 0);
-      //  show_iface->show(suil_instance_get_handle(m_ui_instance));
-
-        // Drive idle interface until interrupted
-      //  while (zix_sem_try_wait(&_idata->lv2.ext.done))
-      //  {
-       //     DMESSAGE("ZIX");
-//            jalv_update(jalv);
-       //     if (idle_iface->idle(suil_instance_get_handle(m_ui_instance)))
-       //     {
-       //         DMESSAGE("GOT IDLE INTERFACE");
-        //        break;
-        //    }
-
-          //  usleep(33333);
-  //      }
-
-       // show_iface->hide(suil_instance_get_handle(m_ui_instance));
-    }
-#endif  // USE_SUIL
 
     return instances;
 }
@@ -2443,6 +2402,66 @@ send_to_plugin(void* const handle,              // Plugin_Module
         DMESSAGE("UI wrote with unsupported protocol %u (%s)\n", protocol);
         return;
     }
+}
+
+bool
+Plugin_Module::try_custom_ui()
+{
+    /* TODO this should toggle - close custom ui if already shown, or remove */
+    if(m_ui_instance)
+    {
+        suil_instance_free(m_ui_instance);
+        m_ui_instance = NULL;
+
+        if(m_ui_host)
+        {
+            suil_host_free(m_ui_host);
+            m_ui_host = NULL;
+        }
+        return true;
+    }
+
+    _idata->lv2.ext.ext_data.data_access =
+        lilv_instance_get_descriptor(m_instance)->extension_data;
+    const LV2UI_Idle_Interface* idle_iface = NULL;
+    const LV2UI_Show_Interface* show_iface = NULL;
+//    if (jalv->ui && jalv->opts.show_ui)
+    
+    if( custom_ui_instantiate("http://lv2plug.in/ns/extensions/ui#X11UI", NULL) )   // FIXME parent = NULL
+    {
+        idle_iface = (const LV2UI_Idle_Interface*)suil_instance_extension_data(
+          m_ui_instance, LV2_UI__idleInterface);
+        show_iface = (const LV2UI_Show_Interface*)suil_instance_extension_data(
+          m_ui_instance, LV2_UI__showInterface);
+        
+        return true;
+    }
+
+    if (show_iface && idle_iface) 
+    {
+       // Fl::add_timeout( 0.1f, custom_update_ui, this );
+        DMESSAGE("GOT show_iface && idle_iface");
+      //  zix_sem_init(&_idata->lv2.ext.done, 0);
+      //  show_iface->show(suil_instance_get_handle(m_ui_instance));
+
+        // Drive idle interface until interrupted
+      //  while (zix_sem_try_wait(&_idata->lv2.ext.done))
+      //  {
+       //     DMESSAGE("ZIX");
+//            jalv_update(jalv);
+       //     if (idle_iface->idle(suil_instance_get_handle(m_ui_instance)))
+       //     {
+       //         DMESSAGE("GOT IDLE INTERFACE");
+        //        break;
+        //    }
+
+          //  usleep(33333);
+  //      }
+
+       // show_iface->hide(suil_instance_get_handle(m_ui_instance));
+    }
+    
+    return false;
 }
 
 bool

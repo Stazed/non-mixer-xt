@@ -1285,7 +1285,20 @@ Module::handle ( int m )
             }
             else if ( e & FL_BUTTON1 )
             {
-                command_open_parameter_editor();
+                if(_is_lv2)
+                {
+#ifdef USE_SUIL
+                    Plugin_Module *pm = static_cast<Plugin_Module *> (this);
+                    if(!pm->try_custom_ui())
+                    {
+                        command_open_parameter_editor();
+                    }
+#endif
+                }
+                else
+                {
+                    command_open_parameter_editor();
+                }
                 return 1;
             }
             else if ( e & FL_BUTTON3 && e & FL_CTRL )
