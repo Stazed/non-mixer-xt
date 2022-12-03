@@ -496,6 +496,7 @@ public:
     bool try_custom_ui();
     bool custom_ui_instantiate(const char* native_ui_type, void* parent);
     bool send_to_custom_ui( uint32_t port_index, uint32_t size, uint32_t type, const void* buf );
+    void update_custom_ui();
 #endif
 
     LOG_CREATE_FUNC( Plugin_Module );

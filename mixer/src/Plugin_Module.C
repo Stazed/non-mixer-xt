@@ -279,7 +279,7 @@ custom_update_ui( void *data)
 {
     Plugin_Module* plug_ui =  static_cast<Plugin_Module *> (data);
 
-    // FIXME plug_ui->update_custom_ui();
+    plug_ui->update_custom_ui();
 
     if (plug_ui->_idata->lv2.ext.idle_iface->idle(suil_instance_get_handle(plug_ui->m_ui_instance)))
     {
@@ -2588,6 +2588,19 @@ Plugin_Module::send_to_custom_ui( uint32_t port_index, uint32_t size, uint32_t p
         m_ui_instance, port_index, size, protocol, buf );
 
     return true;
+}
+
+void
+Plugin_Module::update_custom_ui()
+{
+    for ( unsigned int i = 0; i < control_output.size(); ++i)
+    {
+        float value = control_output[i].control_value();
+        uint32_t port_index = control_output[i].hints.plug_port_index;
+
+        suil_instance_port_event(
+            m_ui_instance, port_index, sizeof(float), 0, &value );
+    }
 }
 
 #endif
