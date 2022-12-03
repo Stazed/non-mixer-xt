@@ -163,8 +163,7 @@ struct ImplementationData
             const LilvNode*   ui_type;      ///< Plugin UI type (unwrapped)
             LV2_Extension_Data_Feature ext_data;
             const LV2UI_Idle_Interface* idle_iface;
-          //  LV2_CORE__extensionData lv2_extensionData;
-           // LV2_UI__showInterface ui_showInterface;
+            const LV2UI_Show_Interface* ui_showInterface;
         } ext;
     } lv2;
 
@@ -385,6 +384,7 @@ public:
 #ifdef USE_SUIL
   SuilHost*     m_ui_host;     ///< Plugin UI host support
   SuilInstance* m_ui_instance; ///< Plugin UI instance (shared library)
+  bool          m_ui_closed;
 #endif
 
 private:

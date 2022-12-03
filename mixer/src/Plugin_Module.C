@@ -274,17 +274,32 @@ patch_put_get(Plugin_Module*  plugin,
 
 #endif  // LV2_WORKER_SUPPORT
 
-static void     // FIXME
+static void
 custom_update_ui( void *data)
 {
     Plugin_Module* plug_ui =  static_cast<Plugin_Module *> (data);
-    
+
+    // FIXME plug_ui->update_custom_ui();
+
     if (plug_ui->_idata->lv2.ext.idle_iface->idle(suil_instance_get_handle(plug_ui->m_ui_instance)))
     {
         DMESSAGE("INTERFACE CLOSED");
+        plug_ui->m_ui_closed = true;
     }
 
-    Fl::repeat_timeout( 0.1f, custom_update_ui, data );
+    if(!plug_ui->m_ui_closed)
+    {
+        Fl::repeat_timeout( 0.03f, custom_update_ui, data );
+    }
+    else
+    {
+        Fl::remove_timeout(custom_update_ui);
+        suil_instance_free(plug_ui->m_ui_instance);
+        plug_ui->m_ui_instance = NULL;
+        
+        suil_host_free(plug_ui->m_ui_host);
+        plug_ui->m_ui_host = NULL;
+    }
 }
 
 /* handy class to handle lv2 open/close */
@@ -579,6 +594,7 @@ _Pragma("GCC diagnostic pop")
 #ifdef USE_SUIL
     m_ui_host = NULL;
     m_ui_instance = NULL;
+    m_ui_closed = true;
 #endif
 }
 
@@ -2407,17 +2423,10 @@ send_to_plugin(void* const handle,              // Plugin_Module
 bool
 Plugin_Module::try_custom_ui()
 {
-    /* TODO this should toggle - close custom ui if already shown, or remove */
+    /* Toggle show and hide */
     if(m_ui_instance)
     {
-        suil_instance_free(m_ui_instance);
-        m_ui_instance = NULL;
-
-        if(m_ui_host)
-        {
-            suil_host_free(m_ui_host);
-            m_ui_host = NULL;
-        }
+        _idata->lv2.ext.ui_showInterface->hide(suil_instance_get_handle(m_ui_instance));
         return true;
     }
 
@@ -2425,42 +2434,27 @@ Plugin_Module::try_custom_ui()
         lilv_instance_get_descriptor(m_instance)->extension_data;
     const LV2UI_Idle_Interface* idle_iface = NULL;
     const LV2UI_Show_Interface* show_iface = NULL;
-//    if (jalv->ui && jalv->opts.show_ui)
     
     if( custom_ui_instantiate("http://lv2plug.in/ns/extensions/ui#X11UI", NULL) )   // FIXME parent = NULL
     {
-        idle_iface = (const LV2UI_Idle_Interface*)suil_instance_extension_data(
+        idle_iface = _idata->lv2.ext.idle_iface = (const LV2UI_Idle_Interface*)suil_instance_extension_data(
           m_ui_instance, LV2_UI__idleInterface);
-        show_iface = (const LV2UI_Show_Interface*)suil_instance_extension_data(
+        show_iface = _idata->lv2.ext.ui_showInterface = (const LV2UI_Show_Interface*)suil_instance_extension_data(
           m_ui_instance, LV2_UI__showInterface);
-        
-        return true;
     }
 
     if (show_iface && idle_iface) 
     {
-       // Fl::add_timeout( 0.1f, custom_update_ui, this );
         DMESSAGE("GOT show_iface && idle_iface");
-      //  zix_sem_init(&_idata->lv2.ext.done, 0);
-      //  show_iface->show(suil_instance_get_handle(m_ui_instance));
 
-        // Drive idle interface until interrupted
-      //  while (zix_sem_try_wait(&_idata->lv2.ext.done))
-      //  {
-       //     DMESSAGE("ZIX");
-//            jalv_update(jalv);
-       //     if (idle_iface->idle(suil_instance_get_handle(m_ui_instance)))
-       //     {
-       //         DMESSAGE("GOT IDLE INTERFACE");
-        //        break;
-        //    }
+        show_iface->show(suil_instance_get_handle(m_ui_instance));
+        m_ui_closed = false;
 
-          //  usleep(33333);
-  //      }
+        Fl::add_timeout( 0.03f, custom_update_ui, this );
 
-       // show_iface->hide(suil_instance_get_handle(m_ui_instance));
+        return true;
     }
-    
+
     return false;
 }
 
@@ -2477,9 +2471,7 @@ Plugin_Module::custom_ui_instantiate(const char* native_ui_type, void* parent)
     const LV2_Feature data_feature = {LV2_DATA_ACCESS_URI,
                                       &_idata->lv2.ext.ext_data};
 
-    const LV2_Feature idle_feature = {LV2_UI__idleInterface, NULL};     // FIXME
-
-    const LV2_Feature options_feature = {LV2_OPTIONS__options, NULL};   // FIXME
+    const LV2_Feature idle_feature = {LV2_UI__idleInterface, NULL};
 
     const LV2_Feature* ui_features[] = {_idata->lv2.features[Plugin_Feature_URID_Map],
                                         _idata->lv2.features[Plugin_Feature_URID_Unmap],
@@ -2487,32 +2479,18 @@ Plugin_Module::custom_ui_instantiate(const char* native_ui_type, void* parent)
                                         &data_feature,
                                       //  &jalv->features.log_feature,
                                         &parent_feature,
-                                        &options_feature,
+                                        _idata->lv2.features[Plugin_Feature_Options],
                                         &idle_feature,
                                        // &jalv->features.request_value_feature,
                                         NULL};
 
-  /*  const LV2_Feature* ui_features[] = {&jalv->features.map_feature,
-                                        &jalv->features.unmap_feature,
-                                        &instance_feature,
-                                        &data_feature,
-                                        &jalv->features.log_feature,
-                                        &parent_feature,
-                                        &jalv->features.options_feature,
-                                        &idle_feature,
-                                        &jalv->features.request_value_feature,
-                                        NULL};
-*/
      // Get a plugin UI
     _idata->lv2.ext.uis = lilv_plugin_get_uis(m_plugin);
 
     LilvNode*   lv2_extensionData = lilv_new_uri(m_lilvWorld, LV2_CORE__extensionData);
     LilvNode*   ui_showInterface = lilv_new_uri(m_lilvWorld, LV2_UI__showInterface);
-    LilvNode*   ui_idleInterface = lilv_new_uri(m_lilvWorld, LV2_UI__idleInterface);
 
- //   if (!native_ui_type_uri && jalv->opts.show_ui)
- //   {
-        // Try to find a UI with ui:showInterface
+    // Try to find a UI with ui:showInterface
     if(_idata->lv2.ext.uis)
     {
         LILV_FOREACH (uis, u, _idata->lv2.ext.uis)
@@ -2525,7 +2503,7 @@ Plugin_Module::custom_ui_instantiate(const char* native_ui_type, void* parent)
             const bool supported = lilv_world_ask(m_lilvWorld,
                                                   ui_node,
                                                   lv2_extensionData,
-                                                  ui_idleInterface);    // FIXME s/b ui_showInterface
+                                                  ui_showInterface);
 
             lilv_world_unload_resource(m_lilvWorld, ui_node);
 
@@ -2533,7 +2511,6 @@ Plugin_Module::custom_ui_instantiate(const char* native_ui_type, void* parent)
             {
                 _idata->lv2.ext.ui = ui;
                 DMESSAGE("GOT _idata->lv2.ext.ui");
-               // return true;
             }
             else
             {
@@ -2568,7 +2545,6 @@ Plugin_Module::custom_ui_instantiate(const char* native_ui_type, void* parent)
         return false;
     }
 
-
     const char* bundle_uri  = lilv_node_as_uri(lilv_ui_get_bundle_uri(_idata->lv2.ext.ui));
     const char* binary_uri  = lilv_node_as_uri(lilv_ui_get_binary_uri(_idata->lv2.ext.ui));
     char*       bundle_path = lilv_file_uri_parse(bundle_uri, NULL);
@@ -2587,7 +2563,7 @@ Plugin_Module::custom_ui_instantiate(const char* native_ui_type, void* parent)
 
     lilv_free(binary_path);
     lilv_free(bundle_path);
-    
+
     if( !m_ui_instance )
     {
         DMESSAGE("m_ui_instance == NULL");
