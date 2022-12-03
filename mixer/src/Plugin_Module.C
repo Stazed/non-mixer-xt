@@ -2443,6 +2443,10 @@ Plugin_Module::try_custom_ui()
           m_ui_instance, LV2_UI__showInterface);
     }
 
+    /* The custom ui needs to know the current settings of the plugin upon init */
+    update_ui_settings();
+
+    /* Run the idle interface */
     if (show_iface && idle_iface) 
     {
         DMESSAGE("GOT show_iface && idle_iface");
@@ -2590,6 +2594,9 @@ Plugin_Module::send_to_custom_ui( uint32_t port_index, uint32_t size, uint32_t p
     return true;
 }
 
+/**
+ Send the current LV2 plugin ouput settings to the custom ui
+ */
 void
 Plugin_Module::update_custom_ui()
 {
@@ -2601,6 +2608,26 @@ Plugin_Module::update_custom_ui()
         suil_instance_port_event(
             m_ui_instance, port_index, sizeof(float), 0, &value );
     }
+    
+    // FIXME need to also do for atom ports
+}
+
+/**
+ Send the current LV2 plugin input settings to the custom ui.
+ */
+void
+Plugin_Module::update_ui_settings()
+{
+    for ( unsigned int i = 0; i < control_input.size(); ++i)
+    {
+        float value = control_input[i].control_value();
+        uint32_t port_index = control_input[i].hints.plug_port_index;
+
+        suil_instance_port_event(
+            m_ui_instance, port_index, sizeof(float), 0, &value );
+    }
+    
+    // FIXME need to also do for atom ports
 }
 
 #endif

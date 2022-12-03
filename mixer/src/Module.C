@@ -478,6 +478,8 @@ Module::handle_control_changed ( Port *p )
                 float value = p->control_value();
                 DMESSAGE("Port_index = %d: Value = %f", i, value);
                 pm->send_to_custom_ui(i, sizeof(float), 0, &value); // 0 = float type
+                
+                // FIXME atom ports
             }
         }
     }
