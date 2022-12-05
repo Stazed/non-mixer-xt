@@ -361,7 +361,7 @@ Plugin_Module::Plugin_Module ( ) : Module( 50, 35, name() )
 Plugin_Module::~Plugin_Module ( )
 {
 #ifdef LV2_WORKER_SUPPORT
-    Fl::remove_timeout(update_ui);
+    Fl::remove_timeout(update_ui, this);
     if ( _idata->lv2.ext.worker )
     {
         _idata->exit = true;
