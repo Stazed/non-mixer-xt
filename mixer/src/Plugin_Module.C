@@ -47,7 +47,6 @@
 
 #include <algorithm>
 
-
 
 #ifdef PRESET_SUPPORT
 // LV2 Presets: port value setter.
@@ -273,34 +272,6 @@ patch_put_get(Plugin_Module*  plugin,
 }
 
 #endif  // LV2_WORKER_SUPPORT
-
-static void
-custom_update_ui( void *data)
-{
-    Plugin_Module* plug_ui =  static_cast<Plugin_Module *> (data);
-
-    plug_ui->update_custom_ui();
-
-    if (plug_ui->_idata->lv2.ext.idle_iface->idle(suil_instance_get_handle(plug_ui->m_ui_instance)))
-    {
-        DMESSAGE("INTERFACE CLOSED");
-        plug_ui->m_ui_closed = true;
-    }
-
-    if(!plug_ui->m_ui_closed)
-    {
-        Fl::repeat_timeout( 0.03f, custom_update_ui, data );
-    }
-    else
-    {
-        Fl::remove_timeout(custom_update_ui);
-        suil_instance_free(plug_ui->m_ui_instance);
-        plug_ui->m_ui_instance = NULL;
-        
-        suil_host_free(plug_ui->m_ui_host);
-        plug_ui->m_ui_host = NULL;
-    }
-}
 
 /* handy class to handle lv2 open/close */
 class LV2_Lib_Manager
@@ -917,6 +888,10 @@ Plugin_Module::get_all_plugins ( void )
                 else
                     ++(pi.audio_outputs);
             }
+            else if (lilvPort.is_a(lv2World.port_control) || lilvPort.has_property(lv2World.pprop_optional))
+            {
+                // supported or optional
+            }
 #ifdef LV2_WORKER_SUPPORT
             else if (lilvPort.is_a(lv2World.port_atom))
             {
@@ -928,10 +903,6 @@ Plugin_Module::get_all_plugins ( void )
                 // supported or optional
             }
 #endif
-            else if (lilvPort.is_a(lv2World.port_control) || lilvPort.has_property(lv2World.pprop_optional))
-            {
-                // supported or optional
-            }
             else
             {
                 // not supported
@@ -2426,35 +2397,60 @@ Plugin_Module::try_custom_ui()
     /* Toggle show and hide */
     if(m_ui_instance)
     {
-        _idata->lv2.ext.ui_showInterface->hide(suil_instance_get_handle(m_ui_instance));
+        //_idata->lv2.ext.ui_showInterface->hide(suil_instance_get_handle(m_ui_instance));
+        DMESSAGE("Already Have m_ui_instance");
+        m_ui_closed = true;
         return true;
     }
 
     _idata->lv2.ext.ext_data.data_access =
         lilv_instance_get_descriptor(m_instance)->extension_data;
     const LV2UI_Idle_Interface* idle_iface = NULL;
-    const LV2UI_Show_Interface* show_iface = NULL;
+  //  const LV2UI_Show_Interface* show_iface = NULL; 
+
+    /* Create an x window for embedded custom uis */
+    XEvent event;		/* the XEvent declaration !!! */
+
+    init_x();
     
-    if( custom_ui_instantiate("http://lv2plug.in/ns/extensions/ui#X11UI", NULL) )   // FIXME parent = NULL
+    // show the x window
+    XNextEvent(dis, &event);
+    
+    auto XWID = (LV2UI_Widget) win;
+    
+    if( custom_ui_instantiate("http://lv2plug.in/ns/extensions/ui#X11UI",  XWID ) )
     {
+#if 1
         idle_iface = _idata->lv2.ext.idle_iface = (const LV2UI_Idle_Interface*)suil_instance_extension_data(
           m_ui_instance, LV2_UI__idleInterface);
-        show_iface = _idata->lv2.ext.ui_showInterface = (const LV2UI_Show_Interface*)suil_instance_extension_data(
-          m_ui_instance, LV2_UI__showInterface);
+      //  show_iface = _idata->lv2.ext.ui_showInterface = (const LV2UI_Show_Interface*)suil_instance_extension_data(
+      //    m_ui_instance, LV2_UI__showInterface);
+#else
+        if(m_ui_instance)
+        {
+            Window *rwindow = (Window*) suil_instance_get_widget(m_ui_instance);
+            DMESSAGE("X_window %p", rwindow);
+        }
+#endif
+    }
+    else
+    {
+        return false;
     }
 
     /* The custom ui needs to know the current settings of the plugin upon init */
     update_ui_settings();
 
     /* Run the idle interface */
-    if (show_iface && idle_iface) 
+    if (idle_iface) 
     {
         DMESSAGE("GOT show_iface && idle_iface");
 
-        show_iface->show(suil_instance_get_handle(m_ui_instance));
+      //  show_iface->show(suil_instance_get_handle(m_ui_instance));
+
         m_ui_closed = false;
 
-        Fl::add_timeout( 0.03f, custom_update_ui, this );
+        Fl::add_timeout( 0.03f, &Plugin_Module::custom_update_ui, this );
 
         return true;
     }
@@ -2475,6 +2471,7 @@ Plugin_Module::custom_ui_instantiate(const char* native_ui_type, void* parent)
     const LV2_Feature data_feature = {LV2_DATA_ACCESS_URI,
                                       &_idata->lv2.ext.ext_data};
 
+    DMESSAGE("parent = %p: parent_feature->data = %p", parent, parent_feature.data);
     const LV2_Feature idle_feature = {LV2_UI__idleInterface, NULL};
 
     const LV2_Feature* ui_features[] = {_idata->lv2.features[Plugin_Feature_URID_Map],
@@ -2487,10 +2484,10 @@ Plugin_Module::custom_ui_instantiate(const char* native_ui_type, void* parent)
                                         &idle_feature,
                                        // &jalv->features.request_value_feature,
                                         NULL};
-
-     // Get a plugin UI
+    
+    // Get a plugin UI
     _idata->lv2.ext.uis = lilv_plugin_get_uis(m_plugin);
-
+#if 0
     LilvNode*   lv2_extensionData = lilv_new_uri(m_lilvWorld, LV2_CORE__extensionData);
     LilvNode*   ui_showInterface = lilv_new_uri(m_lilvWorld, LV2_UI__showInterface);
 
@@ -2529,20 +2526,43 @@ Plugin_Module::custom_ui_instantiate(const char* native_ui_type, void* parent)
         return false;
     }
 
-    const char* host_type_uri = "http://lv2plug.in/ns/extensions/ui#X11UI";
-    if (host_type_uri)
+    if (native_ui_type)
     {
-        LilvNode* host_type = lilv_new_uri(m_lilvWorld, host_type_uri);
-
+        LilvNode* host_type = lilv_new_uri(m_lilvWorld, native_ui_type);
+    
         if (!lilv_ui_is_supported(
-              _idata->lv2.ext.ui, suil_ui_supported, host_type, &_idata->lv2.ext.ui_type))
+                  _idata->lv2.ext.ui, suil_ui_supported, host_type, &_idata->lv2.ext.ui_type))
         {
               _idata->lv2.ext.ui = NULL;
         }
-
-        lilv_node_free(host_type);
+        if(host_type)
+            lilv_node_free(host_type);
     }
+#else
+    // Try to find an embeddable UI
+    if (native_ui_type)
+    {
+        LilvNode* host_type = lilv_new_uri(m_lilvWorld, native_ui_type);
 
+        LILV_FOREACH (uis, u, _idata->lv2.ext.uis)
+        {
+            const LilvUI*   ui   = lilv_uis_get(_idata->lv2.ext.uis, u);
+            const bool      supported =
+              lilv_ui_is_supported(ui, suil_ui_supported, host_type, &_idata->lv2.ext.ui_type);
+
+            if (supported)
+            {
+                DMESSAGE("GOT UI");
+                lilv_node_free(host_type);
+                host_type = NULL;
+                _idata->lv2.ext.ui = ui;
+            }
+        }
+
+        if(host_type)
+            lilv_node_free(host_type);
+    }
+#endif
     if(!_idata->lv2.ext.ui)
     {
         WARNING("NO CUSTOM UI");
@@ -2630,7 +2650,107 @@ Plugin_Module::update_ui_settings()
     // FIXME need to also do for atom ports
 }
 
-#endif
+/**
+ Callback for custom ui idle interface
+ */
+void 
+Plugin_Module::custom_update_ui ( void *v )
+{
+    ((Plugin_Module*)v)->custom_update_ui();
+}
+
+/**
+ The idle callback to update_custom_ui()
+ */
+void
+Plugin_Module::custom_update_ui()
+{
+    if (_idata->lv2.ext.idle_iface->idle(suil_instance_get_handle(m_ui_instance)))
+    {
+        DMESSAGE("INTERFACE CLOSED");
+        m_ui_closed = true;
+    }
+
+    if(!m_ui_closed)
+    {
+        update_custom_ui();
+       // DMESSAGE("TIMEOUT %s", label());
+        Fl::repeat_timeout( 0.03f, &Plugin_Module::custom_update_ui, this );
+    }
+    else
+    {
+        DMESSAGE("Closing Custom Interface");
+        close_x();
+        Fl::remove_timeout(&Plugin_Module::custom_update_ui, this);
+        suil_instance_free(m_ui_instance);
+        m_ui_instance = NULL;
+
+        suil_host_free(m_ui_host);
+        m_ui_host = NULL;
+    }
+}
+/*
+ From: Brian Hammond 2/9/96.    Feel free to do with this as you will!
+ */
+void
+Plugin_Module::init_x()
+{
+    /* get the colors black and white (see section for details) */
+    unsigned long black,white;
+
+    /* use the information from the environment variable DISPLAY 
+       to create the X connection:
+    */	
+    dis=XOpenDisplay((char *)0);
+    screen=DefaultScreen(dis);
+    black=BlackPixel(dis,screen),	/* get color black */
+    white=WhitePixel(dis, screen);  /* get color white */
+
+    /* once the display is initialized, create the window.
+       This window will be have be 200 pixels across and 300 down.
+       It will have the foreground white and background black
+    */
+    win=XCreateSimpleWindow(dis,DefaultRootWindow(dis),0,0,	
+            200, 300, 5, white, black);
+
+    /* here is where some properties of the window can be set.
+       The third and fourth items indicate the name which appears
+       at the top of the window and the name of the minimized window
+       respectively.
+    */
+    XSetStandardProperties(dis,win,label(),"HI!",None,NULL,0,NULL);
+
+    /* this routine determines which types of input are allowed in
+       the input.  see the appropriate section for details...
+    */
+    XSelectInput(dis, win, ExposureMask|ButtonPressMask|KeyPressMask);
+
+    /* create the Graphics Context */
+    gc=XCreateGC(dis, win, 0,0);        
+
+    /* here is another routine to set the foreground and background
+       colors _currently_ in use in the window.
+    */
+    XSetBackground(dis,gc,white);
+    XSetForeground(dis,gc,black);
+
+    /* clear the window and bring it on top of the other windows */
+    XClearWindow(dis, win);
+    XMapRaised(dis, win);
+}
+
+void
+Plugin_Module::close_x()
+{
+    /* it is good programming practice to return system resources to the 
+       system...
+    */
+    XFreeGC(dis, gc);
+    XDestroyWindow(dis,win);
+    XCloseDisplay(dis);				
+}
+
+#endif  // USE_SUIL
 
 
 bool 

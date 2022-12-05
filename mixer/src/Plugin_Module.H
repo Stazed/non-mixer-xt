@@ -216,6 +216,7 @@ struct ImplementationData
         lv2.ext.options = NULL;
         lv2.ext.state   = NULL;
         lv2.ext.worker  = NULL;
+        lv2.ext.ui_type = NULL;
     }
 
     ~ImplementationData()
@@ -385,6 +386,12 @@ public:
   SuilHost*     m_ui_host;     ///< Plugin UI host support
   SuilInstance* m_ui_instance; ///< Plugin UI instance (shared library)
   bool          m_ui_closed;
+
+  /* X window for custom plugin ui */
+  Display *dis;
+  int screen;
+  Window win;
+  GC gc;
 #endif
 
 private:
@@ -405,10 +412,10 @@ private:
             H = h() - 10;
         }
 
-    void cb_handle(Fl_Widget*);
-    static void cb_handle(Fl_Widget*, void*);
+ //   void cb_handle(Fl_Widget*);
+ //   static void cb_handle(Fl_Widget*, void*);
 
-    Fl_Button *close_button;
+ //   Fl_Button *close_button;
 public:
 //    struct ImplementationData;
 
@@ -460,7 +467,7 @@ public:
     int plugin_ins ( void ) const { return _plugin_ins; }
     int plugin_outs ( void ) const { return _plugin_outs; }
 
-    void select_plugin ( unsigned long id );
+//    void select_plugin ( unsigned long id );
 
     const char *name ( void ) const { return "Plugin"; }
 
@@ -498,6 +505,10 @@ public:
     bool send_to_custom_ui( uint32_t port_index, uint32_t size, uint32_t type, const void* buf );
     void update_custom_ui();
     void update_ui_settings();
+    void custom_update_ui();
+    static void custom_update_ui ( void * );
+    void init_x();
+    void close_x();
 #endif
 
     LOG_CREATE_FUNC( Plugin_Module );
