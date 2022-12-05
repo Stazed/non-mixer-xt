@@ -82,7 +82,7 @@ src/lv2/lv2_evbuf.c
               target       = 'non-mixer',
               includes     = ['.', 'src', '..', '../nonlib'],
               use = ['nonlib', 'fl_widgets'],
-              uselib = [ 'JACK', 'LIBLO', 'LRDF', 'LILV', 'SUIL', 'NTK', 'NTK_IMAGES', 'PTHREAD', 'DL', 'M' ],
+              uselib = [ 'JACK', 'LIBLO', 'LRDF', 'LILV', 'SUIL', 'XLIB', 'NTK', 'NTK_IMAGES', 'PTHREAD', 'DL', 'M' ],
               install_path = '${BINDIR}')
 
     bld.program( source = 'src/midi-mapper.C',

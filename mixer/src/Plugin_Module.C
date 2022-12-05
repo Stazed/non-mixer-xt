@@ -2435,6 +2435,9 @@ Plugin_Module::try_custom_ui()
     }
     else
     {
+        if(win)
+            close_x();
+
         return false;
     }
 
