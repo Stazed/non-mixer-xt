@@ -2391,6 +2391,20 @@ send_to_plugin(void* const handle,              // Plugin_Module
     }
 }
 
+static int
+x_resize(LV2UI_Feature_Handle handle, int width, int height)
+{
+    Plugin_Module *pLv2Plugin = static_cast<Plugin_Module *> (handle);
+    if (pLv2Plugin == NULL)
+        return 1;
+
+    XResizeWindow(pLv2Plugin->dis, pLv2Plugin->win, width, height );
+    
+    XSync(pLv2Plugin->dis, False);
+
+    return 0;
+}
+
 bool
 Plugin_Module::try_custom_ui()
 {
@@ -2407,18 +2421,8 @@ Plugin_Module::try_custom_ui()
         lilv_instance_get_descriptor(m_instance)->extension_data;
     const LV2UI_Idle_Interface* idle_iface = NULL;
   //  const LV2UI_Show_Interface* show_iface = NULL; 
-
-    /* Create an x window for embedded custom uis */
-    XEvent event;		/* the XEvent declaration !!! */
-
-    init_x();
     
-    // show the x window
-    XNextEvent(dis, &event);
-    
-    auto XWID = (LV2UI_Widget) win;
-    
-    if( custom_ui_instantiate("http://lv2plug.in/ns/extensions/ui#X11UI",  XWID ) )
+    if( custom_ui_instantiate("http://lv2plug.in/ns/extensions/ui#X11UI") )
     {
 #if 1
         idle_iface = _idata->lv2.ext.idle_iface = (const LV2UI_Idle_Interface*)suil_instance_extension_data(
@@ -2435,9 +2439,6 @@ Plugin_Module::try_custom_ui()
     }
     else
     {
-        if(win)
-            close_x();
-
         return false;
     }
 
@@ -2462,31 +2463,9 @@ Plugin_Module::try_custom_ui()
 }
 
 bool
-Plugin_Module::custom_ui_instantiate(const char* native_ui_type, void* parent)
+Plugin_Module::custom_ui_instantiate(const char* native_ui_type)
 {
     m_ui_host = suil_host_new(send_to_plugin, ui_port_index, NULL, NULL);
-
-    const LV2_Feature parent_feature = {LV2_UI__parent, parent};
-
-    const LV2_Feature instance_feature = {
-        LV2_INSTANCE_ACCESS_URI, lilv_instance_get_handle(m_instance)};
-
-    const LV2_Feature data_feature = {LV2_DATA_ACCESS_URI,
-                                      &_idata->lv2.ext.ext_data};
-
-    DMESSAGE("parent = %p: parent_feature->data = %p", parent, parent_feature.data);
-    const LV2_Feature idle_feature = {LV2_UI__idleInterface, NULL};
-
-    const LV2_Feature* ui_features[] = {_idata->lv2.features[Plugin_Feature_URID_Map],
-                                        _idata->lv2.features[Plugin_Feature_URID_Unmap],
-                                        &instance_feature,
-                                        &data_feature,
-                                      //  &jalv->features.log_feature,
-                                        &parent_feature,
-                                        _idata->lv2.features[Plugin_Feature_Options],
-                                        &idle_feature,
-                                       // &jalv->features.request_value_feature,
-                                        NULL};
     
     // Get a plugin UI
     _idata->lv2.ext.uis = lilv_plugin_get_uis(m_plugin);
@@ -2572,11 +2551,48 @@ Plugin_Module::custom_ui_instantiate(const char* native_ui_type, void* parent)
         return false;
     }
 
+    /* We seem to have an accepted ui, so lets try to embed it in an X window*/
+    init_x();
+
+    auto parent = (LV2UI_Widget) win;
+
+    /* Create our supported features array */
+    const LV2_Feature parent_feature = {LV2_UI__parent, parent};
+
+    const LV2_Feature instance_feature = {
+        LV2_INSTANCE_ACCESS_URI, lilv_instance_get_handle(m_instance)};
+
+    const LV2_Feature data_feature = {LV2_DATA_ACCESS_URI,
+                                      &_idata->lv2.ext.ext_data};
+
+    DMESSAGE("parent = %p: parent_feature->data = %p", parent, parent_feature.data);
+    const LV2_Feature idle_feature = {LV2_UI__idleInterface, NULL};
+    
+    LV2UI_Resize* const uiResizeFt = new LV2UI_Resize;
+        uiResizeFt->handle             = this;
+        uiResizeFt->ui_resize          = x_resize;
+    
+    
+    const LV2_Feature resize_feature = {LV2_UI__resize, uiResizeFt};
+
+    const LV2_Feature* ui_features[] = {_idata->lv2.features[Plugin_Feature_URID_Map],
+                                        _idata->lv2.features[Plugin_Feature_URID_Unmap],
+                                        &instance_feature,
+                                        &data_feature,
+                                      //  &jalv->features.log_feature,
+                                        &parent_feature,
+                                        _idata->lv2.features[Plugin_Feature_Options],
+                                        &idle_feature,
+                                       // &jalv->features.request_value_feature,
+                                        &resize_feature,
+                                        NULL};
+
     const char* bundle_uri  = lilv_node_as_uri(lilv_ui_get_bundle_uri(_idata->lv2.ext.ui));
     const char* binary_uri  = lilv_node_as_uri(lilv_ui_get_binary_uri(_idata->lv2.ext.ui));
     char*       bundle_path = lilv_file_uri_parse(bundle_uri, NULL);
     char*       binary_path = lilv_file_uri_parse(binary_uri, NULL);
 
+    /* This is the real deal */
     m_ui_instance =
       suil_instance_new(m_ui_host,
                         this,
@@ -2698,6 +2714,8 @@ Plugin_Module::custom_update_ui()
 void
 Plugin_Module::init_x()
 {
+    /* Create an x window for embedded custom uis */
+
     /* get the colors black and white (see section for details) */
     unsigned long black,white;
 
@@ -2740,6 +2758,9 @@ Plugin_Module::init_x()
     /* clear the window and bring it on top of the other windows */
     XClearWindow(dis, win);
     XMapRaised(dis, win);
+
+    // show the x window
+    XSync(dis, False);
 }
 
 void

@@ -503,14 +503,14 @@ public:
     
 #ifdef USE_SUIL
     bool try_custom_ui();
-    bool custom_ui_instantiate(const char* native_ui_type, void* parent);
+    bool custom_ui_instantiate(const char* native_ui_type);
     bool send_to_custom_ui( uint32_t port_index, uint32_t size, uint32_t type, const void* buf );
     void update_custom_ui();
     void update_ui_settings();
     void custom_update_ui();
     static void custom_update_ui ( void * );
     void init_x();
-    void close_x();
+    void close_x();    
 #endif
 
     LOG_CREATE_FUNC( Plugin_Module );
