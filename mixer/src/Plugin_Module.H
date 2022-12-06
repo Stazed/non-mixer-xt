@@ -391,10 +391,7 @@ public:
 
   /* X window for custom plugin ui */
   Display *x_display;
-  int x_screen;
   Window x_parent_win;
-  Window x_child_win;
-  GC x_gc;
 #endif
 
 private:

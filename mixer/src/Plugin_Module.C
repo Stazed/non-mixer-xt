@@ -566,6 +566,8 @@ _Pragma("GCC diagnostic pop")
     m_ui_host = NULL;
     m_ui_instance = NULL;
     m_ui_closed = true;
+    x_display = NULL;
+    x_parent_win = 0;
 #endif
 }
 
@@ -2429,10 +2431,10 @@ Plugin_Module::try_custom_ui()
           m_ui_instance, LV2_UI__idleInterface);
       //  show_iface = _idata->lv2.ext.ui_showInterface = (const LV2UI_Show_Interface*)suil_instance_extension_data(
       //    m_ui_instance, LV2_UI__showInterface);
-//#else
+#else
         if(m_ui_instance)
         {
-            x_child_win = (Window) suil_instance_get_widget(m_ui_instance);
+            Window x_child_win = (Window) suil_instance_get_widget(m_ui_instance);
             DMESSAGE("x_child_win %p", x_child_win);
         }
 #endif
@@ -2684,6 +2686,28 @@ Plugin_Module::custom_update_ui ( void *v )
 void
 Plugin_Module::custom_update_ui()
 {
+    for (XEvent event; XPending(x_display) > 0;)
+    {
+        XNextEvent(x_display, &event);
+
+        char* type = nullptr;
+        
+        switch (event.type)
+        {
+            case ClientMessage:
+            type = XGetAtomName(x_display, event.xclient.message_type);
+            
+            if(type == nullptr)
+                continue;
+
+            if (strcmp(type, "WM_PROTOCOLS") == 0)
+            {
+                m_ui_closed = true;
+            }
+            break;
+        }
+    }
+    
     if (_idata->lv2.ext.idle_iface->idle(suil_instance_get_handle(m_ui_instance)))
     {
         DMESSAGE("INTERFACE CLOSED");
@@ -2717,21 +2741,21 @@ Plugin_Module::init_x()
     /* Create an x window for embedded custom uis */
 
     /* get the colors black and white (see section for details) */
-    unsigned long black,white;
+    unsigned long black, white;
 
     /* use the information from the environment variable DISPLAY 
        to create the X connection:
     */	
-    x_display=XOpenDisplay((char *)0);
-    x_screen=DefaultScreen(x_display);
-    black=BlackPixel(x_display,x_screen),	/* get color black */
-    white=WhitePixel(x_display, x_screen);  /* get color white */
+    x_display = XOpenDisplay(nullptr);
+    const int x_screen = DefaultScreen(x_display);
+    black = BlackPixel(x_display, x_screen),	/* get color black */
+    white = WhitePixel(x_display, x_screen);    /* get color white */
 
     /* once the display is initialized, create the window.
        This window will be have be 200 pixels across and 300 down.
        It will have the foreground white and background black
     */
-    x_parent_win=XCreateSimpleWindow(x_display,DefaultRootWindow(x_display),0,0,	
+    x_parent_win = XCreateSimpleWindow(x_display, DefaultRootWindow(x_display), 0, 0,	
             200, 300, 5, white, black);
 
     /* here is where some properties of the window can be set.
@@ -2739,21 +2763,18 @@ Plugin_Module::init_x()
        at the top of the window and the name of the minimized window
        respectively.
     */
-    XSetStandardProperties(x_display,x_parent_win,label(),label(),None,NULL,0,NULL);
+    XSetStandardProperties(x_display, x_parent_win, label(), label(), None, NULL, 0, NULL);
 
     /* this routine determines which types of input are allowed in
        the input.  see the appropriate section for details...
     */
     XSelectInput(x_display, x_parent_win, ExposureMask|ButtonPressMask|KeyPressMask);
-
-    /* create the Graphics Context */
-    x_gc=XCreateGC(x_display, x_parent_win, 0,0);        
-
-    /* here is another routine to set the foreground and background
-       colors _currently_ in use in the window.
-    */
-    XSetBackground(x_display,x_gc,white);
-    XSetForeground(x_display,x_gc,black);
+    
+    /* This will tell the window manager to generate an event when the user
+       closes the window with the window X button
+     */
+    Atom delWindow = XInternAtom( x_display, "WM_DELETE_WINDOW", 0 );
+    XSetWMProtocols(x_display , x_parent_win, &delWindow, 1);
 
     /* clear the window and bring it on top of the other windows */
     XClearWindow(x_display, x_parent_win);
@@ -2766,12 +2787,12 @@ Plugin_Module::init_x()
 void
 Plugin_Module::close_x()
 {
-    /* it is good programming practice to return system resources to the 
-       system...
-    */
-    XFreeGC(x_display, x_gc);
+    XUnmapWindow(x_display, x_parent_win);
+
     XDestroyWindow(x_display, x_parent_win);
-    XCloseDisplay(x_display);				
+    x_parent_win = 0;
+    XCloseDisplay(x_display);
+    x_display = NULL;
 }
 
 #endif  // USE_SUIL
