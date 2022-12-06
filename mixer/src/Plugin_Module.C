@@ -47,6 +47,7 @@
 
 #include <algorithm>
 
+static const uint X11Key_Escape = 9;
 
 #ifdef PRESET_SUPPORT
 // LV2 Presets: port value setter.
@@ -2705,6 +2706,13 @@ Plugin_Module::custom_update_ui()
                 m_ui_closed = true;
             }
             break;
+
+            case KeyRelease:
+            if (event.xkey.keycode == X11Key_Escape)
+            {
+                m_ui_closed = true;
+            }
+            break;
         }
     }
     
@@ -2732,9 +2740,7 @@ Plugin_Module::custom_update_ui()
         m_ui_host = NULL;
     }
 }
-/*
- From: Brian Hammond 2/9/96.    Feel free to do with this as you will!
- */
+
 void
 Plugin_Module::init_x()
 {
@@ -2770,6 +2776,8 @@ Plugin_Module::init_x()
     */
     XSelectInput(x_display, x_parent_win, ExposureMask|ButtonPressMask|KeyPressMask);
     
+    XGrabKey(x_display, X11Key_Escape, AnyModifier, x_parent_win, 1, GrabModeAsync, GrabModeAsync);
+    
     /* This will tell the window manager to generate an event when the user
        closes the window with the window X button
      */
@@ -2787,8 +2795,6 @@ Plugin_Module::init_x()
 void
 Plugin_Module::close_x()
 {
-    XUnmapWindow(x_display, x_parent_win);
-
     XDestroyWindow(x_display, x_parent_win);
     x_parent_win = 0;
     XCloseDisplay(x_display);
