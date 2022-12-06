@@ -2398,9 +2398,9 @@ x_resize(LV2UI_Feature_Handle handle, int width, int height)
     if (pLv2Plugin == NULL)
         return 1;
 
-    XResizeWindow(pLv2Plugin->dis, pLv2Plugin->win, width, height );
+    XResizeWindow(pLv2Plugin->x_display, pLv2Plugin->x_parent_win, width, height );
     
-    XSync(pLv2Plugin->dis, False);
+    XSync(pLv2Plugin->x_display, False);
 
     return 0;
 }
@@ -2429,11 +2429,11 @@ Plugin_Module::try_custom_ui()
           m_ui_instance, LV2_UI__idleInterface);
       //  show_iface = _idata->lv2.ext.ui_showInterface = (const LV2UI_Show_Interface*)suil_instance_extension_data(
       //    m_ui_instance, LV2_UI__showInterface);
-#else
+//#else
         if(m_ui_instance)
         {
-            Window *rwindow = (Window*) suil_instance_get_widget(m_ui_instance);
-            DMESSAGE("X_window %p", rwindow);
+            x_child_win = (Window) suil_instance_get_widget(m_ui_instance);
+            DMESSAGE("x_child_win %p", x_child_win);
         }
 #endif
     }
@@ -2448,7 +2448,7 @@ Plugin_Module::try_custom_ui()
     /* Run the idle interface */
     if (idle_iface) 
     {
-        DMESSAGE("GOT show_iface && idle_iface");
+        DMESSAGE("GOT idle_iface");
 
       //  show_iface->show(suil_instance_get_handle(m_ui_instance));
 
@@ -2554,7 +2554,7 @@ Plugin_Module::custom_ui_instantiate(const char* native_ui_type)
     /* We seem to have an accepted ui, so lets try to embed it in an X window*/
     init_x();
 
-    auto parent = (LV2UI_Widget) win;
+    auto parent = (LV2UI_Widget) x_parent_win;
 
     /* Create our supported features array */
     const LV2_Feature parent_feature = {LV2_UI__parent, parent};
@@ -2722,16 +2722,16 @@ Plugin_Module::init_x()
     /* use the information from the environment variable DISPLAY 
        to create the X connection:
     */	
-    dis=XOpenDisplay((char *)0);
-    screen=DefaultScreen(dis);
-    black=BlackPixel(dis,screen),	/* get color black */
-    white=WhitePixel(dis, screen);  /* get color white */
+    x_display=XOpenDisplay((char *)0);
+    x_screen=DefaultScreen(x_display);
+    black=BlackPixel(x_display,x_screen),	/* get color black */
+    white=WhitePixel(x_display, x_screen);  /* get color white */
 
     /* once the display is initialized, create the window.
        This window will be have be 200 pixels across and 300 down.
        It will have the foreground white and background black
     */
-    win=XCreateSimpleWindow(dis,DefaultRootWindow(dis),0,0,	
+    x_parent_win=XCreateSimpleWindow(x_display,DefaultRootWindow(x_display),0,0,	
             200, 300, 5, white, black);
 
     /* here is where some properties of the window can be set.
@@ -2739,28 +2739,28 @@ Plugin_Module::init_x()
        at the top of the window and the name of the minimized window
        respectively.
     */
-    XSetStandardProperties(dis,win,label(),"HI!",None,NULL,0,NULL);
+    XSetStandardProperties(x_display,x_parent_win,label(),label(),None,NULL,0,NULL);
 
     /* this routine determines which types of input are allowed in
        the input.  see the appropriate section for details...
     */
-    XSelectInput(dis, win, ExposureMask|ButtonPressMask|KeyPressMask);
+    XSelectInput(x_display, x_parent_win, ExposureMask|ButtonPressMask|KeyPressMask);
 
     /* create the Graphics Context */
-    gc=XCreateGC(dis, win, 0,0);        
+    x_gc=XCreateGC(x_display, x_parent_win, 0,0);        
 
     /* here is another routine to set the foreground and background
        colors _currently_ in use in the window.
     */
-    XSetBackground(dis,gc,white);
-    XSetForeground(dis,gc,black);
+    XSetBackground(x_display,x_gc,white);
+    XSetForeground(x_display,x_gc,black);
 
     /* clear the window and bring it on top of the other windows */
-    XClearWindow(dis, win);
-    XMapRaised(dis, win);
+    XClearWindow(x_display, x_parent_win);
+    XMapRaised(x_display, x_parent_win);
 
     // show the x window
-    XSync(dis, False);
+    XSync(x_display, False);
 }
 
 void
@@ -2769,9 +2769,9 @@ Plugin_Module::close_x()
     /* it is good programming practice to return system resources to the 
        system...
     */
-    XFreeGC(dis, gc);
-    XDestroyWindow(dis,win);
-    XCloseDisplay(dis);				
+    XFreeGC(x_display, x_gc);
+    XDestroyWindow(x_display, x_parent_win);
+    XCloseDisplay(x_display);				
 }
 
 #endif  // USE_SUIL
