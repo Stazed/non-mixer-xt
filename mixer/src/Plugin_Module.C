@@ -274,6 +274,24 @@ patch_put_get(Plugin_Module*  plugin,
 
 #endif  // LV2_WORKER_SUPPORT
 
+#ifdef USE_SUIL
+static int
+x_resize(LV2UI_Feature_Handle handle, int width, int height)
+{
+    Plugin_Module *pLv2Plugin = static_cast<Plugin_Module *> (handle);
+    if (pLv2Plugin == NULL)
+        return 1;
+
+    XResizeWindow(pLv2Plugin->x_display, pLv2Plugin->x_parent_win, width, height );
+    
+    DMESSAGE("X-width = %d: X-height = %d", width, height);
+    
+    XSync(pLv2Plugin->x_display, False);
+
+    return 0;
+}
+#endif // USE_SUIL
+
 /* handy class to handle lv2 open/close */
 class LV2_Lib_Manager
 {
@@ -508,6 +526,12 @@ _Pragma("GCC diagnostic pop")
     m_lv2_schedule->schedule_work       = non_worker_schedule;
 #endif
 
+#ifdef USE_SUIL
+    LV2UI_Resize* const uiResizeFt = new LV2UI_Resize;
+    uiResizeFt->handle             = this;
+    uiResizeFt->ui_resize          = x_resize;
+#endif
+
     _idata->lv2.features[Plugin_Feature_BufSize_Bounded]->URI  = LV2_BUF_SIZE__boundedBlockLength;
     _idata->lv2.features[Plugin_Feature_BufSize_Bounded]->data = NULL;
 
@@ -536,7 +560,10 @@ _Pragma("GCC diagnostic pop")
     zix_ring_mlock(_idata->lv2.ext.ui_events);
     zix_ring_mlock(_idata->lv2.ext.plugin_events);
 #endif
-    
+#ifdef USE_SUIL
+    _idata->lv2.features[Plugin_Feature_Resize]->URI  = LV2_UI__resize;
+    _idata->lv2.features[Plugin_Feature_Resize]->data = uiResizeFt;
+#endif
 #if 0
     	jalv->features.sched.handle = &jalv->worker;
 	jalv->features.sched.schedule_work = jalv_worker_schedule;
@@ -2394,20 +2421,6 @@ send_to_plugin(void* const handle,              // Plugin_Module
     }
 }
 
-static int
-x_resize(LV2UI_Feature_Handle handle, int width, int height)
-{
-    Plugin_Module *pLv2Plugin = static_cast<Plugin_Module *> (handle);
-    if (pLv2Plugin == NULL)
-        return 1;
-
-    XResizeWindow(pLv2Plugin->x_display, pLv2Plugin->x_parent_win, width, height );
-    
-    XSync(pLv2Plugin->x_display, False);
-
-    return 0;
-}
-
 bool
 Plugin_Module::try_custom_ui()
 {
@@ -2570,13 +2583,6 @@ Plugin_Module::custom_ui_instantiate(const char* native_ui_type)
 
     DMESSAGE("parent = %p: parent_feature->data = %p", parent, parent_feature.data);
     const LV2_Feature idle_feature = {LV2_UI__idleInterface, NULL};
-    
-    LV2UI_Resize* const uiResizeFt = new LV2UI_Resize;
-        uiResizeFt->handle             = this;
-        uiResizeFt->ui_resize          = x_resize;
-    
-    
-    const LV2_Feature resize_feature = {LV2_UI__resize, uiResizeFt};
 
     const LV2_Feature* ui_features[] = {_idata->lv2.features[Plugin_Feature_URID_Map],
                                         _idata->lv2.features[Plugin_Feature_URID_Unmap],
@@ -2587,7 +2593,7 @@ Plugin_Module::custom_ui_instantiate(const char* native_ui_type)
                                         _idata->lv2.features[Plugin_Feature_Options],
                                         &idle_feature,
                                        // &jalv->features.request_value_feature,
-                                        &resize_feature,
+                                       _idata->lv2.features[Plugin_Feature_Resize],
                                         NULL};
 
     const char* bundle_uri  = lilv_node_as_uri(lilv_ui_get_bundle_uri(_idata->lv2.ext.ui));

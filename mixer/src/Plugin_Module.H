@@ -48,6 +48,9 @@ enum Plugin_Module_Supported_Features {
 #ifdef LV2_WORKER_SUPPORT
     Plugin_Feature_Worker_Schedule,
 #endif
+#ifdef USE_SUIL
+    Plugin_Feature_Resize,
+#endif
     Plugin_Features_Count
 };
 
@@ -68,6 +71,9 @@ enum Plugin_Module_URIs {
     Plugin_Module_URI_Atom_eventTransfer,
     Plugin_Module_URI_patch_Set,
     Plugin_Module_URI_patch_Put,
+#endif
+#ifdef USE_SUIL
+    Plugin_Module_URI_Resize,
 #endif
     Plugin_Module_URI_Count
 };
@@ -206,6 +212,7 @@ struct ImplementationData
         lv2.mappedURIs.push_back(LV2_ATOM__eventTransfer);
         lv2.mappedURIs.push_back(LV2_PATCH__Set);
         lv2.mappedURIs.push_back(LV2_PATCH__Put);
+        lv2.mappedURIs.push_back(LV2_UI__resize);
         zix_sem_init(&work_lock, 1);
         zix_sem_init(&lv2.ext.sem, 0);
         
@@ -239,10 +246,14 @@ _Pragma("GCC diagnostic pop")
         if ( lv2.features[Plugin_Feature_URID_Unmap] && lv2.features[Plugin_Feature_URID_Unmap]->data )
             delete (LV2_URID_Unmap*)lv2.features[Plugin_Feature_URID_Unmap]->data;
 #ifdef LV2_WORKER_SUPPORT
- //       if ( lv2.features[Plugin_Feature_Worker] && lv2.features[Plugin_Feature_Worker]->data )
- //           delete (LV2_WORKER__schedule*)lv2.features[Plugin_Feature_Worker]->data;
+        if ( lv2.features[Plugin_Feature_Worker_Schedule] && lv2.features[Plugin_Feature_Worker_Schedule]->data )
+            delete (LV2_Worker_Schedule*)lv2.features[Plugin_Feature_Worker_Schedule]->data;
  
         free(lv2.ext.ui_event_buf);
+#endif
+#ifdef USE_SUIL
+        if ( lv2.features[Plugin_Feature_Resize] && lv2.features[Plugin_Feature_Resize]->data )
+            delete (LV2UI_Resize*)lv2.features[Plugin_Feature_Resize]->data;
 #endif
     }
 
@@ -287,6 +298,10 @@ _Pragma("GCC diagnostic pop")
             return Plugin_Module_URI_patch_Set;
         if ( ::strcmp(uri, LV2_PATCH__Put) == 0 )
             return Plugin_Module_URI_patch_Put;
+#endif  // LV2_WORKER_SUPPORT
+#ifdef  USE_SUIL
+        if ( ::strcmp(uri, LV2_UI__resize) == 0 )
+            return Plugin_Module_URI_Resize;
 #endif
 
         ImplementationData* self = (ImplementationData*)handle;
