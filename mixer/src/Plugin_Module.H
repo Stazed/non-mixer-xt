@@ -170,6 +170,7 @@ struct ImplementationData
             LV2_Extension_Data_Feature ext_data;
             const LV2UI_Idle_Interface* idle_iface;
             const LV2UI_Show_Interface* ui_showInterface;
+            const LV2UI_Resize* resize_ui;
         } ext;
     } lv2;
 
@@ -407,6 +408,7 @@ public:
   /* X window for custom plugin ui */
   Display *x_display;
   Window x_parent_win;
+  Window x_child_win;
 #endif
 
 private:
@@ -523,7 +525,8 @@ public:
     void custom_update_ui();
     static void custom_update_ui ( void * );
     void init_x();
-    void close_x();    
+    void close_x();
+    Window getChildWindow() const;
 #endif
 
     LOG_CREATE_FUNC( Plugin_Module );

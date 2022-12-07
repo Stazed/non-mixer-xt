@@ -596,6 +596,7 @@ _Pragma("GCC diagnostic pop")
     m_ui_closed = true;
     x_display = NULL;
     x_parent_win = 0;
+    x_child_win = 0;
 #endif
 }
 
@@ -2440,18 +2441,18 @@ Plugin_Module::try_custom_ui()
     
     if( custom_ui_instantiate("http://lv2plug.in/ns/extensions/ui#X11UI") )
     {
-#if 1
-        idle_iface = _idata->lv2.ext.idle_iface = (const LV2UI_Idle_Interface*)suil_instance_extension_data(
-          m_ui_instance, LV2_UI__idleInterface);
-      //  show_iface = _idata->lv2.ext.ui_showInterface = (const LV2UI_Show_Interface*)suil_instance_extension_data(
-      //    m_ui_instance, LV2_UI__showInterface);
-#else
         if(m_ui_instance)
         {
-            Window x_child_win = (Window) suil_instance_get_widget(m_ui_instance);
-            DMESSAGE("x_child_win %p", x_child_win);
+            x_child_win = getChildWindow();
+
+            idle_iface = _idata->lv2.ext.idle_iface = (const LV2UI_Idle_Interface*)suil_instance_extension_data(
+                m_ui_instance, LV2_UI__idleInterface);
+
+            _idata->lv2.ext.resize_ui = (const LV2UI_Resize*)suil_instance_extension_data(
+                m_ui_instance, LV2_UI__resize);
+            //  show_iface = _idata->lv2.ext.ui_showInterface = (const LV2UI_Show_Interface*)suil_instance_extension_data(
+            //    m_ui_instance, LV2_UI__showInterface);
         }
-#endif
     }
     else
     {
@@ -2719,6 +2720,32 @@ Plugin_Module::custom_update_ui()
                 m_ui_closed = true;
             }
             break;
+            
+            case ConfigureNotify:
+            {
+                if (event.xconfigure.window == x_parent_win)
+                {
+                    const uint width  = static_cast<uint>(event.xconfigure.width);
+                    const uint height = static_cast<uint>(event.xconfigure.height);
+                    
+                    DMESSAGE("Resize X_parent: W = %d: H = %d", width, height);
+#if 0
+                    LV2UI_Resize* resize = NULL;
+                    resize = (LV2UI_Resize*)_idata->lv2.ext.resize_ui;
+                    
+                    if(resize)
+                    {
+                        DMESSAGE("Sent resize to plugin UI W = %d: H = %d", width, height);
+                        resize->ui_resize(resize->handle, width, height);
+                    }
+#endif
+                    if(x_child_win)
+                    {
+                        XResizeWindow(x_display, x_child_win, width, height);
+                    }
+                }
+                break;
+            }
         }
     }
     
@@ -2780,7 +2807,7 @@ Plugin_Module::init_x()
     /* this routine determines which types of input are allowed in
        the input.  see the appropriate section for details...
     */
-    XSelectInput(x_display, x_parent_win, ExposureMask|ButtonPressMask|KeyPressMask);
+    XSelectInput(x_display, x_parent_win, ExposureMask|ButtonPressMask|KeyPressMask|StructureNotifyMask);
     
     XGrabKey(x_display, X11Key_Escape, AnyModifier, x_parent_win, 1, GrabModeAsync, GrabModeAsync);
     
@@ -2805,6 +2832,30 @@ Plugin_Module::close_x()
     x_parent_win = 0;
     XCloseDisplay(x_display);
     x_display = NULL;
+}
+
+Window
+Plugin_Module::getChildWindow() const
+{
+    if(x_display == NULL)
+        return 0;
+
+    if(x_parent_win == 0)
+        return 0;
+
+    Window rootWindow, parentWindow, ret = 0;
+    Window* childWindows = nullptr;
+    uint numChildren = 0;
+
+    XQueryTree(x_display, x_parent_win, &rootWindow, &parentWindow, &childWindows, &numChildren);
+
+    if (numChildren > 0 && childWindows != nullptr)
+    {
+        ret = childWindows[0];
+        XFree(childWindows);
+    }
+
+    return ret;
 }
 
 #endif  // USE_SUIL
