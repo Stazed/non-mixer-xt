@@ -379,6 +379,14 @@ Plugin_Module::Plugin_Module ( ) : Module( 50, 35, name() )
 
 Plugin_Module::~Plugin_Module ( )
 {
+#ifdef USE_SUIL
+    /* In case the user left the custom ui up */
+    if(!m_ui_closed)
+    {
+        close_custom_ui();
+    }
+#endif
+
 #ifdef LV2_WORKER_SUPPORT
     Fl::remove_timeout(update_ui, this);
     if ( _idata->lv2.ext.worker )
@@ -2763,14 +2771,7 @@ Plugin_Module::custom_update_ui()
     }
     else
     {
-        DMESSAGE("Closing Custom Interface");
-        close_x();
-        Fl::remove_timeout(&Plugin_Module::custom_update_ui, this);
-        suil_instance_free(m_ui_instance);
-        m_ui_instance = NULL;
-
-        suil_host_free(m_ui_host);
-        m_ui_host = NULL;
+        close_custom_ui();
     }
 }
 
@@ -2828,10 +2829,30 @@ Plugin_Module::init_x()
 void
 Plugin_Module::close_x()
 {
-    XDestroyWindow(x_display, x_parent_win);
-    x_parent_win = 0;
-    XCloseDisplay(x_display);
-    x_display = NULL;
+    if(x_parent_win != 0)
+    {
+        XDestroyWindow(x_display, x_parent_win);
+        x_parent_win = 0;
+    }
+
+    if(x_display != NULL)
+    {
+        XCloseDisplay(x_display);
+        x_display = NULL;
+    }
+}
+
+void
+Plugin_Module::close_custom_ui()
+{
+    DMESSAGE("Closing Custom Interface");
+    close_x();
+    Fl::remove_timeout(&Plugin_Module::custom_update_ui, this);
+    suil_instance_free(m_ui_instance);
+    m_ui_instance = NULL;
+
+    suil_host_free(m_ui_host);
+    m_ui_host = NULL;
 }
 
 Window

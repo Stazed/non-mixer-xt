@@ -526,6 +526,7 @@ public:
     static void custom_update_ui ( void * );
     void init_x();
     void close_x();
+    void close_custom_ui();
     Window getChildWindow() const;
 #endif
 
