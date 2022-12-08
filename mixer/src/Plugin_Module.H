@@ -74,6 +74,7 @@ enum Plugin_Module_URIs {
 #endif
 #ifdef USE_SUIL
     Plugin_Module_URI_Resize,
+    Plugin_Module_URI_Scale,
 #endif
     Plugin_Module_URI_Count
 };
@@ -85,6 +86,7 @@ struct Plugin_Module_Options {
         MaxBlockLenth = 0,
         MinBlockLenth,
         SampleRate,
+        ScaleFactor,
         Null,
         Count
     };
@@ -92,6 +94,7 @@ struct Plugin_Module_Options {
     int maxBufferSize;
     int minBufferSize;
     float sampleRate;
+    float uiScale;
     LV2_Options_Option opts[Count];
 
     Plugin_Module_Options()
@@ -99,6 +102,7 @@ struct Plugin_Module_Options {
         maxBufferSize = 0;
         minBufferSize = 0;
         sampleRate = 0.0;
+        uiScale = 1.0f;
 
         LV2_Options_Option& optMaxBlockLenth(opts[MaxBlockLenth]);
         optMaxBlockLenth.context = LV2_OPTIONS_INSTANCE;
@@ -123,6 +127,14 @@ struct Plugin_Module_Options {
         optSampleRate.size    = sizeof(float);
         optSampleRate.type    = Plugin_Module_URI_Atom_Float;
         optSampleRate.value   = &sampleRate;
+
+        LV2_Options_Option& optScaleFactor(opts[ScaleFactor]);
+        optScaleFactor.context = LV2_OPTIONS_INSTANCE;
+        optScaleFactor.subject = 0;
+        optScaleFactor.key     = Plugin_Module_URI_Scale;
+        optScaleFactor.size    = sizeof(float);
+        optScaleFactor.type    = Plugin_Module_URI_Atom_Float;
+        optScaleFactor.value   = &uiScale;
 
         LV2_Options_Option& optNull(opts[Null]);
         optNull.context = LV2_OPTIONS_INSTANCE;
@@ -207,6 +219,7 @@ struct ImplementationData
         lv2.mappedURIs.push_back(LV2_BUF_SIZE__maxBlockLength); // Plugin_Module_URI_BufSize_MaxLength
         lv2.mappedURIs.push_back(LV2_BUF_SIZE__minBlockLength); // Plugin_Module_URI_BufSize_MinLength
         lv2.mappedURIs.push_back(LV2_PARAMETERS__sampleRate);   // Plugin_Module_URI_Parameter_SampleRate
+        lv2.mappedURIs.push_back(LV2_UI__scaleFactor);
 #ifdef LV2_WORKER_SUPPORT
         lv2.mappedURIs.push_back(LV2_ATOM__Sequence);
         lv2.mappedURIs.push_back(LV2_ATOM__Chunk);
@@ -287,6 +300,8 @@ _Pragma("GCC diagnostic pop")
             return Plugin_Module_URI_BufSize_MinLength;
         if ( ::strcmp(uri, LV2_PARAMETERS__sampleRate) == 0 )
             return Plugin_Module_URI_Parameter_SampleRate;
+        if ( ::strcmp(uri, LV2_UI__scaleFactor) == 0 )
+            return Plugin_Module_URI_Scale;
 #ifdef LV2_WORKER_SUPPORT
         if ( ::strcmp(uri, LV2_ATOM__Sequence) == 0 )
             return Plugin_Module_URI_Worker_Schedule;
