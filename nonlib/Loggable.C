@@ -672,7 +672,7 @@ Loggable::log ( const char *fmt, ... )
 
     if ( NULL == buf )
     {
-        buf_size = 4096;    // Some of the LV2s have 300+ parameters (LSP), was 1024
+        buf_size = 8192;    // Some of the LV2s have 500+ parameters (LSP), was 1024
         buf = (char*)malloc( buf_size );
     }
 
