@@ -2445,21 +2445,27 @@ Plugin_Module::try_custom_ui()
     _idata->lv2.ext.ext_data.data_access =
         lilv_instance_get_descriptor(m_instance)->extension_data;
     const LV2UI_Idle_Interface* idle_iface = NULL;
-  //  const LV2UI_Show_Interface* show_iface = NULL; 
+    const LV2UI_Show_Interface* show_iface = NULL; 
     
-    if( custom_ui_instantiate("http://lv2plug.in/ns/extensions/ui#X11UI") )
+    if( custom_ui_instantiate() )
     {
         if(m_ui_instance)
         {
-            x_child_win = getChildWindow();
-
             idle_iface = _idata->lv2.ext.idle_iface = (const LV2UI_Idle_Interface*)suil_instance_extension_data(
                 m_ui_instance, LV2_UI__idleInterface);
 
             _idata->lv2.ext.resize_ui = (const LV2UI_Resize*)suil_instance_extension_data(
                 m_ui_instance, LV2_UI__resize);
-            //  show_iface = _idata->lv2.ext.ui_showInterface = (const LV2UI_Show_Interface*)suil_instance_extension_data(
-            //    m_ui_instance, LV2_UI__showInterface);
+
+            if( m_use_showInterface )
+            {
+              show_iface = _idata->lv2.ext.ui_showInterface = (const LV2UI_Show_Interface*)suil_instance_extension_data(
+                m_ui_instance, LV2_UI__showInterface);
+            }
+            else    // X11 embedded
+            {
+                x_child_win = getChildWindow();
+            }
         }
     }
     else
@@ -2471,118 +2477,80 @@ Plugin_Module::try_custom_ui()
     update_ui_settings();
 
     /* Run the idle interface */
-    if (idle_iface) 
+    if (idle_iface && !m_use_showInterface) 
     {
-        DMESSAGE("GOT idle_iface");
-
-      //  show_iface->show(suil_instance_get_handle(m_ui_instance));
-
+        DMESSAGE("Running embedded X custom UI");
         m_ui_closed = false;
 
         Fl::add_timeout( 0.03f, &Plugin_Module::custom_update_ui, this );
 
         return true;
     }
+    else if(m_use_showInterface)
+    {
+        if(idle_iface && show_iface)
+        {
+            DMESSAGE("Running shoeInterface");
+            show_iface->show(suil_instance_get_handle(m_ui_instance));
+            m_ui_closed = false;
+
+            Fl::add_timeout( 0.03f, &Plugin_Module::custom_update_ui, this );
+            return true;
+        }
+    }
 
     return false;
 }
 
 bool
-Plugin_Module::custom_ui_instantiate(const char* native_ui_type)
+Plugin_Module::custom_ui_instantiate()
 {
     m_ui_host = suil_host_new(send_to_plugin, ui_port_index, NULL, NULL);
-    
-    // Get a plugin UI
+
+    /* Get a plugin UI */
     _idata->lv2.ext.uis = lilv_plugin_get_uis(m_plugin);
-#if 0
-    LilvNode*   lv2_extensionData = lilv_new_uri(m_lilvWorld, LV2_CORE__extensionData);
-    LilvNode*   ui_showInterface = lilv_new_uri(m_lilvWorld, LV2_UI__showInterface);
 
-    // Try to find a UI with ui:showInterface
-    if(_idata->lv2.ext.uis)
-    {
-        LILV_FOREACH (uis, u, _idata->lv2.ext.uis)
-        {
-            const LilvUI*   ui      = lilv_uis_get(_idata->lv2.ext.uis, u);
-            const LilvNode* ui_node = lilv_ui_get_uri(ui);
+    m_use_showInterface = false;
+    const char* native_ui_type;
 
-            lilv_world_load_resource(m_lilvWorld, ui_node);
+    /* Try to find an embeddable X11 UI */
+    _idata->lv2.ext.ui = try_X11_ui("http://lv2plug.in/ns/extensions/ui#X11UI");
 
-            const bool supported = lilv_world_ask(m_lilvWorld,
-                                                  ui_node,
-                                                  lv2_extensionData,
-                                                  ui_showInterface);
+    if(_idata->lv2.ext.ui)
+        native_ui_type = "http://lv2plug.in/ns/extensions/ui#X11UI";
 
-            lilv_world_unload_resource(m_lilvWorld, ui_node);
+    void * parent = NULL;
 
-            if (supported)
-            {
-                _idata->lv2.ext.ui = ui;
-                DMESSAGE("GOT _idata->lv2.ext.ui");
-            }
-            else
-            {
-                WARNING("NO CUSTOM UI TOP");
-                return false;
-            }
-        }
-    }
-    else
-    {
-        WARNING("NO CUSTOM UI TOP");
-        return false;
-    }
-
-    if (native_ui_type)
-    {
-        LilvNode* host_type = lilv_new_uri(m_lilvWorld, native_ui_type);
-    
-        if (!lilv_ui_is_supported(
-                  _idata->lv2.ext.ui, suil_ui_supported, host_type, &_idata->lv2.ext.ui_type))
-        {
-              _idata->lv2.ext.ui = NULL;
-        }
-        if(host_type)
-            lilv_node_free(host_type);
-    }
-#else
-    // Try to find an embeddable UI
-    if (native_ui_type)
-    {
-        LilvNode* host_type = lilv_new_uri(m_lilvWorld, native_ui_type);
-
-        LILV_FOREACH (uis, u, _idata->lv2.ext.uis)
-        {
-            const LilvUI*   ui   = lilv_uis_get(_idata->lv2.ext.uis, u);
-            const bool      supported =
-              lilv_ui_is_supported(ui, suil_ui_supported, host_type, &_idata->lv2.ext.ui_type);
-
-            if (supported)
-            {
-                DMESSAGE("GOT UI");
-                lilv_node_free(host_type);
-                host_type = NULL;
-                _idata->lv2.ext.ui = ui;
-            }
-        }
-
-        if(host_type)
-            lilv_node_free(host_type);
-    }
-#endif
+    /* If plugin UI does not support X11 embedded, so try showInterface - Calf only with GtkUI */
     if(!_idata->lv2.ext.ui)
     {
-        WARNING("NO CUSTOM UI");
-        return false;
+        MESSAGE("Native X11 not found, trying LV2_UI__showInterface");
+        _idata->lv2.ext.ui = try_showInterface_ui("http://lv2plug.in/ns/extensions/ui#GtkUI");
+
+        /* We got a show interface UI*/
+        if(_idata->lv2.ext.ui)
+        {
+            m_use_showInterface = true;
+            native_ui_type = "http://lv2plug.in/ns/extensions/ui#GtkUI";
+            DMESSAGE("GOT show interface");
+        }
+        else    // We don't support this UI
+        {
+            MESSAGE("NO CUSTOM UI");
+            return false;
+        }
     }
 
-    /* We seem to have an accepted ui, so lets try to embed it in an X window*/
-    init_x();
+    /* If embedded X11 */
+    if(!m_use_showInterface)
+    {
+        /* We seem to have an accepted ui, so lets try to embed it in an X window*/
+        init_x();
 
-    auto parent = (LV2UI_Widget) x_parent_win;
+        parent = (LV2UI_Widget) x_parent_win;
+    }
 
-    /* Create our supported features array */
-    const LV2_Feature parent_feature = {LV2_UI__parent, parent};
+    const LV2_Feature parent_feature {LV2_UI__parent, parent};
 
     const LV2_Feature instance_feature = {
         LV2_INSTANCE_ACCESS_URI, lilv_instance_get_handle(m_instance)};
@@ -2636,6 +2604,95 @@ Plugin_Module::custom_ui_instantiate(const char* native_ui_type)
     }
 
     return true;
+}
+
+const LilvUI*
+Plugin_Module::try_X11_ui (const char* native_ui_type)
+{
+    const LilvUI* native_ui = NULL;
+
+    if (native_ui_type)
+    {
+        LilvNode* host_type = lilv_new_uri(m_lilvWorld, native_ui_type);
+
+        LILV_FOREACH (uis, u, _idata->lv2.ext.uis)
+        {
+            const LilvUI*   ui   = lilv_uis_get(_idata->lv2.ext.uis, u);
+            const bool      supported =
+              lilv_ui_is_supported(ui, suil_ui_supported, host_type, &_idata->lv2.ext.ui_type);
+
+            if (supported)
+            {
+                DMESSAGE("GOT UI");
+                lilv_node_free(host_type);
+                host_type = NULL;
+                native_ui = ui;
+            }
+        }
+
+        if(host_type)
+            lilv_node_free(host_type);
+    }
+
+    return native_ui;
+}
+
+const LilvUI*
+Plugin_Module::try_showInterface_ui(const char* native_ui_type)
+{
+    return NULL;    // FIXME disabled for now, Calf plugins cause all X11 plugins to crash when the X11 ui is closed.
+
+    LilvNode*   lv2_extensionData = lilv_new_uri(m_lilvWorld, LV2_CORE__extensionData);
+    LilvNode*   ui_showInterface = lilv_new_uri(m_lilvWorld, LV2_UI__showInterface);
+    const LilvUI* native_ui = NULL;
+
+    /* Try to find a UI with ui:showInterface */
+    if(_idata->lv2.ext.uis)
+    {
+        LILV_FOREACH (uis, u, _idata->lv2.ext.uis)
+        {
+            const LilvUI*   ui      = lilv_uis_get(_idata->lv2.ext.uis, u);
+            const LilvNode* ui_node = lilv_ui_get_uri(ui);
+
+            lilv_world_load_resource(m_lilvWorld, ui_node);
+
+            const bool supported = lilv_world_ask(m_lilvWorld,
+                                                  ui_node,
+                                                  lv2_extensionData,
+                                                  ui_showInterface);
+
+            lilv_world_unload_resource(m_lilvWorld, ui_node);
+
+            if (supported)
+            {
+                native_ui = ui;
+                DMESSAGE("GOT _idata->lv2.ext.ui");
+            }
+            else
+            {
+                WARNING("NO CUSTOM UI TOP");
+                return NULL;
+            }
+        }
+    }
+    else
+    {
+        WARNING("NO CUSTOM UI TOP");
+        return NULL;
+    }
+
+    LilvNode* host_type = lilv_new_uri(m_lilvWorld, native_ui_type);
+
+    if (!lilv_ui_is_supported(
+              native_ui, suil_ui_supported, host_type, &_idata->lv2.ext.ui_type))
+    {
+          native_ui = NULL;
+    }
+
+    if(host_type)
+        lilv_node_free(host_type);
+
+    return native_ui;
 }
 
 bool
@@ -2702,61 +2759,64 @@ Plugin_Module::custom_update_ui ( void *v )
 void
 Plugin_Module::custom_update_ui()
 {
-    for (XEvent event; XPending(x_display) > 0;)
+    if(!m_use_showInterface)    // X11 embedded
     {
-        XNextEvent(x_display, &event);
-
-        char* type = nullptr;
-        
-        switch (event.type)
+        for (XEvent event; XPending(x_display) > 0;)
         {
-            case ClientMessage:
-            type = XGetAtomName(x_display, event.xclient.message_type);
-            
-            if(type == nullptr)
-                continue;
+            XNextEvent(x_display, &event);
 
-            if (strcmp(type, "WM_PROTOCOLS") == 0)
-            {
-                m_ui_closed = true;
-            }
-            break;
+            char* type = nullptr;
 
-            case KeyRelease:
-            if (event.xkey.keycode == X11Key_Escape)
+            switch (event.type)
             {
-                m_ui_closed = true;
-            }
-            break;
-            
-            case ConfigureNotify:
-            {
-                if (event.xconfigure.window == x_parent_win)
+                case ClientMessage:
+                type = XGetAtomName(x_display, event.xclient.message_type);
+
+                if(type == nullptr)
+                    continue;
+
+                if (strcmp(type, "WM_PROTOCOLS") == 0)
                 {
-                    const uint width  = static_cast<uint>(event.xconfigure.width);
-                    const uint height = static_cast<uint>(event.xconfigure.height);
-                    
-                    DMESSAGE("Resize X_parent: W = %d: H = %d", width, height);
-#if 0
-                    LV2UI_Resize* resize = NULL;
-                    resize = (LV2UI_Resize*)_idata->lv2.ext.resize_ui;
-                    
-                    if(resize)
-                    {
-                        DMESSAGE("Sent resize to plugin UI W = %d: H = %d", width, height);
-                        resize->ui_resize(resize->handle, width, height);
-                    }
-#endif
-                    if(x_child_win)
-                    {
-                        XResizeWindow(x_display, x_child_win, width, height);
-                    }
+                    m_ui_closed = true;
                 }
                 break;
+
+                case KeyRelease:
+                if (event.xkey.keycode == X11Key_Escape)
+                {
+                    m_ui_closed = true;
+                }
+                break;
+
+                case ConfigureNotify:
+                {
+                    if (event.xconfigure.window == x_parent_win)
+                    {
+                        const uint width  = static_cast<uint>(event.xconfigure.width);
+                        const uint height = static_cast<uint>(event.xconfigure.height);
+
+                        DMESSAGE("Resize X_parent: W = %d: H = %d", width, height);
+    #if 0
+                        LV2UI_Resize* resize = NULL;
+                        resize = (LV2UI_Resize*)_idata->lv2.ext.resize_ui;
+
+                        if(resize)
+                        {
+                            DMESSAGE("Sent resize to plugin UI W = %d: H = %d", width, height);
+                            resize->ui_resize(resize->handle, width, height);
+                        }
+    #endif
+                        if(x_child_win)
+                        {
+                            XResizeWindow(x_display, x_child_win, width, height);
+                        }
+                    }
+                    break;
+                }
             }
         }
     }
-    
+
     if (_idata->lv2.ext.idle_iface->idle(suil_instance_get_handle(m_ui_instance)))
     {
         DMESSAGE("INTERFACE CLOSED");
@@ -2846,8 +2906,18 @@ void
 Plugin_Module::close_custom_ui()
 {
     DMESSAGE("Closing Custom Interface");
-    close_x();
     Fl::remove_timeout(&Plugin_Module::custom_update_ui, this);
+
+    if( m_use_showInterface )
+    {
+        _idata->lv2.ext.ui_showInterface->hide(suil_instance_get_handle(m_ui_instance));
+        m_ui_closed = true;
+    }
+    else
+    {
+        close_x();
+    }
+
     suil_instance_free(m_ui_instance);
     m_ui_instance = NULL;
 

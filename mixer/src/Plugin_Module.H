@@ -419,6 +419,7 @@ public:
   SuilHost*     m_ui_host;     ///< Plugin UI host support
   SuilInstance* m_ui_instance; ///< Plugin UI instance (shared library)
   bool          m_ui_closed;
+  bool          m_use_showInterface;
 
   /* X window for custom plugin ui */
   Display *x_display;
@@ -533,7 +534,9 @@ public:
     
 #ifdef USE_SUIL
     bool try_custom_ui();
-    bool custom_ui_instantiate(const char* native_ui_type);
+    bool custom_ui_instantiate();
+    const LilvUI* try_X11_ui (const char* native_ui_type);
+    const LilvUI* try_showInterface_ui(const char* native_ui_type);
     bool send_to_custom_ui( uint32_t port_index, uint32_t size, uint32_t type, const void* buf );
     void update_custom_ui();
     void update_ui_settings();
