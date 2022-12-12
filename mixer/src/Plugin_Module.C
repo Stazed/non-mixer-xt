@@ -48,6 +48,7 @@
 #include <algorithm>
 
 static const uint X11Key_Escape = 9;
+#  define MSG_BUFFER_SIZE 1024
 
 #ifdef PRESET_SUPPORT
 // LV2 Presets: port value setter.
@@ -123,21 +124,21 @@ update_ui( void *data)
     Plugin_Module* plug_ui =  static_cast<Plugin_Module *> (data);
     /* Emit UI events. */
     ControlChange ev;
-    const size_t  space = zix_ring_read_space( plug_ui->_idata->lv2.ext.plugin_events );
+    const size_t  space = zix_ring_read_space( plug_ui->_idata->lv2.ext.plugin_to_ui );
     for (size_t i = 0;
          i + sizeof(ev) < space;
          i += sizeof(ev) + ev.size)
     {
         DMESSAGE("Reading .plugin_events");
         /* Read event header to get the size */
-        zix_ring_read( plug_ui->_idata->lv2.ext.plugin_events, (char*)&ev, sizeof(ev));
+        zix_ring_read( plug_ui->_idata->lv2.ext.plugin_to_ui, (char*)&ev, sizeof(ev));
 
         /* Resize read buffer if necessary */
         plug_ui->_idata->lv2.ext.ui_event_buf = realloc(plug_ui->_idata->lv2.ext.ui_event_buf, ev.size);
         void* const buf = plug_ui->_idata->lv2.ext.ui_event_buf;
 
         /* Read event body */
-        zix_ring_read( plug_ui->_idata->lv2.ext.plugin_events, (char*)buf, ev.size);
+        zix_ring_read( plug_ui->_idata->lv2.ext.plugin_to_ui, (char*)buf, ev.size);
 
         plug_ui->ui_port_event( ev.index, ev.size, ev.protocol, buf );
     }
@@ -396,8 +397,8 @@ Plugin_Module::~Plugin_Module ( )
         non_worker_destroy();
     }
 
-    zix_ring_free(_idata->lv2.ext.plugin_events);
-    zix_ring_free(_idata->lv2.ext.ui_events);
+    zix_ring_free(_idata->lv2.ext.plugin_to_ui);
+    zix_ring_free(_idata->lv2.ext.ui_to_plugin);
 #endif
 
     log_destroy();
@@ -562,11 +563,11 @@ _Pragma("GCC diagnostic pop")
     _idata->lv2.features[Plugin_Feature_Worker_Schedule]->data = m_lv2_schedule;
 
     /* Create Plugin <=> UI communication buffers */
-    _idata->lv2.ext.ui_events = zix_ring_new(ATOM_BUFFER_SIZE);
-    _idata->lv2.ext.plugin_events = zix_ring_new(ATOM_BUFFER_SIZE);
+    _idata->lv2.ext.ui_to_plugin = zix_ring_new(ATOM_BUFFER_SIZE);
+    _idata->lv2.ext.plugin_to_ui = zix_ring_new(ATOM_BUFFER_SIZE);
     
-    zix_ring_mlock(_idata->lv2.ext.ui_events);
-    zix_ring_mlock(_idata->lv2.ext.plugin_events);
+    zix_ring_mlock(_idata->lv2.ext.ui_to_plugin);
+    zix_ring_mlock(_idata->lv2.ext.plugin_to_ui);
 #endif
 #ifdef USE_SUIL
     _idata->lv2.features[Plugin_Feature_Resize]->URI  = LV2_UI__resize;
@@ -602,6 +603,7 @@ _Pragma("GCC diagnostic pop")
     m_ui_host = NULL;
     m_ui_instance = NULL;
     m_ui_closed = true;
+    m_use_showInterface = false;
     x_display = NULL;
     x_parent_win = 0;
     x_child_win = 0;
@@ -1798,12 +1800,12 @@ Plugin_Module::load_lv2 ( const char* uri )
 #ifdef LV2_WORKER_SUPPORT
     for (unsigned int i = 0; i < atom_input.size(); ++i)
     {
-        set_lv2_port_properties( &atom_input[i] );
+        set_lv2_port_properties( &atom_input[i], true );
     }
     
     for (unsigned int i = 0; i < atom_output.size(); ++i)
     {
-        set_lv2_port_properties( &atom_output[i] );
+        set_lv2_port_properties( &atom_output[i], false );
     }
     
     if ( _atom_ins || _atom_outs )
@@ -2136,11 +2138,11 @@ Plugin_Module::send_to_ui( uint32_t port_index, uint32_t type, uint32_t size, co
     atom->type = type;
     atom->size = size;
 
-    if (zix_ring_write_space( _idata->lv2.ext.plugin_events ) >= sizeof(evbuf) + size)
+    if (zix_ring_write_space( _idata->lv2.ext.plugin_to_ui ) >= sizeof(evbuf) + size)
     {
-        DMESSAGE("Write to .plugin_events");
-        zix_ring_write(_idata->lv2.ext.plugin_events, evbuf, sizeof(evbuf));
-        zix_ring_write(_idata->lv2.ext.plugin_events, (const char*)body, size);
+        DMESSAGE("Write to .plugin_events type = %d", type);
+        zix_ring_write(_idata->lv2.ext.plugin_to_ui, evbuf, sizeof(evbuf));
+        zix_ring_write(_idata->lv2.ext.plugin_to_ui, (const char*)body, size);
         return true;
     }
     else
@@ -2194,10 +2196,78 @@ Plugin_Module::ui_port_event( uint32_t port_index, uint32_t buffer_size, uint32_
         }
         else
         {
-            WARNING("Unknown object type?");
+            WARNING("Unknown object type = %d: ID = %d?", obj->body.otype, obj->body.id);
         }
       //  updating = false; // FIXME
     }
+}
+
+void
+Plugin_Module::send_atom_to_plugin( uint32_t port_index, uint32_t buffer_size, const void* buffer)
+{
+    DMESSAGE("Port Index B4 = %d", port_index);
+    for ( unsigned int i = 0; i < atom_input.size(); ++i )
+    {
+        if ( port_index == atom_input[i].hints.plug_port_index )
+        {
+            port_index = i;
+            DMESSAGE("Port Index AFTER = %d", port_index);
+            break;
+        }
+    }
+
+    const LV2_Atom* const atom = (const LV2_Atom*)buffer;
+    if (buffer_size < sizeof(LV2_Atom))
+    {
+        DMESSAGE("UI wrote impossible atom size");
+    }
+    else if (sizeof(LV2_Atom) + atom->size != buffer_size)
+    {
+        DMESSAGE("UI wrote corrupt atom size");
+    }
+    else
+    {
+        write_atom_event(port_index, atom->size, atom->type, atom + 1U);
+    }
+}
+
+static int
+write_control_change(   ZixRing* const    target,
+                        const void* const header,
+                        const uint32_t    header_size,
+                        const void* const body,
+                        const uint32_t    body_size)
+{
+    if (zix_ring_write_space( target ) >= header_size + body_size)
+    {
+        DMESSAGE("Write to .plugin_events ----- ");
+        zix_ring_write(target, header, header_size);
+        zix_ring_write(target, body, body_size);
+        return 0;
+    }
+    else
+    {
+        WARNING( "Plugin => UI buffer overflow!" );
+        return 1;
+    }
+}
+
+int
+Plugin_Module::write_atom_event(const uint32_t    port_index,
+                 const uint32_t    size,
+                 const LV2_URID    type,
+                 const void* const body)
+{
+    typedef struct {
+    ControlChange2 change;
+    LV2_Atom      atom;
+    } Header;
+
+    const Header header = {
+    {port_index, _idata->_lv2_urid_map(_idata, LV2_ATOM__eventTransfer), sizeof(LV2_Atom) + size},
+    {size, type}};
+
+    return write_control_change(_idata->lv2.ext.ui_to_plugin, &header, sizeof(header), body, size);
 }
 
 void
@@ -2232,7 +2302,7 @@ Plugin_Module::send_file_to_plugin( int port, const std::string &filename )
     ev->protocol =  _idata->_lv2_urid_map(_idata, LV2_ATOM__eventTransfer);
     ev->size     =  buffer_size;
     memcpy(ev->body, (const void*) atom, buffer_size);
-    zix_ring_write( _idata->lv2.ext.ui_events, buf2, sizeof(buf2));
+    zix_ring_write( _idata->lv2.ext.ui_to_plugin, buf2, sizeof(buf2));
 
     /*jalv_ui_write(jalv,
                 jalv->control_in,   // port atom_input[port].hints.control_in;
@@ -2241,23 +2311,37 @@ Plugin_Module::send_file_to_plugin( int port, const std::string &filename )
                 atom);*/
 }
 
-// jalv_apply_ui_events
 void
 Plugin_Module::apply_ui_events( uint32_t nframes, unsigned int port )
 {
-    ControlChange ev;
-    const size_t  space = zix_ring_read_space(_idata->lv2.ext.ui_events);
+    ControlChange2 ev  = {0U, 0U, 0U};
+    const size_t  space = zix_ring_read_space(_idata->lv2.ext.ui_to_plugin);
 
     for (size_t i = 0; i < space; i += sizeof(ev) + ev.size)
     {
-        zix_ring_read(_idata->lv2.ext.ui_events, (char*)&ev, sizeof(ev));
-        char body[ev.size];
-        if (zix_ring_read(_idata->lv2.ext.ui_events, body, ev.size) != ev.size)
+        DMESSAGE("APPLY UI");
+        if(zix_ring_read(_idata->lv2.ext.ui_to_plugin, (char*)&ev, sizeof(ev)) != sizeof(ev))
         {
-            DMESSAGE("error: Error reading from UI ring buffer");
+            DMESSAGE("Failed to read header from UI ring buffer\n");
             break;
         }
+
+        struct
+        {
+            union
+            {
+              LV2_Atom atom;
+              float    control;
+            } head;
+            uint8_t body[MSG_BUFFER_SIZE];
+        } buffer;
         
+        if (zix_ring_read(_idata->lv2.ext.ui_to_plugin, &buffer, ev.size) != ev.size)
+        {
+            DMESSAGE("Failed to read from UI ring buffer\n");
+            break;
+        }
+
 /*        assert(ev.index < jalv->num_ports);
         struct Port* const port = &jalv->ports[ev.index];
         if (ev.protocol == 0)
@@ -2268,11 +2352,15 @@ Plugin_Module::apply_ui_events( uint32_t nframes, unsigned int port )
 */
         else if (ev.protocol == _idata->_lv2_urid_map(_idata, LV2_ATOM__eventTransfer))
         {
-            DMESSAGE("LV2 ATOM eventTransfer");
             LV2_Evbuf_Iterator    e    = lv2_evbuf_end( atom_input[port].event_buffer() ); 
-            const LV2_Atom* const atom = (const LV2_Atom*)body;
+            const LV2_Atom* const atom = &buffer.head.atom;
+
+            DMESSAGE("LV2 ATOM eventTransfer atom type = %d", atom->type);
+
             lv2_evbuf_write(&e, nframes, 0, atom->type, atom->size,
                             (const uint8_t*)LV2_ATOM_BODY_CONST(atom));
+
+            lv2_evbuf_reset(atom_input[port].event_buffer(), false);
         }
         else
         {
@@ -2282,10 +2370,8 @@ Plugin_Module::apply_ui_events( uint32_t nframes, unsigned int port )
 }
 
 void
-Plugin_Module::set_lv2_port_properties (Port * port )
+Plugin_Module::set_lv2_port_properties (Port * port, bool writable )
 {
-//    bool writable = false;   // FIXME
-
     const LilvPlugin* plugin         = m_plugin;
     LilvWorld*        world          = m_lilvWorld;
     LilvNode*         patch_writable = lilv_new_uri(world, LV2_PATCH__writable);
@@ -2295,13 +2381,16 @@ Plugin_Module::set_lv2_port_properties (Port * port )
     LilvNodes* properties = lilv_world_find_nodes(
     world,
     lilv_plugin_get_uri(plugin),
-    patch_writable,
+    writable ? patch_writable : patch_readable,
     NULL);
     
     if( ! properties )
     {
         DMESSAGE("Atom port has no properties");
         port->hints.visible = false;
+        lilv_nodes_free(properties);
+        lilv_node_free(patch_readable);
+        lilv_node_free(patch_writable);
         return;
     }
 
@@ -2313,7 +2402,7 @@ Plugin_Module::set_lv2_port_properties (Port * port )
 
         if (lilv_world_ask(world,
                         lilv_plugin_get_uri(plugin),
-                        patch_writable,
+                        writable ? patch_writable : patch_readable,
                         property))
         {
             port->_property = property;
@@ -2421,7 +2510,8 @@ send_to_plugin(void* const handle,              // Plugin_Module
     }
     else if (protocol == pLv2Plugin->_idata->_lv2_urid_map(pLv2Plugin->_idata, LV2_ATOM__eventTransfer)) 
     {
-        pLv2Plugin->ui_port_event( port_index, buffer_size, protocol, buffer );
+        DMESSAGE("UI SENT LV2_ATOM__eventTransfer");
+        pLv2Plugin->send_atom_to_plugin( port_index, buffer_size, buffer );
     }
     else
     {
@@ -2722,7 +2812,7 @@ Plugin_Module::update_custom_ui()
         suil_instance_port_event(
             m_ui_instance, port_index, sizeof(float), 0, &value );
     }
-    
+
     // FIXME need to also do for atom ports
 }
 

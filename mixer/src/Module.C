@@ -823,7 +823,7 @@ Module::set_parameters ( const char *parameters )
 
 #ifdef LV2_WORKER_SUPPORT
 /**
- * Gets the pluging file name and path if applicable.
+ * Gets the plugin file name and path if applicable.
  * The caller should ensure a valid atom_input[] index and file exists.
  * 
  * @param port_index

@@ -166,8 +166,8 @@ struct ImplementationData
 #ifdef LV2_WORKER_SUPPORT
             ZixRing*                    requests;   ///< Requests to the worker
             ZixRing*                    responses;  ///< Responses from the worker
-            ZixRing*                    plugin_events;  ///< Port events from plugin
-            ZixRing*                    ui_events;      ///< Port events from UI
+            ZixRing*                    plugin_to_ui;   ///< Port events from plugin
+            ZixRing*                    ui_to_plugin;   ///< Port events from UI
             void*                       ui_event_buf;   ///< Buffer for reading UI port events
             void*                       response;   ///< Worker response buffer
             ZixSem                      sem;        ///< Worker semaphore
@@ -176,6 +176,7 @@ struct ImplementationData
 //	const LV2_Worker_Interface* iface;      ///< Plugin worker interface
             bool                        threaded;   ///< Run work in another thread
 #endif
+#ifdef USE_SUIL
             LilvUIs*          uis;          ///< All plugin UIs (RDF data)
             const LilvUI*     ui;           ///< Plugin UI (RDF data)
             const LilvNode*   ui_type;      ///< Plugin UI type (unwrapped)
@@ -183,6 +184,7 @@ struct ImplementationData
             const LV2UI_Idle_Interface* idle_iface;
             const LV2UI_Show_Interface* ui_showInterface;
             const LV2UI_Resize* resize_ui;
+#endif
         } ext;
     } lv2;
 
@@ -527,9 +529,14 @@ public:
     bool send_to_ui( uint32_t port_index, uint32_t type, uint32_t size, const void* body );
     void ui_port_event( uint32_t port_index, uint32_t buffer_size, uint32_t protocol, const void* buffer );
     void send_file_to_plugin( int port, const std::string &filename );
+    void send_atom_to_plugin( uint32_t port_index, uint32_t buffer_size, const void* buffer);
     void apply_ui_events( uint32_t nframes, unsigned int port );
-    void set_lv2_port_properties ( Port * port );
+    void set_lv2_port_properties ( Port * port, bool writable );
     void get_atom_output_events( void );
+    int write_atom_event(const uint32_t    port_index,
+                 const uint32_t    size,
+                 const LV2_URID    type,
+                 const void* const body);
 #endif
     
 #ifdef USE_SUIL
