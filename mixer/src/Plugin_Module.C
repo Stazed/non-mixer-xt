@@ -770,7 +770,7 @@ Plugin_Module::set_control_value(unsigned long port_index, float value)
 
 void 
 Plugin_Module::update_control_parameters(int choice)
-{    
+{
     const Lv2WorldClass& lv2World = Lv2WorldClass::getInstance();
 
     DMESSAGE("PresetList[%d].URI = %s", choice, PresetList[choice].URI);
@@ -2360,7 +2360,7 @@ Plugin_Module::apply_ui_events( uint32_t nframes, unsigned int port )
             lv2_evbuf_write(&e, nframes, 0, atom->type, atom->size,
                             (const uint8_t*)LV2_ATOM_BODY_CONST(atom));
 
-            lv2_evbuf_reset(atom_input[port].event_buffer(), false);
+            lv2_evbuf_reset(atom_input[port].event_buffer(), false);    // FIXME
         }
         else
         {
