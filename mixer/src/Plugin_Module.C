@@ -99,23 +99,23 @@ static void mixer_lv2_set_port_value ( const char *port_symbol,
         switch (type)
         {
             case Plugin_Module_URI_Atom_Bool:
-            //CARLA_SAFE_ASSERT_RETURN(size == sizeof(int32_t),);
+            CARLA_SAFE_ASSERT_RETURN(size == sizeof(int32_t),);
             paramValue = *(const int32_t*)value != 0 ? 1.0f : 0.0f;
             break;
             case Plugin_Module_URI_Atom_Double:
-            //CARLA_SAFE_ASSERT_RETURN(size == sizeof(double),);
+            CARLA_SAFE_ASSERT_RETURN(size == sizeof(double),);
             paramValue = static_cast<float>((*(const double*)value));
             break;
             case Plugin_Module_URI_Atom_Int:
-            //CARLA_SAFE_ASSERT_RETURN(size == sizeof(int32_t),);
+            CARLA_SAFE_ASSERT_RETURN(size == sizeof(int32_t),);
             paramValue = static_cast<float>(*(const int32_t*)value);
             break;
             case Plugin_Module_URI_Atom_Float:
-            //CARLA_SAFE_ASSERT_RETURN(size == sizeof(float),);
+            CARLA_SAFE_ASSERT_RETURN(size == sizeof(float),);
             paramValue = *(const float*)value;
             break;
             case Plugin_Module_URI_Atom_Long:
-            //CARLA_SAFE_ASSERT_RETURN(size == sizeof(int64_t),);
+            CARLA_SAFE_ASSERT_RETURN(size == sizeof(int64_t),);
             paramValue = static_cast<float>(*(const int64_t*)value);
             break;
             default:
@@ -2958,15 +2958,6 @@ Plugin_Module::custom_update_ui()
                             if (fChildWindow != 0)
                                 XResizeWindow(fDisplay, fChildWindow, width, height);
                         }
-
-                        LV2UI_Resize* resize = NULL;
-                        resize = (LV2UI_Resize*)_idata->lv2.ext.resize_ui;
-
-                        if(resize)
-                        {
-                            DMESSAGE("Sent resize to plugin UI W = %d: H = %d", width, height);
-                            resize->ui_resize(resize->handle, width, height);
-                        }
                     }
                     else if (fChildWindowMonitoring && event.xconfigure.window == fChildWindow && fChildWindow != 0)
                     {
@@ -3106,6 +3097,8 @@ void
 Plugin_Module::init_x()
 {
 #ifdef USE_CARLA
+    fChildWindowMonitoring = fIsResizable = isUiResizable();
+    
     fDisplay = XOpenDisplay(nullptr);
     CARLA_SAFE_ASSERT_RETURN(fDisplay != nullptr,);
 
@@ -3340,7 +3333,7 @@ Plugin_Module::show_custom_ui()
                 }
 
                 if (width > 1 && height > 1)
-                    setSize(static_cast<uint>(width), static_cast<uint>(height), false, false);
+                    setSize(static_cast<uint>(width), static_cast<uint>(height), false, fIsResizable);
             }
 
             const Atom _xevp = XInternAtom(fDisplay, "_XEventProc", False);
@@ -3417,6 +3410,24 @@ Plugin_Module::setSize(const uint width, const uint height, const bool forceUpda
     if (forceUpdate)
         XSync(fDisplay, False);
 }
+
+bool
+Plugin_Module::isUiResizable() const
+{
+    CARLA_SAFE_ASSERT_RETURN(_idata->lv2.rdf_data != nullptr, false);
+
+    for (uint32_t i=0; i < _idata->lv2.rdf_data->FeatureCount; ++i)
+    {
+        if (std::strcmp(_idata->lv2.rdf_data->Features[i].URI, LV2_UI__fixedSize) == 0)
+            return false;
+
+        if (std::strcmp(_idata->lv2.rdf_data->Features[i].URI, LV2_UI__noUserResize) == 0)
+            return false;
+    }
+
+    return true;
+}
+
 #endif  // USE_CARLA
 #endif  // USE_SUIL
 

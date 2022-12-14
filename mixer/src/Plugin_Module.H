@@ -577,6 +577,7 @@ public:
     void show_custom_ui();
     void hide_custom_ui();
     void setSize(const uint width, const uint height, const bool forceUpdate, const bool resizeChild);
+    bool isUiResizable() const;   
 #else
     void close_x();
 #endif
