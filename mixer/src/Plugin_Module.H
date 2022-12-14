@@ -22,6 +22,7 @@
 #include "Module.H"
 #include "Loggable.H"
 #include "LV2_RDF_Utils.hpp"
+#include "CarlaPluginUI.H"
 #include <ladspa.h>
 #include <lv2/data-access/data-access.h>
 #include "zix/ring.h"
@@ -30,8 +31,13 @@
 #include "lv2/atom-forge.h"
 
 #define PRESET_SUPPORT 1
+#define USE_CARLA 1
 
 #define ATOM_BUFFER_SIZE 4096   // FIXME  /*jalv->opts.buffer_size*/ 
+
+#ifdef USE_CARLA
+typedef void (*EventProcPtr)(XEvent* ev);
+#endif
 
 class Fl_Menu_Button;
 class Thread;
@@ -424,9 +430,23 @@ public:
   bool          m_use_showInterface;
 
   /* X window for custom plugin ui */
+#ifdef USE_CARLA
+    Display* fDisplay;
+    Window   fHostWindow;
+    Window   fChildWindow;
+    bool     fChildWindowConfigured;
+    bool     fChildWindowMonitoring;
+    bool     fIsVisible;
+    bool     fFirstShow;
+    bool     fSetSizeCalledAtLeastOnce;
+    bool     fIsIdling;
+    bool     fIsResizable;
+    EventProcPtr fEventProc;
+#else
   Display *x_display;
   Window x_parent_win;
   Window x_child_win;
+#endif
 #endif
 
 private:
@@ -550,9 +570,16 @@ public:
     void custom_update_ui();
     static void custom_update_ui ( void * );
     void init_x();
-    void close_x();
     void close_custom_ui();
     Window getChildWindow() const;
+
+#ifdef USE_CARLA
+    void show_custom_ui();
+    void hide_custom_ui();
+    void setSize(const uint width, const uint height, const bool forceUpdate, const bool resizeChild);
+#else
+    void close_x();
+#endif
 #endif
 
     LOG_CREATE_FUNC( Plugin_Module );
