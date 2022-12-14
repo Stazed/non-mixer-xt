@@ -19,6 +19,7 @@
 #define CARLA_UTILS_HPP_INCLUDED
 
 #include "CarlaDefines.H"
+#include "debug.h"
 
 #include <cassert>
 #include <cstdarg>
@@ -222,7 +223,7 @@ void carla_stderr2(const char* const fmt, ...) noexcept
 static inline
 void carla_safe_assert(const char* const assertion, const char* const file, const int line) noexcept
 {
-    // FIXME
+    WARNING("Non-mixer assertion failure: \"%s\" in file %s, line %i", assertion, file, line);
     //carla_stderr2("Carla assertion failure: \"%s\" in file %s, line %i", assertion, file, line);
 }
 
@@ -233,6 +234,7 @@ static inline
 void carla_safe_assert_int(const char* const assertion, const char* const file,
                            const int line, const int value) noexcept
 {
+    WARNING("Non-mixer assertion failure: \"%s\" in file %s, line %i, value %i", assertion, file, line, value);
    // carla_stderr2("Carla assertion failure: \"%s\" in file %s, line %i, value %i", assertion, file, line, value);
 }
 
@@ -243,6 +245,7 @@ static inline
 void carla_safe_assert_uint(const char* const assertion, const char* const file,
                             const int line, const uint value) noexcept
 {
+    WARNING("Non-mixer assertion failure: \"%s\" in file %s, line %i, value %u", assertion, file, line, value);
    // carla_stderr2("Carla assertion failure: \"%s\" in file %s, line %i, value %u", assertion, file, line, value);
 }
 
@@ -253,6 +256,7 @@ static inline
 void carla_safe_assert_int2(const char* const assertion, const char* const file,
                             const int line, const int v1, const int v2) noexcept
 {
+    WARNING("Non-mixer assertion failure: \"%s\" in file %s, line %i, v1 %i, v2 %i", assertion, file, line, v1, v2);
    // carla_stderr2("Carla assertion failure: \"%s\" in file %s, line %i, v1 %i, v2 %i", assertion, file, line, v1, v2);
 }
 
@@ -263,6 +267,7 @@ static inline
 void carla_safe_assert_uint2(const char* const assertion, const char* const file,
                              const int line, const uint v1, const uint v2) noexcept
 {
+    WARNING("Non-mixer assertion failure: \"%s\" in file %s, line %i, v1 %u, v2 %u", assertion, file, line, v1, v2);
     //carla_stderr2("Carla assertion failure: \"%s\" in file %s, line %i, v1 %u, v2 %u", assertion, file, line, v1, v2);
 }
 
@@ -273,6 +278,7 @@ static inline
 void carla_custom_safe_assert(const char* const message,
                               const char* const assertion, const char* const file, const int line) noexcept
 {
+    WARNING("Non-mixer assertion failure: %s, condition \"%s\" in file %s, line %i", message, assertion, file, line);
    // carla_stderr2("Carla assertion failure: %s, condition \"%s\" in file %s, line %i", message, assertion, file, line);
 }
 
@@ -285,6 +291,7 @@ void carla_custom_safe_assert(const char* const message,
 static inline
 void carla_safe_exception(const char* const exception, const char* const file, const int line) noexcept
 {
+    WARNING("Non-mixer exception caught: \"%s\" in file %s, line %i", exception, file, line);
    // carla_stderr2("Carla exception caught: \"%s\" in file %s, line %i", exception, file, line);
 }
 

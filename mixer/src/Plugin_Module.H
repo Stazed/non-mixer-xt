@@ -22,7 +22,7 @@
 #include "Module.H"
 #include "Loggable.H"
 #include "LV2_RDF_Utils.hpp"
-#include "CarlaPluginUI.H"
+#include "CarlaUtils.H"
 #include <ladspa.h>
 #include <lv2/data-access/data-access.h>
 #include "zix/ring.h"
