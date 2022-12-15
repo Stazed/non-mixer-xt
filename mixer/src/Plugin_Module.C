@@ -1161,6 +1161,9 @@ Plugin_Module::plugin_instances ( unsigned int n )
 
                             DMESSAGE("ATOM IN event_buffer = %p", lv2_evbuf_get_buffer(atom_input[aji].event_buffer()));
 
+                            /* This sets the capacity */
+                            lv2_evbuf_reset(atom_input[aji].event_buffer(), true);
+
                             aji++;
                         }
                         else if ( LV2_IS_PORT_OUTPUT( _idata->lv2.rdf_data->Ports[k].Types ) )
@@ -2109,16 +2112,6 @@ Plugin_Module::non_worker_init(Plugin_Module* plug,
 void
 Plugin_Module::non_worker_emit_responses( LilvInstance* instance)
 {
-    // FIXME is this the place for this??
-    for (unsigned int i = 0; i < atom_input.size(); ++i)
-    {
-        if ( atom_input[i]._clear_input_buffer )
-        {
-            atom_input[i]._clear_input_buffer = false;
-            lv2_evbuf_reset(atom_input[i].event_buffer(), true);
-        }
-    }
-    
     if (_idata->lv2.ext.responses)
     {
         uint32_t read_space = zix_ring_read_space(_idata->lv2.ext.responses);
@@ -2401,7 +2394,7 @@ Plugin_Module::apply_ui_events( uint32_t nframes, unsigned int port )
             lv2_evbuf_write(&e, nframes, 0, atom->type, atom->size,
                             (const uint8_t*)LV2_ATOM_BODY_CONST(atom));
 
-            lv2_evbuf_reset(atom_input[port].event_buffer(), false);    // FIXME
+            atom_input[port]._clear_input_buffer = true;
         }
         else
         {
@@ -2482,7 +2475,7 @@ Plugin_Module::get_atom_output_events( void )
             uint32_t subframes = 0;
             uint32_t type      = 0;
             uint32_t size      = 0;
-            uint8_t* body      = NULL;
+            void* body         = NULL;
             lv2_evbuf_get(i, &frames, &subframes, &type, &size, &body);
 
             DMESSAGE("GOT ATOM EVENT BUFFER");
@@ -3657,8 +3650,14 @@ Plugin_Module::process ( nframes_t nframes )
             
             for( unsigned int i = 0; i < atom_input.size(); ++i )
             {
+                if ( atom_input[i]._clear_input_buffer )
+                {
+                    DMESSAGE("GOT atom input clear buffer");
+                    atom_input[i]._clear_input_buffer = false;
+                    lv2_evbuf_reset(atom_input[i].event_buffer(), true);
+                }
+                
                 apply_ui_events(  nframes, i );
-                atom_input[i]._clear_input_buffer = true;
             }
 #endif
             // Run the plugin for LV2
