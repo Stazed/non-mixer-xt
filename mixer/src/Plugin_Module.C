@@ -159,10 +159,11 @@ update_ui( void *data)
         /* Read event body */
         zix_ring_read( plug_ui->_idata->lv2.ext.plugin_to_ui, (char*)buf, ev.size);
 
-        plug_ui->ui_port_event( ev.index, ev.size, ev.protocol, buf );
+        if ( !plug_ui->m_ui_instance )
+            plug_ui->ui_port_event( ev.index, ev.size, ev.protocol, buf );
     }
 
-    Fl::repeat_timeout( 0.1f, update_ui, data );
+    Fl::repeat_timeout( 0.03f, update_ui, data );
 }
 
 static LV2_Worker_Status
@@ -1868,7 +1869,7 @@ Plugin_Module::load_lv2 ( const char* uri )
             lilv_state_free(state);
         }
 
-        Fl::add_timeout( 0.1f, update_ui, this );
+        Fl::add_timeout( 0.03f, update_ui, this );
     }
     else
         _loading_from_file = false;
@@ -2855,7 +2856,7 @@ Plugin_Module::update_custom_ui()
             m_ui_instance, port_index, sizeof(float), 0, &value );
     }
 
-    // FIXME need to also do for atom ports
+    get_atom_output_events();
 }
 
 /**
@@ -3646,7 +3647,9 @@ Plugin_Module::process ( nframes_t nframes )
         if (_is_lv2)
         {
 #ifdef LV2_WORKER_SUPPORT
-            get_atom_output_events();
+            
+            if(!m_ui_instance)
+                get_atom_output_events();
             
             for( unsigned int i = 0; i < atom_input.size(); ++i )
             {
