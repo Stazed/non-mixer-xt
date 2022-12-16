@@ -44,12 +44,37 @@
 #endif
 
 struct ZixRingImpl {
-  uint32_t write_head; ///< Read index into buf
-  uint32_t read_head;  ///< Write index into buf
-  uint32_t size;       ///< Size (capacity) in bytes
-  uint32_t size_mask;  ///< Mask for fast modulo
-  char*    buf;        ///< Contents
+  ZixAllocator* allocator;  ///< User allocator
+  uint32_t      write_head; ///< Read index into buf
+  uint32_t      read_head;  ///< Write index into buf
+  uint32_t      size;       ///< Size (capacity) in bytes
+  uint32_t      size_mask;  ///< Mask for fast modulo
+  char*         buf;        ///< Contents
 };
+
+static inline uint32_t
+zix_atomic_load(const uint32_t* const ptr)
+{
+#if defined(_MSC_VER)
+  const uint32_t val = *ptr;
+  _ReadBarrier();
+  return val;
+#else
+  return __atomic_load_n(ptr, __ATOMIC_ACQUIRE);
+#endif
+}
+
+static inline void
+zix_atomic_store(uint32_t* const ptr, // NOLINT(readability-non-const-parameter)
+                 const uint32_t  val)
+{
+#if defined(_MSC_VER)
+  _WriteBarrier();
+  *ptr = val;
+#else
+  __atomic_store_n(ptr, val, __ATOMIC_RELEASE);
+#endif
+}
 
 static inline uint32_t
 next_power_of_two(uint32_t size)
@@ -200,25 +225,58 @@ zix_ring_skip(ZixRing* ring, uint32_t size)
 }
 
 uint32_t
-zix_ring_write(ZixRing* ring, const void* src, uint32_t size)
+zix_ring_write(ZixRing* const ring, const void* src, const uint32_t size)
 {
-  const uint32_t r = ring->read_head;
-  const uint32_t w = ring->write_head;
-  if (write_space_internal(ring, r, w) < size) {
+  ZixRingTransaction tx = zix_ring_begin_write(ring);
+
+  if (zix_ring_amend_write(ring, &tx, src, size) ||
+      zix_ring_commit_write(ring, &tx)) {
     return 0;
   }
 
-  if (w + size <= ring->size) {
-    memcpy(&ring->buf[w], src, size);
-    ZIX_WRITE_BARRIER();
-    ring->write_head = (w + size) & ring->size_mask;
-  } else {
-    const uint32_t this_size = ring->size - w;
-    memcpy(&ring->buf[w], src, this_size);
-    memcpy(&ring->buf[0], (const char*)src + this_size, size - this_size);
-    ZIX_WRITE_BARRIER();
-    ring->write_head = size - this_size;
+  return size;
+}
+
+ZixRingTransaction
+zix_ring_begin_write(ZixRing* const ring)
+{
+  const uint32_t r = zix_atomic_load(&ring->read_head);
+  const uint32_t w = ring->write_head;
+
+  const ZixRingTransaction tx = {r, w};
+  return tx;
+}
+
+ZixStatus
+zix_ring_amend_write(ZixRing* const            ring,
+                     ZixRingTransaction* const tx,
+                     const void* const         src,
+                     const uint32_t            size)
+{
+  const uint32_t r = tx->read_head;
+  const uint32_t w = tx->write_head;
+  if (write_space_internal(ring, r, w) < size) {
+    return ZIX_STATUS_NO_MEM;
   }
 
-  return size;
+  const uint32_t end = w + size;
+  if (end <= ring->size) {
+    memcpy(&ring->buf[w], src, size);
+    tx->write_head = end & ring->size_mask;
+  } else {
+    const uint32_t size1 = ring->size - w;
+    const uint32_t size2 = size - size1;
+    memcpy(&ring->buf[w], src, size1);
+    memcpy(&ring->buf[0], (const char*)src + size1, size2);
+    tx->write_head = size2;
+  }
+
+  return ZIX_STATUS_SUCCESS;
+}
+
+ZixStatus
+zix_ring_commit_write(ZixRing* const ring, const ZixRingTransaction* const tx)
+{
+  zix_atomic_store(&ring->write_head, tx->write_head);
+  return ZIX_STATUS_SUCCESS;
 }

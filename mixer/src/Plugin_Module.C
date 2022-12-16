@@ -142,7 +142,7 @@ update_ui( void *data)
 {
     Plugin_Module* plug_ui =  static_cast<Plugin_Module *> (data);
     /* Emit UI events. */
-    ControlChange ev;
+    ControlChange2 ev;
     const size_t  space = zix_ring_read_space( plug_ui->_idata->lv2.ext.plugin_to_ui );
     for (size_t i = 0;
          i + sizeof(ev) < space;
@@ -168,8 +168,6 @@ update_ui( void *data)
             plug_ui->ui_port_event( ev.index, ev.size, ev.protocol, buf );
         }
     }
-
-    Fl::repeat_timeout( 0.03f, update_ui, data );
 }
 
 static LV2_Worker_Status
@@ -430,7 +428,6 @@ Plugin_Module::~Plugin_Module ( )
 #endif
 
 #ifdef LV2_WORKER_SUPPORT
-    Fl::remove_timeout(update_ui, this);
     if ( _idata->lv2.ext.worker )
     {
         _idata->exit = true;
@@ -1882,8 +1879,6 @@ Plugin_Module::load_lv2 ( const char* uri )
 
             lilv_state_free(state);
         }
-
-        Fl::add_timeout( 0.03f, update_ui, this );
     }
     else
         _loading_from_file = false;
@@ -2173,32 +2168,28 @@ Plugin_Module::non_worker_destroy( void )
     }
 }
 
-bool
-Plugin_Module::send_to_ui( uint32_t port_index, uint32_t type, uint32_t size, const void* body)
+int
+Plugin_Module::send_to_ui(Plugin_Module* plug, uint32_t port_index, uint32_t type, uint32_t size, const void* body)
 {
-    /* TODO: Be more discriminate about what to send */
-    char evbuf[sizeof(ControlChange) + sizeof(LV2_Atom)];
-    ControlChange* ev = (ControlChange*)evbuf;
-    ev->index    = port_index;
-    ev->protocol = _idata->_lv2_urid_map(_idata, LV2_ATOM__eventTransfer);
-    ev->size     = sizeof(LV2_Atom) + size;
+    typedef struct {
+    ControlChange2 change;
+    LV2_Atom      atom;
+    } Header;
 
-    LV2_Atom* atom = (LV2_Atom*)ev->body;
-    atom->type = type;
-    atom->size = size;
+    const Header header = {
+    {port_index, plug->_idata->_lv2_urid_map(plug->_idata, LV2_ATOM__eventTransfer), sizeof(LV2_Atom) + size},
+    {size, type}};
 
-    if (zix_ring_write_space( _idata->lv2.ext.plugin_to_ui ) >= sizeof(evbuf) + size)
-    {
-       // DMESSAGE("Write to .plugin_events type = %d", type);
-        zix_ring_write(_idata->lv2.ext.plugin_to_ui, evbuf, sizeof(evbuf));
-        zix_ring_write(_idata->lv2.ext.plugin_to_ui, (const char*)body, size);
-        return true;
-    }
-    else
+    ZixRingTransaction tx = zix_ring_begin_write(plug->_idata->lv2.ext.plugin_to_ui);
+    if (zix_ring_amend_write(plug->_idata->lv2.ext.plugin_to_ui, &tx, &header, sizeof(header)) ||
+        zix_ring_amend_write(plug->_idata->lv2.ext.plugin_to_ui, &tx, body, size))
     {
         WARNING( "Plugin => UI buffer overflow!" );
-        return false;
+        return -1;
     }
+
+    zix_ring_commit_write(plug->_idata->lv2.ext.plugin_to_ui, &tx);
+    return 0;
 }
 
 void
@@ -2496,7 +2487,7 @@ Plugin_Module::get_atom_output_events( void )
 
            // DMESSAGE("GOT ATOM EVENT BUFFER Port Index = %d", atom_output[k].hints.plug_port_index);
 
-            send_to_ui(atom_output[k].hints.plug_port_index, type, size, body);
+            send_to_ui(this, atom_output[k].hints.plug_port_index, type, size, body);
         }
 
         /* Clear event output for plugin to write to on next cycle */
@@ -2871,8 +2862,6 @@ Plugin_Module::update_custom_ui()
         suil_instance_port_event(
             m_ui_instance, port_index, sizeof(float), 0, &value );
     }
-
-    get_atom_output_events();
 }
 
 /**
@@ -3676,8 +3665,8 @@ Plugin_Module::process ( nframes_t nframes )
         {
 #ifdef LV2_WORKER_SUPPORT
 
-            if(!m_ui_instance)
-                get_atom_output_events();
+            /* Pulls any atom output from the plugin and writes to the zix buffer - to send to the UI*/
+            get_atom_output_events();
 
             for( unsigned int i = 0; i < atom_input.size(); ++i )
             {
@@ -3710,6 +3699,9 @@ Plugin_Module::process ( nframes_t nframes )
                     _idata->lv2.ext.worker->end_run(m_instance->lv2_handle);
                 }
             }
+
+            /* Read the zix buffer sent from the plugin and sends to the UI */
+            update_ui( this );
 #endif
         }
         else    // ladspa
