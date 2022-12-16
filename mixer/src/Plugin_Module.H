@@ -426,7 +426,6 @@ public:
 #ifdef USE_SUIL
   SuilHost*     m_ui_host;     ///< Plugin UI host support
   SuilInstance* m_ui_instance; ///< Plugin UI instance (shared library)
-  bool          m_ui_closed;
   bool          m_use_showInterface;
 
   /* X window for custom plugin ui */

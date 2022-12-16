@@ -416,9 +416,16 @@ Plugin_Module::~Plugin_Module ( )
 {
 #ifdef USE_SUIL
     /* In case the user left the custom ui up */
-    if(!m_ui_closed)
-    {
+    if (fIsVisible)
         close_custom_ui();
+
+    if( !m_use_showInterface )
+    {
+        suil_instance_free(m_ui_instance);
+        m_ui_instance = NULL;
+
+        suil_host_free(m_ui_host);
+        m_ui_host = NULL;
     }
 #endif
 
@@ -636,7 +643,6 @@ _Pragma("GCC diagnostic pop")
 #ifdef USE_SUIL
     m_ui_host = NULL;
     m_ui_instance = NULL;
-    m_ui_closed = true;
     m_use_showInterface = false;
 #ifdef USE_CARLA
     fDisplay = nullptr;
@@ -2570,10 +2576,16 @@ Plugin_Module::try_custom_ui()
     /* Toggle show and hide */
     if(m_ui_instance)
     {
-        //_idata->lv2.ext.ui_showInterface->hide(suil_instance_get_handle(m_ui_instance));
-        DMESSAGE("Already Have m_ui_instance");
-        m_ui_closed = true;
-        return true;
+        if (fIsVisible)
+        {
+            close_custom_ui();
+            return true;
+        }
+        else
+        {
+            show_custom_ui();
+            return true;
+        }
     }
 
     _idata->lv2.ext.ext_data.data_access =
@@ -2619,23 +2631,18 @@ Plugin_Module::try_custom_ui()
     {
 #ifdef USE_CARLA
         show_custom_ui();
-#endif
         DMESSAGE("Running embedded X custom UI");
-        m_ui_closed = false;
-
-        Fl::add_timeout( 0.03f, &Plugin_Module::custom_update_ui, this );
-
+#endif
         return true;
     }
     else if(m_use_showInterface)
     {
         if(idle_iface && show_iface)
         {
-            DMESSAGE("Running shoeInterface");
-            show_iface->show(suil_instance_get_handle(m_ui_instance));
-            m_ui_closed = false;
-
-            Fl::add_timeout( 0.03f, &Plugin_Module::custom_update_ui, this );
+#ifdef USE_CARLA
+            show_custom_ui();
+            DMESSAGE("Running showInterface");
+#endif
             return true;
         }
     }
@@ -2977,7 +2984,6 @@ Plugin_Module::custom_update_ui()
                 if (std::strcmp(type, "WM_PROTOCOLS") == 0)
                 {
                     fIsVisible = false;
-                    m_ui_closed = true;
                 }
                 break;
 
@@ -2985,7 +2991,6 @@ Plugin_Module::custom_update_ui()
                 if (event.xkey.keycode == X11Key_Escape)
                 {
                     fIsVisible = false;
-                    m_ui_closed = true;
                 }
                 break;
 
@@ -3083,10 +3088,10 @@ Plugin_Module::custom_update_ui()
     if (_idata->lv2.ext.idle_iface->idle(suil_instance_get_handle(m_ui_instance)))
     {
         DMESSAGE("INTERFACE CLOSED");
-        m_ui_closed = true;
+        fIsVisible = false;
     }
 
-    if(!m_ui_closed)
+    if(fIsVisible)
     {
         update_custom_ui();
         Fl::repeat_timeout( 0.03f, &Plugin_Module::custom_update_ui, this );
@@ -3223,7 +3228,15 @@ Plugin_Module::close_custom_ui()
     if( m_use_showInterface )
     {
         _idata->lv2.ext.ui_showInterface->hide(suil_instance_get_handle(m_ui_instance));
-        m_ui_closed = true;
+        fIsVisible = false;
+
+        /* For some unknown reason the Calf plugins idle interface does not get reset
+           after the above ->hide is called. Any subsequent call to ->show then fails.
+           So, instead we destroy the custom UI here and then re-create on show. */
+        suil_instance_free(m_ui_instance);
+        m_ui_instance = NULL;
+        suil_host_free(m_ui_host);
+        m_ui_host = NULL;
     }
     else
     {
@@ -3233,12 +3246,6 @@ Plugin_Module::close_custom_ui()
         close_x();
 #endif
     }
-
-    suil_instance_free(m_ui_instance);
-    m_ui_instance = NULL;
-
-    suil_host_free(m_ui_host);
-    m_ui_host = NULL;
 }
 
 Window
@@ -3288,6 +3295,15 @@ Plugin_Module::getChildWindow() const
 void
 Plugin_Module::show_custom_ui()
 {
+    if( m_use_showInterface )
+    {
+        _idata->lv2.ext.ui_showInterface->show(suil_instance_get_handle(m_ui_instance));
+        fIsVisible = true;
+
+        Fl::add_timeout( 0.03f, &Plugin_Module::custom_update_ui, this );
+        return;
+    }
+    
     CARLA_SAFE_ASSERT_RETURN(fDisplay != nullptr,);
     CARLA_SAFE_ASSERT_RETURN(fHostWindow != 0,);
 
@@ -3370,6 +3386,8 @@ Plugin_Module::show_custom_ui()
 
     XMapRaised(fDisplay, fHostWindow);
     XSync(fDisplay, False);
+
+    Fl::add_timeout( 0.03f, &Plugin_Module::custom_update_ui, this );
 }
 
 void
@@ -3378,12 +3396,9 @@ Plugin_Module::hide_custom_ui()
     CARLA_SAFE_ASSERT_RETURN(fDisplay != nullptr,);
     CARLA_SAFE_ASSERT_RETURN(fHostWindow != 0,);
 
+    fIsVisible = false;
     XUnmapWindow(fDisplay, fHostWindow);
     XFlush(fDisplay);
-
-    fIsVisible = false;
-    fFirstShow = true;
-    fSetSizeCalledAtLeastOnce = false;
 }
 
 void
@@ -3660,10 +3675,10 @@ Plugin_Module::process ( nframes_t nframes )
         if (_is_lv2)
         {
 #ifdef LV2_WORKER_SUPPORT
-            
+
             if(!m_ui_instance)
                 get_atom_output_events();
-            
+
             for( unsigned int i = 0; i < atom_input.size(); ++i )
             {
                 if ( atom_input[i]._clear_input_buffer )
@@ -3672,7 +3687,7 @@ Plugin_Module::process ( nframes_t nframes )
                     atom_input[i]._clear_input_buffer = false;
                     lv2_evbuf_reset(atom_input[i].event_buffer(), true);
                 }
-                
+
                 apply_ui_events(  nframes, i );
             }
 #endif
