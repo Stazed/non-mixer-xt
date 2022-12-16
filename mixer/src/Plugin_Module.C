@@ -148,7 +148,7 @@ update_ui( void *data)
          i + sizeof(ev) < space;
          i += sizeof(ev) + ev.size)
     {
-        DMESSAGE("Reading .plugin_events");
+     //   DMESSAGE("Reading .plugin_events");
         /* Read event header to get the size */
         zix_ring_read( plug_ui->_idata->lv2.ext.plugin_to_ui, (char*)&ev, sizeof(ev));
 
@@ -159,8 +159,14 @@ update_ui( void *data)
         /* Read event body */
         zix_ring_read( plug_ui->_idata->lv2.ext.plugin_to_ui, (char*)buf, ev.size);
 
-        if ( !plug_ui->m_ui_instance )
+        if ( plug_ui->m_ui_instance )   // Custom UI
+        {
+            suil_instance_port_event(plug_ui->m_ui_instance, ev.index, ev.size, ev.protocol, buf);
+        }
+        else    // Generic UI
+        {
             plug_ui->ui_port_event( ev.index, ev.size, ev.protocol, buf );
+        }
     }
 
     Fl::repeat_timeout( 0.03f, update_ui, data );
@@ -1654,10 +1660,11 @@ Plugin_Module::load_lv2 ( const char* uri )
                     {
                         DMESSAGE(" LV2_PORT_SUPPORTS_PATCH_MESSAGE - INPUT ");
                         atom_input[_atom_ins].hints.type = Port::Hints::PATCH_MESSAGE;
-                        atom_input[_atom_ins].hints.plug_port_index = i;
                     }
+
+                    atom_input[_atom_ins].hints.plug_port_index = i;
                     _atom_ins++;
-                    
+
                     DMESSAGE("GOT ATOM SEQUENCE PORT IN = %s", _idata->lv2.rdf_data->Ports[i].Name);
                 }
                 else if (LV2_IS_PORT_OUTPUT(_idata->lv2.rdf_data->Ports[i].Types))
@@ -1668,8 +1675,9 @@ Plugin_Module::load_lv2 ( const char* uri )
                     {
                         DMESSAGE(" LV2_PORT_SUPPORTS_PATCH_MESSAGE - OUTPUT ");
                         atom_output[_atom_outs].hints.type = Port::Hints::PATCH_MESSAGE;
-                        atom_output[_atom_outs].hints.plug_port_index = i;
                     }
+
+                    atom_output[_atom_outs].hints.plug_port_index = i;
                     _atom_outs++;
 
                     DMESSAGE("GOT ATOM SEQUENCE PORT OUT = %s", _idata->lv2.rdf_data->Ports[i].Name);
@@ -2175,7 +2183,7 @@ Plugin_Module::send_to_ui( uint32_t port_index, uint32_t type, uint32_t size, co
 
     if (zix_ring_write_space( _idata->lv2.ext.plugin_to_ui ) >= sizeof(evbuf) + size)
     {
-        DMESSAGE("Write to .plugin_events type = %d", type);
+       // DMESSAGE("Write to .plugin_events type = %d", type);
         zix_ring_write(_idata->lv2.ext.plugin_to_ui, evbuf, sizeof(evbuf));
         zix_ring_write(_idata->lv2.ext.plugin_to_ui, (const char*)body, size);
         return true;
@@ -2479,7 +2487,7 @@ Plugin_Module::get_atom_output_events( void )
             void* body         = NULL;
             lv2_evbuf_get(i, &frames, &subframes, &type, &size, &body);
 
-            DMESSAGE("GOT ATOM EVENT BUFFER");
+           // DMESSAGE("GOT ATOM EVENT BUFFER Port Index = %d", atom_output[k].hints.plug_port_index);
 
             send_to_ui(atom_output[k].hints.plug_port_index, type, size, body);
         }
