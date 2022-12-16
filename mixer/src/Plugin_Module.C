@@ -2407,7 +2407,8 @@ Plugin_Module::apply_ui_events( uint32_t nframes, unsigned int port )
         }
         else
         {
-            DMESSAGE("error: Unknown control change protocol %u", ev.protocol);
+            WARNING("Unknown control change protocol %u", ev.protocol);
+            atom_input[port]._clear_input_buffer = true;
         }
     }
 }
@@ -2882,6 +2883,7 @@ Plugin_Module::update_ui_settings()
             m_ui_instance, port_index, sizeof(float), 0, &value );
     }
     
+    //get_atom_output_events();
     // FIXME need to also do for atom ports
 }
 
@@ -3376,9 +3378,12 @@ Plugin_Module::hide_custom_ui()
     CARLA_SAFE_ASSERT_RETURN(fDisplay != nullptr,);
     CARLA_SAFE_ASSERT_RETURN(fHostWindow != 0,);
 
-    fIsVisible = false;
     XUnmapWindow(fDisplay, fHostWindow);
     XFlush(fDisplay);
+
+    fIsVisible = false;
+    fFirstShow = true;
+    fSetSizeCalledAtLeastOnce = false;
 }
 
 void
@@ -3663,7 +3668,7 @@ Plugin_Module::process ( nframes_t nframes )
             {
                 if ( atom_input[i]._clear_input_buffer )
                 {
-                    DMESSAGE("GOT atom input clear buffer");
+                   // DMESSAGE("GOT atom input clear buffer");
                     atom_input[i]._clear_input_buffer = false;
                     lv2_evbuf_reset(atom_input[i].event_buffer(), true);
                 }
