@@ -142,7 +142,7 @@ update_ui( void *data)
 {
     Plugin_Module* plug_ui =  static_cast<Plugin_Module *> (data);
     /* Emit UI events. */
-    ControlChange2 ev;
+    ControlChange ev;
     const size_t  space = zix_ring_read_space( plug_ui->_idata->lv2.ext.plugin_to_ui );
     for (size_t i = 0;
          i + sizeof(ev) < space;
@@ -2172,7 +2172,7 @@ int
 Plugin_Module::send_to_ui(Plugin_Module* plug, uint32_t port_index, uint32_t type, uint32_t size, const void* body)
 {
     typedef struct {
-    ControlChange2 change;
+    ControlChange change;
     LV2_Atom      atom;
     } Header;
 
@@ -2267,7 +2267,7 @@ Plugin_Module::send_atom_to_plugin( uint32_t port_index, uint32_t buffer_size, c
     }
     else
     {
-        write_atom_event(port_index, atom->size, atom->type, atom + 1U);
+        write_atom_event(_idata->lv2.ext.ui_to_plugin, port_index, atom->size, atom->type, atom + 1U);
     }
 }
 
@@ -2287,19 +2287,19 @@ write_control_change(   ZixRing* const    target,
     }
     else
     {
-        WARNING( "Plugin => UI buffer overflow!" );
+        WARNING( "UI => Plugin buffer overflow!" );
         return 1;
     }
 }
 
 int
-Plugin_Module::write_atom_event(const uint32_t    port_index,
+Plugin_Module::write_atom_event(ZixRing* target, const uint32_t    port_index,
                  const uint32_t    size,
                  const LV2_URID    type,
                  const void* const body)
 {
     typedef struct {
-    ControlChange2 change;
+    ControlChange change;
     LV2_Atom      atom;
     } Header;
 
@@ -2307,7 +2307,7 @@ Plugin_Module::write_atom_event(const uint32_t    port_index,
     {port_index, _idata->_lv2_urid_map(_idata, LV2_ATOM__eventTransfer), sizeof(LV2_Atom) + size},
     {size, type}};
 
-    return write_control_change(_idata->lv2.ext.ui_to_plugin, &header, sizeof(header), body, size);
+    return write_control_change(target, &header, sizeof(header), body, size);
 }
 
 void
@@ -2334,27 +2334,14 @@ Plugin_Module::send_file_to_plugin( int port, const std::string &filename )
     lv2_atom_forge_write(&forge, (const void*)filename.c_str(), size);
 
     const LV2_Atom* atom = lv2_atom_forge_deref(&forge, frame.ref);
-    uint32_t       buffer_size = lv2_atom_total_size(atom);
     
-    char buf2[sizeof(ControlChange) + buffer_size];
-    ControlChange* ev = (ControlChange*)buf2;
-    ev->index    =   atom_input[port].hints.plug_port_index; 
-    ev->protocol =  _idata->_lv2_urid_map(_idata, LV2_ATOM__eventTransfer);
-    ev->size     =  buffer_size;
-    memcpy(ev->body, (const void*) atom, buffer_size);
-    zix_ring_write( _idata->lv2.ext.ui_to_plugin, buf2, sizeof(buf2));
-
-    /*jalv_ui_write(jalv,
-                jalv->control_in,   // port atom_input[port].hints.control_in;
-                lv2_atom_total_size(atom),
-                jalv->urids.atom_eventTransfer,
-                atom);*/
+    write_atom_event(_idata->lv2.ext.ui_to_plugin, port, atom->size, atom->type, atom + 1U);
 }
 
 void
 Plugin_Module::apply_ui_events( uint32_t nframes, unsigned int port )
 {
-    ControlChange2 ev  = {0U, 0U, 0U};
+    ControlChange ev  = {0U, 0U, 0U};
     const size_t  space = zix_ring_read_space(_idata->lv2.ext.ui_to_plugin);
 
     for (size_t i = 0; i < space; i += sizeof(ev) + ev.size)

@@ -552,7 +552,7 @@ public:
     void apply_ui_events( uint32_t nframes, unsigned int port );
     void set_lv2_port_properties ( Port * port, bool writable );
     void get_atom_output_events( void );
-    int write_atom_event(const uint32_t    port_index,
+    int write_atom_event(ZixRing* target, const uint32_t port_index,
                  const uint32_t    size,
                  const LV2_URID    type,
                  const void* const body);

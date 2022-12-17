@@ -25,23 +25,13 @@ extern "C" {
 #  include <stdbool.h>
 #endif
     
-/**
-   Control change event, sent through ring buffers for UI updates.
-*/
-typedef struct {
-	uint32_t index;
-	uint32_t protocol;
-	uint32_t size;
-	uint8_t  body[];
-} ControlChange;
-
 // Control change event, sent through ring buffers for UI updates
 typedef struct {
   uint32_t index;
   uint32_t protocol;
   uint32_t size;
   // Followed immediately by size bytes of data
-} ControlChange2;
+} ControlChange;
 
 /// An abstract/opaque LV2 event buffer
 typedef struct LV2_Evbuf_Impl LV2_Evbuf;
