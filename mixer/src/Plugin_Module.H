@@ -33,7 +33,7 @@
 #define PRESET_SUPPORT 1
 #define USE_CARLA 1
 
-#define ATOM_BUFFER_SIZE 4096   // FIXME  /*jalv->opts.buffer_size*/ 
+#define ATOM_BUFFER_SIZE 16384  // 4096 * 4
 
 #ifdef USE_CARLA
 typedef void (*EventProcPtr)(XEvent* ev);
