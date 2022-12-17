@@ -441,12 +441,8 @@ public:
     bool     fIsIdling;
     bool     fIsResizable;
     EventProcPtr fEventProc;
-#else
-  Display *x_display;
-  Window x_parent_win;
-  Window x_child_win;
-#endif
-#endif
+#endif  // USE CARLA
+#endif  // USE_SUIL
 
 private:
 
@@ -556,7 +552,7 @@ public:
                  const uint32_t    size,
                  const LV2_URID    type,
                  const void* const body);
-#endif
+#endif  // LV2_WORKER_SUPPORT
     
 #ifdef USE_SUIL
     bool try_custom_ui();
@@ -571,16 +567,13 @@ public:
     void init_x();
     void close_custom_ui();
     Window getChildWindow() const;
-
 #ifdef USE_CARLA
     void show_custom_ui();
     void hide_custom_ui();
     void setSize(const uint width, const uint height, const bool forceUpdate, const bool resizeChild);
     bool isUiResizable() const;   
-#else
-    void close_x();
-#endif
-#endif
+#endif  // USE_CARLA
+#endif  // USE_SUIL
 
     LOG_CREATE_FUNC( Plugin_Module );
 

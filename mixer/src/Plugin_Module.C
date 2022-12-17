@@ -312,11 +312,6 @@ x_resize(LV2UI_Feature_Handle handle, int width, int height)
     XResizeWindow(pLv2Plugin->fDisplay, pLv2Plugin->fHostWindow, width, height );
     XSync(pLv2Plugin->fDisplay, False);
 
-#else
-
-    XResizeWindow(pLv2Plugin->x_display, pLv2Plugin->x_parent_win, width, height );
-    XSync(pLv2Plugin->x_display, False);
-
 #endif
 
     DMESSAGE("X-width = %d: X-height = %d", width, height);
@@ -651,13 +646,9 @@ _Pragma("GCC diagnostic pop")
     fFirstShow = true;
     fSetSizeCalledAtLeastOnce = false;
     fIsIdling = false;
-    fIsResizable = false;             // FIXME
+    fIsResizable = false;
     fEventProc = nullptr;
-#else
-    x_display = NULL;
-    x_parent_win = 0;
-    x_child_win = 0;
-#endif  // USE_CAARLA
+#endif  // USE_CARLA
 #endif  // USE_SUIL
 }
 
@@ -2590,8 +2581,6 @@ Plugin_Module::try_custom_ui()
             {
 #ifdef USE_CARLA
                 fChildWindow = getChildWindow();
-#else
-                x_child_win = getChildWindow();
 #endif
             }
         }
@@ -2674,8 +2663,6 @@ Plugin_Module::custom_ui_instantiate()
         init_x();
 #ifdef USE_CARLA
         parent = (LV2UI_Widget) fHostWindow;
-#else
-        parent = (LV2UI_Widget) x_parent_win;
 #endif
     }
 
@@ -3003,62 +2990,7 @@ Plugin_Module::custom_update_ui()
         }
 
         fIsIdling = false;
-#else
-        for (XEvent event; XPending(x_display) > 0;)
-        {
-            XNextEvent(x_display, &event);
-
-            char* type = nullptr;
-
-            switch (event.type)
-            {
-                case ClientMessage:
-                type = XGetAtomName(x_display, event.xclient.message_type);
-
-                if(type == nullptr)
-                    continue;
-
-                if (strcmp(type, "WM_PROTOCOLS") == 0)
-                {
-                    m_ui_closed = true;
-                }
-                break;
-
-                case KeyRelease:
-                if (event.xkey.keycode == X11Key_Escape)
-                {
-                    m_ui_closed = true;
-                }
-                break;
-
-                case ConfigureNotify:
-                {
-                    if (event.xconfigure.window == x_parent_win)
-                    {
-                        const uint width  = static_cast<uint>(event.xconfigure.width);
-                        const uint height = static_cast<uint>(event.xconfigure.height);
-
-                        DMESSAGE("Resize X_parent: W = %d: H = %d", width, height);
-    #if 0
-                        LV2UI_Resize* resize = NULL;
-                        resize = (LV2UI_Resize*)_idata->lv2.ext.resize_ui;
-
-                        if(resize)
-                        {
-                            DMESSAGE("Sent resize to plugin UI W = %d: H = %d", width, height);
-                            resize->ui_resize(resize->handle, width, height);
-                        }
-    #endif
-                        if(x_child_win)
-                        {
-                            XResizeWindow(x_display, x_child_win, width, height);
-                        }
-                    }
-                    break;
-                }
-            }
-        }
-#endif  // !#ifdef USE_CARLA
+#endif  //  USE_CARLA
     }
 
     if (_idata->lv2.ext.idle_iface->idle(suil_instance_get_handle(m_ui_instance)))
@@ -3105,6 +3037,8 @@ Plugin_Module::init_x()
                                 CWBorderPixel|CWEventMask, &attr);
 
     CARLA_SAFE_ASSERT_RETURN(fHostWindow != 0,);
+    
+    XSetStandardProperties(fDisplay, fHostWindow, label(), label(), None, NULL, 0, NULL);
 
     XGrabKey(fDisplay, X11Key_Escape, AnyModifier, fHostWindow, 1, GrabModeAsync, GrabModeAsync);
 
@@ -3127,73 +3061,8 @@ Plugin_Module::init_x()
         XInternAtom(fDisplay, "_NET_WM_WINDOW_TYPE_NORMAL", False)
     };
     XChangeProperty(fDisplay, fHostWindow, _wt, XA_ATOM, 32, PropModeReplace, (const uchar*)&_wts, 2);
-#else
-    /* Create an x window for embedded custom uis */
-
-    /* get the colors black and white (see section for details) */
-    unsigned long black, white;
-
-    /* use the information from the environment variable DISPLAY 
-       to create the X connection:
-    */	
-    x_display = XOpenDisplay(nullptr);
-    const int x_screen = DefaultScreen(x_display);
-    black = BlackPixel(x_display, x_screen),	/* get color black */
-    white = WhitePixel(x_display, x_screen);    /* get color white */
-
-    /* once the display is initialized, create the window.
-       This window will be have be 200 pixels across and 300 down.
-       It will have the foreground white and background black
-    */
-    x_parent_win = XCreateSimpleWindow(x_display, DefaultRootWindow(x_display), 0, 0,	
-            200, 300, 5, white, black);
-
-    /* here is where some properties of the window can be set.
-       The third and fourth items indicate the name which appears
-       at the top of the window and the name of the minimized window
-       respectively.
-    */
-    XSetStandardProperties(x_display, x_parent_win, label(), label(), None, NULL, 0, NULL);
-
-    /* this routine determines which types of input are allowed in
-       the input.  see the appropriate section for details...
-    */
-    XSelectInput(x_display, x_parent_win, ExposureMask|ButtonPressMask|KeyPressMask|StructureNotifyMask);
-    
-    XGrabKey(x_display, X11Key_Escape, AnyModifier, x_parent_win, 1, GrabModeAsync, GrabModeAsync);
-    
-    /* This will tell the window manager to generate an event when the user
-       closes the window with the window X button
-     */
-    Atom delWindow = XInternAtom( x_display, "WM_DELETE_WINDOW", 0 );
-    XSetWMProtocols(x_display , x_parent_win, &delWindow, 1);
-
-    /* clear the window and bring it on top of the other windows */
-    XClearWindow(x_display, x_parent_win);
-    XMapRaised(x_display, x_parent_win);
-
-    // show the x window
-    XSync(x_display, False);
 #endif
 }
-
-#ifndef USE_CARLA
-void
-Plugin_Module::close_x()
-{
-    if(x_parent_win != 0)
-    {
-        XDestroyWindow(x_display, x_parent_win);
-        x_parent_win = 0;
-    }
-
-    if(x_display != NULL)
-    {
-        XCloseDisplay(x_display);
-        x_display = NULL;
-    }
-}
-#endif
 
 void
 Plugin_Module::close_custom_ui()
@@ -3218,8 +3087,6 @@ Plugin_Module::close_custom_ui()
     {
 #ifdef USE_CARLA
         hide_custom_ui();
-#else
-        close_x();
 #endif
     }
 }
@@ -3236,26 +3103,6 @@ Plugin_Module::getChildWindow() const
     uint numChildren = 0;
 
     XQueryTree(fDisplay, fHostWindow, &rootWindow, &parentWindow, &childWindows, &numChildren);
-
-    if (numChildren > 0 && childWindows != nullptr)
-    {
-        ret = childWindows[0];
-        XFree(childWindows);
-    }
-
-    return ret;
-#else
-    if(x_display == NULL)
-        return 0;
-
-    if(x_parent_win == 0)
-        return 0;
-
-    Window rootWindow, parentWindow, ret = 0;
-    Window* childWindows = nullptr;
-    uint numChildren = 0;
-
-    XQueryTree(x_display, x_parent_win, &rootWindow, &parentWindow, &childWindows, &numChildren);
 
     if (numChildren > 0 && childWindows != nullptr)
     {
