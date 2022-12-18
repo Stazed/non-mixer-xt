@@ -562,11 +562,12 @@ _Pragma("GCC diagnostic pop")
     uridUnmapFt->unmap                  = ImplementationData::_lv2_urid_unmap;
     
 #ifdef LV2_WORKER_SUPPORT
-    _loading_from_file = false;
-    ui_event_buf     = malloc(ATOM_BUFFER_SIZE);
-    LV2_Worker_Schedule* const m_lv2_schedule  = new LV2_Worker_Schedule;   // FIXME leak make member
+    LV2_Worker_Schedule* const m_lv2_schedule  = new LV2_Worker_Schedule;
     m_lv2_schedule->handle              = this;
     m_lv2_schedule->schedule_work       = non_worker_schedule;
+
+    _loading_from_file = false;
+    ui_event_buf     = malloc(ATOM_BUFFER_SIZE);
     zix_sem_init(&sem, 0);
     threaded = false;
     zix_sem_init(&work_lock, 1);
@@ -2839,9 +2840,6 @@ Plugin_Module::update_ui_settings()
         suil_instance_port_event(
             m_ui_instance, port_index, sizeof(float), 0, &value );
     }
-    
-    //get_atom_output_events();
-    // FIXME need to also do for atom ports
 }
 
 /**
