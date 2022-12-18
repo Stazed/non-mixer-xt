@@ -169,19 +169,6 @@ struct ImplementationData
             const LV2_Options_Interface* options;
             const LV2_State_Interface*   state;
             const LV2_Worker_Interface*  worker;
-#ifdef LV2_WORKER_SUPPORT
-            ZixRing*                    requests;   ///< Requests to the worker
-            ZixRing*                    responses;  ///< Responses from the worker
-            ZixRing*                    plugin_to_ui;   ///< Port events from plugin
-            ZixRing*                    ui_to_plugin;   ///< Port events from UI
-            void*                       ui_event_buf;   ///< Buffer for reading UI port events
-            void*                       response;   ///< Worker response buffer
-            ZixSem                      sem;        ///< Worker semaphore
-            ZixThread                   thread;     ///< Worker thread
-            LV2_Atom_Forge              forge;      ///< Atom forge
-//	const LV2_Worker_Interface* iface;      ///< Plugin worker interface
-            bool                        threaded;   ///< Run work in another thread
-#endif
 #ifdef USE_SUIL
             LilvUIs*          uis;          ///< All plugin UIs (RDF data)
             const LilvUI*     ui;           ///< Plugin UI (RDF data)
@@ -193,14 +180,6 @@ struct ImplementationData
 #endif
         } ext;
     } lv2;
-
-#ifdef LV2_WORKER_SUPPORT
-    ZixSem             work_lock;      ///< Lock for plugin work() method
-//    JalvWorker         Worker;         ///< Worker thread implementation
-//    JalvWorker         state_worker;   ///< Synchronous worker for state restore
-    bool               exit;           ///< True iff execution is finished
-    bool               safe_restore;   ///< Plugin restore() is thread-safe
-#endif
 
     std::vector<void*> handle;
 
@@ -235,12 +214,6 @@ struct ImplementationData
         lv2.mappedURIs.push_back(LV2_PATCH__Set);
         lv2.mappedURIs.push_back(LV2_PATCH__Put);
         lv2.mappedURIs.push_back(LV2_UI__resize);
-        zix_sem_init(&work_lock, 1);
-        zix_sem_init(&lv2.ext.sem, 0);
-        
-        lv2.ext.threaded = false;
-        exit = false;
-        safe_restore = false;
 #endif
         lv2.ext.options = NULL;
         lv2.ext.state   = NULL;
@@ -270,8 +243,6 @@ _Pragma("GCC diagnostic pop")
 #ifdef LV2_WORKER_SUPPORT
         if ( lv2.features[Plugin_Feature_Worker_Schedule] && lv2.features[Plugin_Feature_Worker_Schedule]->data )
             delete (LV2_Worker_Schedule*)lv2.features[Plugin_Feature_Worker_Schedule]->data;
- 
-        free(lv2.ext.ui_event_buf);
 #endif
 #ifdef USE_SUIL
         if ( lv2.features[Plugin_Feature_Resize] && lv2.features[Plugin_Feature_Resize]->data )
@@ -421,6 +392,22 @@ public:
 
     void update_control_parameters(int choice);
     /* End Preset loading */
+#endif
+
+#ifdef LV2_WORKER_SUPPORT
+    ZixRing* requests;      ///< Requests to the worker
+    ZixRing* responses;     ///< Responses from the worker
+    ZixRing* plugin_to_ui;  ///< Port events from plugin
+    ZixRing* ui_to_plugin;  ///< Port events from UI
+    void*    ui_event_buf;  ///< Buffer for reading UI port events
+    void*    response;      ///< Worker response buffer
+    ZixSem   sem;           ///< Worker semaphore
+    ZixThread thread;       ///< Worker thread
+    LV2_Atom_Forge m_forge; ///< Atom forge
+    bool     threaded;      ///< Run work in another thread
+    ZixSem  work_lock;      ///< Lock for plugin work() method
+    bool    m_exit;         ///< True iff execution is finished
+    bool    m_safe_restore;   ///< Plugin restore() is thread-safe
 #endif
     
 #ifdef USE_SUIL

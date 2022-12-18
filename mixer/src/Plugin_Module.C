@@ -143,21 +143,21 @@ update_ui( void *data)
     Plugin_Module* plug_ui =  static_cast<Plugin_Module *> (data);
     /* Emit UI events. */
     ControlChange ev;
-    const size_t  space = zix_ring_read_space( plug_ui->_idata->lv2.ext.plugin_to_ui );
+    const size_t  space = zix_ring_read_space( plug_ui->plugin_to_ui );
     for (size_t i = 0;
          i + sizeof(ev) < space;
          i += sizeof(ev) + ev.size)
     {
      //   DMESSAGE("Reading .plugin_events");
         /* Read event header to get the size */
-        zix_ring_read( plug_ui->_idata->lv2.ext.plugin_to_ui, (char*)&ev, sizeof(ev));
+        zix_ring_read( plug_ui->plugin_to_ui, (char*)&ev, sizeof(ev));
 
         /* Resize read buffer if necessary */
-        plug_ui->_idata->lv2.ext.ui_event_buf = realloc(plug_ui->_idata->lv2.ext.ui_event_buf, ev.size);
-        void* const buf = plug_ui->_idata->lv2.ext.ui_event_buf;
+        plug_ui->ui_event_buf = realloc(plug_ui->ui_event_buf, ev.size);
+        void* const buf = plug_ui->ui_event_buf;
 
         /* Read event body */
-        zix_ring_read( plug_ui->_idata->lv2.ext.plugin_to_ui, (char*)buf, ev.size);
+        zix_ring_read( plug_ui->plugin_to_ui, (char*)buf, ev.size);
 
         if ( plug_ui->m_ui_instance )   // Custom UI
         {
@@ -178,8 +178,8 @@ non_worker_respond(LV2_Worker_Respond_Handle handle,
     DMESSAGE("non_worker_respond");
     Plugin_Module* worker = static_cast<Plugin_Module *> (handle);
 
-    zix_ring_write(worker->_idata->lv2.ext.responses, (const char*)&size, sizeof(size));
-    zix_ring_write(worker->_idata->lv2.ext.responses, (const char*)data, size);
+    zix_ring_write(worker->responses, (const char*)&size, sizeof(size));
+    zix_ring_write(worker->responses, (const char*)data, size);
     return LV2_WORKER_SUCCESS;
 }
 
@@ -192,29 +192,29 @@ worker_func(void* data)
     while (true)
     {
         DMESSAGE("worker_func - TOP");
-        zix_sem_wait( &worker->_idata->lv2.ext.sem );
-        if ( worker->_idata->exit )
+        zix_sem_wait( &worker->sem );
+        if ( worker->m_exit )
         {
             DMESSAGE ("EXIT");
             break;
         }
         DMESSAGE("worker_func - MIDDLE");
         uint32_t size = 0;
-        zix_ring_read(worker->_idata->lv2.ext.requests, (char*)&size, sizeof(size));
+        zix_ring_read(worker->requests, (char*)&size, sizeof(size));
 
         if (!(buf = malloc(size))) {
             fprintf(stderr, "error: realloc() failed\n");
             return NULL;
         }
 
-        zix_ring_read(worker->_idata->lv2.ext.requests, (char*)buf, size);
+        zix_ring_read(worker->requests, (char*)buf, size);
 
-        zix_sem_wait(&worker->_idata->work_lock);
+        zix_sem_wait(&worker->work_lock);
         DMESSAGE("worker_func - BOTTOM");
         worker->_idata->lv2.ext.worker->work(
                 worker->m_instance->lv2_handle, non_worker_respond, worker, size, buf);
 
-        zix_sem_post(&worker->_idata->work_lock);
+        zix_sem_post(&worker->work_lock);
         DMESSAGE("worker_func - END");
     }
 
@@ -230,22 +230,22 @@ non_worker_schedule(LV2_Worker_Schedule_Handle handle,
     DMESSAGE("non_worker_schedule");
     Plugin_Module* worker = static_cast<Plugin_Module *> (handle);
     
-    if ( worker->_idata->lv2.ext.threaded )
+    if ( worker->threaded )
     {
         // Schedule a request to be executed by the worker thread
-        zix_ring_write(worker->_idata->lv2.ext.requests, (const char*)&size, sizeof(size));
-        zix_ring_write(worker->_idata->lv2.ext.requests, (const char*)data, size);
-        zix_sem_post( &worker->_idata->lv2.ext.sem );
+        zix_ring_write(worker->requests, (const char*)&size, sizeof(size));
+        zix_ring_write(worker->requests, (const char*)data, size);
+        zix_sem_post( &worker->sem );
     }
     else 
     {
         // Execute work immediately in this thread
-        zix_sem_wait(&worker->_idata->work_lock);
+        zix_sem_wait(&worker->work_lock);
 
         worker->_idata->lv2.ext.worker->work(
         worker->m_instance->lv2_handle, non_worker_respond, worker, size, data);
 
-        zix_sem_post(&worker->_idata->work_lock);
+        zix_sem_post(&worker->work_lock);
     }
     return LV2_WORKER_SUCCESS;
 }
@@ -266,7 +266,7 @@ patch_set_get(Plugin_Module* plugin,
         WARNING( "patch:Set message with no property" );
         return 1;
     }
-    else if ((*property)->atom.type != plugin->_idata->lv2.ext.forge.URID)
+    else if ((*property)->atom.type != plugin->m_forge.URID)
     {
         WARNING( "patch:Set property is not a URID" );
         return 1;
@@ -288,7 +288,7 @@ patch_put_get(Plugin_Module*  plugin,
         WARNING( "patch:Put message with no body" );
         return 1;
     }
-    else if (!lv2_atom_forge_is_object_type(&plugin->_idata->lv2.ext.forge, (*body)->atom.type))
+    else if (!lv2_atom_forge_is_object_type(&plugin->m_forge, (*body)->atom.type))
     {
         WARNING( "patch:Put body is not an object" );
         return 1;
@@ -425,13 +425,14 @@ Plugin_Module::~Plugin_Module ( )
 #ifdef LV2_WORKER_SUPPORT
     if ( _idata->lv2.ext.worker )
     {
-        _idata->exit = true;
+        m_exit = true;
         non_worker_finish();
         non_worker_destroy();
     }
 
-    zix_ring_free(_idata->lv2.ext.plugin_to_ui);
-    zix_ring_free(_idata->lv2.ext.ui_to_plugin);
+    zix_ring_free(plugin_to_ui);
+    zix_ring_free(ui_to_plugin);
+    free(ui_event_buf);
 #endif
 
     log_destroy();
@@ -562,10 +563,15 @@ _Pragma("GCC diagnostic pop")
     
 #ifdef LV2_WORKER_SUPPORT
     _loading_from_file = false;
-    _idata->lv2.ext.ui_event_buf     = malloc(ATOM_BUFFER_SIZE);
-    LV2_Worker_Schedule* const m_lv2_schedule  = new LV2_Worker_Schedule;
+    ui_event_buf     = malloc(ATOM_BUFFER_SIZE);
+    LV2_Worker_Schedule* const m_lv2_schedule  = new LV2_Worker_Schedule;   // FIXME leak make member
     m_lv2_schedule->handle              = this;
     m_lv2_schedule->schedule_work       = non_worker_schedule;
+    zix_sem_init(&sem, 0);
+    threaded = false;
+    zix_sem_init(&work_lock, 1);
+    m_exit = false;
+    m_safe_restore = false;
 #endif
 
 #ifdef USE_SUIL
@@ -596,34 +602,15 @@ _Pragma("GCC diagnostic pop")
     _idata->lv2.features[Plugin_Feature_Worker_Schedule]->data = m_lv2_schedule;
 
     /* Create Plugin <=> UI communication buffers */
-    _idata->lv2.ext.ui_to_plugin = zix_ring_new(ATOM_BUFFER_SIZE);
-    _idata->lv2.ext.plugin_to_ui = zix_ring_new(ATOM_BUFFER_SIZE);
+    ui_to_plugin = zix_ring_new(ATOM_BUFFER_SIZE);
+    plugin_to_ui = zix_ring_new(ATOM_BUFFER_SIZE);
     
-    zix_ring_mlock(_idata->lv2.ext.ui_to_plugin);
-    zix_ring_mlock(_idata->lv2.ext.plugin_to_ui);
+    zix_ring_mlock(ui_to_plugin);
+    zix_ring_mlock(plugin_to_ui);
 #endif
 #ifdef USE_SUIL
     _idata->lv2.features[Plugin_Feature_Resize]->URI  = LV2_UI__resize;
     _idata->lv2.features[Plugin_Feature_Resize]->data = uiResizeFt;
-#endif
-#if 0
-    	jalv->features.sched.handle = &jalv->worker;
-	jalv->features.sched.schedule_work = jalv_worker_schedule;
-	init_feature(&jalv->features.sched_feature,
-	             LV2_WORKER__schedule, &jalv->features.sched);
-
-	jalv->features.ssched.handle = &jalv->state_worker;
-	jalv->features.ssched.schedule_work = jalv_worker_schedule;
-	init_feature(&jalv->features.state_sched_feature,
-	             LV2_WORKER__schedule, &jalv->features.ssched);
-
-	/* Check for thread-safe state restore() method. */
-	LilvNode* state_threadSafeRestore = lilv_new_uri(
-		jalv->world, LV2_STATE__threadSafeRestore);
-	if (lilv_plugin_has_feature(jalv->plugin, state_threadSafeRestore)) {
-		jalv->safe_restore = true;
-	}
-	lilv_node_free(state_threadSafeRestore);    
 #endif
     
 #ifdef PRESET_SUPPORT
@@ -1596,7 +1583,7 @@ Plugin_Module::load_lv2 ( const char* uri )
 #ifdef LV2_WORKER_SUPPORT
             else
             {
-                _idata->safe_restore = true;
+                m_safe_restore = true;
             }
 #endif
             if ( _idata->lv2.ext.worker != NULL && _idata->lv2.ext.worker->work == NULL )
@@ -1608,10 +1595,10 @@ Plugin_Module::load_lv2 ( const char* uri )
             {
                 DMESSAGE("Setting worker initialization");
 
-                lv2_atom_forge_init(&_idata->lv2.ext.forge, _uridMapFt);
+                lv2_atom_forge_init(&m_forge, _uridMapFt);
                 non_worker_init(this,  _idata->lv2.ext.worker, true);
 
-		if (_idata->safe_restore)   // FIXME
+		if (m_safe_restore)   // FIXME
                 {
                     MESSAGE( "Plugin Has safe_restore - TODO" );
                    // non_worker_init(this, _idata->lv2.ext.state, false);
@@ -2096,66 +2083,66 @@ Plugin_Module::non_worker_init(Plugin_Module* plug,
 {
     DMESSAGE("Threaded = %d", threaded);
     plug->_idata->lv2.ext.worker = iface;
-    plug->_idata->lv2.ext.threaded = threaded;
+    plug->threaded = threaded;
 
     if (threaded)
     {
-        zix_thread_create(&plug->_idata->lv2.ext.thread, ATOM_BUFFER_SIZE, worker_func, plug);
-        plug->_idata->lv2.ext.requests = zix_ring_new(ATOM_BUFFER_SIZE);
-        zix_ring_mlock(plug->_idata->lv2.ext.requests);
+        zix_thread_create(&plug->thread, ATOM_BUFFER_SIZE, worker_func, plug);
+        plug->requests = zix_ring_new(ATOM_BUFFER_SIZE);
+        zix_ring_mlock(plug->requests);
     }
     
-    plug->_idata->lv2.ext.responses = zix_ring_new(ATOM_BUFFER_SIZE);
-    plug->_idata->lv2.ext.response = malloc(ATOM_BUFFER_SIZE);
-    zix_ring_mlock(plug->_idata->lv2.ext.responses);
+    plug->responses = zix_ring_new(ATOM_BUFFER_SIZE);
+    plug->response = malloc(ATOM_BUFFER_SIZE);
+    zix_ring_mlock(plug->responses);
 }
 
 void
 Plugin_Module::non_worker_emit_responses( LilvInstance* instance)
 {
-    if (_idata->lv2.ext.responses)
+    if (responses)
     {
-        uint32_t read_space = zix_ring_read_space(_idata->lv2.ext.responses);
+        uint32_t read_space = zix_ring_read_space(responses);
         while (read_space)
         {
             DMESSAGE("GOT responses read space");
             uint32_t size = 0;
-            zix_ring_read(_idata->lv2.ext.responses, (char*)&size, sizeof(size));
+            zix_ring_read(responses, (char*)&size, sizeof(size));
 
-            zix_ring_read(_idata->lv2.ext.responses, (char*)_idata->lv2.ext.responses, size);
+            zix_ring_read(responses, (char*)responses, size);
 
             _idata->lv2.ext.worker->work_response(
-                instance->lv2_handle, size, _idata->lv2.ext.responses);
+                instance->lv2_handle, size, responses);
 
             read_space -= sizeof(size) + size;
         }
         // FIXME is this correct?
-        zix_ring_reset( _idata->lv2.ext.responses );
+        zix_ring_reset( responses );
     }
 }
 
 void
 Plugin_Module::non_worker_finish( void )
 {
-    if (_idata->lv2.ext.threaded) 
+    if (threaded) 
     {
-        zix_sem_post(&_idata->lv2.ext.sem);
-        zix_thread_join(_idata->lv2.ext.thread, NULL);
+        zix_sem_post(&sem);
+        zix_thread_join(thread, NULL);
     }
 }
 
 void
 Plugin_Module::non_worker_destroy( void )
 {
-    if (_idata->lv2.ext.requests) 
+    if (requests) 
     {
-        if (_idata->lv2.ext.threaded)
+        if (threaded)
         {
-            zix_ring_free(_idata->lv2.ext.requests);
+            zix_ring_free(requests);
         }
 
-        zix_ring_free(_idata->lv2.ext.responses);
-        free(_idata->lv2.ext.response);
+        zix_ring_free(responses);
+        free(response);
     }
 }
 
@@ -2171,15 +2158,15 @@ Plugin_Module::send_to_ui(Plugin_Module* plug, uint32_t port_index, uint32_t typ
     {port_index, plug->_idata->_lv2_urid_map(plug->_idata, LV2_ATOM__eventTransfer), sizeof(LV2_Atom) + size},
     {size, type}};
 
-    ZixRingTransaction tx = zix_ring_begin_write(plug->_idata->lv2.ext.plugin_to_ui);
-    if (zix_ring_amend_write(plug->_idata->lv2.ext.plugin_to_ui, &tx, &header, sizeof(header)) ||
-        zix_ring_amend_write(plug->_idata->lv2.ext.plugin_to_ui, &tx, body, size))
+    ZixRingTransaction tx = zix_ring_begin_write(plug->plugin_to_ui);
+    if (zix_ring_amend_write(plug->plugin_to_ui, &tx, &header, sizeof(header)) ||
+        zix_ring_amend_write(plug->plugin_to_ui, &tx, body, size))
     {
         WARNING( "Plugin => UI buffer overflow!" );
         return -1;
     }
 
-    zix_ring_commit_write(plug->_idata->lv2.ext.plugin_to_ui, &tx);
+    zix_ring_commit_write(plug->plugin_to_ui, &tx);
     return 0;
 }
 
@@ -2200,7 +2187,7 @@ Plugin_Module::ui_port_event( uint32_t port_index, uint32_t buffer_size, uint32_
     }
 
     const LV2_Atom* atom = (const LV2_Atom*)buffer;
-    if (lv2_atom_forge_is_object_type( &_idata->lv2.ext.forge, atom->type))
+    if (lv2_atom_forge_is_object_type(&m_forge, atom->type))
     {
 //        updating = true;  // FIXME
         const LV2_Atom_Object* obj = (const LV2_Atom_Object*)buffer;
@@ -2258,7 +2245,7 @@ Plugin_Module::send_atom_to_plugin( uint32_t port_index, uint32_t buffer_size, c
     }
     else
     {
-        write_atom_event(_idata->lv2.ext.ui_to_plugin, port_index, atom->size, atom->type, atom + 1U);
+        write_atom_event(ui_to_plugin, port_index, atom->size, atom->type, atom + 1U);
     }
 }
 
@@ -2312,7 +2299,7 @@ Plugin_Module::send_file_to_plugin( int port, const std::string &filename )
     uint32_t size = filename.size() + 1;
     
     // Copy forge since it is used by process thread
-    LV2_Atom_Forge       forge =  _idata->lv2.ext.forge;
+    LV2_Atom_Forge       forge =  this->m_forge;
     LV2_Atom_Forge_Frame frame;
     uint8_t              buf[1024];
     lv2_atom_forge_set_buffer(&forge, buf, sizeof(buf));
@@ -2321,24 +2308,24 @@ Plugin_Module::send_file_to_plugin( int port, const std::string &filename )
     lv2_atom_forge_key(&forge, _idata->_lv2_urid_map(_idata, LV2_PATCH__property) );
     lv2_atom_forge_urid(&forge, atom_input[port]._property_mapped);
     lv2_atom_forge_key(&forge, _idata->_lv2_urid_map(_idata, LV2_PATCH__value));
-    lv2_atom_forge_atom(&forge, size, _idata->lv2.ext.forge.Path);
+    lv2_atom_forge_atom(&forge, size, this->m_forge.Path);
     lv2_atom_forge_write(&forge, (const void*)filename.c_str(), size);
 
     const LV2_Atom* atom = lv2_atom_forge_deref(&forge, frame.ref);
     
-    write_atom_event(_idata->lv2.ext.ui_to_plugin, port, atom->size, atom->type, atom + 1U);
+    write_atom_event(ui_to_plugin, port, atom->size, atom->type, atom + 1U);
 }
 
 void
 Plugin_Module::apply_ui_events( uint32_t nframes, unsigned int port )
 {
     ControlChange ev  = {0U, 0U, 0U};
-    const size_t  space = zix_ring_read_space(_idata->lv2.ext.ui_to_plugin);
+    const size_t  space = zix_ring_read_space(ui_to_plugin);
 
     for (size_t i = 0; i < space; i += sizeof(ev) + ev.size)
     {
         DMESSAGE("APPLY UI");
-        if(zix_ring_read(_idata->lv2.ext.ui_to_plugin, (char*)&ev, sizeof(ev)) != sizeof(ev))
+        if(zix_ring_read(ui_to_plugin, (char*)&ev, sizeof(ev)) != sizeof(ev))
         {
             DMESSAGE("Failed to read header from UI ring buffer\n");
             break;
@@ -2354,7 +2341,7 @@ Plugin_Module::apply_ui_events( uint32_t nframes, unsigned int port )
             uint8_t body[MSG_BUFFER_SIZE];
         } buffer;
         
-        if (zix_ring_read(_idata->lv2.ext.ui_to_plugin, &buffer, ev.size) != ev.size)
+        if (zix_ring_read(ui_to_plugin, &buffer, ev.size) != ev.size)
         {
             DMESSAGE("Failed to read from UI ring buffer\n");
             break;
