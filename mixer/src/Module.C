@@ -478,8 +478,6 @@ Module::handle_control_changed ( Port *p )
                 float value = p->control_value();
                 DMESSAGE("Port_index = %d: Value = %f", i, value);
                 pm->send_to_custom_ui(i, sizeof(float), 0, &value); // 0 = float type
-                
-                // FIXME atom ports
             }
         }
     }
@@ -1191,7 +1189,7 @@ Module::menu ( void ) const
 
     m.add( "Insert", 0, &Module::menu_cb, (void*)this, 0);
     m.add( "Insert", 0, &Module::menu_cb, const_cast< Fl_Menu_Item *>( insert_menu->menu() ), FL_SUBMENU_POINTER );
-    m.add( "Edit Parameters", ' ', &Module::menu_cb, (void*)this, 0 );
+    m.add( "Edit Parameters", FL_CTRL + ' ', &Module::menu_cb, (void*)this, 0 );
     m.add( "Show Analysis", 's', &Module::menu_cb, (void*)this, 0);
     m.add( "Bypass",   'b', &Module::menu_cb, (void*)this, FL_MENU_TOGGLE | ( bypass() ? FL_MENU_VALUE : 0 ) );
     m.add( "Cut", FL_CTRL + 'x', &Module::menu_cb, (void*)this, is_default() ? FL_MENU_INACTIVE : 0 );
@@ -1256,6 +1254,28 @@ Module::handle ( int m )
     {
         case FL_KEYBOARD:
         {
+            /* For LV2 we show the custom UI if available with the space bar. The generic
+               UI is shown with CTRL space. If no custom UI then either space or CTRL space opens
+               the generic UI. */
+            if ( !( Fl::event_key(FL_Control_L) ) &&  !( Fl::event_key(FL_Control_R) ) && (Fl::event_key(32)) ) // 32 == space bar
+            {
+                if(_is_lv2)
+                {
+#ifdef USE_SUIL
+                    Plugin_Module *pm = static_cast<Plugin_Module *> (this);
+                    if(!pm->try_custom_ui())
+                    {
+                        command_open_parameter_editor();
+                    }
+#endif
+                }
+                else
+                {
+                    command_open_parameter_editor();
+                }
+                return 1;
+            }
+
             if ( Fl::event_key() == FL_Menu )
             {
                 menu_popup( &menu(), x(), y() );
