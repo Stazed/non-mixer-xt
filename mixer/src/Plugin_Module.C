@@ -579,6 +579,9 @@ _Pragma("GCC diagnostic pop")
     LV2UI_Resize* const uiResizeFt = new LV2UI_Resize;
     uiResizeFt->handle             = this;
     uiResizeFt->ui_resize          = x_resize;
+    m_uis                          = NULL;
+    m_ui                           = NULL;
+    m_ui_type                      = NULL;
 #endif
 
     _idata->lv2.features[Plugin_Feature_BufSize_Bounded]->URI  = LV2_BUF_SIZE__boundedBlockLength;
@@ -2611,27 +2614,27 @@ Plugin_Module::custom_ui_instantiate()
     m_ui_host = suil_host_new(send_to_plugin, ui_port_index, NULL, NULL);
 
     /* Get a plugin UI */
-    _idata->lv2.ext.uis = lilv_plugin_get_uis(m_plugin);
+    m_uis = lilv_plugin_get_uis(m_plugin);
 
     m_use_showInterface = false;
     const char* native_ui_type;
 
     /* Try to find an embeddable X11 UI */
-    _idata->lv2.ext.ui = try_X11_ui("http://lv2plug.in/ns/extensions/ui#X11UI");
+    m_ui = try_X11_ui("http://lv2plug.in/ns/extensions/ui#X11UI");
 
-    if(_idata->lv2.ext.ui)
+    if(m_ui)
         native_ui_type = "http://lv2plug.in/ns/extensions/ui#X11UI";
 
     void * parent = NULL;
 
     /* If plugin UI does not support X11 embedded, so try showInterface - Calf only with GtkUI */
-    if(!_idata->lv2.ext.ui)
+    if(!m_ui)
     {
         MESSAGE("Native X11 not found, trying LV2_UI__showInterface");
-        _idata->lv2.ext.ui = try_showInterface_ui("http://lv2plug.in/ns/extensions/ui#GtkUI");
+        m_ui = try_showInterface_ui("http://lv2plug.in/ns/extensions/ui#GtkUI");
 
         /* We got a show interface UI*/
-        if(_idata->lv2.ext.ui)
+        if(m_ui)
         {
             m_use_showInterface = true;
             native_ui_type = "http://lv2plug.in/ns/extensions/ui#GtkUI";
@@ -2677,8 +2680,8 @@ Plugin_Module::custom_ui_instantiate()
                                        _idata->lv2.features[Plugin_Feature_Resize],
                                         NULL};
 
-    const char* bundle_uri  = lilv_node_as_uri(lilv_ui_get_bundle_uri(_idata->lv2.ext.ui));
-    const char* binary_uri  = lilv_node_as_uri(lilv_ui_get_binary_uri(_idata->lv2.ext.ui));
+    const char* bundle_uri  = lilv_node_as_uri(lilv_ui_get_bundle_uri(m_ui));
+    const char* binary_uri  = lilv_node_as_uri(lilv_ui_get_binary_uri(m_ui));
     char*       bundle_path = lilv_file_uri_parse(bundle_uri, NULL);
     char*       binary_path = lilv_file_uri_parse(binary_uri, NULL);
 
@@ -2688,8 +2691,8 @@ Plugin_Module::custom_ui_instantiate()
                         this,
                         native_ui_type,
                         lilv_node_as_uri(lilv_plugin_get_uri(m_plugin)),
-                        lilv_node_as_uri(lilv_ui_get_uri(_idata->lv2.ext.ui)),
-                        lilv_node_as_uri(_idata->lv2.ext.ui_type),
+                        lilv_node_as_uri(lilv_ui_get_uri(m_ui)),
+                        lilv_node_as_uri(m_ui_type),
                         bundle_path,
                         binary_path,
                         ui_features);
@@ -2719,11 +2722,11 @@ Plugin_Module::try_X11_ui (const char* native_ui_type)
     {
         LilvNode* host_type = lilv_new_uri(m_lilvWorld, native_ui_type);
 
-        LILV_FOREACH (uis, u, _idata->lv2.ext.uis)
+        LILV_FOREACH (uis, u, m_uis)
         {
-            const LilvUI*   ui   = lilv_uis_get(_idata->lv2.ext.uis, u);
+            const LilvUI*   ui   = lilv_uis_get(m_uis, u);
             const bool      supported =
-              lilv_ui_is_supported(ui, suil_ui_supported, host_type, &_idata->lv2.ext.ui_type);
+              lilv_ui_is_supported(ui, suil_ui_supported, host_type, &m_ui_type);
 
             if (supported)
             {
@@ -2749,11 +2752,11 @@ Plugin_Module::try_showInterface_ui(const char* native_ui_type)
     const LilvUI* native_ui = NULL;
 
     /* Try to find a UI with ui:showInterface */
-    if(_idata->lv2.ext.uis)
+    if(m_uis)
     {
-        LILV_FOREACH (uis, u, _idata->lv2.ext.uis)
+        LILV_FOREACH (uis, u, m_uis)
         {
-            const LilvUI*   ui      = lilv_uis_get(_idata->lv2.ext.uis, u);
+            const LilvUI*   ui      = lilv_uis_get(m_uis, u);
             const LilvNode* ui_node = lilv_ui_get_uri(ui);
 
             lilv_world_load_resource(m_lilvWorld, ui_node);
@@ -2786,7 +2789,7 @@ Plugin_Module::try_showInterface_ui(const char* native_ui_type)
     LilvNode* host_type = lilv_new_uri(m_lilvWorld, native_ui_type);
 
     if (!lilv_ui_is_supported(
-              native_ui, suil_ui_supported, host_type, &_idata->lv2.ext.ui_type))
+              native_ui, suil_ui_supported, host_type, &m_ui_type))
     {
           native_ui = NULL;
     }
@@ -3022,7 +3025,7 @@ Plugin_Module::init_x()
                                 CWBorderPixel|CWEventMask, &attr);
 
     CARLA_SAFE_ASSERT_RETURN(fHostWindow != 0,);
-    
+
     XSetStandardProperties(fDisplay, fHostWindow, label(), label(), None, NULL, 0, NULL);
 
     XGrabKey(fDisplay, X11Key_Escape, AnyModifier, fHostWindow, 1, GrabModeAsync, GrabModeAsync);

@@ -170,9 +170,6 @@ struct ImplementationData
             const LV2_State_Interface*   state;
             const LV2_Worker_Interface*  worker;
 #ifdef USE_SUIL
-            LilvUIs*          uis;          ///< All plugin UIs (RDF data)
-            const LilvUI*     ui;           ///< Plugin UI (RDF data)
-            const LilvNode*   ui_type;      ///< Plugin UI type (unwrapped)
             LV2_Extension_Data_Feature ext_data;
             const LV2UI_Idle_Interface* idle_iface;
             const LV2UI_Show_Interface* ui_showInterface;
@@ -218,9 +215,6 @@ struct ImplementationData
         lv2.ext.options = NULL;
         lv2.ext.state   = NULL;
         lv2.ext.worker  = NULL;
-        lv2.ext.uis     = NULL;
-        lv2.ext.ui      = NULL;
-        lv2.ext.ui_type = NULL;
     }
 
     ~ImplementationData()
@@ -414,6 +408,9 @@ public:
   SuilHost*     m_ui_host;     ///< Plugin UI host support
   SuilInstance* m_ui_instance; ///< Plugin UI instance (shared library)
   bool          m_use_showInterface;
+  LilvUIs*      m_uis;         ///< All plugin UIs (RDF data)
+  const LilvUI*    m_ui;       ///< Plugin UI (RDF data)
+  const LilvNode*  m_ui_type;  ///< Plugin UI type (unwrapped)
 
   /* X window for custom plugin ui */
 #ifdef USE_CARLA
