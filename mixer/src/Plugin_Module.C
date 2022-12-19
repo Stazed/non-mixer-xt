@@ -2159,7 +2159,7 @@ Plugin_Module::send_to_ui(Plugin_Module* plug, uint32_t port_index, uint32_t typ
     } Header;
 
     const Header header = {
-    {port_index, plug->_idata->_lv2_urid_map(plug->_idata, LV2_ATOM__eventTransfer), sizeof(LV2_Atom) + size},
+    {port_index, plug->_idata->_lv2_urid_map(plug->_idata, LV2_ATOM__eventTransfer), (uint32_t) sizeof(LV2_Atom) + size},
     {size, type}};
 
     ZixRingTransaction tx = zix_ring_begin_write(plug->plugin_to_ui);
@@ -2286,7 +2286,7 @@ Plugin_Module::write_atom_event(ZixRing* target, const uint32_t    port_index,
     } Header;
 
     const Header header = {
-    {port_index, _idata->_lv2_urid_map(_idata, LV2_ATOM__eventTransfer), sizeof(LV2_Atom) + size},
+    {port_index, _idata->_lv2_urid_map(_idata, LV2_ATOM__eventTransfer), (uint32_t) sizeof(LV2_Atom) + size},
     {size, type}};
 
     return write_control_change(target, &header, sizeof(header), body, size);
