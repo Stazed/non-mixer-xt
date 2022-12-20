@@ -33,7 +33,7 @@
 #include <FL/Fl_Group.H>
 #include <FL/Fl_Menu_Button.H>
 #include <lv2/instance-access/instance-access.h>
-#include "CarlaPluginUI_X11Icon.H"  // FIXME
+#include "NonMixerPluginUI_X11Icon.h"
 
 #include "Plugin_Module.H"
 
@@ -3038,7 +3038,7 @@ Plugin_Module::init_x()
     XChangeProperty(fDisplay, fHostWindow, _nwp, XA_CARDINAL, 32, PropModeReplace, (const uchar*)&pid, 1);
 
     const Atom _nwi = XInternAtom(fDisplay, "_NET_WM_ICON", False);
-    XChangeProperty(fDisplay, fHostWindow, _nwi, XA_CARDINAL, 32, PropModeReplace, (const uchar*)sCarlaX11Icon, sCarlaX11IconSize);
+    XChangeProperty(fDisplay, fHostWindow, _nwi, XA_CARDINAL, 32, PropModeReplace, (const uchar*)sNonMixerX11Icon, sNonMixerX11IconSize);
 
     const Atom _wt = XInternAtom(fDisplay, "_NET_WM_WINDOW_TYPE", False);
 
