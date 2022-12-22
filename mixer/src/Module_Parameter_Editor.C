@@ -239,7 +239,7 @@ Module_Parameter_Editor::make_controls ( void )
     if(module->control_input.size() > 8)
     {
         _use_scroller = true;
-        control_scroll = new Fl_Scroll( 0, 0, 400, 300 );
+        control_scroll = new Fl_Scroll( 0, 0, 500, 320 );
         control_scroll->type(6);    // Type 6 - vertical scroll only
 
         control_pack->add( control_scroll );
