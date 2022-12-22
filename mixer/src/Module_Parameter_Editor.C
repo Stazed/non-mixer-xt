@@ -201,14 +201,12 @@ Module_Parameter_Editor::make_controls ( void )
         o->labelsize(14);
         o->align(FL_ALIGN_TOP);
 
-
         Fl_Labelpad_Group *flg = new Fl_Labelpad_Group( (Fl_Widget*)o );
 
         flg->hide();
 
         control_pack->add( flg );
     }
-
 
     controls_by_port.clear();
 
@@ -226,7 +224,8 @@ Module_Parameter_Editor::make_controls ( void )
 
     controls_by_port.resize( module->control_input.size() );
     
-    // Controll pack
+    /* FIXME we could probably simplify things and eliminate the flowpack now that we are 
+       using the scroller and no longer have different modes. */
     control_pack->vspacing( 1 );
     control_pack->hspacing( 10 );
     control_pack->flow(true);
@@ -338,9 +337,8 @@ Module_Parameter_Editor::make_controls ( void )
             w = o;
 
             o->type( FL_HORIZONTAL );
-
             o->align( FL_ALIGN_RIGHT );
-            o->size( 200, 24 );
+
             if ( p->hints.ranged )
             {
                 o->minimum( p->hints.minimum );
@@ -428,6 +426,7 @@ Module_Parameter_Editor::make_controls ( void )
 
         Fl_Widget *w;
 
+        /* Use i * 24, not ii for Y location since we have parameters from control_input above */
         Fl_Button *o = new Fl_Button( 75, (i*24) + 24, 200, 24, lilv_node_as_string(p->_symbol) );
 
         ++i;    // increment the scroll widget counter to set for next item if any
