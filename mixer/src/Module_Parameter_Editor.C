@@ -141,27 +141,23 @@ Module_Parameter_Editor::Module_Parameter_Editor ( Module *module ) : Fl_Double_
             }
         }
 #endif
-        
+
         o->resizable(0);
         o->end();
     }
 
-    { Fl_Scroll *o = control_scroll = new Fl_Scroll( 0, 40, w(), h() - 40 );
-        { Fl_Group *o = new Fl_Group( 0, 40, w(), h() - 40 );
-            { Fl_Flowpack *o = control_pack = new Fl_Flowpack( 50, 40, w() - 100, h() - 40 );
-                o->type( FL_HORIZONTAL );
-                o->flow( true );
-                o->vspacing( 5 );
-                o->hspacing( 5 );
-                
-                o->end();
-            }
-            o->resizable( 0 );
-            o->end();
+    { Fl_Group *o = new Fl_Group( 0, 40, w(), h() - 40 );
+        { Fl_Flowpack *o = control_pack = new Fl_Flowpack( 50, 40, w() - 100, h() - 40 );
+            o->type( FL_HORIZONTAL );
+            o->flow( true );
+            o->vspacing( 5 );
+            o->hspacing( 5 );
+
+            o->end();   // control_pack
         }
-        o->end();
+        o->resizable( 0 );
+        o->end();       // Fl_Group
     }
-    resizable(control_scroll);
 
     end();
 
@@ -273,8 +269,16 @@ Module_Parameter_Editor::make_controls ( void )
         control_pack->size( 700, 50 );
         
     }
+
+    control_scroll = new Fl_Scroll( 0, 0, 400, 300 );
+    control_scroll->type(6);    // Type 6 - vertical scroll only
+
+    control_pack->add( control_scroll );
+
+    // Counter for adding to the scroll pad
+    unsigned int i = 0;
         
-    for ( unsigned int i = 0; i < module->control_input.size(); ++i )
+    for ( i = 0; i < module->control_input.size(); ++i )
     {
         Fl_Widget *w;
 
@@ -308,16 +312,16 @@ Module_Parameter_Editor::make_controls ( void )
 
         if ( p->hints.type == Module::Port::Hints::BOOLEAN )
         {
-            Fl_Button *o = new Fl_Button( 0, 0, 24, 24, p->name() );
+            Fl_Button *o = new Fl_Button( 75, (i*24) + 24, 200, 24, p->name() );
             w = o;
             o->selection_color( fc );
             o->type( FL_TOGGLE_BUTTON );
             o->value( p->control_value() );
-            o->align(FL_ALIGN_TOP);
+            o->align(FL_ALIGN_RIGHT);
         }
         else if ( p->hints.type == Module::Port::Hints::LV2_INTEGER_ENUMERATION )
         {
-            Fl_Choice *o =  new Fl_Choice( 0, 0, 200, 25, p->name() );
+            Fl_Choice *o =  new Fl_Choice( 75, (i*24) + 24, 200, 24, p->name() );
             w = o;
             for(unsigned count = 0; count < module->control_input[i].hints.ScalePoints.size(); ++count)
             {
@@ -343,8 +347,7 @@ Module_Parameter_Editor::make_controls ( void )
         }
         else if ( p->hints.type == Module::Port::Hints::INTEGER )
         {
-
-            Fl_Counter *o = new Fl_Counter(0, 0, 58, 24, p->name() );
+            Fl_Counter *o = new Fl_Counter(75, (i*24) + 24, 200, 24, p->name() );
             w = o;
             
             o->type(1);
@@ -405,10 +408,10 @@ Module_Parameter_Editor::make_controls ( void )
             }
             else
             {
-                Fl_Value_SliderX *o = new Fl_Value_SliderX( 0, 0, 120, 24, p->name() );
+                Fl_Value_SliderX *o = new Fl_Value_SliderX( 75, (i*24) + 24, 200, 24, p->name() );
                 w = o;
 
-                if ( mode_choice->value() == 1 )
+                if ( mode_choice->value() == 1 )    // MODE
                 {
                     o->type( FL_HORIZONTAL );
 
@@ -484,23 +487,16 @@ Module_Parameter_Editor::make_controls ( void )
         else
             w->callback( cb_value_handle, &_callback_data.back() );
 
-        {
-            Fl_Labelpad_Group *flg = new Fl_Labelpad_Group( w );
-
-            flg->set_visible_focus();
-
-            control_pack->add( flg );
-        }
-
+        control_scroll->add( w );
     }
 
 #ifdef LV2_WORKER_SUPPORT
     atom_port_controller.clear();
     atom_port_controller.resize( module->atom_input.size() );
 
-    for ( unsigned int i = 0; i < module->atom_input.size(); ++i )
+    for ( unsigned int ii = 0; ii < module->atom_input.size(); ++ii )
     {
-        Module::Port *p = &module->atom_input[i];
+        Module::Port *p = &module->atom_input[ii];
 
         if ( p->hints.type != Module::Port::Hints::PATCH_MESSAGE )
             continue;
@@ -510,7 +506,10 @@ Module_Parameter_Editor::make_controls ( void )
 
         Fl_Widget *w;
 
-        Fl_Button *o = new Fl_Button( 0, 0, 200, 24, lilv_node_as_string(p->_symbol) );
+        Fl_Button *o = new Fl_Button( 75, (i*24) + 24, 200, 24, lilv_node_as_string(p->_symbol) );
+
+        ++i;    // increment the scroll widget counter to set for next item if any
+
         w = o;
         o->selection_color( fc );
         o->type( FL_NORMAL_BUTTON );
@@ -523,17 +522,12 @@ Module_Parameter_Editor::make_controls ( void )
             o->copy_label( base_filename.c_str() );
         }
 
-        _callback_data.push_back( callback_data( this, i ) );
+        _callback_data.push_back( callback_data( this, ii ) );
         w->callback( cb_filechooser_handle, &_callback_data.back() );
 
-        atom_port_controller[i] = w;    // so we can update the button label
+        atom_port_controller[ii] = w;    // so we can update the button label
 
-        {
-            Fl_Labelpad_Group *flg = new Fl_Labelpad_Group( o );
-
-            flg->set_visible_focus();
-            control_pack->add( flg );
-        }
+        control_scroll->add( w );
     }
 #endif
 
@@ -610,7 +604,7 @@ Module_Parameter_Editor::update_control_visibility ( void )
 
     control_pack->parent()->size( control_pack->w() + 100, control_pack->h() );
     
-    control_scroll->scroll_to(0, 0 );
+    control_scroll->scroll_to(control_scroll->xposition(), control_scroll->yposition() -17);
 
     size( width, height );
     size_range( width, height, width, height );
