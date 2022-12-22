@@ -89,23 +89,7 @@ Module_Parameter_Editor::Module_Parameter_Editor ( Module *module ) : Fl_Double_
     _min_width = 30 + fl_width( module->label() );
     
     { Fl_Group *o = new Fl_Group( 0, 0, w(), 25 );
-    /* Deleting this module_label. It is redundant to the window title and gets in the way
-       of the LV2 preset choice on small plugins */
-//        o->label( module->label() );
-//        o->labelfont( 2 );
-//        o->labeltype( FL_SHADOW_LABEL );
-//        o->labelsize( 14 );
-//        o->align( FL_ALIGN_TOP | FL_ALIGN_RIGHT | FL_ALIGN_INSIDE );
 
-        { Fl_Menu_Button *o = mode_choice = new Fl_Menu_Button( 0, 0, 25, 25 );
-            o->add( "Knobs" );
-            o->add( "Horizontal Sliders" );
-            o->add( "Vertical Sliders" );
-            o->label( NULL );
-            o->value( 1 );
-            o->when( FL_WHEN_CHANGED );
-            o->callback( cb_mode_handle, this );
-        }
 #ifdef PRESET_SUPPORT
         if (_module->_is_lv2)
         {
@@ -241,35 +225,15 @@ Module_Parameter_Editor::make_controls ( void )
 
     controls_by_port.resize( module->control_input.size() );
     
-    if ( mode_choice->value() == 1 )
-    {
-        control_pack->vspacing( 1 );
-        control_pack->hspacing( 10 );
-        control_pack->flow(true);
-        control_pack->flowdown(true);
-        control_pack->type( FL_HORIZONTAL );
-        control_pack->size( 900, 300 );
-    }
-    else if ( mode_choice->value() == 2 )
-    {
-        control_pack->vspacing( 10 );
-        control_pack->hspacing( 10 );
-        control_pack->flow(true);
-        control_pack->flowdown(false);
-        control_pack->type( FL_HORIZONTAL );
-        control_pack->size( 900, 250 );
-    }
-    else if ( mode_choice->value() == 0 )
-    {
-        control_pack->vspacing( 10 );
-        control_pack->hspacing( 10 );
-        control_pack->flow(true);
-        control_pack->flowdown(true);
-        control_pack->type( FL_HORIZONTAL );
-        control_pack->size( 700, 50 );
-        
-    }
+    // Controll pack
+    control_pack->vspacing( 1 );
+    control_pack->hspacing( 10 );
+    control_pack->flow(true);
+    control_pack->flowdown(true);
+    control_pack->type( FL_HORIZONTAL );
+    control_pack->size( 900, 300 );
 
+    // Scroller
     control_scroll = new Fl_Scroll( 0, 0, 400, 300 );
     control_scroll->type(6);    // Type 6 - vertical scroll only
 
@@ -361,115 +325,56 @@ Module_Parameter_Editor::make_controls ( void )
             }
 
             o->value( p->control_value() );
-
         }
         else
         {
-            if ( mode_choice->value() == 0 )
+            Fl_Value_SliderX *o = new Fl_Value_SliderX( 75, (i*24) + 24, 200, 24, p->name() );
+            w = o;
+
+            o->type( FL_HORIZONTAL );
+
+            o->align( FL_ALIGN_RIGHT );
+            o->size( 200, 24 );
+            if ( p->hints.ranged )
             {
-                Fl_DialX *o = new Fl_DialX( 0, 0, 60, 60, p->name() );
-                w = o;
-
-                if ( p->hints.ranged )
-                {
-                    DMESSAGE( "Min: %f, max: %f", p->hints.minimum, p->hints.maximum );
-
-                    o->minimum( p->hints.minimum );
-                    o->maximum( p->hints.maximum );
-                }
-                o->color( FL_BACKGROUND_COLOR );
-                o->selection_color( fc );
-                o->value( p->control_value() );
-                o->align(FL_ALIGN_TOP);
-                o->box( FL_FLAT_BOX );
-
-                if ( p->hints.type == Module::Port::Hints::LV2_INTEGER )
-                {
-                    o->precision(0);
-                }
-                else    // floats
-                {
-                    /* a couple of plugins have ridiculously small units */
-                    float r =  fabs( p->hints.maximum - p->hints.minimum );
-
-                    if ( r  <= 0.01f )
-                        o->precision( 4 );
-                    else if ( r <= 0.1f )
-                        o->precision( 3 );
-                    else if ( r <= 100.0f )
-                        o->precision( 2 );
-                    else if ( r <= 5000.0f )
-                        o->precision( 1 );
-                    /* else if ( r <= 10000.0f ) */
-                    /*     o->precision( 1 ); */
-                    else
-                        o->precision( 0 );
-                }
+                o->minimum( p->hints.minimum );
+                o->maximum( p->hints.maximum );
             }
-            else
+
+            if ( p->hints.type & Module::Port::Hints::LOGARITHMIC )
+                o->log(true);
+
+            if ( p->hints.type == Module::Port::Hints::LV2_INTEGER )
             {
-                Fl_Value_SliderX *o = new Fl_Value_SliderX( 75, (i*24) + 24, 200, 24, p->name() );
-                w = o;
+                o->precision(0);
+            }
+            else    // floats
+            {
+                o->precision( 2 );
+                /* a couple of plugins have ridiculously small units */
+                float r =  fabs( p->hints.maximum - p->hints.minimum );
 
-                if ( mode_choice->value() == 1 )    // MODE
-                {
-                    o->type( FL_HORIZONTAL );
-
-                    o->align( FL_ALIGN_RIGHT );
-                    o->size( 200, 24 );
-                    if ( p->hints.ranged )
-                    {
-                        o->minimum( p->hints.minimum );
-                        o->maximum( p->hints.maximum );
-                    }
-                }
-                else
-                {
-                    o->type( FL_VERTICAL );
-                    o->align(FL_ALIGN_TOP);
-
-                    o->size( 24, 200 );
-                    /* have to reverse the meaning of these to get the
-                     * orientation of the slider right */
-                    o->maximum( p->hints.minimum );
-                    o->minimum( p->hints.maximum );
-                }
-		if ( p->hints.type & Module::Port::Hints::LOGARITHMIC )
-		    o->log(true);
-
-                if ( p->hints.type == Module::Port::Hints::LV2_INTEGER )
-                {
-                    o->precision(0);
-                }
-                else    // floats
-                {
+                if ( r  <= 0.01f )
+                    o->precision( 4 );
+                else if ( r <= 0.1f )
+                    o->precision( 3 );
+                else if ( r <= 100.0f )
                     o->precision( 2 );
-                    /* a couple of plugins have ridiculously small units */
-                    float r =  fabs( p->hints.maximum - p->hints.minimum );
-
-                    if ( r  <= 0.01f )
-                        o->precision( 4 );
-                    else if ( r <= 0.1f )
-                        o->precision( 3 );
-                    else if ( r <= 100.0f )
-                        o->precision( 2 );
-                    else if ( r <= 5000.0f )
-                        o->precision( 1 );
-                    /* else if ( r <= 10000.0f ) */
-                    /*     o->precision( 1 ); */
-                    else
-                        o->precision( 0 );
-                }
-
-                o->textsize( 8 );
-//                o->box( FL_NO_BOX );
-                o->slider( FL_UP_BOX );
-                o->color( bc );
-                o->selection_color( fc );
-                o->value( p->control_value() );
-		o->box( FL_BORDER_BOX );
+                else if ( r <= 5000.0f )
+                    o->precision( 1 );
+                /* else if ( r <= 10000.0f ) */
+                /*     o->precision( 1 ); */
+                else
+                    o->precision( 0 );
             }
 
+            o->textsize( 8 );
+//                o->box( FL_NO_BOX );
+            o->slider( FL_UP_BOX );
+            o->color( bc );
+            o->selection_color( fc );
+            o->value( p->control_value() );
+            o->box( FL_BORDER_BOX );
         }
 //        w->align(FL_ALIGN_TOP);
         w->labelsize( 14 );
