@@ -70,6 +70,7 @@ Module_Parameter_Editor::Module_Parameter_Editor ( Module *module ) : Fl_Double_
     _module = module;
     _resized = false;
     _min_width = 100;
+    _use_scroller = false;
 
     char lab[256];
     if ( strcmp( module->name(), module->label() ) )
@@ -233,11 +234,16 @@ Module_Parameter_Editor::make_controls ( void )
     control_pack->type( FL_HORIZONTAL );
     control_pack->size( 900, 300 );
 
-    // Scroller
-    control_scroll = new Fl_Scroll( 0, 0, 400, 300 );
-    control_scroll->type(6);    // Type 6 - vertical scroll only
+     _use_scroller = false;
+    /* If the parameter number is greater than 8, we use the scroller */
+    if(module->control_input.size() > 8)
+    {
+        _use_scroller = true;
+        control_scroll = new Fl_Scroll( 0, 0, 400, 300 );
+        control_scroll->type(6);    // Type 6 - vertical scroll only
 
-    control_pack->add( control_scroll );
+        control_pack->add( control_scroll );
+    }
 
     // Counter for adding to the scroll pad
     unsigned int i = 0;
@@ -391,8 +397,19 @@ Module_Parameter_Editor::make_controls ( void )
             w->callback( cb_enumeration_handle, &_callback_data.back() );
         else
             w->callback( cb_value_handle, &_callback_data.back() );
+        
+        if (_use_scroller)
+        {
+            control_scroll->add( w );
+        }
+        else
+        {
+            Fl_Labelpad_Group *flg = new Fl_Labelpad_Group( w );
 
-        control_scroll->add( w );
+            flg->set_visible_focus();
+
+            control_pack->add( flg );
+        }
     }
 
 #ifdef LV2_WORKER_SUPPORT
@@ -432,7 +449,18 @@ Module_Parameter_Editor::make_controls ( void )
 
         atom_port_controller[ii] = w;    // so we can update the button label
 
-        control_scroll->add( w );
+        if (_use_scroller)
+        {
+            control_scroll->add( w );
+        }
+        else
+        {
+            Fl_Labelpad_Group *flg = new Fl_Labelpad_Group( w );
+
+            flg->set_visible_focus();
+
+            control_pack->add( flg );
+        }
     }
 #endif
 
@@ -509,7 +537,10 @@ Module_Parameter_Editor::update_control_visibility ( void )
 
     control_pack->parent()->size( control_pack->w() + 100, control_pack->h() );
     
-    control_scroll->scroll_to(control_scroll->xposition(), control_scroll->yposition() -17);
+    if(_use_scroller)
+    {
+        control_scroll->scroll_to(control_scroll->xposition(), control_scroll->yposition() -17);
+    }
 
     size( width, height );
     size_range( width, height, width, height );

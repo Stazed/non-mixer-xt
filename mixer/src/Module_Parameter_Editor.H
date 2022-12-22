@@ -103,6 +103,7 @@ class Module_Parameter_Editor : public Fl_Double_Window
     bool _resized;
     int _min_width;
     int _selected_control;
+    bool _use_scroller;
 
     int azimuth_port_number;
     int elevation_port_number;
