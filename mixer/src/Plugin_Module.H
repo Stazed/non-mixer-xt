@@ -215,6 +215,9 @@ struct ImplementationData
         lv2.ext.options = NULL;
         lv2.ext.state   = NULL;
         lv2.ext.worker  = NULL;
+        lv2.ext.idle_iface = NULL;
+        lv2.ext.ui_showInterface = NULL;
+        lv2.ext.resize_ui = NULL;
     }
 
     ~ImplementationData()
