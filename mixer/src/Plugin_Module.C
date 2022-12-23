@@ -2648,7 +2648,7 @@ Plugin_Module::custom_ui_instantiate()
         }
         else    // We don't support this UI
         {
-            MESSAGE("NO CUSTOM UI");
+            MESSAGE("NO CUSTOM UI SUPPORTED");
             return false;
         }
     }
@@ -2736,7 +2736,7 @@ Plugin_Module::try_X11_ui (const char* native_ui_type)
 
             if (supported)
             {
-                DMESSAGE("GOT UI");
+                DMESSAGE("GOT UI X11");
                 lilv_node_free(host_type);
                 host_type = NULL;
                 native_ui = ui;
@@ -2777,18 +2777,18 @@ Plugin_Module::try_showInterface_ui(const char* native_ui_type)
             if (supported)
             {
                 native_ui = ui;
-                DMESSAGE("GOT _idata->lv2.ext.ui");
+                DMESSAGE("GOT ShowInterface CUSTOM UI");
             }
             else
             {
-                WARNING("NO CUSTOM UI TOP");
+                DMESSAGE("NO ShowInterface CUSTOM UI");
                 return NULL;
             }
         }
     }
     else
     {
-        WARNING("NO CUSTOM UI TOP");
+        DMESSAGE("NO ShowInterface CUSTOM UI");
         return NULL;
     }
 
@@ -2820,7 +2820,7 @@ Plugin_Module::send_to_custom_ui( uint32_t port_index, uint32_t size, uint32_t p
 }
 
 /**
- Send the current LV2 plugin ouput settings to the custom ui
+ Send the current LV2 plugin output settings to the custom ui
  */
 void
 Plugin_Module::update_custom_ui()
