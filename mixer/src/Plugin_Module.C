@@ -2480,15 +2480,21 @@ ui_port_index(void* const controller, const char* port_symbol)
     if (plugin == NULL)
         return LV2UI_INVALID_PORT_INDEX;
 
+    DMESSAGE("port_symbol = %s", port_symbol);
+
     LilvWorld* world = pLv2Plugin->get_lilv_world();
 
     LilvNode *symbol = lilv_new_string(world, port_symbol);
 
     const LilvPort *port = lilv_plugin_get_port_by_symbol(plugin, symbol);
+    lilv_node_free(symbol);
+
+    if(!port)
+        return LV2UI_INVALID_PORT_INDEX;
 
     const unsigned long port_index = lilv_port_get_index(plugin, port);
 
-    DMESSAGE("port_index = %U, port_symbol = %s", port_index, port_symbol);
+    DMESSAGE("port_index = %U", port_index);
 
     return port ? port_index : LV2UI_INVALID_PORT_INDEX;
 }
