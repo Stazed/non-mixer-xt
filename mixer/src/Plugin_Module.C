@@ -1823,8 +1823,8 @@ Plugin_Module::load_lv2 ( const char* uri )
     else
     {
         WARNING( "Failed to load plugin" );
-        delete _idata->lv2.rdf_data;
-        _idata->lv2.rdf_data = NULL;
+        /* We don't need to delete anything here because the plugin module gets deleted along with
+           everything else. */
         return false;
     }
 
@@ -1865,6 +1865,17 @@ Plugin_Module::load_lv2 ( const char* uri )
     else
         _loading_from_file = false;
 #endif  // LV2_WORKER_SUPPORT
+
+    /* We are setting the initial buffer size here because some plugins seem to need it upon instantiation -- Distrho
+     The reset update is called too late so we get a crash upon the first call to run. */
+    if ( _idata->lv2.ext.options && _idata->lv2.ext.options->set  )
+    {
+        for ( unsigned int i = 0; i < _idata->handle.size(); ++i )
+        {
+            _idata->lv2.ext.options->set( _idata->handle[i], &(_idata->lv2.options.opts[Plugin_Module_Options::MaxBlockLenth]) );
+            _idata->lv2.ext.options->set( _idata->handle[i], &(_idata->lv2.options.opts[Plugin_Module_Options::MinBlockLenth]) );
+        }
+    }
 
     return instances;
 }

@@ -280,6 +280,7 @@ Group::name ( const char *n )
     {
         Client::init( ename );
         Module::sample_rate( sample_rate() );
+        Module::set_buffer_size( nframes() );
     }
     else
     {
