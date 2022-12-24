@@ -1078,7 +1078,12 @@ Module::insert_menu_cb ( const Fl_Menu_ *m )
         
         Plugin_Module *m = new Plugin_Module();
         
-        m->load( picked );
+        if(!m->load( picked ))
+        {
+            fl_alert( "%s could not be loaded", m->base_label() );
+            delete m;
+            return;
+        }
         
         mod = m;
     }
