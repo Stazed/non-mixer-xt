@@ -244,17 +244,16 @@ Module_Parameter_Editor::make_controls ( void )
         control_pack->add( control_scroll );
     }
 
-    // Counter for adding to the scroll pad
-    unsigned int i = 0;
-        
-    for ( i = 0; i < module->control_input.size(); ++i )
+    /* Location counter - needed because some of the control_input items created may not
+       be visible. We still create them, but hide them. This location counter does not
+       increment on hidden items so the proper vertical alignment is kept. */
+    unsigned int y_location = 0;
+
+    for (unsigned int i = 0; i < module->control_input.size(); ++i )
     {
         Fl_Widget *w;
 
         Module::Port *p = &module->control_input[i];
-
-        /* if ( !p->hints.visible ) */
-        /*     continue; */
 
         if ( !strcasecmp( "Azimuth", p->name() ) &&
              180.0f == p->hints.maximum &&
@@ -281,7 +280,7 @@ Module_Parameter_Editor::make_controls ( void )
 
         if ( p->hints.type == Module::Port::Hints::BOOLEAN )
         {
-            Fl_Button *o = new Fl_Button( 75, (i*24) + 24, 200, 24, p->name() );
+            Fl_Button *o = new Fl_Button( 75, (y_location*24) + 24, 200, 24, p->name() );
             w = o;
             o->selection_color( fc );
             o->type( FL_TOGGLE_BUTTON );
@@ -290,7 +289,7 @@ Module_Parameter_Editor::make_controls ( void )
         }
         else if ( p->hints.type == Module::Port::Hints::LV2_INTEGER_ENUMERATION )
         {
-            Fl_Choice *o =  new Fl_Choice( 75, (i*24) + 24, 200, 24, p->name() );
+            Fl_Choice *o =  new Fl_Choice( 75, (y_location*24) + 24, 200, 24, p->name() );
             w = o;
             for(unsigned count = 0; count < module->control_input[i].hints.ScalePoints.size(); ++count)
             {
@@ -316,7 +315,7 @@ Module_Parameter_Editor::make_controls ( void )
         }
         else if ( p->hints.type == Module::Port::Hints::INTEGER )
         {
-            Fl_Counter *o = new Fl_Counter(75, (i*24) + 24, 200, 24, p->name() );
+            Fl_Counter *o = new Fl_Counter(75, (y_location*24) + 24, 200, 24, p->name() );
             w = o;
             
             o->type(1);
@@ -333,7 +332,7 @@ Module_Parameter_Editor::make_controls ( void )
         }
         else
         {
-            Fl_Value_SliderX *o = new Fl_Value_SliderX( 75, (i*24) + 24, 200, 24, p->name() );
+            Fl_Value_SliderX *o = new Fl_Value_SliderX( 75, (y_location*24) + 24, 200, 24, p->name() );
             w = o;
 
             o->type( FL_HORIZONTAL );
@@ -395,7 +394,17 @@ Module_Parameter_Editor::make_controls ( void )
             w->callback( cb_enumeration_handle, &_callback_data.back() );
         else
             w->callback( cb_value_handle, &_callback_data.back() );
-        
+
+        /* For ports that are not visible we create the widget and then hide them. This is because
+           the controls_by_port and control_input vectors are set the same size. It would get
+           really tedious to skip the creation of a widget and then try to keep the control_input
+           and controls_by_port aligned. Also we don't increment the y_location counter */
+        if ( !p->hints.visible )
+        {
+            w->hide();
+            continue;   // don't add the hidden ones to the scroller or control_pack
+        }
+
         if (_use_scroller)
         {
             control_scroll->add( w );
@@ -408,6 +417,8 @@ Module_Parameter_Editor::make_controls ( void )
 
             control_pack->add( flg );
         }
+
+        ++y_location;
     }
 
 #ifdef LV2_WORKER_SUPPORT
@@ -420,16 +431,10 @@ Module_Parameter_Editor::make_controls ( void )
 
         if ( p->hints.type != Module::Port::Hints::PATCH_MESSAGE )
             continue;
-        
-        if ( !p->hints.visible )
-            continue;
 
         Fl_Widget *w;
 
-        /* Use i * 24, not ii for Y location since we have parameters from control_input above */
-        Fl_Button *o = new Fl_Button( 75, (i*24) + 24, 200, 24, lilv_node_as_string(p->_symbol) );
-
-        ++i;    // increment the scroll widget counter to set for next item if any
+        Fl_Button *o = new Fl_Button( 75, (y_location*24) + 24, 200, 24, lilv_node_as_string(p->_symbol) );
 
         w = o;
         o->selection_color( fc );
@@ -448,6 +453,16 @@ Module_Parameter_Editor::make_controls ( void )
 
         atom_port_controller[ii] = w;    // so we can update the button label
 
+        /* For ports that are not visible we create the widget and then hide them. This is because
+           the atom_port_controller and atom_input vectors are set the same size. It would get
+           really tedious to skip the creation of a widget and then try to keep the atom_input
+           and atom_port_controller aligned. Also we don't increment the y_location counter */
+        if ( !p->hints.visible )
+        {
+            w->hide();
+            continue;
+        }
+
         if (_use_scroller)
         {
             control_scroll->add( w );
@@ -460,6 +475,8 @@ Module_Parameter_Editor::make_controls ( void )
 
             control_pack->add( flg );
         }
+
+        ++y_location;   // increment the scroll widget counter to set for next item if any
     }
 #endif
 
@@ -824,7 +841,7 @@ Module_Parameter_Editor::handle ( int m )
             {
                 for ( unsigned int i = 0; i < controls_by_port.size(); i++ )
                 {
-                    if ( Fl::event_inside( controls_by_port[i] ) )
+                    if ( Fl::event_inside( controls_by_port[i] ) && controls_by_port[i]->visible() )
                     {
                         _selected_control = i;
 
