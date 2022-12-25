@@ -438,7 +438,7 @@ Controller_Module::connect_to ( Port *p )
 
     if ( p->hints.type == Module::Port::Hints::BOOLEAN )
     {
-        Fl_Button *o = new Fl_Button( 0, 0, 40, 40 );
+        Fl_Button *o = new Fl_Button( 0, 0, 200, 20 );
         w = o;
         o->type( FL_TOGGLE_BUTTON );
         o->value( p->control_value() );
@@ -451,7 +451,7 @@ Controller_Module::connect_to ( Port *p )
     else if ( p->hints.type == Module::Port::Hints::INTEGER )
     {
 
-        Fl_Counter *o = new Fl_Counter(0, 0, 58, 24 );
+        Fl_Counter *o = new Fl_Counter(0, 0, 200, 20 );
 
         control = o;
         w = o;
@@ -514,7 +514,7 @@ Controller_Module::connect_to ( Port *p )
         }
         else
         {
-            o->size(250,20);
+            o->size(200,20);
             o->type(FL_HOR_NICE_SLIDER);
         }
 
@@ -993,9 +993,9 @@ Controller_Module::handle_control_changed ( Port *p )
     if ( p )
         control_value = p->control_value();
 
-    if ( type() == CHOICE )
+    if ( type() == CHOICE || type() == TOGGLE )
     {
-        // We have to check this always since the control value may not be the same as the menu value
+        // We have to check these always since the control value may not be the same as the widget value
     }
     else if ( ((Fl_Valuator*)control)->value() == control_value )
         return;

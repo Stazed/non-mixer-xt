@@ -323,7 +323,7 @@ Module_Parameter_Editor::make_controls ( void )
             
             o->type(1);
             o->step(1);
-            o->align(FL_ALIGN_TOP);
+            o->align(FL_ALIGN_RIGHT);
 
             if ( p->hints.ranged )
             {
