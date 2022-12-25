@@ -30,6 +30,8 @@
 #include "Loggable.H"
 #include "Group.H"
 
+const int MAX_PORTS = 32;
+
 class Mixer_Strip;
 class Fl_Flowpack;
 class Fl_Flip_Button;

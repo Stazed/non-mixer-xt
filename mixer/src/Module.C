@@ -155,12 +155,12 @@ Module::init ( void )
 {
 
     /* we use pointers to these vector elements for port auto connection stuff and need to prevent reallocation from invalidating them. */
-    audio_input.reserve(16);
-    audio_output.reserve(16);
-    control_input.reserve(16);
-    control_output.reserve(16);
-    aux_audio_input.reserve(16);
-    aux_audio_output.reserve(16);
+    audio_input.reserve(MAX_PORTS);
+    audio_output.reserve(MAX_PORTS);
+    control_input.reserve(MAX_PORTS);
+    control_output.reserve(MAX_PORTS);
+    aux_audio_input.reserve(MAX_PORTS);
+    aux_audio_output.reserve(MAX_PORTS);
 
 //    _latency = 0;
     _is_default = false;

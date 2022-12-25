@@ -54,7 +54,6 @@ extern char *instance_name;
 
 static JACK_Module *receptive_to_drop = NULL;
 
-const int MAX_PORTS = 16;
 
 JACK_Module::JACK_Module ( bool log )
     : Module ( 25, 25, name() )
