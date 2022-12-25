@@ -3282,6 +3282,9 @@ Plugin_Module::isUiResizable() const
 #endif  // USE_SUIL
 
 
+/**
+ For LADSPA plugins only. LV2 does not work well with this for many plugins.
+ */
 bool 
 Plugin_Module::get_impulse_response ( sample_t *buf, nframes_t nframes )
 {
@@ -3297,187 +3300,60 @@ Plugin_Module::get_impulse_response ( sample_t *buf, nframes_t nframes )
     return true;
 }
 
-/** Instantiate a temporary version of the plugin, and run it (in place) against the provided buffer */
+/** Instantiate a temporary version of the LADSPA plugin, and run it (in place) against the provided buffer */
 bool
 Plugin_Module::apply ( sample_t *buf, nframes_t nframes )
 {
 // actually osc or UI    THREAD_ASSERT( UI );
 
     void* h;
-    LilvInstance* temp_instance;
 
-    if (_is_lv2)
+    if ( ! (h = _idata->descriptor->instantiate( _idata->descriptor, sample_rate() ) ) )
     {
-        temp_instance = lilv_plugin_instantiate(m_plugin,  sample_rate(), _idata->lv2.features);
-
-        if ( !temp_instance )
-        {
-            WARNING( "Failed to instantiate plugin" );
-            return false;
-        }
-        else
-        {
-            h = temp_instance->lv2_handle;
-            _idata->lv2.descriptor = temp_instance->lv2_descriptor;
-#ifdef LV2_WORKER_SUPPORT
-            /* The impulse response stuff does not work well with atom port so punt.. */
-            for ( unsigned int k = 0; k < _idata->lv2.rdf_data->PortCount; ++k )
-            {
-                if (LV2_IS_PORT_ATOM_SEQUENCE ( _idata->lv2.rdf_data->Ports[k].Types ))
-                    return false;
-            }
-#endif
-        }
-    }
-    else
-    {
-        if ( ! (h = _idata->descriptor->instantiate( _idata->descriptor, sample_rate() ) ) )
-        {
-            WARNING( "Failed to instantiate plugin" );
-            return false;
-        }
+        WARNING( "Failed to instantiate plugin" );
+        return false;
     }
 
     int ij = 0;
     int oj = 0;
-#if 0
-//#ifdef LV2_WORKER_SUPPORT
-    int aji = 0;
-    int ajo = 0;
-#endif
 
-    if (_is_lv2)
+    for ( unsigned int k = 0; k < _idata->descriptor->PortCount; ++k )
     {
-        for ( unsigned int k = 0; k < _idata->lv2.rdf_data->PortCount; ++k )
+        if ( LADSPA_IS_PORT_CONTROL( _idata->descriptor->PortDescriptors[k] ) )
         {
-            if ( LV2_IS_PORT_CONTROL( _idata->lv2.rdf_data->Ports[k].Types ) )
-            {   
-                if ( LV2_IS_PORT_INPUT( _idata->lv2.rdf_data->Ports[k].Types ) )
-                    _idata->lv2.descriptor->connect_port( h, k, (float*)control_input[ij++].buffer() );
-                else if ( LV2_IS_PORT_OUTPUT( _idata->lv2.rdf_data->Ports[k].Types ) )
-                    _idata->lv2.descriptor->connect_port( h, k, (float*)control_output[oj++].buffer() );
-            }
-            // we need to connect non audio/control ports to NULL
-            else if ( ! LV2_IS_PORT_AUDIO( _idata->lv2.rdf_data->Ports[k].Types ))
-                _idata->lv2.descriptor->connect_port( h, k, NULL );
-
-#if 0
-//#ifdef LV2_WORKER_SUPPORT
-            else if ( ! LV2_IS_PORT_AUDIO( _idata->lv2.rdf_data->Ports[k].Types ) &&
-                        !LV2_IS_PORT_ATOM_SEQUENCE ( _idata->lv2.rdf_data->Ports[k].Types ))
-                _idata->lv2.descriptor->connect_port( h, k, NULL );
-
-            if (LV2_IS_PORT_ATOM_SEQUENCE ( _idata->lv2.rdf_data->Ports[k].Types ))
-            {
-                if ( LV2_IS_PORT_INPUT( _idata->lv2.rdf_data->Ports[k].Types ) )
-                {
-                    if ( atom_input[aji].tmp_event_buffer() )
-                        lv2_evbuf_free( atom_input[aji].tmp_event_buffer() );
-
-                    const size_t buf_size = ATOM_BUFFER_SIZE;
-                    atom_input[aji].tmp_event_buffer( lv2_evbuf_new(buf_size, _uridMapFt->map(_uridMapFt->handle,
-                                                    LV2_ATOM__Chunk),
-                                                    _uridMapFt->map(_uridMapFt->handle,
-                                                    LV2_ATOM__Sequence)) );
-
-                    _idata->lv2.descriptor->connect_port( h, k, lv2_evbuf_get_buffer( atom_input[aji].tmp_event_buffer() ));
-
-                    aji++;
-                }
-                else if ( LV2_IS_PORT_OUTPUT( _idata->lv2.rdf_data->Ports[k].Types ) )
-                {
-                    if ( atom_output[ajo].tmp_event_buffer() )
-                        lv2_evbuf_free( atom_output[ajo].tmp_event_buffer() );
-
-                    const size_t buf_size = ATOM_BUFFER_SIZE;
-                    atom_output[ajo].tmp_event_buffer( lv2_evbuf_new(buf_size, _uridMapFt->map(_uridMapFt->handle,
-                                                    LV2_ATOM__Chunk),
-                                                    _uridMapFt->map(_uridMapFt->handle,
-                                                    LV2_ATOM__Sequence)) );
-
-                    _idata->lv2.descriptor->connect_port( h, k, lv2_evbuf_get_buffer( atom_output[ajo].tmp_event_buffer() ));
-
-                    ajo++;
-                }
-            }
-#endif
+            if ( LADSPA_IS_PORT_INPUT( _idata->descriptor->PortDescriptors[k] ) )
+                _idata->descriptor->connect_port( h, k, (LADSPA_Data*)control_input[ij++].buffer() );
+            else if ( LADSPA_IS_PORT_OUTPUT( _idata->descriptor->PortDescriptors[k] ) )
+                _idata->descriptor->connect_port( h, k, (LADSPA_Data*)control_output[oj++].buffer() );
         }
-
-        if ( _idata->lv2.descriptor->activate )
-            _idata->lv2.descriptor->activate( h );
     }
-    else
-    {
-        for ( unsigned int k = 0; k < _idata->descriptor->PortCount; ++k )
-        {
-            if ( LADSPA_IS_PORT_CONTROL( _idata->descriptor->PortDescriptors[k] ) )
-            {
-                if ( LADSPA_IS_PORT_INPUT( _idata->descriptor->PortDescriptors[k] ) )
-                    _idata->descriptor->connect_port( h, k, (LADSPA_Data*)control_input[ij++].buffer() );
-                else if ( LADSPA_IS_PORT_OUTPUT( _idata->descriptor->PortDescriptors[k] ) )
-                    _idata->descriptor->connect_port( h, k, (LADSPA_Data*)control_output[oj++].buffer() );
-            }
-        }
 
-        if ( _idata->descriptor->activate )
-            _idata->descriptor->activate( h );
-    }
+    if ( _idata->descriptor->activate )
+        _idata->descriptor->activate( h );
 
     int tframes = 512;
     float tmp[tframes];
 
     memset( tmp, 0, sizeof( float ) * tframes );
 
-    if (_is_lv2)
-    {
-        for ( unsigned int k = 0; k < _idata->lv2.rdf_data->PortCount; ++k )
-            if ( LV2_IS_PORT_AUDIO( _idata->lv2.rdf_data->Ports[k].Types ) )
-                _idata->lv2.descriptor->connect_port( h, k, tmp );
-    }
-    else
-    {
-        for ( unsigned int k = 0; k < _idata->descriptor->PortCount; ++k )
-            if ( LADSPA_IS_PORT_AUDIO( _idata->descriptor->PortDescriptors[k] ) )
-                _idata->descriptor->connect_port( h, k, tmp );
-    }
+    for ( unsigned int k = 0; k < _idata->descriptor->PortCount; ++k )
+        if ( LADSPA_IS_PORT_AUDIO( _idata->descriptor->PortDescriptors[k] ) )
+            _idata->descriptor->connect_port( h, k, tmp );
 
     /* flush any parameter interpolation */
-    if (_is_lv2)
-    {
-        _idata->lv2.descriptor->run( h, tframes );
+    _idata->descriptor->run( h, tframes );
 
-        for ( unsigned int k = 0; k < _idata->lv2.rdf_data->PortCount; ++k )
-            if ( LV2_IS_PORT_AUDIO( _idata->lv2.rdf_data->Ports[k].Types ) )
-                _idata->lv2.descriptor->connect_port( h, k, buf );
-    }
-    else
-    {
-        _idata->descriptor->run( h, tframes );
-
-        for ( unsigned int k = 0; k < _idata->descriptor->PortCount; ++k )
-            if ( LADSPA_IS_PORT_AUDIO( _idata->descriptor->PortDescriptors[k] ) )
-                _idata->descriptor->connect_port( h, k, buf );
-    }
+    for ( unsigned int k = 0; k < _idata->descriptor->PortCount; ++k )
+        if ( LADSPA_IS_PORT_AUDIO( _idata->descriptor->PortDescriptors[k] ) )
+            _idata->descriptor->connect_port( h, k, buf );
 
     /* run for real */
-    if (_is_lv2)
-    {
-        _idata->lv2.descriptor->run( h, nframes );
+    _idata->descriptor->run( h, nframes );
 
-        if ( _idata->lv2.descriptor->deactivate )
-            _idata->lv2.descriptor->deactivate( h );
-        if ( _idata->lv2.descriptor->cleanup )
-            _idata->lv2.descriptor->cleanup( h );
-    }
-    else
-    {
-        _idata->descriptor->run( h, nframes );
-
-        if ( _idata->descriptor->deactivate )
-            _idata->descriptor->deactivate( h );
-        if ( _idata->descriptor->cleanup )
-            _idata->descriptor->cleanup( h );
-    }
+    if ( _idata->descriptor->deactivate )
+        _idata->descriptor->deactivate( h );
+    if ( _idata->descriptor->cleanup )
+        _idata->descriptor->cleanup( h );
 
     return true;
 }
