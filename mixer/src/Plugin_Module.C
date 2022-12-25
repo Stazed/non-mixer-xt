@@ -3285,6 +3285,9 @@ Plugin_Module::isUiResizable() const
 bool 
 Plugin_Module::get_impulse_response ( sample_t *buf, nframes_t nframes )
 {
+    if (_is_lv2)
+        return false;
+
     apply( buf, nframes );
     
     if ( buffer_is_digital_black( buf + 1, nframes - 1 ))

@@ -57,6 +57,9 @@
 bool
 Module_Parameter_Editor::is_probably_eq ( void )
 {
+    if(_module->_is_lv2)
+        return false;
+
     const char *name = _module->label();
 
     return strcasestr( name, "eq" ) ||
@@ -234,8 +237,8 @@ Module_Parameter_Editor::make_controls ( void )
     control_pack->size( 900, 300 );
 
      _use_scroller = false;
-    /* If the parameter number is greater than 8, we use the scroller */
-    if(module->control_input.size() > 8)
+    /* If the parameter number is greater than 12, we use the scroller */
+    if(module->control_input.size() > 12)
     {
         _use_scroller = true;
         control_scroll = new Fl_Scroll( 0, 0, 500, 320 );
@@ -401,8 +404,11 @@ Module_Parameter_Editor::make_controls ( void )
            and controls_by_port aligned. Also we don't increment the y_location counter */
         if ( !p->hints.visible )
         {
+            /* Add to control_pack because update_control_visibility() needs a parent widget even if not visible */
+            Fl_Labelpad_Group *flg = new Fl_Labelpad_Group( w );
+            control_pack->add( flg );
             w->hide();
-            continue;   // don't add the hidden ones to the scroller or control_pack
+            continue;
         }
 
         if (_use_scroller)
