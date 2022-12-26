@@ -32,6 +32,7 @@
 
 #define PRESET_SUPPORT 1
 #define USE_CARLA 1
+#define LV2_STATE_SAVE 1
 
 #define ATOM_BUFFER_SIZE 16384  // 4096 * 4
 
@@ -389,6 +390,11 @@ public:
 
     void update_control_parameters(int choice);
     /* End Preset loading */
+#endif
+    
+#ifdef LV2_STATE_SAVE
+    void save_LV2_plugin_state(const std::string directory);
+    void restore_LV2_plugin_state(const std::string directory);
 #endif
 
 #ifdef LV2_WORKER_SUPPORT

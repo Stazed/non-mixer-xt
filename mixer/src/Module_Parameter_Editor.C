@@ -94,14 +94,14 @@ Module_Parameter_Editor::Module_Parameter_Editor ( Module *module ) : Fl_Double_
     
     { Fl_Group *o = new Fl_Group( 0, 0, w(), 25 );
 
-#ifdef PRESET_SUPPORT
         if (_module->_is_lv2)
         {
+#ifdef PRESET_SUPPORT
             Plugin_Module *pm = static_cast<Plugin_Module *> (_module);
             
             if( !pm->PresetList.empty() )
             {
-                { Fl_Choice *o = LV2_presets_choice = new Fl_Choice( 30, 0, 200, 24 );
+                { Fl_Choice *o = LV2_presets_choice = new Fl_Choice( 0, 0, 200, 24 );
                     for(unsigned i = 0; i < pm->PresetList.size(); ++i)
                     {
                         std::string temp = pm->PresetList[i].Label;
@@ -127,12 +127,32 @@ Module_Parameter_Editor::Module_Parameter_Editor ( Module *module ) : Fl_Double_
                     o->callback( cb_preset_handle,  this );
                 }
             }
-        }
-#endif
+#endif  // PRESET_SUPPORT
+
+#ifdef LV2_STATE_SAVE
+            Fl_Color fc = fl_color_add_alpha( FL_CYAN, 200 );
+
+            { Fl_Button *o = new Fl_Button( 275, 0, 100, 24, "Save State" );
+                o->selection_color( fc );
+                o->type( FL_NORMAL_BUTTON );
+                o->align(FL_ALIGN_INSIDE | FL_ALIGN_BOTTOM);
+                o->copy_label( "Save State" );
+                o->callback( cb_save_state_handle, this );
+            }
+
+            { Fl_Button *o = new Fl_Button( 375, 0, 100, 24, "Restore State" );
+                o->selection_color( fc );
+                o->type( FL_NORMAL_BUTTON );
+                o->align(FL_ALIGN_INSIDE | FL_ALIGN_BOTTOM);
+                o->copy_label( "Restore State" );
+                o->callback( cb_restore_state_handle, this );
+            }
+#endif  // LV2_STATE_SAVE
+        }   // if (_module->_is_lv2)
 
         o->resizable(0);
         o->end();
-    }
+    }   // Fl_Group
 
     { Fl_Group *o = new Fl_Group( 0, 40, w(), h() - 40 );
         { Fl_Flowpack *o = control_pack = new Fl_Flowpack( 50, 40, w() - 100, h() - 40 );
@@ -551,7 +571,15 @@ Module_Parameter_Editor::update_control_visibility ( void )
 
     control_pack->dolayout();
 
-    int width = control_pack->w() + 100;
+    int width = control_pack->w() + 100; // LADSPA
+    if (_module->_is_lv2)
+    {
+        /* When the scroller is not used, we need to expand width to account for 
+           the preset, state save and restore button */
+        if(!_use_scroller)
+            width = control_pack->w() + 225;
+    }
+
     int height = control_pack->h() + 60;
 
     if ( width < _min_width )
@@ -648,6 +676,60 @@ Module_Parameter_Editor::cb_preset_handle ( Fl_Widget *w, void *v )
 {
     Fl_Choice *m = (Fl_Choice*)w;
     ((Module_Parameter_Editor*)v)->set_preset_controls( (int) m->value());
+}
+#endif
+
+#ifdef LV2_STATE_SAVE
+void
+Module_Parameter_Editor::cb_save_state_handle ( Fl_Widget *, void *v )
+{
+    /* TODO Set file chooser location based on ... */
+    std::string file_chooser_location = "";
+
+    /* File chooser window title */
+    std::string title = "LV2 State Save";
+
+    char *directory;
+
+    directory = fl_dir_chooser(title.c_str(), file_chooser_location.c_str(), 0);
+    if (directory == NULL)
+        return;
+
+    /* Save the state to location */
+    ((Module_Parameter_Editor*)v)->save_plugin_state( directory );
+}
+
+void
+Module_Parameter_Editor::save_plugin_state(const std::string directory)
+{
+    Plugin_Module *pm = static_cast<Plugin_Module *> (_module);
+    pm->save_LV2_plugin_state(directory);
+}
+
+void
+Module_Parameter_Editor::cb_restore_state_handle ( Fl_Widget *w, void *v )
+{
+    /* TODO Set file chooser location based on ... */
+    std::string file_chooser_location = "";
+
+    /* File chooser window title */
+    std::string title = "LV2 State Restore";
+
+    char *directory;
+
+    directory = fl_dir_chooser(title.c_str(), file_chooser_location.c_str(), 0);
+    if (directory == NULL)
+        return;
+
+    /* Save the state to location */
+    ((Module_Parameter_Editor*)v)->restore_plugin_state( directory );
+}
+
+void
+Module_Parameter_Editor::restore_plugin_state(const std::string directory)
+{
+    Plugin_Module *pm = static_cast<Plugin_Module *> (_module);
+    pm->restore_LV2_plugin_state(directory);
 }
 #endif
 

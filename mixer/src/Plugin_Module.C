@@ -815,6 +815,20 @@ Plugin_Module::update_control_parameters(int choice)
 }
 #endif
 
+#ifdef LV2_STATE_SAVE
+void
+Plugin_Module::save_LV2_plugin_state(const std::string directory)
+{
+    DMESSAGE("Saving plugin state to %s", directory.c_str());
+}
+
+void
+Plugin_Module::restore_LV2_plugin_state(const std::string directory)
+{
+    DMESSAGE("Restoring plugin state from %s", directory.c_str());
+}
+#endif
+
 
 /* return a list of available plugins */
 std::list<Plugin_Module::Plugin_Info>
