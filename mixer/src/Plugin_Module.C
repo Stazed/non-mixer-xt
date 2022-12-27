@@ -126,7 +126,7 @@ static void mixer_lv2_set_port_value ( const char *port_symbol,
 
         const unsigned long port_index = lilv_port_get_index(plugin, port);
 
-        DMESSAGE("PORT INDEX = %lu: paramValue = %f: VALUE = %p", port_index, paramValue, value);
+       // DMESSAGE("PORT INDEX = %lu: paramValue = %f: VALUE = %p", port_index, paramValue, value);
 
         pLv2Plugin->set_control_value(port_index, paramValue);
     }
@@ -795,7 +795,7 @@ Plugin_Module::set_control_value(unsigned long port_index, float value)
         if ( port_index == control_input[i].hints.plug_port_index )
         {
             control_input[i].control_value(value);
-            DMESSAGE("Port Index = %d: Value = %f", port_index, value);
+          //  DMESSAGE("Port Index = %d: Value = %f", port_index, value);
             break;
         }
     }
@@ -880,13 +880,30 @@ Plugin_Module::save_LV2_plugin_state(const std::string directory)
     lilv_state_save(
         m_lilvWorld, _uridMapFt, _uridUnmapFt, state, NULL, directory.c_str(), "state.ttl");
 
-  lilv_state_free(state);
+    lilv_state_free(state);
 }
 
 void
 Plugin_Module::restore_LV2_plugin_state(const std::string directory)
 {
-    DMESSAGE("Restoring plugin state from %s", directory.c_str());
+    std::string path = directory;
+    path.append("/state.ttl");
+
+    LilvState* state      = NULL;
+
+    state = lilv_state_new_from_file(m_lilvWorld, _uridMapFt, NULL, path.c_str());
+
+    if (!state)
+    {
+        WARNING("Failed to load state from %s", path.c_str());
+        return;
+    }
+
+    DMESSAGE("Restoring plugin state from %s", path.c_str());
+
+    lilv_state_restore(state, m_instance,  mixer_lv2_set_port_value, this, 0, _idata->lv2.features);
+
+    lilv_state_free(state);
 }
 #endif
 
@@ -2899,7 +2916,7 @@ Plugin_Module::send_to_custom_ui( uint32_t port_index, uint32_t size, uint32_t p
     /* port_index coming in is internal number - so convert to plugin .ttl number */
     port_index = control_input[port_index].hints.plug_port_index;
 
-    DMESSAGE("Port_index = %u: Value = %f", port_index, *(const float*)buf);
+   // DMESSAGE("Port_index = %u: Value = %f", port_index, *(const float*)buf);
     suil_instance_port_event(
         m_ui_instance, port_index, size, protocol, buf );
 
