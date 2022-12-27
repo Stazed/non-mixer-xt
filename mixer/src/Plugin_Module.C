@@ -816,10 +816,71 @@ Plugin_Module::update_control_parameters(int choice)
 #endif
 
 #ifdef LV2_STATE_SAVE
+static const void*
+get_port_value(const char* port_symbol,
+               void*       user_data,
+               uint32_t*   size,
+               uint32_t*   type)
+{
+    Plugin_Module* pm =  static_cast<Plugin_Module *> (user_data);
+
+    const LilvPlugin *plugin = pm->get_slv2_plugin();
+
+    if (plugin == NULL)
+    {
+        *size = *type = 0;
+        return NULL;
+    }
+
+    LilvWorld* world = pm->get_lilv_world();
+
+    LilvNode *symbol = lilv_new_string(world, port_symbol);
+
+    const LilvPort *port = lilv_plugin_get_port_by_symbol(plugin, symbol);
+    free(symbol);
+
+    if (port)
+    {
+        const unsigned long port_index = lilv_port_get_index(plugin, port);
+
+        for (unsigned int i = 0; i < pm->control_input.size(); ++i)
+        {
+            if(port_index == pm->control_input[i].hints.plug_port_index)
+            {
+                *size = sizeof(float);
+                *type = Plugin_Module_URI_Atom_Float;
+                pm->control_input[i].hints.current_value = pm->control_input[i].control_value();
+                return &pm->control_input[i].hints.current_value;
+            }
+        }
+    }
+
+    *size = *type = 0;
+    return NULL;
+}
+
 void
 Plugin_Module::save_LV2_plugin_state(const std::string directory)
 {
     DMESSAGE("Saving plugin state to %s", directory.c_str());
+
+    LilvState* const state =
+        lilv_state_new_from_instance(m_plugin,
+                                 m_instance,
+                                 _uridMapFt,
+                                 NULL,
+                                 directory.c_str(),
+                                 directory.c_str(),
+                                 directory.c_str(),
+                                 get_port_value,
+                                 this,
+                                 LV2_STATE_IS_POD | LV2_STATE_IS_PORTABLE,
+                                 NULL);
+
+    lilv_state_save(
+        m_lilvWorld, _uridMapFt, _uridUnmapFt, state, NULL, directory.c_str(), "state.ttl");
+
+  lilv_state_free(state);
 }
 
 void
@@ -1531,6 +1592,7 @@ Plugin_Module::load_lv2 ( const char* uri )
 #ifdef PRESET_SUPPORT
     PresetList = _idata->lv2.rdf_data->PresetListStructs;
     _uridMapFt =  (LV2_URID_Map*) _idata->lv2.features[Plugin_Feature_URID_Map]->data;
+    _uridUnmapFt = (LV2_URID_Unmap*) _idata->lv2.features[Plugin_Feature_URID_Unmap]->data;
     LilvNode* plugin_uri = lilv_new_uri(get_lilv_world(), uri);
     m_plugin = lilv_plugins_get_by_uri(get_lilv_plugins(), plugin_uri);
     lilv_node_free(plugin_uri);

@@ -689,19 +689,23 @@ Module_Parameter_Editor::cb_save_state_handle ( Fl_Widget *, void *v )
     /* File chooser window title */
     std::string title = "LV2 State Save";
 
-    char *directory;
+    char *filename;
 
-    directory = fl_dir_chooser(title.c_str(), file_chooser_location.c_str(), 0);
-    if (directory == NULL)
+    filename = fl_file_chooser(title.c_str(), "", file_chooser_location.c_str(), 0);
+    if (filename == NULL)
         return;
 
     /* Save the state to location */
-    ((Module_Parameter_Editor*)v)->save_plugin_state( directory );
+    ((Module_Parameter_Editor*)v)->save_plugin_state( filename );
 }
 
 void
-Module_Parameter_Editor::save_plugin_state(const std::string directory)
+Module_Parameter_Editor::save_plugin_state(const std::string filename)
 {
+    /* Change the filename to a directory */
+    std::string directory = filename;
+    directory.append("/");
+
     Plugin_Module *pm = static_cast<Plugin_Module *> (_module);
     pm->save_LV2_plugin_state(directory);
 }

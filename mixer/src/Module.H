@@ -164,6 +164,7 @@ public:
             float minimum;
             float maximum;
             float default_value;
+            float current_value;
             int dimensions;
             bool visible;
             uint32_t plug_port_index;     ///< plugin Index of port control
@@ -178,6 +179,7 @@ public:
                                      * plugins (SWH delays) don't
                                      * provide an upper bound. */
                     default_value = 0.0f;
+                    current_value = 0.0f;
                     dimensions = 1;
                     visible = true;
                     plug_port_index = 0;

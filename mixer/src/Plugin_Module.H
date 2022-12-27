@@ -393,6 +393,7 @@ public:
 #endif
     
 #ifdef LV2_STATE_SAVE
+    LV2_URID_Unmap* _uridUnmapFt;
     void save_LV2_plugin_state(const std::string directory);
     void restore_LV2_plugin_state(const std::string directory);
 #endif
