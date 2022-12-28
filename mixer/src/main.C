@@ -77,6 +77,7 @@ Mixer *mixer;
 NSM_Client *nsm;
 
 char *instance_name;
+std::string project_directory = "";
 
 #include <errno.h>
 

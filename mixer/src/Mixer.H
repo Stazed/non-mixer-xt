@@ -28,6 +28,8 @@
 
 #include "Thread.H"
 
+extern std::string project_directory;
+
 class Fl_Blink_Button;
 class Fl_Flowpack;
 class Fl_Menu_Bar;

@@ -202,8 +202,14 @@ void Mixer::command_new ( void )
     
     if ( path )
     {
+        project_directory = path;
         if ( ! Project::create( path, NULL ) )
+        {
             fl_alert( "Error creating project!" );
+            project_directory = "";
+        }
+
+        DMESSAGE("project_directory = %s", project_directory.c_str());
         free( path );
     }
     
@@ -247,9 +253,12 @@ void Mixer::cb_menu(Fl_Widget* o) {
 
         mixer->hide();
 
+        project_directory = name;
+
         if ( int err = Project::open( name ) )
         {
             fl_alert( "Error opening project: %s", Project::errstr( err ) );
+            project_directory = "";
         }
 
         update_menu();
@@ -1302,9 +1311,12 @@ Mixer::command_save ( void )
     return Project::save();
 }
 
+/** This is where we get the load file name - and tell state restore where to find */
 bool
 Mixer::command_load ( const char *path, const char *display_name )
 {
+    project_directory = path;
+    DMESSAGE("project_directory = %s", project_directory.c_str());
     mixer->deactivate();
 
     Project::close();
@@ -1318,6 +1330,7 @@ Mixer::command_load ( const char *path, const char *display_name )
 
     if ( Project::open( path ) )
     {
+        project_directory = "";
         // fl_alert( "Error opening project specified on commandline: %s", Project::errstr( err ) );
         return false;
     }
@@ -1345,6 +1358,7 @@ Mixer::command_new ( const char *path, const char *display_name )
     if ( ! Project::create( path, "" ) )
         return false;
 
+    project_directory = path;
     if ( display_name )
         Project::name( display_name );
 

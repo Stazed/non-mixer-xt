@@ -36,6 +36,8 @@
 
 #define ATOM_BUFFER_SIZE 16384  // 4096 * 4
 
+extern std::string project_directory;
+
 #ifdef USE_CARLA
 typedef void (*EventProcPtr)(XEvent* ev);
 #endif
@@ -396,6 +398,8 @@ public:
     LV2_URID_Unmap* _uridUnmapFt;
     void save_LV2_plugin_state(const std::string directory);
     void restore_LV2_plugin_state(const std::string directory);
+    std::string get_plugin_save_directory();
+    std::string m_project_directory;
 #endif
 
 #ifdef LV2_WORKER_SUPPORT

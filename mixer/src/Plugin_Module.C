@@ -466,6 +466,7 @@ void
 Plugin_Module::set ( Log_Entry &e )
 {
     int n = 0;
+    std::string restore = "";
 
     /* we need to have number() defined before we create the control inputs in load() */
     for ( int i = 0; i < e.size(); ++i )
@@ -508,6 +509,13 @@ Plugin_Module::set ( Log_Entry &e )
         {
             _plugin_outs = atoi( v );
         }
+        else if ( ! strcmp( s, ":custom_data" ) )
+        {
+            restore = project_directory;
+            restore += "/";
+            restore += v;
+            m_project_directory = restore;
+        }
     }
 
     Module::set( e );
@@ -520,6 +528,13 @@ Plugin_Module::set ( Log_Entry &e )
         }
     }
 #endif
+    
+    if (!restore.empty())
+    {
+        sleep(2);   // FIXME some of these big plugins need time to initialize before restoring - seems like there should
+        // be a better way
+        restore_LV2_plugin_state(restore);
+    }
 }
 
 
@@ -534,6 +549,7 @@ Plugin_Module::init ( void )
     _bypass = true;
     _crosswire = false;
     _is_lv2 = false;
+    m_project_directory = "";
 
     align( (Fl_Align)FL_ALIGN_CENTER | FL_ALIGN_INSIDE );
 //     color( (Fl_Color)fl_color_average( FL_MAGENTA, FL_WHITE, 0.5f ) );
@@ -905,6 +921,43 @@ Plugin_Module::restore_LV2_plugin_state(const std::string directory)
 
     lilv_state_free(state);
 }
+
+/**
+ This generates the LV2 plugin state save directory we use for big plugins - specifically synths.
+ */
+std::string
+Plugin_Module::get_plugin_save_directory()
+{
+    std::string project_base = project_directory;
+
+    if(project_base.empty())
+        return "";
+
+    std::string slabel = "/";
+    slabel += label();
+
+    /* Just replacing spaces in the plugin label with '_' cause it looks better */
+    std::replace( slabel.begin(), slabel.end(), ' ', '_');
+
+    project_base += slabel;
+
+    /* This generates the random directory suffix '.nABCD' to support multiple instances */
+    char id_str[6];
+
+    id_str[0] = 'n';
+    id_str[5] = 0;
+
+    for ( int i = 1; i < 5; i++)
+        id_str[i] = 'A' + (rand() % 25);
+
+    project_base += ".";
+    project_base += id_str;
+
+    DMESSAGE("project_base = %s", project_base.c_str());
+
+    return project_base;
+}
+
 #endif
 
 

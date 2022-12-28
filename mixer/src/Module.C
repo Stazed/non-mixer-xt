@@ -201,6 +201,38 @@ Module::get ( Log_Entry &e ) const
 {
 //    e.add( ":name",            label()           );
 //    e.add( ":color",           (unsigned long)color());
+    bool use_state_restore = false;
+
+    if (_is_lv2)
+    {
+        if ( control_input.size() > 100  )  // FIXME find out how to determine if plugin has custom data
+        {
+            Module *m = control_input[0].module();
+            Plugin_Module *pm = static_cast<Plugin_Module *> (m);
+ 
+            /* If we already have pm->m_project_directory, it means that we have an existing project
+               already loaded. So use that directory instead of making a new one */
+            std::string s = pm->m_project_directory;
+            if(s.empty())
+            {
+                /* This is a new project */
+                s = pm->get_plugin_save_directory();
+            }
+            if ( !s.empty() )
+            {
+                /* This is an existing project */
+                pm->m_project_directory = s;
+                pm->save_LV2_plugin_state(s);
+
+                std::string base_dir = s.substr(s.find_last_of("/\\") + 1);
+                e.add( ":custom_data", base_dir.c_str() );
+            }
+            use_state_restore = true;
+        }
+    }
+
+    /* If using state restore then all the parameter are stored in the custom data file */
+    if(!use_state_restore)
     {
         char *s = get_parameters();
         if ( strlen( s ) )
@@ -208,6 +240,8 @@ Module::get ( Log_Entry &e ) const
         delete[] s;
     }
 #ifdef LV2_WORKER_SUPPORT
+    /* If using state restore then all the file paths are stored in the custom data file */
+    if(!use_state_restore)
     {
         for ( unsigned int i = 0; i < atom_input.size(); ++i )
         {
@@ -1123,10 +1157,15 @@ Module::menu_cb ( const Fl_Menu_ *m )
 
     DMESSAGE( "%s", picked );
 
-    Logger log( this );
+    /* FIXME check this - I believe this was supposed to log the current state for undo, redo but
+       the mixer does not have any undo, redo?? Commented out since it does not work with LV2
+       save state and triggers a save any time you open the parameter editor window. */
+    // Logger log( this );
 
     if ( ! strcmp( picked, "Edit Parameters" ) )
+    {
         command_open_parameter_editor();
+    }
     else if ( ! strcmp( picked, "Bypass" ) )
     {
         if ( ! bypassable() )
