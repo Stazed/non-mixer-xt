@@ -345,5 +345,11 @@ main ( int argc, char **argv )
     delete main_window;
     main_window = NULL;
 
+    /* Delete clipboard contents because if the strip contains custom data then it will accumulate */
+    std::string remove_clipboard = "exec rm -r ";
+    remove_clipboard += clipboard_dir;
+    remove_clipboard += "/*";
+    system(remove_clipboard.c_str());
+
     MESSAGE( "Your fun is over" );
 }
