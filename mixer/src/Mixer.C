@@ -1143,7 +1143,7 @@ Mixer::handle ( int m )
         {
             if ( ! Fl::event_inside( this ) )
                 return 0;
-            
+
             /* Ignore this paste if previous one is not completed */
             if ( _is_pasting )
             {
@@ -1152,33 +1152,28 @@ Mixer::handle ( int m )
             }
 
 	    DMESSAGE( "Got paste into mixer, expecting strip file..." );
-	    
+
             const char *text = Fl::event_text();
 
             char *file;
-            
+
             if ( ! sscanf( text, "file://%m[^\r\n]\n", &file ) )
             {
                 WARNING( "invalid drop \"%s\"\n", text );
                 return 0;
             }
-            
+
             unescape_url( file );
 
-            std::string project_path(Project::path());
-            if ( project_path.empty() )
-            {
-                project_path = file;
-                project_path.erase(project_path.begin());   // remove leading '/'
-            }
-            else
-                project_path = file;
+            if(file)
+                export_import_strip = file;
 
-            MESSAGE( "Pasted file \"%s\"\n", project_path.c_str() );
+            MESSAGE( "Pasted file \"%s\"\n", export_import_strip.c_str() );
 
-            if (! Mixer_Strip::import_strip( project_path.c_str() ) )
+            if (! Mixer_Strip::import_strip( export_import_strip.c_str() ) )
                 fl_alert( "%s", "Failed to import strip!" );
-            
+
+            export_import_strip = "";
             return 1;
         }
     }

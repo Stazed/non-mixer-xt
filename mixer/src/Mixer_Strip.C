@@ -62,6 +62,7 @@
 #include "FL/focus_frame.H"
 
 extern Mixer *mixer;
+extern char *clipboard_dir;
 
 
 
@@ -870,14 +871,27 @@ Mixer_Strip::menu_cb ( const Fl_Menu_ *m )
     }
     else if ( ! strcmp( picked, "/Copy" ) )
     {
-        export_strip( "clipboard.strip" );
+        if(clipboard_dir)
+        {
+            std::string location = clipboard_dir;
+            location += "/clipboard.strip";
+            export_strip( location.c_str() );
+        }
+        else
+        {
+            WARNING("No clipboard directory defined! Cannot copy strip!");
+            return;
+        }
 
         char *s;
-        asprintf( &s, "file://%s/%s\r\n", Project::path(), "clipboard.strip" );
+        asprintf( &s, "file://%s/%s\r\n", clipboard_dir, "clipboard.strip" );
+        
+        DMESSAGE("Strip copied = %s", s);
 
         Fl::copy( s, strlen(s), 0 );
 
         free(s);
+        export_import_strip = "";
     }
     else if ( ! strcmp( picked, "/Color" ) )
     {

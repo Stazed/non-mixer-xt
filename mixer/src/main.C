@@ -73,6 +73,7 @@ const double NSM_CHECK_INTERVAL = 0.25f;
 const char COPYRIGHT[]  = "Copyright (c) 2008-2013 Jonathan Moore Liles";
 
 char *user_config_dir;
+char *clipboard_dir;
 Mixer *mixer;
 NSM_Client *nsm;
 
@@ -86,8 +87,10 @@ static int
 ensure_dirs ( void )
 {
     asprintf( &user_config_dir, "%s/%s", getenv( "HOME" ), USER_CONFIG_DIR );
+    asprintf( &clipboard_dir, "%s/%s",user_config_dir, "clipboard" );
 
     int r = mkdir( user_config_dir, 0777 );
+    r = mkdir( clipboard_dir, 0777 );
 
     return r == 0 || errno == EEXIST;
 }
