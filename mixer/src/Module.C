@@ -51,6 +51,7 @@
 #include "time.h"
 
 
+extern char *clipboard_dir;
 nframes_t Module::_buffer_size = 0;
 nframes_t Module::_sample_rate = 0;
 Module *Module::_copied_module_empty = 0;
@@ -304,6 +305,13 @@ Module::copy ( void ) const
 
     {
         Log_Entry e;
+
+        if (clipboard_dir)
+        {
+            export_import_strip = clipboard_dir;
+            export_import_strip += "/clipboard.strip";
+        }
+
         get( e );
 
         for ( int i = 0; i < e.size(); ++i )
@@ -322,6 +330,8 @@ Module::copy ( void ) const
                 ne->add_raw( s, v );
             }
         }
+
+        export_import_strip = "";
     }
 
     _copied_module_settings = ne->print();
@@ -344,6 +354,12 @@ Module::paste_before ( void )
 
     free( print );
 
+    if (clipboard_dir)
+    {
+        export_import_strip = clipboard_dir;
+        export_import_strip += "/clipboard.strip";
+    }
+
     m->set( le );
 
     m->number(-1);
@@ -352,6 +368,8 @@ Module::paste_before ( void )
     {
         fl_alert( "Copied module cannot be inserted at this point in the chain" );
     }
+
+    export_import_strip = "";
 
     free( _copied_module_settings );
     _copied_module_settings = NULL;
