@@ -511,10 +511,22 @@ Plugin_Module::set ( Log_Entry &e )
         }
         else if ( ! strcmp( s, ":custom_data" ) )
         {
-            restore = project_directory;
-            restore += "/";
-            restore += v;
-            m_project_directory = restore;
+            if(!export_import_strip.empty())
+            {
+                std::string path = export_import_strip;
+
+                std::size_t found = path.find_last_of("/\\");
+                restore = (path.substr(0, found));
+                restore += "/";
+                restore += v;
+            }
+            else
+            {
+                restore = project_directory;
+                restore += "/";
+                restore += v;
+                m_project_directory = restore;
+            }
         }
     }
 
@@ -925,9 +937,9 @@ Plugin_Module::restore_LV2_plugin_state(const std::string directory)
  This generates the LV2 plugin state save directory we use for big plugins - specifically synths.
  */
 std::string
-Plugin_Module::get_plugin_save_directory()
+Plugin_Module::get_plugin_save_directory(const std::string directory)
 {
-    std::string project_base = project_directory;
+    std::string project_base = directory;
 
     if(project_base.empty())
         return "";

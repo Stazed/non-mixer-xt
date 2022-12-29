@@ -290,12 +290,15 @@ void Mixer::cb_menu(Fl_Widget* o) {
     }
     else if ( !strcmp( picked, "&Mixer/&Import Strip" ) )
     {
-        const char *s = fl_file_chooser( "Export strip to filename:", "*.strip", NULL, 0 );
+        const char *s = fl_file_chooser( "Import strip filename:", "*.strip", NULL, 0 );
 
         if ( s )
         {
+            export_import_strip = s;
             if (! Mixer_Strip::import_strip( s ) )
                 fl_alert( "%s", "Failed to import strip!" );
+
+            export_import_strip = "";
         }
     }
     else if ( ! strcmp( picked, "&Project/Se&ttings/Learn/By Strip Name" ) )

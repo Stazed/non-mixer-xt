@@ -29,6 +29,7 @@
 #include "Thread.H"
 
 extern std::string project_directory;
+extern std::string export_import_strip;
 
 class Fl_Blink_Button;
 class Fl_Flowpack;

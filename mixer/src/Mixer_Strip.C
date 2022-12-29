@@ -821,10 +821,13 @@ Mixer_Strip::snapshot ( void )
 bool
 Mixer_Strip::export_strip ( const char *filename )
 {
+    if(filename)
+        export_import_strip = filename;
+
     MESSAGE( "Exporting chain state = %s", filename );
     Loggable::snapshot_callback( &Mixer_Strip::snapshot, this );
     return Loggable::snapshot( filename );
-    }
+}
 
 bool
 Mixer_Strip::import_strip ( const char *filename )
@@ -902,6 +905,8 @@ Mixer_Strip::menu_cb ( const Fl_Menu_ *m )
 		fl_message( "Strip exported." );
 	    else
 		fl_alert("Failed to export strip");
+
+            export_import_strip = "";
 	}
     }
     else if ( ! strcmp( picked, "/Remove" ) )

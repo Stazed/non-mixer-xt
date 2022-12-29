@@ -78,6 +78,7 @@ NSM_Client *nsm;
 
 char *instance_name;
 std::string project_directory = "";
+std::string export_import_strip = "";
 
 #include <errno.h>
 
