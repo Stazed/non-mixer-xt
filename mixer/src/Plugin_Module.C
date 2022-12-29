@@ -531,8 +531,7 @@ Plugin_Module::set ( Log_Entry &e )
     
     if (!restore.empty())
     {
-        sleep(2);   // FIXME some of these big plugins need time to initialize before restoring - seems like there should
-        // be a better way
+        sleep(1);   // some of these big plugins need time to initialize before restoring
         restore_LV2_plugin_state(restore);
     }
 }

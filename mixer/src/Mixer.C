@@ -253,7 +253,8 @@ void Mixer::cb_menu(Fl_Widget* o) {
 
         mixer->hide();
 
-        project_directory = name;
+        if(name)
+            project_directory = name;
 
         if ( int err = Project::open( name ) )
         {
@@ -1315,7 +1316,9 @@ Mixer::command_save ( void )
 bool
 Mixer::command_load ( const char *path, const char *display_name )
 {
-    project_directory = path;
+    if(path)
+        project_directory = path;
+
     DMESSAGE("project_directory = %s", project_directory.c_str());
     mixer->deactivate();
 
@@ -1358,7 +1361,9 @@ Mixer::command_new ( const char *path, const char *display_name )
     if ( ! Project::create( path, "" ) )
         return false;
 
-    project_directory = path;
+    if(path)
+        project_directory = path;
+
     if ( display_name )
         Project::name( display_name );
 
