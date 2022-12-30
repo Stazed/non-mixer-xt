@@ -173,6 +173,7 @@ Module::init ( void )
     _number = -2;	/* magic number indicates old instance, before numbering */
     _is_lv2 = false;
     _is_from_custom_ui = false;
+    _is_removed = false;
 
     box( FL_UP_BOX );
     labeltype( FL_NO_LABEL );

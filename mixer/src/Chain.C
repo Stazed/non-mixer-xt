@@ -358,6 +358,10 @@ Chain::remove ( Module *m )
         fl_alert( "Can't remove module at this point because the resultant chain is invalid" );
     }
 
+    /* Flag to tell LV2 Plugin_Module that custom user data directories should be set to remove on save */
+    if(m->_is_lv2)
+        m->_is_removed = true;
+
     client()->lock();
 
     strip()->handle_module_removed( m );
@@ -627,7 +631,7 @@ Chain::insert ( Module *m, Module *n )
             else
                 goto err;
         }
-        else
+        else    // This is the plugin module
         {
             if ( n->can_support_inputs(  module( i - 1 )->noutputs() ) >= 0 )
             {

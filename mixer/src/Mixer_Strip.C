@@ -107,6 +107,12 @@ Mixer_Strip::~Mixer_Strip ( )
     if ( _chain )
     {
         _chain->_deleting = true;   // do this first to ensure process does not get called by group on deleting chain
+        
+        for ( int i = 0; i < _chain->modules(); ++i )
+        {
+            if(_chain->module(i)->_is_lv2)
+                _chain->module(i)->_is_removed = true;
+        }
     }
 
 //    _chain->engine()->lock();

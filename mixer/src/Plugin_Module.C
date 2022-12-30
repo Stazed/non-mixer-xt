@@ -407,6 +407,19 @@ Plugin_Module::Plugin_Module ( ) : Module( 50, 35, name() )
 
 Plugin_Module::~Plugin_Module ( )
 {
+    /* This is the case when the user manually removes a Plugin. We set the
+     _is_removed = true, and add any custom data directory to the remove directories
+     vector. If the user saves the project then we remove any items in the vector.
+     We also clear the vector. If the user abandons any changes on exit, then any
+     items added to the vector since the last save will not be removed */
+    if(_is_removed)
+    {
+        if(!m_project_directory.empty())
+        {
+            remove_custom_data_directories.push_back(m_project_directory);
+        }
+    }
+
 #ifdef USE_SUIL
     /* In case the user left the custom ui up */
     if (fIsVisible)

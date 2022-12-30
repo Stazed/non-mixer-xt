@@ -80,6 +80,7 @@ NSM_Client *nsm;
 char *instance_name;
 std::string project_directory = "";
 std::string export_import_strip = "";
+std::vector<std::string>remove_custom_data_directories;
 
 #include <errno.h>
 
@@ -348,9 +349,9 @@ main ( int argc, char **argv )
     /* Delete clipboard contents because if the strip contains custom data then it will accumulate */
     if(clipboard_dir)
     {
-        std::string remove_clipboard = "exec rm -r ";
+        std::string remove_clipboard = "exec rm -r '";
         remove_clipboard += clipboard_dir;
-        remove_clipboard += "/*";
+        remove_clipboard += "'/*";
         system(remove_clipboard.c_str());
     }
 

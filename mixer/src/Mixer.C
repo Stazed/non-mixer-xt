@@ -63,6 +63,7 @@ extern char *instance_name;
 #include "Chain.H"
 
 extern NSM_Client *nsm;
+extern std::vector<std::string>remove_custom_data_directories;
 
 Spatialization_Console *Mixer::spatialization_console = 0;
 
@@ -873,7 +874,7 @@ void Mixer::remove ( Mixer_Strip *ms )
     MESSAGE( "Remove mixer strip \"%s\"", ms->name() );
 
     mixer_strips->remove( ms );
-    
+
     if ( parent() )
         parent()->redraw();
 
@@ -1066,6 +1067,19 @@ Mixer::save ( void )
     Loggable::snapshot( "snapshot" );
 
     save_translations();
+
+    if(!remove_custom_data_directories.empty())
+    {
+        for(unsigned int i = 0; i < remove_custom_data_directories.size(); ++i)
+        {
+            std::string remove_custom_data = "exec rm -r '";
+            remove_custom_data += remove_custom_data_directories[i];
+            remove_custom_data += "'";
+            DMESSAGE("Remove = %s", remove_custom_data.c_str());
+            system(remove_custom_data.c_str());
+        }
+        remove_custom_data_directories.clear();
+    }
     return true;
 }
 

@@ -38,6 +38,7 @@
 
 extern std::string project_directory;
 extern std::string export_import_strip;
+extern std::vector<std::string>remove_custom_data_directories;
 
 #ifdef USE_CARLA
 typedef void (*EventProcPtr)(XEvent* ev);
