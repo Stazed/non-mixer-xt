@@ -479,6 +479,10 @@ private:
     int _atom_outs;
     bool _loading_from_file;
 #endif
+#ifdef LV2_MIDI_SUPPORT
+    int _midi_ins;
+    int _midi_outs;
+#endif
     bool _crosswire;
 
     static void *discover_thread ( void * );

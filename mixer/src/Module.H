@@ -35,6 +35,7 @@
 #include <algorithm>
 
 #define LV2_WORKER_SUPPORT 1
+#define LV2_MIDI_SUPPORT 1
 #define USE_SUIL 1
 
 #ifdef LV2_WORKER_SUPPORT
@@ -153,7 +154,7 @@ public:
     public:
 
         enum Direction { INPUT, OUTPUT };
-        enum Type { AUDIO, CONTROL, AUX_AUDIO, ATOM };
+        enum Type { AUDIO, CONTROL, AUX_AUDIO, ATOM, MIDI };
 
         /* hints for control ports (specifically control inputs) */
         struct Hints
@@ -536,6 +537,10 @@ public:
     std::vector<Port> atom_input;
     std::vector<Port> atom_output;
 #endif
+#ifdef LV2_MIDI_SUPPORT
+    std::vector<Port> midi_input;
+    std::vector<Port> midi_output;
+#endif
 
     void add_port ( const Port &p )
         {
@@ -553,6 +558,12 @@ public:
                 atom_input.push_back( p );
             else if ( p.type() == Port::ATOM && p.direction() == Port::OUTPUT )
                 atom_output.push_back( p );
+#endif
+#ifdef LV2_MIDI_SUPPORT
+            else if ( p.type() == Port::MIDI && p.direction() == Port::INPUT )
+                midi_input.push_back( p );
+            else if ( p.type() == Port::MIDI && p.direction() == Port::OUTPUT )
+                midi_output.push_back( p );
 #endif
         }
 

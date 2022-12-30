@@ -1140,8 +1140,10 @@ Plugin_Module::get_all_plugins ( void )
             {
                 if (lilvPort.supports_event(lv2World.midi_event) || lilvPort.supports_event(lv2World.time_position))
                 {
+#ifndef LV2_MIDI_SUPPORT
                     supported = false;
                     break;  
+#endif
                 }
                 // supported or optional
             }
@@ -1287,6 +1289,10 @@ Plugin_Module::plugin_instances ( unsigned int n )
             int aji = 0;
             int ajo = 0;
 #endif
+#ifdef LV2_MIDI_SUPPORT
+            int mji = 0;
+            int mjo = 0;
+#endif
             if (_is_lv2)
             {
                 for ( unsigned int k = 0; k < _idata->lv2.rdf_data->PortCount; ++k )
@@ -1308,45 +1314,100 @@ Plugin_Module::plugin_instances ( unsigned int n )
                     {
                         if ( LV2_IS_PORT_INPUT( _idata->lv2.rdf_data->Ports[k].Types ) )
                         {
-                            if ( atom_input[aji].event_buffer() )
-                                lv2_evbuf_free( atom_input[aji].event_buffer() );
-                            
-                            const size_t buf_size = ATOM_BUFFER_SIZE;
-                            atom_input[aji].event_buffer( lv2_evbuf_new(buf_size,
-                                                                  _uridMapFt->map(_uridMapFt->handle,
-                                                                                  LV2_ATOM__Chunk),
-                                                                  _uridMapFt->map(_uridMapFt->handle,
-                                                                                  LV2_ATOM__Sequence)) );
+#ifdef LV2_MIDI_SUPPORT
+                            if(LV2_PORT_SUPPORTS_MIDI_EVENT(_idata->lv2.rdf_data->Ports[k].Types))
+                            {
+                                if ( midi_input[mji].event_buffer() )
+                                    lv2_evbuf_free( midi_input[mji].event_buffer() );
 
-                            _idata->lv2.descriptor->connect_port( h, k, lv2_evbuf_get_buffer(atom_input[aji].event_buffer()));
+                                const size_t buf_size = ATOM_BUFFER_SIZE;
+                                midi_input[mji].event_buffer( lv2_evbuf_new(buf_size,
+                                                                      _uridMapFt->map(_uridMapFt->handle,
+                                                                                      LV2_ATOM__Chunk),
+                                                                      _uridMapFt->map(_uridMapFt->handle,
+                                                                                      LV2_ATOM__Sequence)) );
+                                _idata->lv2.descriptor->connect_port( h, k, lv2_evbuf_get_buffer(midi_input[mji].event_buffer()));
 
-                            DMESSAGE("ATOM IN event_buffer = %p", lv2_evbuf_get_buffer(atom_input[aji].event_buffer()));
+                                DMESSAGE("MIDI IN event_buffer = %p", lv2_evbuf_get_buffer(midi_input[mji].event_buffer()));
 
-                            /* This sets the capacity */
-                            lv2_evbuf_reset(atom_input[aji].event_buffer(), true);
+                                /* This sets the capacity */
+                                lv2_evbuf_reset(midi_input[mji].event_buffer(), true);
 
-                            aji++;
+                                mji++;
+                            }
+                            else
+                            {
+#endif
+                                if ( atom_input[aji].event_buffer() )
+                                    lv2_evbuf_free( atom_input[aji].event_buffer() );
+
+                                const size_t buf_size = ATOM_BUFFER_SIZE;
+                                atom_input[aji].event_buffer( lv2_evbuf_new(buf_size,
+                                                                      _uridMapFt->map(_uridMapFt->handle,
+                                                                                      LV2_ATOM__Chunk),
+                                                                      _uridMapFt->map(_uridMapFt->handle,
+                                                                                      LV2_ATOM__Sequence)) );
+
+                                _idata->lv2.descriptor->connect_port( h, k, lv2_evbuf_get_buffer(atom_input[aji].event_buffer()));
+
+                                DMESSAGE("ATOM IN event_buffer = %p", lv2_evbuf_get_buffer(atom_input[aji].event_buffer()));
+
+                                /* This sets the capacity */
+                                lv2_evbuf_reset(atom_input[aji].event_buffer(), true);
+
+                                aji++;
+#ifdef LV2_MIDI_SUPPORT
+                            }
+#endif
                         }
                         else if ( LV2_IS_PORT_OUTPUT( _idata->lv2.rdf_data->Ports[k].Types ) )
                         {
-                            if ( atom_output[ajo].event_buffer() )
-                                lv2_evbuf_free( atom_output[ajo].event_buffer() );
+#ifdef LV2_MIDI_SUPPORT
+                            if(LV2_PORT_SUPPORTS_MIDI_EVENT(_idata->lv2.rdf_data->Ports[k].Types))
+                            {
+                                if ( midi_output[mjo].event_buffer() )
+                                    lv2_evbuf_free( midi_output[mjo].event_buffer() );
 
-                            const size_t buf_size = ATOM_BUFFER_SIZE;
-                            atom_output[ajo].event_buffer( lv2_evbuf_new(buf_size,
-                                                                  _uridMapFt->map(_uridMapFt->handle,
-                                                                                  LV2_ATOM__Chunk),
-                                                                  _uridMapFt->map(_uridMapFt->handle,
-                                                                                  LV2_ATOM__Sequence)) );
+                                const size_t buf_size = ATOM_BUFFER_SIZE;
+                                midi_output[mjo].event_buffer( lv2_evbuf_new(buf_size,
+                                                                      _uridMapFt->map(_uridMapFt->handle,
+                                                                                      LV2_ATOM__Chunk),
+                                                                      _uridMapFt->map(_uridMapFt->handle,
+                                                                                      LV2_ATOM__Sequence)) );
 
-                            _idata->lv2.descriptor->connect_port( h, k, lv2_evbuf_get_buffer( atom_output[ajo].event_buffer() ));
+                                _idata->lv2.descriptor->connect_port( h, k, lv2_evbuf_get_buffer( midi_output[mjo].event_buffer() ));
 
-                            /* This sets the capacity */
-                            lv2_evbuf_reset(atom_output[ajo].event_buffer(), false);
+                                /* This sets the capacity */
+                                lv2_evbuf_reset(midi_output[mjo].event_buffer(), false);
 
-                            DMESSAGE("ATOM OUT event_buffer = %p", lv2_evbuf_get_buffer( atom_output[ajo].event_buffer() ) );
+                                DMESSAGE("MIDI OUT event_buffer = %p", lv2_evbuf_get_buffer( midi_output[mjo].event_buffer() ) );
 
-                            ajo++;
+                                mjo++;
+                            }
+                            else
+                            {
+#endif
+                                if ( atom_output[ajo].event_buffer() )
+                                    lv2_evbuf_free( atom_output[ajo].event_buffer() );
+
+                                const size_t buf_size = ATOM_BUFFER_SIZE;
+                                atom_output[ajo].event_buffer( lv2_evbuf_new(buf_size,
+                                                                      _uridMapFt->map(_uridMapFt->handle,
+                                                                                      LV2_ATOM__Chunk),
+                                                                      _uridMapFt->map(_uridMapFt->handle,
+                                                                                      LV2_ATOM__Sequence)) );
+
+                                _idata->lv2.descriptor->connect_port( h, k, lv2_evbuf_get_buffer( atom_output[ajo].event_buffer() ));
+
+                                /* This sets the capacity */
+                                lv2_evbuf_reset(atom_output[ajo].event_buffer(), false);
+
+                                DMESSAGE("ATOM OUT event_buffer = %p", lv2_evbuf_get_buffer( atom_output[ajo].event_buffer() ) );
+
+                                ajo++;
+#ifdef LV2_MIDI_SUPPORT
+                            }
+#endif
                         }
                     }
 #endif
@@ -1696,6 +1757,9 @@ Plugin_Module::load_lv2 ( const char* uri )
 #ifdef LV2_WORKER_SUPPORT
     _atom_ins = _atom_outs = 0;
 #endif
+#ifdef LV2_MIDI_SUPPORT
+    _midi_ins = _midi_outs = 0;
+#endif
 
     if ( ! _idata->lv2.rdf_data )
     {
@@ -1809,39 +1873,77 @@ Plugin_Module::load_lv2 ( const char* uri )
             {
                 if ( LV2_IS_PORT_INPUT( _idata->lv2.rdf_data->Ports[i].Types ) )
                 {
-                    add_port( Port( this, Port::INPUT, Port::ATOM, _idata->lv2.rdf_data->Ports[i].Name ) );
-                    
-                    if (LV2_PORT_SUPPORTS_PATCH_MESSAGE( _idata->lv2.rdf_data->Ports[i].Types ))
+#ifdef LV2_MIDI_SUPPORT
+                    if(LV2_PORT_SUPPORTS_MIDI_EVENT(_idata->lv2.rdf_data->Ports[i].Types))
                     {
-                        DMESSAGE(" LV2_PORT_SUPPORTS_PATCH_MESSAGE - INPUT ");
-                        atom_input[_atom_ins].hints.type = Port::Hints::PATCH_MESSAGE;
+                        add_port( Port( this, Port::INPUT, Port::MIDI, _idata->lv2.rdf_data->Ports[i].Name ) );
+
+                        midi_input[_midi_ins].hints.plug_port_index = i;
+                        _midi_ins++;
+
+                        DMESSAGE("LV2_PORT_SUPPORTS_MIDI_EVENT = %s", _idata->lv2.rdf_data->Ports[i].Name);
                     }
+                    else
+                    {
+#endif
+                        add_port( Port( this, Port::INPUT, Port::ATOM, _idata->lv2.rdf_data->Ports[i].Name ) );
 
-                    atom_input[_atom_ins].hints.plug_port_index = i;
-                    _atom_ins++;
+                        if (LV2_PORT_SUPPORTS_PATCH_MESSAGE( _idata->lv2.rdf_data->Ports[i].Types ))
+                        {
+                            DMESSAGE(" LV2_PORT_SUPPORTS_PATCH_MESSAGE - INPUT ");
+                            atom_input[_atom_ins].hints.type = Port::Hints::PATCH_MESSAGE;
+                        }
 
-                    DMESSAGE("GOT ATOM SEQUENCE PORT IN = %s", _idata->lv2.rdf_data->Ports[i].Name);
+                        atom_input[_atom_ins].hints.plug_port_index = i;
+                        _atom_ins++;
+
+                        DMESSAGE("GOT ATOM SEQUENCE PORT IN = %s", _idata->lv2.rdf_data->Ports[i].Name);
+#ifdef LV2_MIDI_SUPPORT
+                    }
+#endif
                 }
                 else if (LV2_IS_PORT_OUTPUT(_idata->lv2.rdf_data->Ports[i].Types))
                 {
-                    add_port( Port( this, Port::OUTPUT, Port::ATOM, _idata->lv2.rdf_data->Ports[i].Name ) );
-                    
-                    if (LV2_PORT_SUPPORTS_PATCH_MESSAGE( _idata->lv2.rdf_data->Ports[i].Types ))
+#ifdef LV2_MIDI_SUPPORT
+                    if(LV2_PORT_SUPPORTS_MIDI_EVENT(_idata->lv2.rdf_data->Ports[i].Types))
                     {
-                        DMESSAGE(" LV2_PORT_SUPPORTS_PATCH_MESSAGE - OUTPUT ");
-                        atom_output[_atom_outs].hints.type = Port::Hints::PATCH_MESSAGE;
+                        add_port( Port( this, Port::OUTPUT, Port::MIDI, _idata->lv2.rdf_data->Ports[i].Name ) );
+
+                        midi_output[_midi_outs].hints.plug_port_index = i;
+                        _midi_outs++;
+
+                        DMESSAGE("LV2_PORT_SUPPORTS_MIDI_EVENT = %s", _idata->lv2.rdf_data->Ports[i].Name);
                     }
+                    else
+                    {
+#endif
+                        add_port( Port( this, Port::OUTPUT, Port::ATOM, _idata->lv2.rdf_data->Ports[i].Name ) );
 
-                    atom_output[_atom_outs].hints.plug_port_index = i;
-                    _atom_outs++;
+                        if (LV2_PORT_SUPPORTS_PATCH_MESSAGE( _idata->lv2.rdf_data->Ports[i].Types ))
+                        {
+                            DMESSAGE(" LV2_PORT_SUPPORTS_PATCH_MESSAGE - OUTPUT ");
+                            atom_output[_atom_outs].hints.type = Port::Hints::PATCH_MESSAGE;
+                        }
 
-                    DMESSAGE("GOT ATOM SEQUENCE PORT OUT = %s", _idata->lv2.rdf_data->Ports[i].Name);
+                        atom_output[_atom_outs].hints.plug_port_index = i;
+                        _atom_outs++;
+
+                        DMESSAGE("GOT ATOM SEQUENCE PORT OUT = %s", _idata->lv2.rdf_data->Ports[i].Name);
+#ifdef LV2_MIDI_SUPPORT
+                    }
+#endif
                 }
             }
 #endif
         }
 
-        MESSAGE( "Plugin has %i inputs and %i outputs", _plugin_ins, _plugin_outs);
+        MESSAGE( "Plugin has %i AUDIO inputs and %i AUDIO outputs", _plugin_ins, _plugin_outs);
+#ifdef LV2_WORKER_SUPPORT
+        MESSAGE( "Plugin has %i ATOM inputs and %i ATOM outputs", _atom_ins, _atom_outs);
+#endif
+#ifdef LV2_MIDI_SUPPORT
+        MESSAGE( "Plugin has %i MIDI inputs and %i MIDI outputs", _midi_ins, _midi_outs);
+#endif
 
         for ( unsigned int i = 0; i < _idata->lv2.rdf_data->PortCount; ++i )
         {
