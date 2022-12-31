@@ -649,6 +649,10 @@ public:
      * channel configuration, but only if can_support_inputs() returns
      * true */
     virtual bool configure_inputs ( int n ) = 0;
+#ifdef LV2_MIDI_SUPPORT
+    virtual void configure_midi_inputs () {}
+    virtual void configure_midi_outputs () {}
+#endif
 
     virtual void process ( nframes_t ) = 0;
 

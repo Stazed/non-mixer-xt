@@ -644,6 +644,17 @@ Chain::insert ( Module *m, Module *n )
             }
             else
                 goto err;
+#ifdef LV2_MIDI_SUPPORT
+            if (n->midi_input.size())
+            {
+                n->configure_midi_inputs();
+            }
+
+            if (n->midi_output.size())
+            {
+                n->configure_midi_outputs();
+            }
+#endif
         }
 
         modules_pack->insert( *n, i );

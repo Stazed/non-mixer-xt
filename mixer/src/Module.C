@@ -102,6 +102,20 @@ Module::~Module ( )
         aux_audio_output[i].jack_port()->shutdown();
         delete aux_audio_output[i].jack_port();
     }
+
+    for ( unsigned int i = 0; i < midi_input.size(); ++i )
+    {
+        midi_input[i].disconnect();
+        midi_input[i].jack_port()->shutdown();
+        delete midi_input[i].jack_port();
+    } 
+    for ( unsigned int i = 0; i < midi_output.size(); ++i )
+    {
+        midi_output[i].disconnect();
+        midi_output[i].jack_port()->shutdown();
+        delete midi_output[i].jack_port();
+    }
+
     for ( unsigned int i = 0; i < control_input.size(); ++i )
     {
         /* destroy connected Controller_Module */
@@ -143,6 +157,9 @@ Module::~Module ( )
 
     control_input.clear();
     control_output.clear();
+
+    midi_output.clear();
+    midi_input.clear();
 
     if ( parent() )
         parent()->remove( this );
@@ -1638,13 +1655,13 @@ Module::add_aux_port ( bool input, const char *prefix, int i, JACK::Port::type_e
         jack_port_activation_error( po );
         return false;
     }
-    
+
     if ( po->valid() )
     {
         if ( input )
         {
             Module::Port mp( (Module*)this, Module::Port::INPUT, Module::Port::AUX_AUDIO );
-            
+
             mp.jack_port( po );
 
             aux_audio_input.push_back( mp );
@@ -1652,9 +1669,9 @@ Module::add_aux_port ( bool input, const char *prefix, int i, JACK::Port::type_e
         else
         {
             Module::Port mp( (Module*)this, Module::Port::OUTPUT, Module::Port::AUX_AUDIO );
-            
+
             mp.jack_port( po );
-            
+
             aux_audio_output.push_back( mp );
         }
     }

@@ -792,6 +792,50 @@ Plugin_Module::configure_inputs( int n )
     return true;
 }
 
+#ifdef LV2_MIDI_SUPPORT
+void
+Plugin_Module::configure_midi_inputs ()
+{
+    for( unsigned int i = 0; i < midi_input.size(); ++i )
+    {
+        std::string port_name = label();
+
+        port_name += midi_input[i].name();
+
+        DMESSAGE("CONFIGURE MIDI INPUTS = %s", port_name.c_str());
+        JACK::Port *jack_port = new JACK::Port( chain()->client(), NULL, port_name.c_str(), JACK::Port::Input, JACK::Port::MIDI );
+        midi_input[i].jack_port(jack_port);
+
+        if( !midi_input[i].jack_port()->activate() )
+        {
+            WARNING( "Failed to activate JACK MIDI IN port" );
+            return;
+        }
+    }
+}
+
+void
+Plugin_Module::configure_midi_outputs ()
+{
+    for( unsigned int i = 0; i < midi_output.size(); ++i )
+    {
+        std::string port_name = label();
+
+        port_name += midi_output[i].name();
+
+        DMESSAGE("CONFIGURE MIDI OUTPUTS = %s", port_name.c_str());
+        JACK::Port *jack_port = new JACK::Port( chain()->client(), NULL, port_name.c_str(), JACK::Port::Output, JACK::Port::MIDI );
+        midi_output[i].jack_port(jack_port);
+
+        if( !midi_output[i].jack_port()->activate() )
+        {
+            WARNING( "Failed to activate JACK MIDI OUT port" );
+            return;
+        }
+    }
+}
+#endif
+
 void *
 Plugin_Module::discover_thread ( void * )
 {
@@ -2662,6 +2706,69 @@ Plugin_Module::apply_ui_events( uint32_t nframes, unsigned int port )
     }
 }
 
+#ifdef LV2_MIDI_SUPPORT
+void
+Plugin_Module::process_midi_in_events( uint32_t nframes, unsigned int port )
+{
+    lv2_evbuf_reset(midi_input[port].event_buffer(), true);
+    
+    if (! midi_input[port].jack_port())
+        return;
+
+    void *buf = midi_input[port].jack_port()->buffer( nframes );
+
+    LV2_Evbuf_Iterator iter = lv2_evbuf_begin(midi_input[port].event_buffer());
+
+    for (uint32_t i = 0; i < jack_midi_get_event_count(buf); ++i)
+    {
+      //  DMESSAGE( "Got midi input!" );
+        jack_midi_event_t ev;
+        jack_midi_event_get(&ev, buf, i);
+        lv2_evbuf_write(
+          &iter, ev.time, 0, _idata->_lv2_urid_map(_idata, LV2_MIDI__MidiEvent), ev.size, ev.buffer);
+    }
+}
+
+void
+Plugin_Module::process_midi_out_events( uint32_t nframes, unsigned int port )
+{
+#if 0
+    if ( midi_output_port )
+    {
+        void* buf = midi_output_port->buffer( nframes );
+//            if (port->sys_port) {
+//              buf = jack_port_get_buffer(port->sys_port, nframes);
+          jack_midi_clear_buffer(buf);
+//            }
+
+        for (LV2_Evbuf_Iterator i = lv2_evbuf_begin(midi_evbuf);
+             lv2_evbuf_is_valid(i);
+             i = lv2_evbuf_next(i))
+        {
+            // Get event from LV2 buffer
+            uint32_t frames    = 0;
+            uint32_t subframes = 0;
+            LV2_URID type      = 0;
+            uint32_t size      = 0;
+            void*    body      = NULL;
+            lv2_evbuf_get(i, &frames, &subframes, &type, &size, &body);
+
+            if (buf && type == _idata->_lv2_urid_map(_idata, LV2_MIDI__MidiEvent))
+            {
+                  DMESSAGE("Write MIDI event to Jack output");
+                  jack_midi_event_write(buf, frames, (jack_midi_data_t*) body, size);
+            }
+
+           // if (jalv->has_ui) {
+              // Forward event to UI
+            //  jalv_write_event(jalv, jalv->plugin_to_ui, p, size, type, body);
+        }
+    }
+#endif
+}
+
+#endif
+
 void
 Plugin_Module::set_lv2_port_properties (Port * port, bool writable )
 {
@@ -3670,11 +3777,28 @@ Plugin_Module::process ( nframes_t nframes )
                 apply_ui_events(  nframes, i );
             }
 #endif
+
+#ifdef LV2_MIDI_SUPPORT
+            /* JACK MIDI in to plugin MIDI in */
+            for( unsigned int i = 0; i < midi_input.size(); ++i )
+            {
+                process_midi_in_events( nframes, i );
+            }
+#endif  // LV2_MIDI_SUPPORT
+
             // Run the plugin for LV2
             for ( unsigned int i = 0; i < _idata->handle.size(); ++i )
             {
                 _idata->lv2.descriptor->run( _idata->handle[i], nframes );
             }
+            
+#ifdef LV2_MIDI_SUPPORT
+            /* plugin MIDI out to JACK MIDI out */
+            for( unsigned int i = 0; i < midi_output.size(); ++i )
+            {
+                process_midi_out_events( nframes, i );
+            }
+#endif  // LV2_MIDI_SUPPORT
 
 #ifdef LV2_WORKER_SUPPORT
             /* Process any worker replies. */

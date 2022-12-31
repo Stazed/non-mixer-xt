@@ -87,6 +87,9 @@ enum Plugin_Module_URIs {
     Plugin_Module_URI_Resize,
     Plugin_Module_URI_Scale,
 #endif
+#ifdef LV2_MIDI_SUPPORT
+    Plugin_Module_URI_Midi_event,
+#endif
     Plugin_Module_URI_Count
 };
 
@@ -217,6 +220,9 @@ struct ImplementationData
         lv2.mappedURIs.push_back(LV2_PATCH__Put);
         lv2.mappedURIs.push_back(LV2_UI__resize);
 #endif
+#ifdef LV2_MIDI_SUPPORT
+        lv2.mappedURIs.push_back(LV2_MIDI__MidiEvent);
+#endif
         lv2.ext.options = NULL;
         lv2.ext.state   = NULL;
         lv2.ext.worker  = NULL;
@@ -299,6 +305,10 @@ _Pragma("GCC diagnostic pop")
 #ifdef  USE_SUIL
         if ( ::strcmp(uri, LV2_UI__resize) == 0 )
             return Plugin_Module_URI_Resize;
+#endif
+#ifdef LV2_MIDI_SUPPORT
+        if ( ::strcmp(uri, LV2_MIDI__MidiEvent) == 0 )
+            return Plugin_Module_URI_Midi_event;
 #endif
 
         ImplementationData* self = (ImplementationData*)handle;
@@ -528,6 +538,11 @@ public:
     int can_support_inputs ( int );
     bool configure_inputs ( int );
 
+#ifdef LV2_MIDI_SUPPORT
+    void configure_midi_inputs ();
+    void configure_midi_outputs ();
+#endif
+
     virtual bool bypass ( void ) const { return _bypass; }
     virtual void bypass ( bool v );
 
@@ -557,7 +572,10 @@ public:
                  const LV2_URID    type,
                  const void* const body);
 #endif  // LV2_WORKER_SUPPORT
-    
+#ifdef LV2_MIDI_SUPPORT
+    void process_midi_in_events( uint32_t nframes, unsigned int port );
+    void process_midi_out_events( uint32_t nframes, unsigned int port );
+#endif
 #ifdef USE_SUIL
     bool try_custom_ui();
     bool custom_ui_instantiate();
