@@ -472,12 +472,7 @@ private:
             H = h() - 10;
         }
 
- //   void cb_handle(Fl_Widget*);
- //   static void cb_handle(Fl_Widget*, void*);
-
- //   Fl_Button *close_button;
 public:
-//    struct ImplementationData;
 
     ImplementationData *_idata;
 
@@ -530,8 +525,6 @@ public:
 
     int plugin_ins ( void ) const { return _plugin_ins; }
     int plugin_outs ( void ) const { return _plugin_outs; }
-
-//    void select_plugin ( unsigned long id );
 
     const char *name ( void ) const { return "Plugin"; }
 
