@@ -2710,38 +2710,36 @@ Plugin_Module::apply_ui_events( uint32_t nframes, unsigned int port )
 void
 Plugin_Module::process_midi_in_events( uint32_t nframes, unsigned int port )
 {
-    lv2_evbuf_reset(midi_input[port].event_buffer(), true);
-    
-    if (! midi_input[port].jack_port())
-        return;
-
-    void *buf = midi_input[port].jack_port()->buffer( nframes );
-
-    LV2_Evbuf_Iterator iter = lv2_evbuf_begin(midi_input[port].event_buffer());
-
-    for (uint32_t i = 0; i < jack_midi_get_event_count(buf); ++i)
+    if ( midi_input[port].jack_port())
     {
-      //  DMESSAGE( "Got midi input!" );
-        jack_midi_event_t ev;
-        jack_midi_event_get(&ev, buf, i);
-        lv2_evbuf_write(
-          &iter, ev.time, 0, _idata->_lv2_urid_map(_idata, LV2_MIDI__MidiEvent), ev.size, ev.buffer);
+        lv2_evbuf_reset(midi_input[port].event_buffer(), true);
+
+        void *buf = midi_input[port].jack_port()->buffer( nframes );
+
+        LV2_Evbuf_Iterator iter = lv2_evbuf_begin(midi_input[port].event_buffer());
+
+        for (uint32_t i = 0; i < jack_midi_get_event_count(buf); ++i)
+        {
+          //  DMESSAGE( "Got midi input!" );
+            jack_midi_event_t ev;
+            jack_midi_event_get(&ev, buf, i);
+            lv2_evbuf_write(
+              &iter, ev.time, 0, _idata->_lv2_urid_map(_idata, LV2_MIDI__MidiEvent), ev.size, ev.buffer);
+        }
     }
 }
 
 void
 Plugin_Module::process_midi_out_events( uint32_t nframes, unsigned int port )
 {
-#if 0
-    if ( midi_output_port )
+    if ( midi_output[port].jack_port() )
     {
-        void* buf = midi_output_port->buffer( nframes );
-//            if (port->sys_port) {
-//              buf = jack_port_get_buffer(port->sys_port, nframes);
-          jack_midi_clear_buffer(buf);
-//            }
+        void* buf = NULL;
 
-        for (LV2_Evbuf_Iterator i = lv2_evbuf_begin(midi_evbuf);
+        buf = midi_output[port].jack_port()->buffer( nframes );
+        jack_midi_clear_buffer(buf);
+
+        for (LV2_Evbuf_Iterator i = lv2_evbuf_begin(midi_output[port].event_buffer());
              lv2_evbuf_is_valid(i);
              i = lv2_evbuf_next(i))
         {
@@ -2755,19 +2753,16 @@ Plugin_Module::process_midi_out_events( uint32_t nframes, unsigned int port )
 
             if (buf && type == _idata->_lv2_urid_map(_idata, LV2_MIDI__MidiEvent))
             {
-                  DMESSAGE("Write MIDI event to Jack output");
+                 // DMESSAGE("Write MIDI event to Jack output");
                   jack_midi_event_write(buf, frames, (jack_midi_data_t*) body, size);
             }
-
-           // if (jalv->has_ui) {
-              // Forward event to UI
-            //  jalv_write_event(jalv, jalv->plugin_to_ui, p, size, type, body);
         }
+
+        lv2_evbuf_reset(midi_output[port].event_buffer(), false);
     }
-#endif
 }
 
-#endif
+#endif  // LV2_MIDI_SUPPORT
 
 void
 Plugin_Module::set_lv2_port_properties (Port * port, bool writable )
