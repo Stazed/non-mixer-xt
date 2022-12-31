@@ -256,9 +256,9 @@ patch_set_get(Plugin_Module* plugin,
               const LV2_Atom_URID**  property,
               const LV2_Atom**       value)
 {
-    lv2_atom_object_get(obj, plugin->_idata->_lv2_urid_map(plugin->_idata, LV2_PATCH__property),
+    lv2_atom_object_get(obj, Plugin_Module_URI_patch_Property,
                         (const LV2_Atom*)property,
-                        plugin->_idata->_lv2_urid_map(plugin->_idata, LV2_PATCH__value),
+                        Plugin_Module_URI_patch_Value,
                         value,
                         0);
     if (!*property)
@@ -280,7 +280,7 @@ patch_put_get(Plugin_Module*  plugin,
               const LV2_Atom_Object*  obj,
               const LV2_Atom_Object** body)
 {
-    lv2_atom_object_get(obj, plugin->_idata->_lv2_urid_map(plugin->_idata, LV2_PATCH__body),
+    lv2_atom_object_get(obj, Plugin_Module_URI_patch_Body,
                         (const LV2_Atom*)body,
                         0);
     if (!*body)
@@ -2489,7 +2489,7 @@ Plugin_Module::send_to_ui(Plugin_Module* plug, uint32_t port_index, uint32_t typ
     } Header;
 
     const Header header = {
-    {port_index, plug->_idata->_lv2_urid_map(plug->_idata, LV2_ATOM__eventTransfer), (uint32_t) sizeof(LV2_Atom) + size},
+    {port_index, Plugin_Module_URI_Atom_eventTransfer, (uint32_t) sizeof(LV2_Atom) + size},
     {size, type}};
 
     ZixRingTransaction tx = zix_ring_begin_write(plug->plugin_to_ui);
@@ -2525,7 +2525,7 @@ Plugin_Module::ui_port_event( uint32_t port_index, uint32_t buffer_size, uint32_
     {
 //        updating = true;  // FIXME
         const LV2_Atom_Object* obj = (const LV2_Atom_Object*)buffer;
-        if (obj->body.otype ==  _idata->_lv2_urid_map(_idata, LV2_PATCH__Set))
+        if (obj->body.otype ==  Plugin_Module_URI_patch_Set)
         {
             const LV2_Atom_URID* property = NULL;
             const LV2_Atom*      value    = NULL;
@@ -2535,7 +2535,7 @@ Plugin_Module::ui_port_event( uint32_t port_index, uint32_t buffer_size, uint32_
                 set_file ((char *) (value + 1), ai, false ); // false means don't update the plugin, since this comes from the plugin
             }
         } 
-        else if (obj->body.otype == _idata->_lv2_urid_map(_idata, LV2_PATCH__Put))
+        else if (obj->body.otype == Plugin_Module_URI_patch_Put)
         {
             const LV2_Atom_Object* body = NULL;
             if (!patch_put_get(this, obj, &body))
@@ -2616,7 +2616,7 @@ Plugin_Module::write_atom_event(ZixRing* target, const uint32_t    port_index,
     } Header;
 
     const Header header = {
-    {port_index, _idata->_lv2_urid_map(_idata, LV2_ATOM__eventTransfer), (uint32_t) sizeof(LV2_Atom) + size},
+    {port_index, Plugin_Module_URI_Atom_eventTransfer, (uint32_t) sizeof(LV2_Atom) + size},
     {size, type}};
 
     return write_control_change(target, &header, sizeof(header), body, size);
@@ -2638,10 +2638,10 @@ Plugin_Module::send_file_to_plugin( int port, const std::string &filename )
     uint8_t              buf[1024];
     lv2_atom_forge_set_buffer(&forge, buf, sizeof(buf));
 
-    lv2_atom_forge_object(&forge, &frame, 0, _idata->_lv2_urid_map(_idata, LV2_PATCH__Set) );
-    lv2_atom_forge_key(&forge, _idata->_lv2_urid_map(_idata, LV2_PATCH__property) );
+    lv2_atom_forge_object(&forge, &frame, 0, Plugin_Module_URI_patch_Set );
+    lv2_atom_forge_key(&forge, Plugin_Module_URI_patch_Property );
     lv2_atom_forge_urid(&forge, atom_input[port]._property_mapped);
-    lv2_atom_forge_key(&forge, _idata->_lv2_urid_map(_idata, LV2_PATCH__value));
+    lv2_atom_forge_key(&forge, Plugin_Module_URI_patch_Value);
     lv2_atom_forge_atom(&forge, size, this->m_forge.Path);
     lv2_atom_forge_write(&forge, (const void*)filename.c_str(), size);
 
@@ -2689,7 +2689,7 @@ Plugin_Module::apply_ui_events( uint32_t nframes, unsigned int port )
                 port->control = *(float*)body;
         }
 */
-        else if (ev.protocol == _idata->_lv2_urid_map(_idata, LV2_ATOM__eventTransfer))
+        else if (ev.protocol == Plugin_Module_URI_Atom_eventTransfer)
         {
             LV2_Evbuf_Iterator    e    = lv2_evbuf_end( atom_input[port].event_buffer() ); 
             const LV2_Atom* const atom = &buffer.head.atom;
@@ -2779,7 +2779,7 @@ Plugin_Module::process_midi_in_events( uint32_t nframes, unsigned int port )
             jack_midi_event_t ev;
             jack_midi_event_get(&ev, buf, i);
             lv2_evbuf_write(
-              &iter, ev.time, 0, _idata->_lv2_urid_map(_idata, LV2_MIDI__MidiEvent), ev.size, ev.buffer);
+              &iter, ev.time, 0, Plugin_Module_URI_Midi_event, ev.size, ev.buffer);
         }
     }
 }
@@ -2806,7 +2806,7 @@ Plugin_Module::process_midi_out_events( uint32_t nframes, unsigned int port )
             void*    body      = NULL;
             lv2_evbuf_get(i, &frames, &subframes, &type, &size, &body);
 
-            if (buf && type == _idata->_lv2_urid_map(_idata, LV2_MIDI__MidiEvent))
+            if (buf && type == Plugin_Module_URI_Midi_event)
             {
                  // DMESSAGE("Write MIDI event to Jack output");
                   jack_midi_event_write(buf, frames, (jack_midi_data_t*) body, size);
@@ -2964,7 +2964,7 @@ send_to_plugin(void* const handle,              // Plugin_Module
         /* Pass the control information to the plugin and other generic ui widgets */
         pLv2Plugin->set_control_value(port_index, *(const float*)buffer);
     }
-    else if (protocol == pLv2Plugin->_idata->_lv2_urid_map(pLv2Plugin->_idata, LV2_ATOM__eventTransfer)) 
+    else if (protocol == Plugin_Module_URI_Atom_eventTransfer) 
     {
         DMESSAGE("UI SENT LV2_ATOM__eventTransfer");
         pLv2Plugin->send_atom_to_plugin( port_index, buffer_size, buffer );

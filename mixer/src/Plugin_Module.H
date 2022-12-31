@@ -80,8 +80,13 @@ enum Plugin_Module_URIs {
     Plugin_Module_URI_Worker_Schedule,
     Plugin_Module_URI_Atom_Chunk,
     Plugin_Module_URI_Atom_eventTransfer,
+    Plugin_Module_URI_patch_Property,
+    Plugin_Module_URI_patch_Value,
+    Plugin_Module_URI_patch_Body,
     Plugin_Module_URI_patch_Set,
     Plugin_Module_URI_patch_Put,
+    Plugin_Module_URI_patch_Writable,
+    Plugin_Module_URI_patch_Readable,
 #endif
 #ifdef USE_SUIL
     Plugin_Module_URI_Resize,
@@ -219,14 +224,19 @@ struct ImplementationData
         lv2.mappedURIs.push_back(LV2_BUF_SIZE__maxBlockLength); // Plugin_Module_URI_BufSize_MaxLength
         lv2.mappedURIs.push_back(LV2_BUF_SIZE__minBlockLength); // Plugin_Module_URI_BufSize_MinLength
         lv2.mappedURIs.push_back(LV2_PARAMETERS__sampleRate);   // Plugin_Module_URI_Parameter_SampleRate
-        lv2.mappedURIs.push_back(LV2_UI__scaleFactor);
 #ifdef LV2_WORKER_SUPPORT
         lv2.mappedURIs.push_back(LV2_ATOM__Sequence);
         lv2.mappedURIs.push_back(LV2_ATOM__Chunk);
         lv2.mappedURIs.push_back(LV2_ATOM__eventTransfer);
+        lv2.mappedURIs.push_back(LV2_PATCH__property);
+        lv2.mappedURIs.push_back(LV2_PATCH__value);
+        lv2.mappedURIs.push_back(LV2_PATCH__body);
         lv2.mappedURIs.push_back(LV2_PATCH__Set);
         lv2.mappedURIs.push_back(LV2_PATCH__Put);
+#endif
+#ifdef USE_SUIL
         lv2.mappedURIs.push_back(LV2_UI__resize);
+        lv2.mappedURIs.push_back(LV2_UI__scaleFactor);
 #endif
 #ifdef LV2_MIDI_SUPPORT
         lv2.mappedURIs.push_back(LV2_MIDI__MidiEvent);
@@ -303,8 +313,6 @@ _Pragma("GCC diagnostic pop")
             return Plugin_Module_URI_BufSize_MinLength;
         if ( ::strcmp(uri, LV2_PARAMETERS__sampleRate) == 0 )
             return Plugin_Module_URI_Parameter_SampleRate;
-        if ( ::strcmp(uri, LV2_UI__scaleFactor) == 0 )
-            return Plugin_Module_URI_Scale;
 #ifdef LV2_WORKER_SUPPORT
         if ( ::strcmp(uri, LV2_ATOM__Sequence) == 0 )
             return Plugin_Module_URI_Worker_Schedule;
@@ -312,14 +320,26 @@ _Pragma("GCC diagnostic pop")
             return Plugin_Module_URI_Atom_Chunk;
         if ( ::strcmp(uri, LV2_ATOM__eventTransfer) == 0 )
             return Plugin_Module_URI_Atom_eventTransfer;
+        if ( ::strcmp(uri, LV2_PATCH__property) == 0 )
+            return Plugin_Module_URI_patch_Property;
+        if ( ::strcmp(uri, LV2_PATCH__value) == 0 )
+            return Plugin_Module_URI_patch_Value;
+        if ( ::strcmp(uri, LV2_PATCH__body) == 0 )
+            return Plugin_Module_URI_patch_Body;
         if ( ::strcmp(uri, LV2_PATCH__Set) == 0 )
             return Plugin_Module_URI_patch_Set;
         if ( ::strcmp(uri, LV2_PATCH__Put) == 0 )
             return Plugin_Module_URI_patch_Put;
+        if ( ::strcmp(uri, LV2_PATCH__writable) == 0 )
+            return Plugin_Module_URI_patch_Writable;
+        if ( ::strcmp(uri, LV2_PATCH__readable) == 0 )
+            return Plugin_Module_URI_patch_Readable;
 #endif  // LV2_WORKER_SUPPORT
 #ifdef  USE_SUIL
         if ( ::strcmp(uri, LV2_UI__resize) == 0 )
             return Plugin_Module_URI_Resize;
+        if ( ::strcmp(uri, LV2_UI__scaleFactor) == 0 )
+            return Plugin_Module_URI_Scale;
 #endif
 #ifdef LV2_MIDI_SUPPORT
         if ( ::strcmp(uri, LV2_MIDI__MidiEvent) == 0 )
