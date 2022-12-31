@@ -89,6 +89,14 @@ enum Plugin_Module_URIs {
 #endif
 #ifdef LV2_MIDI_SUPPORT
     Plugin_Module_URI_Midi_event,
+    Plugin_Module_URI_time_Position,
+    Plugin_Module_URI_time_frame,
+    Plugin_Module_URI_time_speed,
+    Plugin_Module_URI_time_barBeat,
+    Plugin_Module_URI_time_bar,
+    Plugin_Module_URI_time_beatUnit,
+    Plugin_Module_URI_time_beatsPerBar,
+    Plugin_Module_URI_time_beatsPerMinute,
 #endif
     Plugin_Module_URI_Count
 };
@@ -222,6 +230,14 @@ struct ImplementationData
 #endif
 #ifdef LV2_MIDI_SUPPORT
         lv2.mappedURIs.push_back(LV2_MIDI__MidiEvent);
+        lv2.mappedURIs.push_back(LV2_TIME__Position);
+        lv2.mappedURIs.push_back(LV2_TIME__frame);
+        lv2.mappedURIs.push_back(LV2_TIME__speed);
+        lv2.mappedURIs.push_back(LV2_TIME__barBeat);
+        lv2.mappedURIs.push_back(LV2_TIME__bar);
+        lv2.mappedURIs.push_back(LV2_TIME__beatUnit);
+        lv2.mappedURIs.push_back(LV2_TIME__beatsPerBar);
+        lv2.mappedURIs.push_back(LV2_TIME__beatsPerMinute);
 #endif
         lv2.ext.options = NULL;
         lv2.ext.state   = NULL;
@@ -294,7 +310,6 @@ _Pragma("GCC diagnostic pop")
             return Plugin_Module_URI_Worker_Schedule;
         if ( ::strcmp(uri, LV2_ATOM__Chunk) == 0 )
             return Plugin_Module_URI_Atom_Chunk;
-
         if ( ::strcmp(uri, LV2_ATOM__eventTransfer) == 0 )
             return Plugin_Module_URI_Atom_eventTransfer;
         if ( ::strcmp(uri, LV2_PATCH__Set) == 0 )
@@ -309,6 +324,22 @@ _Pragma("GCC diagnostic pop")
 #ifdef LV2_MIDI_SUPPORT
         if ( ::strcmp(uri, LV2_MIDI__MidiEvent) == 0 )
             return Plugin_Module_URI_Midi_event;
+        if ( ::strcmp(uri, LV2_TIME__Position) == 0 )
+            return Plugin_Module_URI_time_Position;
+        if ( ::strcmp(uri, LV2_TIME__frame) == 0 )
+            return Plugin_Module_URI_time_frame;
+        if ( ::strcmp(uri, LV2_TIME__speed) == 0 )
+            return Plugin_Module_URI_time_speed;
+        if ( ::strcmp(uri, LV2_TIME__barBeat) == 0 )
+            return Plugin_Module_URI_time_barBeat;
+        if ( ::strcmp(uri, LV2_TIME__bar) == 0 )
+            return Plugin_Module_URI_time_bar;
+        if ( ::strcmp(uri, LV2_TIME__beatUnit) == 0 )
+            return Plugin_Module_URI_time_beatUnit;
+        if ( ::strcmp(uri, LV2_TIME__beatsPerBar) == 0 )
+            return Plugin_Module_URI_time_beatsPerBar;
+        if ( ::strcmp(uri, LV2_TIME__beatsPerMinute) == 0 )
+            return Plugin_Module_URI_time_beatsPerMinute;
 #endif
 
         ImplementationData* self = (ImplementationData*)handle;
@@ -487,6 +518,9 @@ private:
 #ifdef LV2_MIDI_SUPPORT
     int _midi_ins;
     int _midi_outs;
+    uint32_t  _position;        ///< Transport position in frames
+    float     _bpm;             ///< Transport tempo in beats per minute
+    bool      _rolling;         ///< Transport speed (0=stop, 1=play)
 #endif
     bool _crosswire;
 

@@ -1803,6 +1803,9 @@ Plugin_Module::load_lv2 ( const char* uri )
 #endif
 #ifdef LV2_MIDI_SUPPORT
     _midi_ins = _midi_outs = 0;
+    _position = 0;
+    _bpm = 120.0f;
+    _rolling = false;
 #endif
 
     if ( ! _idata->lv2.rdf_data )
@@ -2712,11 +2715,63 @@ Plugin_Module::process_midi_in_events( uint32_t nframes, unsigned int port )
 {
     if ( midi_input[port].jack_port())
     {
+        // Get Jack transport position
+        jack_position_t pos;
+        const bool rolling =
+            (chain()->client()->transport_query(&pos) == JackTransportRolling);
+
+        // If transport state is not as expected, then something has changed
+        const bool has_bbt = (pos.valid & JackPositionBBT);
+        const bool xport_changed =
+          (rolling != _rolling || pos.frame != _position ||
+           (has_bbt && pos.beats_per_minute != _bpm));
+
+        uint8_t   pos_buf[256];
+        LV2_Atom* lv2_pos = (LV2_Atom*)pos_buf;
+        if (xport_changed)
+        {
+            // Build an LV2 position object to report change to plugin
+            lv2_atom_forge_set_buffer(&m_forge, pos_buf, sizeof(pos_buf));
+            LV2_Atom_Forge*      forge = &m_forge;
+            LV2_Atom_Forge_Frame frame;
+            lv2_atom_forge_object(forge, &frame, 0, Plugin_Module_URI_time_Position);
+            lv2_atom_forge_key(forge, Plugin_Module_URI_time_frame);
+            lv2_atom_forge_long(forge, pos.frame);
+            lv2_atom_forge_key(forge, Plugin_Module_URI_time_speed);
+            lv2_atom_forge_float(forge, rolling ? 1.0 : 0.0);
+
+            if (has_bbt)
+            {
+                lv2_atom_forge_key(forge, Plugin_Module_URI_time_barBeat);
+                lv2_atom_forge_float(forge,
+                                     pos.beat - 1 + (pos.tick / pos.ticks_per_beat));
+                lv2_atom_forge_key(forge, Plugin_Module_URI_time_bar);
+                lv2_atom_forge_long(forge, pos.bar - 1);
+                lv2_atom_forge_key(forge, Plugin_Module_URI_time_beatUnit);
+                lv2_atom_forge_int(forge, pos.beat_type);
+                lv2_atom_forge_key(forge, Plugin_Module_URI_time_beatsPerBar);
+                lv2_atom_forge_float(forge, pos.beats_per_bar);
+                lv2_atom_forge_key(forge, Plugin_Module_URI_time_beatsPerMinute);
+                lv2_atom_forge_float(forge, pos.beats_per_minute);
+            }
+        }
+
+        // Update transport state to expected values for next cycle
+        _position = rolling ? pos.frame + nframes : pos.frame;
+        _bpm      = has_bbt ? pos.beats_per_minute : _bpm;
+        _rolling  = rolling;
+
         lv2_evbuf_reset(midi_input[port].event_buffer(), true);
 
-        void *buf = midi_input[port].jack_port()->buffer( nframes );
-
+        // Write transport change event if applicable
         LV2_Evbuf_Iterator iter = lv2_evbuf_begin(midi_input[port].event_buffer());
+        if (xport_changed)
+        {
+          lv2_evbuf_write(
+            &iter, 0, 0, lv2_pos->type, lv2_pos->size, LV2_ATOM_BODY(lv2_pos));
+        }
+
+        void *buf = midi_input[port].jack_port()->buffer( nframes );
 
         for (uint32_t i = 0; i < jack_midi_get_event_count(buf); ++i)
         {
