@@ -643,7 +643,16 @@ Chain::insert ( Module *m, Module *n )
                     module( j )->configure_inputs( module( j - 1 )->noutputs() );
             }
             else
+            {
+                /* If the plugin has MIDI, the JACK ports will not get configured so on module
+                   delete, we destroy all related JACK ports. This is not a problem for audio
+                   ins and outs above since they do not have JACK ports. Since the failure
+                   above meant we don't have JACK ports created for MIDI, we delete any MIDI
+                   vectors here so the JACK port deletion does not get called on NULL ports and crash */
+                n->midi_input.clear();
+                n->midi_output.clear();
                 goto err;
+            }
 #ifdef LV2_MIDI_SUPPORT
             if (n->midi_input.size())
             {
