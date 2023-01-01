@@ -284,7 +284,8 @@ namespace JACK
                 jack_remove_property(_client->jack_client(), uuid, "http://jackaudio.org/metadata/signal-type");
             }
 #endif
-            jack_port_unregister( _client->jack_client(), _port );
+            if(_client->jack_client())
+                jack_port_unregister( _client->jack_client(), _port );
         }
 
         _port = 0;
