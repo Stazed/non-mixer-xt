@@ -182,6 +182,8 @@ Module::init ( void )
 
 //    _latency = 0;
     _is_default = false;
+    _is_jack_module = false;
+    _is_zero_synth = false;
     _editor = 0;
     _chain = 0;
     _instances = 1;

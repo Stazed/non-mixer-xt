@@ -262,6 +262,7 @@ Chain::initialize_with_default ( void )
 
     { JACK_Module *m = new JACK_Module();
         m->is_default( true );
+        m->is_jack_module(true);
         m->chain( this );
         m->configure_outputs( 1 );
         add( m );
@@ -625,7 +626,11 @@ Chain::insert ( Module *m, Module *n )
 
         if ( 0 == i )
         {
-            /* inserting to head of chain*/
+            /* Don't allow insertion of zero_input synths before the JACK module */
+            if (n->is_zero_input_synth())
+                goto err;
+
+            DMESSAGE("Inserting to head of chain");
             if ( n->can_support_inputs( 0 ) >= 0 )
                 n->configure_inputs( 0 );
             else
@@ -633,6 +638,23 @@ Chain::insert ( Module *m, Module *n )
         }
         else    // This is the plugin module
         {
+            int jack_module = i - 2;
+            if(jack_module < 0)
+            {
+                DMESSAGE("Something went wrong!!");
+                goto err;
+            }
+            else
+            {
+                DMESSAGE("After JACK Module = %s", module( jack_module )->is_jack_module() ? "true" : "false");
+            }
+
+            /* If the plugin has zero inputs then it can only be inserted directly after a JACK module */
+            if (!module( jack_module )->is_jack_module() && n->is_zero_input_synth())
+            {
+                goto err;
+            }
+
             if ( n->can_support_inputs(  module( i - 1 )->noutputs() ) >= 0 )
             {
                 n->configure_inputs(  module( i - 1 )->noutputs() );
@@ -644,13 +666,6 @@ Chain::insert ( Module *m, Module *n )
             }
             else
             {
-                /* If the plugin has MIDI, the JACK ports will not get configured so on module
-                   delete, we destroy all related JACK ports. This is not a problem for audio
-                   ins and outs above since they do not have JACK ports. Since the failure
-                   above meant we don't have JACK ports created for MIDI, we delete any MIDI
-                   vectors here so the JACK port deletion does not get called on NULL ports and crash */
-                n->midi_input.clear();
-                n->midi_output.clear();
                 goto err;
             }
 #ifdef LV2_MIDI_SUPPORT
@@ -687,6 +702,16 @@ Chain::insert ( Module *m, Module *n )
     return true;
 
 err:
+
+#ifdef LV2_MIDI_SUPPORT
+    /* If the plugin has MIDI, the JACK ports will not get configured on err,
+    so on module delete, we destroy all related JACK ports. This is not a problem for audio
+    ins and outs above since they do not have JACK ports. Since the failure
+    above meant we don't have JACK ports created for MIDI, we delete any MIDI
+    vectors here so the JACK port deletion does not get called on NULL ports and crash */
+    n->midi_input.clear();
+    n->midi_output.clear();
+#endif
 
     client()->unlock();
 

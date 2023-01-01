@@ -701,7 +701,12 @@ Plugin_Module::update ( void )
 int
 Plugin_Module::can_support_inputs ( int n )
 {
-    /* this is the simple case */
+    /* The synth case, 0 ins any outs. For these we only allow to add
+       a zero synth if the JACK ins are 1. ie. n == 1 */
+    if(plugin_ins() == 0 && (n == 1) )
+        return plugin_outs();
+    
+    /* this is the simple case */   
     if ( plugin_ins() == n )
         return plugin_outs();
     /* e.g. MONO going into STEREO */
@@ -726,8 +731,13 @@ bool
 Plugin_Module::configure_inputs( int n )
 {
     unsigned int inst = _idata->handle.size();
-
-    if ( ninputs() != n )
+    
+    /* The synth case - no inputs and JACK module has one */
+    if( ninputs() == 0 && n == 1)
+    {
+        _crosswire = false;
+    }
+    else if ( ninputs() != n )
     {
         _crosswire = false;
 
@@ -1601,6 +1611,8 @@ Plugin_Module::load_ladspa ( unsigned long id )
         }
 
         MESSAGE( "Plugin has %i inputs and %i outputs", _plugin_ins, _plugin_outs);
+        if(!_plugin_ins)
+            is_zero_input_synth(true);
 
         for ( unsigned int i = 0; i < _idata->descriptor->PortCount; ++i )
         {
@@ -1991,6 +2003,9 @@ Plugin_Module::load_lv2 ( const char* uri )
 #ifdef LV2_MIDI_SUPPORT
         MESSAGE( "Plugin has %i MIDI inputs and %i MIDI outputs", _midi_ins, _midi_outs);
 #endif
+
+        if(!_plugin_ins)
+            is_zero_input_synth(true);
 
         for ( unsigned int i = 0; i < _idata->lv2.rdf_data->PortCount; ++i )
         {

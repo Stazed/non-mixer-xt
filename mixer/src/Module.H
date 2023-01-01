@@ -61,6 +61,8 @@ class Module : public Fl_Group, public Loggable {
     int _instances;
     Chain *_chain;
     bool _is_default;
+    bool _is_jack_module;
+    bool _is_zero_synth;
     char *_base_label;
     nframes_t _nframes;
     
@@ -107,6 +109,12 @@ public:
     /* true if this module was added by default and not under normal user control */
     bool is_default ( void ) const { return _is_default; }
     void is_default ( bool v ) { _is_default = v; }
+
+    bool is_jack_module ( void ) const { return _is_jack_module; }
+    void is_jack_module ( bool v ) { _is_jack_module = v; }
+
+    bool is_zero_input_synth ( void ) const { return  _is_zero_synth; }
+    void is_zero_input_synth ( bool v ) {  _is_zero_synth = v; }
     
     virtual void update ( void ) {}
 

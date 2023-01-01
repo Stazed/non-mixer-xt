@@ -77,14 +77,15 @@ Plugin_Chooser::search ( const char *name, const char *author, const char *categ
         if ( strcasestr( p->name.c_str(), name ) &&
              strcasestr( p->author.c_str(), author ) )
         {
+            /* We don't support these - probably MIDI only. The Gain module must have at least one out */
+            if ( p->audio_outputs == 0 )
+                continue;
+
             if ( !
                  ((( ( ninputs == 0 || ninputs == p->audio_inputs || ( ninputs == 1 && p->audio_inputs == 2 ) ) ) &&
                   ( noutputs == 0 || noutputs == p->audio_outputs )) ||
-                  ( p->audio_inputs == 1 && p->audio_outputs == 1 ) ) )
-                continue;
-
-            if ( p->audio_outputs == 0 || p->audio_inputs == 0 )
-                /* we don't support these */
+                  ( p->audio_inputs == 1 && p->audio_outputs == 1 ) ||
+                  (p->audio_inputs == 0 && ninputs == 1) ) )    // this would be a synth with no inputs
                 continue;
 
             if ( favorites > 0 && ! p->favorite )
