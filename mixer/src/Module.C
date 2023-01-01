@@ -1330,6 +1330,17 @@ Module::handle_chain_name_changed ( )
             aux_audio_output[i].jack_port()->trackname( chain()->name() );
             aux_audio_output[i].jack_port()->rename();
         }
+
+        for ( unsigned int i = 0; i < midi_input.size(); i++ )
+        {
+            midi_input[i].jack_port()->trackname( chain()->name() );
+            midi_input[i].jack_port()->rename();
+        }
+        for ( unsigned int i = 0; i < midi_output.size(); i++ )
+        {
+            midi_output[i].jack_port()->trackname( chain()->name() );
+            midi_output[i].jack_port()->rename();
+        }
     }
 }
 
@@ -1521,6 +1532,18 @@ Module::freeze_ports ( void )
         aux_audio_output[i].jack_port()->freeze();
         aux_audio_output[i].jack_port()->shutdown();
     }
+
+    for ( unsigned int i = 0; i < midi_input.size(); ++i )
+    {   
+        midi_input[i].jack_port()->freeze();
+        midi_input[i].jack_port()->shutdown();
+    }
+
+    for ( unsigned int i = 0; i < midi_output.size(); ++i )
+    {
+        midi_output[i].jack_port()->freeze();
+        midi_output[i].jack_port()->shutdown();
+    }
 }
 
 /* rename and thaw all jack ports--used when changing groups */
@@ -1555,6 +1578,25 @@ Module::thaw_ports ( void )
         aux_audio_output[i].jack_port()->thaw();
 
         mixer->maybe_auto_connect_output( &aux_audio_output[i] );
+    }
+
+    for ( unsigned int i = 0; i < midi_input.size(); ++i )
+    {   
+        /* if we're entering a group we need to add the chain name
+         * prefix and if we're leaving one, we need to remove it */
+        
+        midi_input[i].jack_port()->client( chain()->client() );
+        midi_input[i].jack_port()->trackname( trackname );
+        midi_input[i].jack_port()->thaw();
+    }
+
+    for ( unsigned int i = 0; i < midi_output.size(); ++i )
+    {
+        /* if we're entering a group we won't actually be using our
+         * JACK output ports anymore, just mixing into the group outputs */
+        midi_output[i].jack_port()->client( chain()->client() );
+        midi_output[i].jack_port()->trackname( trackname );
+        midi_output[i].jack_port()->thaw();
     }
 }
 
