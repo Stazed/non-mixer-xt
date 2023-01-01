@@ -641,7 +641,7 @@ Chain::insert ( Module *m, Module *n )
             int jack_module = i - 2;
             if(jack_module < 0)
             {
-                DMESSAGE("Something went wrong!!");
+                DMESSAGE("Attempting to Insert before JACK module!!");
                 goto err;
             }
             else
@@ -651,6 +651,12 @@ Chain::insert ( Module *m, Module *n )
 
             /* If the plugin has zero inputs then it can only be inserted directly after a JACK module */
             if (!module( jack_module )->is_jack_module() && n->is_zero_input_synth())
+            {
+                goto err;
+            }
+
+            /* User is trying to insert something before an existing zero input synth */
+            if (module( i )->is_zero_input_synth())
             {
                 goto err;
             }
