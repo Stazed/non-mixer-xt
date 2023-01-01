@@ -81,6 +81,10 @@ Plugin_Chooser::search ( const char *name, const char *author, const char *categ
             if ( p->audio_outputs == 0 )
                 continue;
 
+            /* MAX_PORTS is an arbitrary limit, could be more if we really needed it */
+            if ( p->audio_outputs > MAX_PORTS)
+                continue;
+
             if ( !
                  ((( ( ninputs == 0 || ninputs == p->audio_inputs || ( ninputs == 1 && p->audio_inputs == 2 ) ) ) &&
                   ( noutputs == 0 || noutputs == p->audio_outputs )) ||

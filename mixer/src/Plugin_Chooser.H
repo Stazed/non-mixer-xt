@@ -23,6 +23,8 @@
 #include "Plugin_Module.H"
 #include <vector>
 
+extern const int MAX_PORTS;
+
 class Plugin_Chooser_UI;
 class Plugin_Chooser : public Fl_Double_Window
 {

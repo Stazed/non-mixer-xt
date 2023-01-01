@@ -30,7 +30,7 @@
 #include "Loggable.H"
 #include "Group.H"
 
-const int MAX_PORTS = 32;
+extern const int MAX_PORTS;
 
 class Mixer_Strip;
 class Fl_Flowpack;
