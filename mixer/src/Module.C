@@ -193,6 +193,7 @@ Module::init ( void )
     _is_lv2 = false;
     _is_from_custom_ui = false;
     _is_removed = false;
+    _use_custom_data = false;
 
     box( FL_UP_BOX );
     labeltype( FL_NO_LABEL );
@@ -226,7 +227,7 @@ Module::get ( Log_Entry &e ) const
 
     if (_is_lv2)
     {
-        if ( control_input.size() > 100  )  // FIXME find out how to determine if plugin has custom data
+        if ( _use_custom_data  )
         {
             Module *m = control_input[0].module();
             Plugin_Module *pm = static_cast<Plugin_Module *> (m);

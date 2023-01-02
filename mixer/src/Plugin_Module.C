@@ -2210,6 +2210,12 @@ Plugin_Module::load_lv2 ( const char* uri )
             _idata->lv2.ext.options->set( _idata->handle[i], &(_idata->lv2.options.opts[Plugin_Module_Options::MinBlockLenth]) );
         }
     }
+    
+    if ( control_input.size() > 100  )  // FIXME find out how to determine if plugin has custom data
+        _use_custom_data = true;
+
+    if (!strcmp( uri, "http://zynaddsubfx.sourceforge.net" ))   // Hack
+        _use_custom_data = true;
 
     return instances;
 }

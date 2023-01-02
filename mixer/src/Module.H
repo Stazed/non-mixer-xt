@@ -141,6 +141,7 @@ public:
     bool _is_lv2;
     bool _is_from_custom_ui;
     bool _is_removed;
+    bool _use_custom_data;
 
     class Port
     {
