@@ -58,6 +58,7 @@ static JACK_Module *receptive_to_drop = NULL;
 JACK_Module::JACK_Module ( bool log )
     : Module ( 25, 25, name() )
 {
+    is_jack_module(true);
     _prefix = 0;
 
     _connection_handle_outputs[0][0] = 0;
