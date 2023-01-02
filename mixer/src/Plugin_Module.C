@@ -51,6 +51,17 @@
 static const uint X11Key_Escape = 9;
 #  define MSG_BUFFER_SIZE 1024
 
+#ifdef USE_SUIL
+const std::vector<std::string> v_ui_types
+{
+    "http://lv2plug.in/ns/extensions/ui#X11UI",
+    "http://lv2plug.in/ns/extensions/ui#GtkUI",
+    "http://lv2plug.in/ns/extensions/ui#Gtk3UI",
+    "http://lv2plug.in/ns/extensions/ui#Qt4UI",
+    "http://lv2plug.in/ns/extensions/ui#Qt5UI"
+};
+#endif
+
 #ifdef USE_CARLA
 static bool gErrorTriggered = false;
 # if defined(__GNUC__) && (__GNUC__ >= 5) && ! defined(__clang__)
@@ -2210,7 +2221,7 @@ Plugin_Module::load_lv2 ( const char* uri )
             _idata->lv2.ext.options->set( _idata->handle[i], &(_idata->lv2.options.opts[Plugin_Module_Options::MinBlockLenth]) );
         }
     }
-    
+
     if ( control_input.size() > 100  )  // FIXME find out how to determine if plugin has custom data
         _use_custom_data = true;
 
@@ -3052,7 +3063,7 @@ Plugin_Module::try_custom_ui()
     update_ui_settings();
 
     /* Run the idle interface */
-    if (idle_iface && !m_use_showInterface) 
+    if (!m_use_showInterface) 
     {
 #ifdef USE_CARLA
         show_custom_ui();
@@ -3086,33 +3097,34 @@ Plugin_Module::custom_ui_instantiate()
     m_use_showInterface = false;
     const char* native_ui_type;
 
-    /* Try to find an embeddable X11 UI */
-    m_ui = try_X11_ui("http://lv2plug.in/ns/extensions/ui#X11UI");
-
-    if(m_ui)
-        native_ui_type = "http://lv2plug.in/ns/extensions/ui#X11UI";
-
-    void * parent = NULL;
-
-    /* If plugin UI does not support X11 embedded, so try showInterface - Calf only with GtkUI */
-    if(!m_ui)
+    /* Try showInterface first */
+    for(unsigned int i = 0; i < v_ui_types.size(); ++i)
     {
-        MESSAGE("Native X11 not found, trying LV2_UI__showInterface");
-        m_ui = try_showInterface_ui("http://lv2plug.in/ns/extensions/ui#GtkUI");
-
-        /* We got a show interface UI*/
+        m_ui = try_showInterface_ui(v_ui_types[i].c_str());
         if(m_ui)
         {
             m_use_showInterface = true;
-            native_ui_type = "http://lv2plug.in/ns/extensions/ui#GtkUI";
-            DMESSAGE("GOT show interface");
-        }
-        else    // We don't support this UI
-        {
-            MESSAGE("NO CUSTOM UI SUPPORTED");
-            return false;
+            native_ui_type = v_ui_types[i].c_str();
+            MESSAGE("Using Show Interface = %s", v_ui_types[i].c_str());
+            break;
         }
     }
+
+    /* We didn't find showInterface so try to find an embeddable X11 UI */
+    if(!m_use_showInterface)
+    {
+        m_ui = try_X11_ui("http://lv2plug.in/ns/extensions/ui#X11UI");
+        if(m_ui)
+            native_ui_type = "http://lv2plug.in/ns/extensions/ui#X11UI";
+    }
+
+    if(!m_ui)
+    {
+        MESSAGE("NO CUSTOM UI SUPPORTED");
+        return false;
+    }
+
+    void * parent = NULL;
 
     /* If embedded X11 */
     if(!m_use_showInterface)
@@ -3239,17 +3251,18 @@ Plugin_Module::try_showInterface_ui(const char* native_ui_type)
             {
                 native_ui = ui;
                 DMESSAGE("GOT ShowInterface CUSTOM UI");
+                break;
             }
             else
             {
-                DMESSAGE("NO ShowInterface CUSTOM UI");
+                DMESSAGE("NO ShowInterface %s", native_ui_type);
                 return NULL;
             }
         }
     }
     else
     {
-        DMESSAGE("NO ShowInterface CUSTOM UI");
+        DMESSAGE("NO m_uis");
         return NULL;
     }
 
@@ -3350,50 +3363,50 @@ Plugin_Module::custom_update_ui()
             switch (event.type)
             {
             case ConfigureNotify:
-                    CARLA_SAFE_ASSERT_CONTINUE(event.xconfigure.width > 0);
-                    CARLA_SAFE_ASSERT_CONTINUE(event.xconfigure.height > 0);
+                CARLA_SAFE_ASSERT_CONTINUE(event.xconfigure.width > 0);
+                CARLA_SAFE_ASSERT_CONTINUE(event.xconfigure.height > 0);
 
-                    if (event.xconfigure.window == fHostWindow)
+                if (event.xconfigure.window == fHostWindow)
+                {
+                    const uint width  = static_cast<uint>(event.xconfigure.width);
+                    const uint height = static_cast<uint>(event.xconfigure.height);
+
+                    if (fChildWindow != 0)
                     {
-                        const uint width  = static_cast<uint>(event.xconfigure.width);
-                        const uint height = static_cast<uint>(event.xconfigure.height);
-
-                        if (fChildWindow != 0)
+                        if (! fChildWindowConfigured)
                         {
-                            if (! fChildWindowConfigured)
+                            pthread_mutex_lock(&gErrorMutex);
+                            const XErrorHandler oldErrorHandler = XSetErrorHandler(temporaryErrorHandler);
+                            gErrorTriggered = false;
+
+                            XSizeHints sizeHints;
+                            carla_zeroStruct(sizeHints);
+
+                            if (XGetNormalHints(fDisplay, fChildWindow, &sizeHints) && !gErrorTriggered)
                             {
-                                pthread_mutex_lock(&gErrorMutex);
-                                const XErrorHandler oldErrorHandler = XSetErrorHandler(temporaryErrorHandler);
-                                gErrorTriggered = false;
-
-                                XSizeHints sizeHints;
-                                carla_zeroStruct(sizeHints);
-
-                                if (XGetNormalHints(fDisplay, fChildWindow, &sizeHints) && !gErrorTriggered)
-                                {
-                                    XSetNormalHints(fDisplay, fHostWindow, &sizeHints);
-                                }
-                                else
-                                {
-                                    WARNING("Caught errors while accessing child window");
-                                    fChildWindow = 0;
-                                }
-
-                                fChildWindowConfigured = true;
-                                XSetErrorHandler(oldErrorHandler);
-                                pthread_mutex_unlock(&gErrorMutex);
+                                XSetNormalHints(fDisplay, fHostWindow, &sizeHints);
+                            }
+                            else
+                            {
+                                WARNING("Caught errors while accessing child window");
+                                fChildWindow = 0;
                             }
 
-                            if (fChildWindow != 0)
-                                XResizeWindow(fDisplay, fChildWindow, width, height);
+                            fChildWindowConfigured = true;
+                            XSetErrorHandler(oldErrorHandler);
+                            pthread_mutex_unlock(&gErrorMutex);
                         }
+
+                        if (fChildWindow != 0)
+                            XResizeWindow(fDisplay, fChildWindow, width, height);
                     }
-                    else if (fChildWindowMonitoring && event.xconfigure.window == fChildWindow && fChildWindow != 0)
-                    {
-                        nextWidth = event.xconfigure.width;
-                        nextHeight = event.xconfigure.height;
-                    }
-                    break;
+                }
+                else if (fChildWindowMonitoring && event.xconfigure.window == fChildWindow && fChildWindow != 0)
+                {
+                    nextWidth = event.xconfigure.width;
+                    nextHeight = event.xconfigure.height;
+                }
+                break;
 
             case ClientMessage:
                 type = XGetAtomName(fDisplay, event.xclient.message_type);
@@ -3448,10 +3461,13 @@ Plugin_Module::custom_update_ui()
 #endif  //  USE_CARLA
     }
 
-    if (_idata->lv2.ext.idle_iface->idle(suil_instance_get_handle(m_ui_instance)))
+    if( _idata->lv2.ext.idle_iface)
     {
-        DMESSAGE("INTERFACE CLOSED");
-        fIsVisible = false;
+        if (_idata->lv2.ext.idle_iface->idle(suil_instance_get_handle(m_ui_instance)))
+        {
+            DMESSAGE("INTERFACE CLOSED");
+            fIsVisible = false;
+        }
     }
 
     if(fIsVisible)
