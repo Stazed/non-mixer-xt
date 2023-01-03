@@ -355,7 +355,22 @@ Chain::remove ( Module *m )
 
     if ( ! can_configure_outputs( m, ins ) )
     {
-        fl_alert( "Can't remove module at this point because the resultant chain is invalid" );
+        if(!m->is_zero_input_synth())
+        {
+            fl_alert( "Can't remove module at this point because the resultant chain is invalid" );
+        }
+        else
+        {
+            /* When we add a zero input synth, we set the jack port outs to zero. So now to make the
+               chain valid we reset the jack outs to 1. The only time that JACK == 0 is when we have
+               a zero input synth */
+            if(module( i - 1 )->is_jack_module() )
+            {
+                Module *m = module( i - 1 );
+                JACK_Module *j = static_cast<JACK_Module *> (m);
+                j->configure_outputs( 1 );
+            }
+        }
     }
 
     /* Flag to tell LV2 Plugin_Module that custom user data directories should be set to remove on save */
@@ -615,6 +630,7 @@ Chain::insert ( Module *m, Module *n )
             }
 #endif
         }
+        /* This is used when loading from project file */
         else if ( n->can_support_inputs( module( modules() - 1 )->noutputs() ) >= 0 )
         {
             n->chain( this );
@@ -629,6 +645,17 @@ Chain::insert ( Module *m, Module *n )
             if (n->midi_output.size())
             {
                 n->configure_midi_outputs();
+            }
+
+            /* Eliminate the JACK input when we have a zero synth s*/
+            if (n->is_zero_input_synth())
+            {
+                if(module( 0 )->is_jack_module() )
+                {
+                    Module *m = module( 0 );
+                    JACK_Module *j = static_cast<JACK_Module *> (m);
+                    j->configure_outputs( 0 );
+                }
             }
 #endif
         }
@@ -659,7 +686,7 @@ Chain::insert ( Module *m, Module *n )
         }
         else    // This is the plugin module
         {
-            int jack_module = i - 2;
+            int jack_module = i - 1;
             if(jack_module < 0)
             {
                 DMESSAGE("Attempting to Insert before JACK module!!");
@@ -704,6 +731,17 @@ Chain::insert ( Module *m, Module *n )
             if (n->midi_output.size())
             {
                 n->configure_midi_outputs();
+            }
+
+            /* For zero input synths, set the JACK out port to zero since JACK input is invalid */
+            if (n->is_zero_input_synth())
+            {
+                if(module( jack_module )->is_jack_module() )
+                {
+                    Module *m = module( i - 1 );
+                    JACK_Module *j = static_cast<JACK_Module *> (m);
+                    j->configure_outputs( 0 );
+                }
             }
 #endif
         }
