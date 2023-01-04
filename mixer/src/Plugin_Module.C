@@ -54,11 +54,11 @@ static const uint X11Key_Escape = 9;
 #ifdef USE_SUIL
 const std::vector<std::string> v_ui_types
 {
-    "http://lv2plug.in/ns/extensions/ui#X11UI",
-    "http://lv2plug.in/ns/extensions/ui#GtkUI",
-    "http://lv2plug.in/ns/extensions/ui#Gtk3UI",
-    "http://lv2plug.in/ns/extensions/ui#Qt4UI",
-    "http://lv2plug.in/ns/extensions/ui#Qt5UI"
+    LV2_UI__X11UI,
+    LV2_UI__GtkUI,
+    LV2_UI__Gtk3UI,
+    LV2_UI__Qt4UI,
+    LV2_UI__Qt5UI
 };
 #endif
 
@@ -3113,9 +3113,9 @@ Plugin_Module::custom_ui_instantiate()
     /* We didn't find showInterface so try to find an embeddable X11 UI */
     if(!m_use_showInterface)
     {
-        m_ui = try_X11_ui("http://lv2plug.in/ns/extensions/ui#X11UI");
+        m_ui = try_X11_ui(v_ui_types[0].c_str());
         if(m_ui)
-            native_ui_type = "http://lv2plug.in/ns/extensions/ui#X11UI";
+            native_ui_type = v_ui_types[0].c_str();
     }
 
     if(!m_ui)
