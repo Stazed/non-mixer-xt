@@ -33,6 +33,7 @@
 #define PRESET_SUPPORT 1
 #define USE_CARLA 1
 #define LV2_STATE_SAVE 1
+//#define LV2_EXTERNAL_UI 1
 
 #define ATOM_BUFFER_SIZE 16384  // 4096 * 4
 
@@ -485,6 +486,14 @@ public:
   SuilHost*     m_ui_host;     ///< Plugin UI host support
   SuilInstance* m_ui_instance; ///< Plugin UI instance (shared library)
   bool          m_use_showInterface;
+  bool          m_use_X11_interface;
+#ifdef LV2_EXTERNAL_UI
+  bool          m_use_externalUI;
+  LV2UI_Widget  m_lv2_ui_widget;
+  LV2_External_UI_Host m_lv2_ui_external_host;
+  LV2_Feature          m_lv2_ui_external_feature;
+  LV2UI_Handle   m_lv2_ui_handle;
+#endif
   LilvUIs*      m_uis;         ///< All plugin UIs (RDF data)
   const LilvUI*    m_ui;       ///< Plugin UI (RDF data)
   const LilvNode*  m_ui_type;  ///< Plugin UI type (unwrapped)
@@ -627,6 +636,9 @@ public:
     bool try_custom_ui();
     bool custom_ui_instantiate();
     const LilvUI* try_X11_ui (const char* native_ui_type);
+#ifdef LV2_EXTERNAL_UI
+    const LilvUI* try_external_ui (const char* native_ui_type);
+#endif
     const LilvUI* try_showInterface_ui(const char* native_ui_type);
     bool send_to_custom_ui( uint32_t port_index, uint32_t size, uint32_t type, const void* buf );
     void update_custom_ui();
