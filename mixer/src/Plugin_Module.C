@@ -448,8 +448,19 @@ Plugin_Module::~Plugin_Module ( )
 
 #ifdef USE_SUIL
     /* In case the user left the custom ui up */
+    m_exit = true;
+
     if (fIsVisible)
-        close_custom_ui();
+    {
+        if(m_use_externalUI)
+        {
+            Fl::remove_timeout(&Plugin_Module::custom_update_ui, this);
+            if (m_lv2_ui_widget)
+                LV2_EXTERNAL_UI_HIDE((LV2_External_UI_Widget *) m_lv2_ui_widget);
+        }
+        else
+            close_custom_ui();
+    }
 
     if( m_use_X11_interface )
     {
@@ -653,12 +664,6 @@ _Pragma("GCC diagnostic pop")
     m_uis                          = NULL;
     m_ui                           = NULL;
     m_ui_type                      = NULL;
-#ifdef LV2_EXTERNAL_UI
-    m_lv2_ui_external_host.ui_closed = mixer_lv2_ui_closed;
-    m_lv2_ui_external_host.plugin_human_id = "NON MIXER";   // FIXME
-    m_lv2_ui_external_feature.URI = LV2_EXTERNAL_UI__Host;
-    m_lv2_ui_external_feature.data = &m_lv2_ui_external_host;
-#endif // LV2_EXTERNAL_UI
 #endif // USE_SUIL
 
     _idata->lv2.features[Plugin_Feature_BufSize_Bounded]->URI  = LV2_BUF_SIZE__boundedBlockLength;
@@ -2257,6 +2262,10 @@ Plugin_Module::load_lv2 ( const char* uri )
 
     if (!strcmp( uri, "http://zynaddsubfx.sourceforge.net" ))   // Hack
         _use_custom_data = true;
+    else if (!strcmp( uri, "http://yoshimi.sourceforge.net/lv2_plugin"))
+        _use_custom_data = true;
+    else if (!strcmp( uri, "http://yoshimi.sourceforge.net/lv2_plugin_multi"))
+        _use_custom_data = true;
 
     return instances;
 }
@@ -2619,6 +2628,9 @@ Plugin_Module::ui_port_event( uint32_t port_index, uint32_t buffer_size, uint32_
 void
 Plugin_Module::send_atom_to_plugin( uint32_t port_index, uint32_t buffer_size, const void* buffer)
 {
+    if(m_exit)
+        return;
+
     DMESSAGE("Port Index B4 = %d", port_index);
     for ( unsigned int i = 0; i < atom_input.size(); ++i )
     {
@@ -3011,6 +3023,9 @@ send_to_plugin(void* const handle,              // Plugin_Module
     Plugin_Module *pLv2Plugin = static_cast<Plugin_Module *> (handle);
     if (pLv2Plugin == NULL)
         return;
+    
+    if(pLv2Plugin->m_exit)
+        return;
 
     if (protocol == 0U)
     {
@@ -3187,13 +3202,6 @@ Plugin_Module::custom_ui_instantiate()
 
     void * parent = NULL;
 
-#ifdef LV2_EXTERNAL_UI
-    if(m_use_externalUI)
-    {
-        //m_lv2_ui_widget = suil_instance_get_widget(m_suil_instance);
-    }
-    else
-#endif
     if(m_use_X11_interface)   /* If embedded X11 */
     {
         /* We seem to have an accepted ui, so lets try to embed it in an X window*/
@@ -3202,6 +3210,13 @@ Plugin_Module::custom_ui_instantiate()
         parent = (LV2UI_Widget) fHostWindow;
 #endif
     }
+
+#ifdef LV2_EXTERNAL_UI
+    m_lv2_ui_external_host.ui_closed = mixer_lv2_ui_closed;
+    m_lv2_ui_external_host.plugin_human_id = base_label();
+    m_lv2_ui_external_feature.URI = LV2_EXTERNAL_UI__Host;
+    m_lv2_ui_external_feature.data = &m_lv2_ui_external_host;
+#endif
 
     const LV2_Feature parent_feature {LV2_UI__parent, parent};
 
@@ -3297,11 +3312,6 @@ Plugin_Module::try_X11_ui (const char* native_ui_type)
 const LilvUI*
 Plugin_Module::try_external_ui (const char* native_ui_type)
 {
-//    LV2_EXTERNAL_UI__Host
-//    LV2_EXTERNAL_UI_DEPRECATED_URI
-//    LV2_EXTERNAL_UI_URI
-//    LV2_EXTERNAL_UI__Widget
-
     const LilvUI* native_ui = NULL;
 
     if (native_ui_type)
@@ -3395,8 +3405,11 @@ Plugin_Module::send_to_custom_ui( uint32_t port_index, uint32_t size, uint32_t p
     port_index = control_input[port_index].hints.plug_port_index;
 
    // DMESSAGE("Port_index = %u: Value = %f", port_index, *(const float*)buf);
-    suil_instance_port_event(
-        m_ui_instance, port_index, size, protocol, buf );
+    if(m_ui_instance)
+    {
+        suil_instance_port_event(
+            m_ui_instance, port_index, size, protocol, buf );
+    }
 
     return true;
 }
@@ -3407,6 +3420,9 @@ Plugin_Module::send_to_custom_ui( uint32_t port_index, uint32_t size, uint32_t p
 void
 Plugin_Module::update_custom_ui()
 {
+    if(!m_ui_instance)
+        return;
+
     for ( unsigned int i = 0; i < control_output.size(); ++i)
     {
         float value = control_output[i].control_value();
@@ -3423,6 +3439,9 @@ Plugin_Module::update_custom_ui()
 void
 Plugin_Module::update_ui_settings()
 {
+    if(!m_ui_instance)
+        return;
+
     for ( unsigned int i = 0; i < control_input.size(); ++i)
     {
         float value = isnan(control_input[i].control_value()) ? 0.0f : control_input[i].control_value();

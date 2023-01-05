@@ -33,7 +33,7 @@
 #define PRESET_SUPPORT 1
 #define USE_CARLA 1
 #define LV2_STATE_SAVE 1
-//#define LV2_EXTERNAL_UI 1
+#define LV2_EXTERNAL_UI 1
 
 #define ATOM_BUFFER_SIZE 16384  // 4096 * 4
 

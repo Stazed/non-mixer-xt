@@ -324,9 +324,12 @@ public:
 
         void control_value_no_callback ( float f )
             {
-              /* can also be called from the OSC thread */
-                ASSERT( Thread::is( "UI" ) || Thread::is( "OSC" ),
-                        "Function called from wrong thread! (is %s)",  Thread::current()->name() );
+                /* can also be called from the OSC thread */
+                if(!_module->_is_from_custom_ui)    // external uis sometimes crash this???
+                {
+                    ASSERT( Thread::is( "UI" ) || Thread::is( "OSC" ),
+                            "Function called from wrong thread! (is %s)",  Thread::current()->name() );
+                }
 
                 if ( buffer() )
                 {
