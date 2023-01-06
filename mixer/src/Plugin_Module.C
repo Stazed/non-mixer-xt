@@ -856,6 +856,7 @@ Plugin_Module::configure_midi_inputs ()
     {
         std::string port_name = label();
 
+        port_name += " ";
         port_name += midi_input[i].name();
 
         DMESSAGE("CONFIGURE MIDI INPUTS = %s", port_name.c_str());
@@ -877,6 +878,7 @@ Plugin_Module::configure_midi_outputs ()
     {
         std::string port_name = label();
 
+        port_name += " ";
         port_name += midi_output[i].name();
 
         DMESSAGE("CONFIGURE MIDI OUTPUTS = %s", port_name.c_str());
