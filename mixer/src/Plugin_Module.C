@@ -36,6 +36,7 @@
 #include "NonMixerPluginUI_X11Icon.h"
 
 #include "Plugin_Module.H"
+#include "Mixer_Strip.H"
 
 #include "debug.h"
 
@@ -852,6 +853,8 @@ Plugin_Module::configure_inputs( int n )
 void
 Plugin_Module::configure_midi_inputs ()
 {
+    const char *trackname = chain()->strip()->group()->single() ? NULL : chain()->name();
+
     for( unsigned int i = 0; i < midi_input.size(); ++i )
     {
         std::string port_name = label();
@@ -860,7 +863,7 @@ Plugin_Module::configure_midi_inputs ()
         port_name += midi_input[i].name();
 
         DMESSAGE("CONFIGURE MIDI INPUTS = %s", port_name.c_str());
-        JACK::Port *jack_port = new JACK::Port( chain()->client(), NULL, port_name.c_str(), JACK::Port::Input, JACK::Port::MIDI );
+        JACK::Port *jack_port = new JACK::Port( chain()->client(), trackname, port_name.c_str(), JACK::Port::Input, JACK::Port::MIDI );
         midi_input[i].jack_port(jack_port);
 
         if( !midi_input[i].jack_port()->activate() )
@@ -874,6 +877,8 @@ Plugin_Module::configure_midi_inputs ()
 void
 Plugin_Module::configure_midi_outputs ()
 {
+    const char *trackname = chain()->strip()->group()->single() ? NULL : chain()->name();
+
     for( unsigned int i = 0; i < midi_output.size(); ++i )
     {
         std::string port_name = label();
@@ -882,7 +887,7 @@ Plugin_Module::configure_midi_outputs ()
         port_name += midi_output[i].name();
 
         DMESSAGE("CONFIGURE MIDI OUTPUTS = %s", port_name.c_str());
-        JACK::Port *jack_port = new JACK::Port( chain()->client(), NULL, port_name.c_str(), JACK::Port::Output, JACK::Port::MIDI );
+        JACK::Port *jack_port = new JACK::Port( chain()->client(), trackname, port_name.c_str(), JACK::Port::Output, JACK::Port::MIDI );
         midi_output[i].jack_port(jack_port);
 
         if( !midi_output[i].jack_port()->activate() )
