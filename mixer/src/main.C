@@ -285,6 +285,8 @@ main ( int argc, char **argv )
         }
                       
     }
+    
+    Fl::unlock();   // Don't forget this!!!!
 
     /* Gets the list of all available plugins for the plugin chooser */
     Plugin_Module::spawn_discover_thread();

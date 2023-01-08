@@ -454,7 +454,7 @@ progress_cb ( int p, void *v )
         {
             nsm->progress( p / 100.0f );
         }
-        Fl::check();
+      //  Fl::check(); // This caused intermittent crash on NSM start
     }
 }
 

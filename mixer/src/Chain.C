@@ -1098,7 +1098,8 @@ Chain::port_connect ( jack_port_id_t a, jack_port_id_t b, int connect )
     if ( jack_port_is_mine( client()->jack_client(), jack_port_by_id( client()->jack_client(), a ) ) ||
          jack_port_is_mine( client()->jack_client(), jack_port_by_id( client()->jack_client(), b ) ))
     {
-        Fl::awake( Chain::update_connection_status, this );
+        update_connection_status(this);
+       // Fl::awake( Chain::update_connection_status, this );   // Caused intermittent crash on NSM start
     }
 }
 

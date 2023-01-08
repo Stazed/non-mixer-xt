@@ -51,7 +51,7 @@ public:
 
     Value_Smoothing_Filter ( )
     {
-        g1 = g2 = 0;
+        w = g1 = g2 = 0;
         _cutoff = 10.0f;
     }
 
