@@ -619,12 +619,12 @@ Chain::insert ( Module *m, Module *n )
             n->configure_inputs( 0 );
             modules_pack->add( n );
 #ifdef LV2_MIDI_SUPPORT
-            if (n->midi_input.size())
+            if (n->atom_input.size())
             {
                 n->configure_midi_inputs();
             }
 
-            if (n->midi_output.size())
+            if (n->atom_output.size())
             {
                 n->configure_midi_outputs();
             }
@@ -637,12 +637,12 @@ Chain::insert ( Module *m, Module *n )
             n->configure_inputs( module( modules() - 1 )->noutputs() );
             modules_pack->add( n );
 #ifdef LV2_MIDI_SUPPORT
-            if (n->midi_input.size())
+            if (n->atom_input.size())
             {
                 n->configure_midi_inputs();
             }
 
-            if (n->midi_output.size())
+            if (n->atom_output.size())
             {
                 n->configure_midi_outputs();
             }
@@ -723,12 +723,12 @@ Chain::insert ( Module *m, Module *n )
                 goto err;
             }
 #ifdef LV2_MIDI_SUPPORT
-            if (n->midi_input.size())
+            if (n->atom_input.size())
             {
                 n->configure_midi_inputs();
             }
 
-            if (n->midi_output.size())
+            if (n->atom_output.size())
             {
                 n->configure_midi_outputs();
             }
@@ -774,8 +774,8 @@ err:
     ins and outs above since they do not have JACK ports. Since the failure
     above meant we don't have JACK ports created for MIDI, we clear any MIDI
     vectors here so the JACK port deletion does not get called on NULL ports and crash */
-    n->midi_input.clear();
-    n->midi_output.clear();
+    n->atom_input.clear();
+    n->atom_output.clear();
 #endif
 
     client()->unlock();

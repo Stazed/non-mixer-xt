@@ -103,17 +103,23 @@ Module::~Module ( )
         delete aux_audio_output[i].jack_port();
     }
 #ifdef LV2_MIDI_SUPPORT
-    for ( unsigned int i = 0; i < midi_input.size(); ++i )
+    for ( unsigned int i = 0; i < atom_input.size(); ++i )
     {
-        midi_input[i].disconnect();
-        midi_input[i].jack_port()->shutdown();
-        delete midi_input[i].jack_port();
+        if(!(atom_input[i].type() == Port::MIDI))
+            continue;
+
+        atom_input[i].disconnect();
+        atom_input[i].jack_port()->shutdown();
+        delete atom_input[i].jack_port();
     } 
-    for ( unsigned int i = 0; i < midi_output.size(); ++i )
+    for ( unsigned int i = 0; i < atom_output.size(); ++i )
     {
-        midi_output[i].disconnect();
-        midi_output[i].jack_port()->shutdown();
-        delete midi_output[i].jack_port();
+        if(!(atom_output[i].type() == Port::MIDI))
+            continue;
+
+        atom_output[i].disconnect();
+        atom_output[i].jack_port()->shutdown();
+        delete atom_output[i].jack_port();
     }
 #endif
     for ( unsigned int i = 0; i < control_input.size(); ++i )
@@ -158,8 +164,8 @@ Module::~Module ( )
     control_input.clear();
     control_output.clear();
 #ifdef LV2_MIDI_SUPPORT
-    midi_output.clear();
-    midi_input.clear();
+    atom_output.clear();
+    atom_input.clear();
 #endif
     if ( parent() )
         parent()->remove( this );
@@ -1331,15 +1337,21 @@ Module::handle_chain_name_changed ( )
             aux_audio_output[i].jack_port()->rename();
         }
 #ifdef LV2_MIDI_SUPPORT
-        for ( unsigned int i = 0; i < midi_input.size(); i++ )
+        for ( unsigned int i = 0; i < atom_input.size(); i++ )
         {
-            midi_input[i].jack_port()->trackname( chain()->name() );
-            midi_input[i].jack_port()->rename();
+            if(!(atom_input[i].type() == Port::MIDI))
+                continue;
+
+            atom_input[i].jack_port()->trackname( chain()->name() );
+            atom_input[i].jack_port()->rename();
         }
-        for ( unsigned int i = 0; i < midi_output.size(); i++ )
+        for ( unsigned int i = 0; i < atom_output.size(); i++ )
         {
-            midi_output[i].jack_port()->trackname( chain()->name() );
-            midi_output[i].jack_port()->rename();
+            if(!(atom_output[i].type() == Port::MIDI))
+                continue;
+
+            atom_output[i].jack_port()->trackname( chain()->name() );
+            atom_output[i].jack_port()->rename();
         }
 #endif
     }
@@ -1534,16 +1546,22 @@ Module::freeze_ports ( void )
         aux_audio_output[i].jack_port()->shutdown();
     }
 #ifdef LV2_MIDI_SUPPORT
-    for ( unsigned int i = 0; i < midi_input.size(); ++i )
-    {   
-        midi_input[i].jack_port()->freeze();
-        midi_input[i].jack_port()->shutdown();
+    for ( unsigned int i = 0; i < atom_input.size(); ++i )
+    {
+        if(!(atom_input[i].type() == Port::MIDI))
+            continue;
+
+        atom_input[i].jack_port()->freeze();
+        atom_input[i].jack_port()->shutdown();
     }
 
-    for ( unsigned int i = 0; i < midi_output.size(); ++i )
+    for ( unsigned int i = 0; i < atom_output.size(); ++i )
     {
-        midi_output[i].jack_port()->freeze();
-        midi_output[i].jack_port()->shutdown();
+        if(!(atom_output[i].type() == Port::MIDI))
+            continue;
+
+        atom_output[i].jack_port()->freeze();
+        atom_output[i].jack_port()->shutdown();
     }
 #endif
 }
@@ -1582,23 +1600,28 @@ Module::thaw_ports ( void )
         mixer->maybe_auto_connect_output( &aux_audio_output[i] );
     }
 #ifdef LV2_MIDI_SUPPORT
-    for ( unsigned int i = 0; i < midi_input.size(); ++i )
+    for ( unsigned int i = 0; i < atom_input.size(); ++i )
     {   
         /* if we're entering a group we need to add the chain name
          * prefix and if we're leaving one, we need to remove it */
-        
-        midi_input[i].jack_port()->client( chain()->client() );
-        midi_input[i].jack_port()->trackname( trackname );
-        midi_input[i].jack_port()->thaw();
+        if(!(atom_input[i].type() == Port::MIDI))
+            continue;
+
+        atom_input[i].jack_port()->client( chain()->client() );
+        atom_input[i].jack_port()->trackname( trackname );
+        atom_input[i].jack_port()->thaw();
     }
 
-    for ( unsigned int i = 0; i < midi_output.size(); ++i )
+    for ( unsigned int i = 0; i < atom_output.size(); ++i )
     {
         /* if we're entering a group we won't actually be using our
          * JACK output ports anymore, just mixing into the group outputs */
-        midi_output[i].jack_port()->client( chain()->client() );
-        midi_output[i].jack_port()->trackname( trackname );
-        midi_output[i].jack_port()->thaw();
+        if(!(atom_output[i].type() == Port::MIDI))
+            continue;
+
+        atom_output[i].jack_port()->client( chain()->client() );
+        atom_output[i].jack_port()->trackname( trackname );
+        atom_output[i].jack_port()->thaw();
     }
 #endif
 }

@@ -549,10 +549,6 @@ public:
     std::vector<Port> atom_input;
     std::vector<Port> atom_output;
 #endif
-#ifdef LV2_MIDI_SUPPORT
-    std::vector<Port> midi_input;
-    std::vector<Port> midi_output;
-#endif
 
     void add_port ( const Port &p )
         {
@@ -573,9 +569,9 @@ public:
 #endif
 #ifdef LV2_MIDI_SUPPORT
             else if ( p.type() == Port::MIDI && p.direction() == Port::INPUT )
-                midi_input.push_back( p );
+                atom_input.push_back( p );
             else if ( p.type() == Port::MIDI && p.direction() == Port::OUTPUT )
-                midi_output.push_back( p );
+                atom_output.push_back( p );
 #endif
         }
 
