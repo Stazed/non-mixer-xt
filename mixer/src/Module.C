@@ -102,7 +102,7 @@ Module::~Module ( )
         aux_audio_output[i].jack_port()->shutdown();
         delete aux_audio_output[i].jack_port();
     }
-
+#ifdef LV2_MIDI_SUPPORT
     for ( unsigned int i = 0; i < midi_input.size(); ++i )
     {
         midi_input[i].disconnect();
@@ -115,7 +115,7 @@ Module::~Module ( )
         midi_output[i].jack_port()->shutdown();
         delete midi_output[i].jack_port();
     }
-
+#endif
     for ( unsigned int i = 0; i < control_input.size(); ++i )
     {
         /* destroy connected Controller_Module */
@@ -157,10 +157,10 @@ Module::~Module ( )
 
     control_input.clear();
     control_output.clear();
-
+#ifdef LV2_MIDI_SUPPORT
     midi_output.clear();
     midi_input.clear();
-
+#endif
     if ( parent() )
         parent()->remove( this );
 }
@@ -1330,7 +1330,7 @@ Module::handle_chain_name_changed ( )
             aux_audio_output[i].jack_port()->trackname( chain()->name() );
             aux_audio_output[i].jack_port()->rename();
         }
-
+#ifdef LV2_MIDI_SUPPORT
         for ( unsigned int i = 0; i < midi_input.size(); i++ )
         {
             midi_input[i].jack_port()->trackname( chain()->name() );
@@ -1341,6 +1341,7 @@ Module::handle_chain_name_changed ( )
             midi_output[i].jack_port()->trackname( chain()->name() );
             midi_output[i].jack_port()->rename();
         }
+#endif
     }
 }
 
@@ -1532,7 +1533,7 @@ Module::freeze_ports ( void )
         aux_audio_output[i].jack_port()->freeze();
         aux_audio_output[i].jack_port()->shutdown();
     }
-
+#ifdef LV2_MIDI_SUPPORT
     for ( unsigned int i = 0; i < midi_input.size(); ++i )
     {   
         midi_input[i].jack_port()->freeze();
@@ -1544,6 +1545,7 @@ Module::freeze_ports ( void )
         midi_output[i].jack_port()->freeze();
         midi_output[i].jack_port()->shutdown();
     }
+#endif
 }
 
 /* rename and thaw all jack ports--used when changing groups */
@@ -1579,7 +1581,7 @@ Module::thaw_ports ( void )
 
         mixer->maybe_auto_connect_output( &aux_audio_output[i] );
     }
-
+#ifdef LV2_MIDI_SUPPORT
     for ( unsigned int i = 0; i < midi_input.size(); ++i )
     {   
         /* if we're entering a group we need to add the chain name
@@ -1598,6 +1600,7 @@ Module::thaw_ports ( void )
         midi_output[i].jack_port()->trackname( trackname );
         midi_output[i].jack_port()->thaw();
     }
+#endif
 }
 
 void
