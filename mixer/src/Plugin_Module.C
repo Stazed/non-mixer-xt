@@ -2786,8 +2786,6 @@ Plugin_Module::process_midi_in_events( uint32_t nframes, unsigned int port )
         _bpm      = has_bbt ? pos.beats_per_minute : _bpm;
         _rolling  = rolling;
 
-        lv2_evbuf_reset(atom_input[port].event_buffer(), true);
-
         // Write transport change event if applicable
         LV2_Evbuf_Iterator iter = lv2_evbuf_begin(atom_input[port].event_buffer());
         if (xport_changed)
@@ -2806,6 +2804,8 @@ Plugin_Module::process_midi_in_events( uint32_t nframes, unsigned int port )
             lv2_evbuf_write(
               &iter, ev.time, 0, Plugin_Module_URI_Midi_event, ev.size, ev.buffer);
         }
+
+        atom_input[port]._clear_input_buffer = true;
     }
 }
 
@@ -3975,16 +3975,12 @@ Plugin_Module::process ( nframes_t nframes )
                 }
 
                 apply_ui_events(  nframes, i );
+#ifdef LV2_MIDI_SUPPORT
+                /* JACK MIDI in to plugin MIDI in */
+                process_midi_in_events( nframes, i );
+#endif
             }
 #endif
-
-#ifdef LV2_MIDI_SUPPORT
-            /* JACK MIDI in to plugin MIDI in */
-            for( unsigned int i = 0; i < atom_input.size(); ++i )
-            {
-                process_midi_in_events( nframes, i );
-            }
-#endif  // LV2_MIDI_SUPPORT
 
             // Run the plugin for LV2
             for ( unsigned int i = 0; i < _idata->handle.size(); ++i )
