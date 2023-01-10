@@ -599,7 +599,10 @@ Plugin_Module::set ( Log_Entry &e )
     
     if (!restore.empty())
     {
-        sleep(1);   // some of these big plugins need time to initialize before restoring
+        /* some of these big plugins need time to initialize before restoring */
+        if ( control_input.size() > 100  )
+            sleep(1);
+
         restore_LV2_plugin_state(restore);
     }
 }
@@ -1819,7 +1822,14 @@ Plugin_Module::load_lv2 ( const char* uri )
     _position = 0;
     _bpm = 120.0f;
     _rolling = false;
+    _is_instrument = false;
 #endif
+
+    /* We use custom data for instrument plugins */
+   if( _idata->lv2.rdf_data->Type[1] == LV2_PLUGIN_INSTRUMENT)
+   {
+       _is_instrument = true;
+   }
 
     if ( ! _idata->lv2.rdf_data )
     {
@@ -1998,7 +2008,7 @@ Plugin_Module::load_lv2 ( const char* uri )
         MESSAGE( "Plugin has %i ATOM inputs and %i ATOM outputs", _atom_ins, _atom_outs);
 #endif
 #ifdef LV2_MIDI_SUPPORT
-        MESSAGE( "Plugin has %i MIDI inputs and %i MIDI outputs", _midi_ins, _midi_outs);
+        MESSAGE( "Plugin has %i MIDI in ports and %i MIDI out ports", _midi_ins, _midi_outs);
 #endif
 
         if(!_plugin_ins)
@@ -2210,12 +2220,9 @@ Plugin_Module::load_lv2 ( const char* uri )
 
     if ( control_input.size() > 100  )  // FIXME find out how to determine if plugin has custom data
         _use_custom_data = true;
-
-    if (!strcmp( uri, "http://zynaddsubfx.sourceforge.net" ))   // Hack
+    else if (audio_input.empty())
         _use_custom_data = true;
-    else if (!strcmp( uri, "http://yoshimi.sourceforge.net/lv2_plugin"))
-        _use_custom_data = true;
-    else if (!strcmp( uri, "http://yoshimi.sourceforge.net/lv2_plugin_multi"))
+    else if ( _is_instrument )
         _use_custom_data = true;
 
     return instances;

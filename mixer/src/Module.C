@@ -229,7 +229,6 @@ Module::get ( Log_Entry &e ) const
 {
 //    e.add( ":name",            label()           );
 //    e.add( ":color",           (unsigned long)color());
-    bool use_state_restore = false;
 
     if (_is_lv2)
     {
@@ -253,8 +252,6 @@ Module::get ( Log_Entry &e ) const
 
                 std::string base_dir = location.substr(location.find_last_of("/\\") + 1);
                 e.add( ":custom_data", base_dir.c_str() );
-
-                use_state_restore = true;
             }
             else
             {
@@ -275,13 +272,12 @@ Module::get ( Log_Entry &e ) const
                     std::string base_dir = s.substr(s.find_last_of("/\\") + 1);
                     e.add( ":custom_data", base_dir.c_str() );
                 }
-                use_state_restore = true;
             }
         }
     }
 
     /* If using state restore then all the parameter are stored in the custom data file */
-    if(!use_state_restore)
+    if(!_use_custom_data)
     {
         char *s = get_parameters();
         if ( strlen( s ) )
@@ -290,7 +286,7 @@ Module::get ( Log_Entry &e ) const
     }
 #ifdef LV2_WORKER_SUPPORT
     /* If using state restore then all the file paths are stored in the custom data file */
-    if(!use_state_restore)
+    if(!_use_custom_data)
     {
         for ( unsigned int i = 0; i < atom_input.size(); ++i )
         {
