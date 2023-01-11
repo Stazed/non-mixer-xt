@@ -149,6 +149,25 @@ static void mixer_lv2_set_port_value ( const char *port_symbol,
 
 #ifdef LV2_WORKER_SUPPORT
 
+static LV2_Worker_Status
+worker_write_packet(ZixRing* const    target,
+                         const uint32_t    size,
+                         const void* const data)
+{
+    ZixRingTransaction tx = zix_ring_begin_write(target);
+    if (zix_ring_amend_write(target, &tx, &size, sizeof(size)) ||
+        zix_ring_amend_write(target, &tx, data, size))
+    {
+        return LV2_WORKER_ERR_NO_SPACE;
+    }
+
+    DMESSAGE("worker_write_packet");
+
+    zix_ring_commit_write(target, &tx);
+
+    return LV2_WORKER_SUCCESS;
+}
+
 static void
 update_ui( void *data)
 {
@@ -187,47 +206,52 @@ non_worker_respond(LV2_Worker_Respond_Handle handle,
                     uint32_t                  size,
                     const void*               data)
 {
-    DMESSAGE("non_worker_respond");
     Plugin_Module* worker = static_cast<Plugin_Module *> (handle);
 
-    zix_ring_write(worker->responses, (const char*)&size, sizeof(size));
-    zix_ring_write(worker->responses, (const char*)data, size);
-    return LV2_WORKER_SUCCESS;
+    DMESSAGE("non_worker_respond");
+    return worker_write_packet(worker->responses, size, data);
 }
 
 static void*
 worker_func(void* data)
 {
-    DMESSAGE("worker_func");
     Plugin_Module* worker = static_cast<Plugin_Module *> (data);
     void*       buf    = NULL;
     while (true)
     {
-        DMESSAGE("worker_func - TOP");
         zix_sem_wait( &worker->sem );
         if ( worker->m_exit )
         {
             DMESSAGE ("EXIT");
             break;
         }
-        DMESSAGE("worker_func - MIDDLE");
+
         uint32_t size = 0;
         zix_ring_read(worker->requests, (char*)&size, sizeof(size));
 
-        if (!(buf = malloc(size))) {
-            fprintf(stderr, "error: realloc() failed\n");
-            return NULL;
-        }
+        // Reallocate buffer to accommodate request if necessary
+        void* const new_buf = realloc(buf, size);
 
-        zix_ring_read(worker->requests, (char*)buf, size);
+        if (new_buf) 
+        {
+            DMESSAGE("Read request into buffer");
+            // Read request into buffer
+            buf = new_buf;
+            zix_ring_read(worker->requests, buf, size);
 
-        zix_sem_wait(&worker->work_lock);
-        DMESSAGE("worker_func - BOTTOM");
-        worker->_idata->lv2.ext.worker->work(
+            // Lock and dispatch request to plugin's work handler
+            zix_sem_wait(&worker->work_lock);
+            
+            worker->_idata->lv2.ext.worker->work(
                 worker->m_instance->lv2_handle, non_worker_respond, worker, size, buf);
 
-        zix_sem_post(&worker->work_lock);
-        DMESSAGE("worker_func - END");
+            zix_sem_post(&worker->work_lock);
+        }
+        else
+        {
+            // Reallocation failed, skip request to avoid corrupting ring
+            zix_ring_skip(worker->requests, size);
+        }
     }
 
     free(buf);
@@ -239,27 +263,38 @@ non_worker_schedule(LV2_Worker_Schedule_Handle handle,
                      uint32_t                   size,
                      const void*                data)
 {
-    DMESSAGE("non_worker_schedule");
     Plugin_Module* worker = static_cast<Plugin_Module *> (handle);
-    
-    if ( worker->threaded )
+
+    LV2_Worker_Status st = LV2_WORKER_SUCCESS;
+
+    if (!worker || !size)
     {
-        // Schedule a request to be executed by the worker thread
-        zix_ring_write(worker->requests, (const char*)&size, sizeof(size));
-        zix_ring_write(worker->requests, (const char*)data, size);
-        zix_sem_post( &worker->sem );
+        return LV2_WORKER_ERR_UNKNOWN;
     }
-    else 
+
+    if (worker->threaded)
+    {
+        DMESSAGE("worker->threaded");
+
+        // Schedule a request to be executed by the worker thread
+        if (!(st = worker_write_packet(worker->requests, size, data)))
+        {
+            zix_sem_post(&worker->sem);
+        }
+    }
+    else
     {
         // Execute work immediately in this thread
+        DMESSAGE("NOT threaded");
         zix_sem_wait(&worker->work_lock);
 
-        worker->_idata->lv2.ext.worker->work(
+        st = worker->_idata->lv2.ext.worker->work(
         worker->m_instance->lv2_handle, non_worker_respond, worker, size, data);
 
         zix_sem_post(&worker->work_lock);
     }
-    return LV2_WORKER_SUCCESS;
+
+    return st;
 }
 
 static int
@@ -2465,22 +2500,18 @@ Plugin_Module::non_worker_emit_responses( LilvInstance* instance)
 {
     if (responses)
     {
-        uint32_t read_space = zix_ring_read_space(responses);
-        while (read_space)
+        static const uint32_t size_size = (uint32_t)sizeof(uint32_t);
+
+        uint32_t size = 0U;
+        while (zix_ring_read(responses, &size, size_size) == size_size)
         {
-            DMESSAGE("GOT responses read space");
-            uint32_t size = 0;
-            zix_ring_read(responses, (char*)&size, sizeof(size));
-
-            zix_ring_read(responses, (char*)responses, size);
-
-            _idata->lv2.ext.worker->work_response(
-                instance->lv2_handle, size, responses);
-
-            read_space -= sizeof(size) + size;
+            if (zix_ring_read(responses, response, size) == size)
+            {
+                DMESSAGE("Got work response");
+                _idata->lv2.ext.worker->work_response(
+                    instance->lv2_handle, size, responses);
+            }
         }
-        // FIXME is this correct?
-        zix_ring_reset( responses );
     }
 }
 
