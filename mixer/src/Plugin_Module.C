@@ -634,9 +634,8 @@ Plugin_Module::set ( Log_Entry &e )
     
     if (!restore.empty())
     {
-        /* some of these big plugins need time to initialize before restoring */
-        if ( control_input.size() > 100  )
-            sleep(1);
+        /* some of these plugins need time to initialize before restoring */
+        usleep(50000);  // 1/2 second
 
         restore_LV2_plugin_state(restore);
     }
