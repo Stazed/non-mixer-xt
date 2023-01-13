@@ -234,7 +234,7 @@ Module::get ( Log_Entry &e ) const
     {
         if ( _use_custom_data  )
         {
-            Module *m = control_input[0].module();
+            Module *m = (Module *) this;
             Plugin_Module *pm = static_cast<Plugin_Module *> (m);
 
             /* Export directory location */
@@ -561,7 +561,7 @@ Module::handle_control_changed ( Port *p )
     {
         if(m->_is_from_custom_ui)
         {
-            DMESSAGE("Received control from custom UI");
+          //  DMESSAGE("Received control from custom UI");
             m->_is_from_custom_ui = false;
         }
         else
