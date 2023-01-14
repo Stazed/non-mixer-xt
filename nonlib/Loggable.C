@@ -272,7 +272,10 @@ Loggable::close ( void )
         _fp = NULL;
     }
 
-    if ( ! snapshot( "snapshot" ) )
+    std::string full_path = project_directory;
+    full_path += "/snapshot";
+
+    if ( ! snapshot( full_path.c_str() ) )
         WARNING( "Failed to create snapshot" );
 
     if ( ! save_unjournaled_state() )
@@ -609,23 +612,23 @@ Loggable::snapshot ( const char *name )
     FILE *fp;
 
     char *tmp  = NULL;
-    
+
     {
-	const char *filename = basename(name);
-	char *dir = (char*)malloc( (strlen(name) - strlen(filename)) + 1 );
+        const char *filename = basename(name);
+        char *dir = (char*)malloc( (strlen(name) - strlen(filename)) + 1 );
 
 _Pragma("GCC diagnostic push")
 _Pragma("GCC diagnostic ignored \"-Wstringop-overflow=\"")
-	strncpy( dir, name, strlen(name) - strlen(filename) );
+        strncpy( dir, name, strlen(name) - strlen(filename) );
 _Pragma("GCC diagnostic pop")
 
-	asprintf( &tmp, "%s#%s", dir, filename );
-	free(dir);
+        asprintf( &tmp, "%s#%s", dir, filename );
+        free(dir);
     }
 
     if ( ! ( fp = fopen( tmp, "w" ) ))
     {
-	DWARNING( "Could not open file for writing: %s", tmp );
+        DWARNING( "Could not open file for writing: %s", tmp );
         return false;
     }
 
@@ -702,6 +705,7 @@ Loggable::log ( const char *fmt, ... )
 
     if ( '\n' == buf[i-1] )
     {
+       // DMESSAGE("log buf transaction push = %s", buf);
         _transaction.push( strdup( buf ) );
         i = 0;
     }
@@ -732,6 +736,8 @@ Loggable::flush ( void )
     while ( ! _transaction.empty() )
     {
         char *s = _transaction.front();
+
+      //  printf("_transaction.front s = %s\n", s);
 
         _transaction.pop();
 

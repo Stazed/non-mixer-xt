@@ -39,6 +39,8 @@
    Any attempt by the user to paste when true is ignored - only applies to Mixer */
 extern bool _is_pasting;
 
+extern std::string project_directory;
+
 typedef void (progress_func)( int, void * );
 typedef void (snapshot_func)( void * );
 typedef void (dirty_func)( int, void * );

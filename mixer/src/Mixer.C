@@ -1064,7 +1064,11 @@ Mixer::save ( void )
 {
     MESSAGE( "Saving state" );
     Loggable::snapshot_callback( &Mixer::snapshot, this );
-    Loggable::snapshot( "snapshot" );
+
+    std::string full_path = project_directory;
+    full_path += "/snapshot";
+
+    Loggable::snapshot( full_path.c_str() );
 
     save_translations();
 
