@@ -622,6 +622,8 @@ _Pragma("GCC diagnostic ignored \"-Wstringop-overflow=\"")
         strncpy( dir, name, strlen(name) - strlen(filename) );
 _Pragma("GCC diagnostic pop")
 
+        /* Create tmp file with '#' in front of the file name -
+         to be later renamed if all goes well */
         asprintf( &tmp, "%s#%s", dir, filename );
         free(dir);
     }
@@ -636,7 +638,12 @@ _Pragma("GCC diagnostic pop")
 
     fclose( fp );
 
-    rename( tmp, name );
+    /* Do not rename the temp file and clobber existing file if something went wrong */
+    if(r)
+    {
+        /* Looks like all went well, so rename the temp file to the correct name */
+        rename( tmp, name );
+    }
 
     free(tmp);
 
