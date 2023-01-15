@@ -1029,6 +1029,13 @@ main ( int argc, char **argv )
 //            Fl::add_timeout( NSM_CHECK_INTERVAL, check_nsm, NULL );
         }
     }
+    else
+    {
+        delete engine;
+        delete nsm;
+        fprintf(stderr, "Attention!!! -- non-midi-mapper can only be used as an NSM client!!!\n");
+        exit(0);
+    }
     
     osc = new OSC::Endpoint();
 
