@@ -31,12 +31,10 @@
 #include "Loggable.H"
 #include "JACK/Port.H"
 #include "OSC/Endpoint.H"
+#include "ImplementationData.H"
 #include <list>
 #include <algorithm>
 
-#define LV2_WORKER_SUPPORT 1
-#define LV2_MIDI_SUPPORT 1
-#define USE_SUIL 1
 
 #ifdef LV2_WORKER_SUPPORT
 #include "lv2/lv2_evbuf.h"

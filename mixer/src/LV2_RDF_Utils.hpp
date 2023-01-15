@@ -44,6 +44,8 @@
 #include <lv2/lv2plug.in/ns/ext/urid/urid.h>
 #include <lv2/lv2plug.in/ns/ext/worker/worker.h>
 
+#include <algorithm>    // sort
+
 #include "lv2/lv2_external_ui.h"
 #include "lv2/lv2_kxstudio_properties.h"
 
