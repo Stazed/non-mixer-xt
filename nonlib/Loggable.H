@@ -161,11 +161,11 @@ private:
     static bool replay ( FILE *fp, bool need_clear = true );
 
     static void signal_dirty ( int v ) { if ( _dirty_callback ) _dirty_callback( v, _dirty_callback_arg ); }
-    static void set_dirty ( void ) {  signal_dirty( ++_dirty ); }
     static void clear_dirty ( void ) {  signal_dirty( _dirty = 0 ); }
 
 public:
     
+    static void set_dirty ( void ) {  signal_dirty( ++_dirty ); }
     static bool readonly ( void ) { return _readonly; }
 
     static bool replay ( const char *name, bool need_clear = true );

@@ -1388,6 +1388,10 @@ Module::handle ( int m )
                     {
                         command_open_parameter_editor();
                     }
+                    else    // set the dirty flag if we opened the custom UI
+                    {
+                        set_dirty();
+                    }
 #endif
                 }
                 else
@@ -1435,6 +1439,10 @@ Module::handle ( int m )
                     if(!pm->try_custom_ui())
                     {
                         command_open_parameter_editor();
+                    }
+                    else    // set the dirty flag if we opened the custom UI
+                    {
+                        set_dirty();
                     }
 #endif
                 }
@@ -1782,6 +1790,7 @@ Module::command_open_parameter_editor ( void )
     if ( _editor )
     {
         _editor->show();
+        set_dirty();
     }
     else if ( ncontrol_inputs() && nvisible_control_inputs() )
     {
@@ -1789,6 +1798,7 @@ Module::command_open_parameter_editor ( void )
         _editor = new Module_Parameter_Editor( this );
 
         _editor->show();
+        set_dirty();
     }
 }
 
