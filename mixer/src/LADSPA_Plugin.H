@@ -31,18 +31,22 @@ class LADSPA_Plugin : public Plugin_Module {
 
 public:
 
+    bool load_plugin ( unsigned long id );
 
 private:
 
+    void init ( void );
 
 public:
 
     LADSPA_Plugin ( );
     virtual ~LADSPA_Plugin();
 
-
+    virtual void process ( nframes_t );
 
 protected:
 
+    void get ( Log_Entry &e ) const;
+    void set ( Log_Entry &e );
 
 };

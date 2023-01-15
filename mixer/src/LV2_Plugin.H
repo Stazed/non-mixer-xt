@@ -30,9 +30,13 @@
 class LV2_Plugin : public Plugin_Module {
 
 public:
+    
+    bool load_plugin ( const char* uri );
 
 
 private:
+
+    void init ( void );
 
 
 public:
@@ -40,9 +44,11 @@ public:
     LV2_Plugin ( );
     virtual ~LV2_Plugin();
 
-
+    virtual void process ( nframes_t );
 
 protected:
 
+    void get ( Log_Entry &e ) const;
+    void set ( Log_Entry &e );
 
 };

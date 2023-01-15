@@ -27,10 +27,41 @@
 
 LV2_Plugin::LV2_Plugin ( ) : Plugin_Module( )
 {
-
+    // TODO
 }
 
 LV2_Plugin::~LV2_Plugin ( )
 {
+    // TODO
+}
 
+bool
+LV2_Plugin::load_plugin ( const char* uri )
+{
+    _is_lv2 = true;
+    // TODO
+}
+
+void
+LV2_Plugin::init ( void )
+{
+    // TODO
+}
+
+void
+LV2_Plugin::process ( nframes_t nframes )
+{
+    // TODO
+}
+
+void
+LV2_Plugin::get ( Log_Entry &e ) const
+{
+    // TODO
+}
+
+void
+LV2_Plugin::set ( Log_Entry &e )
+{
+    // TODO
 }

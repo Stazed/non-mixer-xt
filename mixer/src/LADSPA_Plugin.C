@@ -26,10 +26,41 @@
 
 LADSPA_Plugin::LADSPA_Plugin ( ) : Plugin_Module( )
 {
-
+    // TODO
 }
 
 LADSPA_Plugin::~LADSPA_Plugin ( )
 {
+    // TODO
+}
 
+bool
+LADSPA_Plugin::load_plugin(unsigned long id)
+{
+    _is_lv2 = false;
+    // TODO
+}
+
+void
+LADSPA_Plugin::init ( void )
+{
+    // TODO
+}
+
+void
+LADSPA_Plugin::process ( nframes_t nframes )
+{
+    // TODO
+}
+
+void
+LADSPA_Plugin::get ( Log_Entry &e ) const
+{
+    // TODO
+}
+
+void
+LADSPA_Plugin::set ( Log_Entry &e )
+{
+    // TODO
 }
