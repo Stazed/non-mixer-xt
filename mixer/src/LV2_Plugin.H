@@ -39,6 +39,31 @@ private:
 
     void init ( void );
 
+#ifdef LV2_WORKER_SUPPORT
+    void non_worker_init(Plugin_Module* plug,
+                 const LV2_Worker_Interface* iface,
+                 bool threaded);
+
+    void non_worker_emit_responses( LilvInstance* instance );
+    void non_worker_finish( void );
+    void non_worker_destroy( void );
+    static int send_to_ui(Plugin_Module* plug, uint32_t port_index, uint32_t type, uint32_t size, const void* body );
+    void ui_port_event( uint32_t port_index, uint32_t buffer_size, uint32_t protocol, const void* buffer );
+    void send_file_to_plugin( int port, const std::string &filename );
+    void send_atom_to_plugin( uint32_t port_index, uint32_t buffer_size, const void* buffer);
+    void apply_ui_events( uint32_t nframes, unsigned int port );
+    void set_lv2_port_properties ( Port * port, bool writable );
+    void get_atom_output_events( void );
+    int write_atom_event(ZixRing* target, const uint32_t port_index,
+                 const uint32_t    size,
+                 const LV2_URID    type,
+                 const void* const body);
+#endif  // LV2_WORKER_SUPPORT
+#ifdef LV2_MIDI_SUPPORT
+    void process_midi_in_events( uint32_t nframes, unsigned int port );
+    void process_midi_out_events( uint32_t nframes, unsigned int port );
+#endif
+
 
 public:
 

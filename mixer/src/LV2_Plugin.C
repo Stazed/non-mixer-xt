@@ -24,7 +24,11 @@
 
 #include "LV2_Plugin.H"
 #include <dsp.h>
+#include "Chain.H"
 
+#  define MSG_BUFFER_SIZE 1024
+
+class Chain;
 
 #ifdef PRESET_SUPPORT
 // LV2 Presets: port value setter.
@@ -365,7 +369,7 @@ LV2_Plugin::~LV2_Plugin ( )
     {
         if(m_use_externalUI)
         {
-            Fl::remove_timeout(&Plugin_Module::custom_update_ui, this);
+            Fl::remove_timeout(&Plugin_Module::custom_update_ui, this); // FIXME LV2_Plugin
             if (m_lv2_ui_widget)
                 LV2_EXTERNAL_UI_HIDE((LV2_External_UI_Widget *) m_lv2_ui_widget);
         }
@@ -964,6 +968,504 @@ _Pragma("GCC diagnostic pop")
 #endif  // USE_CARLA
 #endif  // USE_SUIL
 }
+
+#ifdef LV2_WORKER_SUPPORT
+// FIXME change to LV2_Plugin* plug
+void
+LV2_Plugin::non_worker_init(Plugin_Module* plug,
+                 const LV2_Worker_Interface* iface,
+                 bool                        threaded)
+{
+    DMESSAGE("Threaded = %d", threaded);
+    plug->_idata->lv2.ext.worker = iface;
+    plug->threaded = threaded;
+
+    if (threaded)
+    {
+        zix_thread_create(&plug->thread, ATOM_BUFFER_SIZE, worker_func, plug);
+        plug->requests = zix_ring_new(ATOM_BUFFER_SIZE);
+        zix_ring_mlock(plug->requests);
+    }
+    
+    plug->responses = zix_ring_new(ATOM_BUFFER_SIZE);
+    plug->response = malloc(ATOM_BUFFER_SIZE);
+    zix_ring_mlock(plug->responses);
+}
+
+void
+LV2_Plugin::non_worker_emit_responses( LilvInstance* instance)
+{
+    if (responses)
+    {
+        static const uint32_t size_size = (uint32_t)sizeof(uint32_t);
+
+        uint32_t size = 0U;
+        while (zix_ring_read(responses, &size, size_size) == size_size)
+        {
+            if (zix_ring_read(responses, response, size) == size)
+            {
+                DMESSAGE("Got work response");
+                _idata->lv2.ext.worker->work_response(
+                    instance->lv2_handle, size, responses);
+            }
+        }
+    }
+}
+
+void
+LV2_Plugin::non_worker_finish( void )
+{
+    if (threaded) 
+    {
+        zix_sem_post(&sem);
+        zix_thread_join(thread, NULL);
+    }
+}
+
+void
+LV2_Plugin::non_worker_destroy( void )
+{
+    if (requests) 
+    {
+        if (threaded)
+        {
+            zix_ring_free(requests);
+        }
+
+        zix_ring_free(responses);
+        free(response);
+    }
+}
+// FIXME change to LV2_Plugin* plug
+int
+LV2_Plugin::send_to_ui(Plugin_Module* plug, uint32_t port_index, uint32_t type, uint32_t size, const void* body)
+{
+    typedef struct {
+    ControlChange change;
+    LV2_Atom      atom;
+    } Header;
+
+    const Header header = {
+    {port_index, Plugin_Module_URI_Atom_eventTransfer, (uint32_t) sizeof(LV2_Atom) + size},
+    {size, type}};
+
+    ZixRingTransaction tx = zix_ring_begin_write(plug->plugin_to_ui);
+    if (zix_ring_amend_write(plug->plugin_to_ui, &tx, &header, sizeof(header)) ||
+        zix_ring_amend_write(plug->plugin_to_ui, &tx, body, size))
+    {
+        WARNING( "Plugin => UI buffer overflow!" );
+        return -1;
+    }
+
+    zix_ring_commit_write(plug->plugin_to_ui, &tx);
+    return 0;
+}
+
+void
+LV2_Plugin::ui_port_event( uint32_t port_index, uint32_t buffer_size, uint32_t protocol, const void* buffer )
+{
+    /* The incoming port_index is the index from the plugin .ttl port order.
+       We need the corresponding atom_input index so we have to look up
+       the saved port_index in hints.plug_port_index - ai == atom_input index */
+    unsigned int ai = 0;    // used by set_file()
+    for (unsigned int i = 0; i < atom_input.size(); ++i)
+    {
+        if ( atom_input[i].hints.plug_port_index == port_index )
+        {
+            ai = i;
+            break;
+        }
+    }
+
+    const LV2_Atom* atom = (const LV2_Atom*)buffer;
+    if (lv2_atom_forge_is_object_type(&m_forge, atom->type))
+    {
+//        updating = true;  // FIXME
+        const LV2_Atom_Object* obj = (const LV2_Atom_Object*)buffer;
+        if (obj->body.otype ==  Plugin_Module_URI_patch_Set)
+        {
+            const LV2_Atom_URID* property = NULL;
+            const LV2_Atom*      value    = NULL;
+            if (!patch_set_get(this, obj, &property, &value))
+            {
+                DMESSAGE("To set_file(): atom_input_index = %u: Value received = %s",ai , (char *) (value + 1) );
+                set_file ((char *) (value + 1), ai, false ); // false means don't update the plugin, since this comes from the plugin
+            }
+        } 
+        else if (obj->body.otype == Plugin_Module_URI_patch_Put)
+        {
+            const LV2_Atom_Object* body = NULL;
+            if (!patch_put_get(this, obj, &body))
+            {
+                LV2_ATOM_OBJECT_FOREACH(body, prop)
+                {
+                    //property_changed(jalv, prop->key, &prop->value);  // FIXME
+                }
+            }
+        }
+        else
+        {
+            WARNING("Unknown object type = %d: ID = %d?", obj->body.otype, obj->body.id);
+        }
+      //  updating = false; // FIXME
+    }
+}
+
+void
+LV2_Plugin::send_atom_to_plugin( uint32_t port_index, uint32_t buffer_size, const void* buffer)
+{
+    if(m_exit)
+        return;
+
+    DMESSAGE("Port Index B4 = %d", port_index);
+    for ( unsigned int i = 0; i < atom_input.size(); ++i )
+    {
+        if ( port_index == atom_input[i].hints.plug_port_index )
+        {
+            port_index = i;
+            DMESSAGE("Port Index AFTER = %d", port_index);
+            break;
+        }
+    }
+
+    const LV2_Atom* const atom = (const LV2_Atom*)buffer;
+    if (buffer_size < sizeof(LV2_Atom))
+    {
+        DMESSAGE("UI wrote impossible atom size");
+    }
+    else if (sizeof(LV2_Atom) + atom->size != buffer_size)
+    {
+        DMESSAGE("UI wrote corrupt atom size");
+    }
+    else
+    {
+        write_atom_event(ui_to_plugin, port_index, atom->size, atom->type, atom + 1U);
+    }
+}
+
+static int
+write_control_change(   ZixRing* const    target,
+                        const void* const header,
+                        const uint32_t    header_size,
+                        const void* const body,
+                        const uint32_t    body_size)
+{
+    if (zix_ring_write_space( target ) >= header_size + body_size)
+    {
+        DMESSAGE("Write to .plugin_events ----- ");
+        zix_ring_write(target, header, header_size);
+        zix_ring_write(target, body, body_size);
+        return 0;
+    }
+    else
+    {
+        WARNING( "UI => Plugin buffer overflow!" );
+        return 1;
+    }
+}
+
+int
+LV2_Plugin::write_atom_event(ZixRing* target, const uint32_t    port_index,
+                 const uint32_t    size,
+                 const LV2_URID    type,
+                 const void* const body)
+{
+    typedef struct {
+    ControlChange change;
+    LV2_Atom      atom;
+    } Header;
+
+    const Header header = {
+    {port_index, Plugin_Module_URI_Atom_eventTransfer, (uint32_t) sizeof(LV2_Atom) + size},
+    {size, type}};
+
+    return write_control_change(target, &header, sizeof(header), body, size);
+}
+
+void
+LV2_Plugin::send_file_to_plugin( int port, const std::string &filename )
+{
+    DMESSAGE("File = %s", filename.c_str());
+    
+    /* Set the file for non-mixer here - may be redundant some times */
+    atom_input[port]._file = filename;
+    
+    uint32_t size = filename.size() + 1;
+    
+    // Copy forge since it is used by process thread
+    LV2_Atom_Forge       forge =  this->m_forge;
+    LV2_Atom_Forge_Frame frame;
+    uint8_t              buf[1024];
+    lv2_atom_forge_set_buffer(&forge, buf, sizeof(buf));
+
+    lv2_atom_forge_object(&forge, &frame, 0, Plugin_Module_URI_patch_Set );
+    lv2_atom_forge_key(&forge, Plugin_Module_URI_patch_Property );
+    lv2_atom_forge_urid(&forge, atom_input[port]._property_mapped);
+    lv2_atom_forge_key(&forge, Plugin_Module_URI_patch_Value);
+    lv2_atom_forge_atom(&forge, size, this->m_forge.Path);
+    lv2_atom_forge_write(&forge, (const void*)filename.c_str(), size);
+
+    const LV2_Atom* atom = lv2_atom_forge_deref(&forge, frame.ref);
+    
+    write_atom_event(ui_to_plugin, port, atom->size, atom->type, atom + 1U);
+}
+
+void
+LV2_Plugin::apply_ui_events( uint32_t nframes, unsigned int port )
+{
+    ControlChange ev  = {0U, 0U, 0U};
+    const size_t  space = zix_ring_read_space(ui_to_plugin);
+
+    for (size_t i = 0; i < space; i += sizeof(ev) + ev.size)
+    {
+        DMESSAGE("APPLY UI");
+        if(zix_ring_read(ui_to_plugin, (char*)&ev, sizeof(ev)) != sizeof(ev))
+        {
+            DMESSAGE("Failed to read header from UI ring buffer\n");
+            break;
+        }
+
+        struct
+        {
+            union
+            {
+              LV2_Atom atom;
+              float    control;
+            } head;
+            uint8_t body[MSG_BUFFER_SIZE];
+        } buffer;
+        
+        if (zix_ring_read(ui_to_plugin, &buffer, ev.size) != ev.size)
+        {
+            DMESSAGE("Failed to read from UI ring buffer\n");
+            break;
+        }
+
+/*        assert(ev.index < jalv->num_ports);
+        struct Port* const port = &jalv->ports[ev.index];
+        if (ev.protocol == 0)
+        {
+                assert(ev.size == sizeof(float));
+                port->control = *(float*)body;
+        }
+*/
+        else if (ev.protocol == Plugin_Module_URI_Atom_eventTransfer)
+        {
+            LV2_Evbuf_Iterator    e    = lv2_evbuf_end( atom_input[port].event_buffer() ); 
+            const LV2_Atom* const atom = &buffer.head.atom;
+
+            DMESSAGE("LV2 ATOM eventTransfer atom type = %d", atom->type);
+
+            lv2_evbuf_write(&e, nframes, 0, atom->type, atom->size,
+                            (const uint8_t*)LV2_ATOM_BODY_CONST(atom));
+
+            atom_input[port]._clear_input_buffer = true;
+        }
+        else
+        {
+            WARNING("Unknown control change protocol %u", ev.protocol);
+            atom_input[port]._clear_input_buffer = true;
+        }
+    }
+}
+
+#ifdef LV2_MIDI_SUPPORT
+void
+LV2_Plugin::process_midi_in_events( uint32_t nframes, unsigned int port )
+{
+    if ( atom_input[port].jack_port())
+    {
+        // Get Jack transport position
+        jack_position_t pos;
+        const bool rolling =
+            (chain()->client()->transport_query(&pos) == JackTransportRolling);
+
+        // If transport state is not as expected, then something has changed
+        const bool has_bbt = (pos.valid & JackPositionBBT);
+        const bool xport_changed =
+          (rolling != _rolling || pos.frame != _position ||
+           (has_bbt && pos.beats_per_minute != _bpm));
+
+        uint8_t   pos_buf[256];
+        LV2_Atom* lv2_pos = (LV2_Atom*)pos_buf;
+        if (xport_changed)
+        {
+            // Build an LV2 position object to report change to plugin
+            lv2_atom_forge_set_buffer(&m_forge, pos_buf, sizeof(pos_buf));
+            LV2_Atom_Forge*      forge = &m_forge;
+            LV2_Atom_Forge_Frame frame;
+            lv2_atom_forge_object(forge, &frame, 0, Plugin_Module_URI_time_Position);
+            lv2_atom_forge_key(forge, Plugin_Module_URI_time_frame);
+            lv2_atom_forge_long(forge, pos.frame);
+            lv2_atom_forge_key(forge, Plugin_Module_URI_time_speed);
+            lv2_atom_forge_float(forge, rolling ? 1.0 : 0.0);
+
+            if (has_bbt)
+            {
+                lv2_atom_forge_key(forge, Plugin_Module_URI_time_barBeat);
+                lv2_atom_forge_float(forge,
+                                     pos.beat - 1 + (pos.tick / pos.ticks_per_beat));
+                lv2_atom_forge_key(forge, Plugin_Module_URI_time_bar);
+                lv2_atom_forge_long(forge, pos.bar - 1);
+                lv2_atom_forge_key(forge, Plugin_Module_URI_time_beatUnit);
+                lv2_atom_forge_int(forge, pos.beat_type);
+                lv2_atom_forge_key(forge, Plugin_Module_URI_time_beatsPerBar);
+                lv2_atom_forge_float(forge, pos.beats_per_bar);
+                lv2_atom_forge_key(forge, Plugin_Module_URI_time_beatsPerMinute);
+                lv2_atom_forge_float(forge, pos.beats_per_minute);
+            }
+        }
+
+        // Update transport state to expected values for next cycle
+        _position = rolling ? pos.frame + nframes : pos.frame;
+        _bpm      = has_bbt ? pos.beats_per_minute : _bpm;
+        _rolling  = rolling;
+
+        // Write transport change event if applicable
+        LV2_Evbuf_Iterator iter = lv2_evbuf_begin(atom_input[port].event_buffer());
+        if (xport_changed)
+        {
+          lv2_evbuf_write(
+            &iter, 0, 0, lv2_pos->type, lv2_pos->size, LV2_ATOM_BODY(lv2_pos));
+        }
+
+        void *buf = atom_input[port].jack_port()->buffer( nframes );
+
+        for (uint32_t i = 0; i < jack_midi_get_event_count(buf); ++i)
+        {
+          //  DMESSAGE( "Got midi input!" );
+            jack_midi_event_t ev;
+            jack_midi_event_get(&ev, buf, i);
+            lv2_evbuf_write(
+              &iter, ev.time, 0, Plugin_Module_URI_Midi_event, ev.size, ev.buffer);
+        }
+
+        atom_input[port]._clear_input_buffer = true;
+    }
+}
+
+void
+LV2_Plugin::process_midi_out_events( uint32_t nframes, unsigned int port )
+{
+    if ( atom_output[port].jack_port() )
+    {
+        void* buf = NULL;
+
+        buf = atom_output[port].jack_port()->buffer( nframes );
+        jack_midi_clear_buffer(buf);
+
+        for (LV2_Evbuf_Iterator i = lv2_evbuf_begin(atom_output[port].event_buffer());
+             lv2_evbuf_is_valid(i);
+             i = lv2_evbuf_next(i))
+        {
+            // Get event from LV2 buffer
+            uint32_t frames    = 0;
+            uint32_t subframes = 0;
+            LV2_URID type      = 0;
+            uint32_t size      = 0;
+            void*    body      = NULL;
+            lv2_evbuf_get(i, &frames, &subframes, &type, &size, &body);
+
+            if (buf && type == Plugin_Module_URI_Midi_event)
+            {
+                 // DMESSAGE("Write MIDI event to Jack output");
+                  jack_midi_event_write(buf, frames, (jack_midi_data_t*) body, size);
+            }
+        }
+
+        lv2_evbuf_reset(atom_output[port].event_buffer(), false);
+    }
+}
+
+#endif  // LV2_MIDI_SUPPORT
+
+void
+LV2_Plugin::set_lv2_port_properties (Port * port, bool writable )
+{
+    const LilvPlugin* plugin         = m_plugin;
+    LilvWorld*        world          = m_lilvWorld;
+    LilvNode*         patch_writable = lilv_new_uri(world, LV2_PATCH__writable);
+    LilvNode*         patch_readable = lilv_new_uri(world, LV2_PATCH__readable);
+
+    // This checks for control type -- in our case the patch__writable is returned as properties
+    LilvNodes* properties = lilv_world_find_nodes(
+    world,
+    lilv_plugin_get_uri(plugin),
+    writable ? patch_writable : patch_readable,
+    NULL);
+    
+    if( ! properties )
+    {
+        DMESSAGE("Atom port has no properties");
+        port->hints.visible = false;
+        lilv_nodes_free(properties);
+        lilv_node_free(patch_readable);
+        lilv_node_free(patch_writable);
+        return;
+    }
+
+    LILV_FOREACH(nodes, p, properties)
+    {
+        const LilvNode* property = lilv_nodes_get(properties, p);
+
+        DMESSAGE("Property = %s", lilv_node_as_string(property));
+
+        if (lilv_world_ask(world,
+                        lilv_plugin_get_uri(plugin),
+                        writable ? patch_writable : patch_readable,
+                        property))
+        {
+            port->_property = property;
+            break;
+        }
+    }
+    
+    LilvNode* rdfs_label;
+    rdfs_label = lilv_new_uri(world, LILV_NS_RDFS "label");
+    
+    port->_label  = lilv_world_get(world, port->_property, rdfs_label, NULL);
+    port->_symbol = lilv_world_get_symbol(world, port->_property);
+    port->_property_mapped = _idata->_lv2_urid_map(_idata, lilv_node_as_uri( port->_property ));
+    
+    DMESSAGE("Properties label = %s", lilv_node_as_string(port->_label));
+    DMESSAGE("Properties symbol = %s", lilv_node_as_string(port->_symbol));
+    DMESSAGE("Property mapped = %u", port->_property_mapped);
+
+    lilv_nodes_free(properties);
+
+    lilv_node_free(patch_readable);
+    lilv_node_free(patch_writable);
+}
+
+void
+LV2_Plugin::get_atom_output_events( void )
+{
+    for ( unsigned int k = 0; k < atom_output.size(); ++k )
+    {
+        for (LV2_Evbuf_Iterator i = lv2_evbuf_begin(atom_output[k].event_buffer());
+            lv2_evbuf_is_valid(i);
+            i = lv2_evbuf_next(i))
+        {
+            // Get event from LV2 buffer
+            uint32_t frames    = 0;
+            uint32_t subframes = 0;
+            uint32_t type      = 0;
+            uint32_t size      = 0;
+            void* body         = NULL;
+            lv2_evbuf_get(i, &frames, &subframes, &type, &size, &body);
+
+           // DMESSAGE("GOT ATOM EVENT BUFFER Port Index = %d", atom_output[k].hints.plug_port_index);
+
+            send_to_ui(this, atom_output[k].hints.plug_port_index, type, size, body);
+        }
+
+        /* Clear event output for plugin to write to on next cycle */
+        lv2_evbuf_reset(atom_output[k].event_buffer(), false);
+    }            
+}
+
+#endif  // LV2_WORKER_SUPPORT
+
 
 void
 LV2_Plugin::process ( nframes_t nframes )
