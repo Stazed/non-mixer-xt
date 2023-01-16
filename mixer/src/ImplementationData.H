@@ -26,6 +26,7 @@
 #include <ladspa.h>
 #include "LV2_RDF_Utils.hpp"
 #include <lv2/data-access/data-access.h>
+#include <dlfcn.h>
 
 #define LV2_WORKER_SUPPORT 1
 #define LV2_MIDI_SUPPORT 1
@@ -382,4 +383,59 @@ _Pragma("GCC diagnostic pop")
     }
 };
 
+/* handy class to handle lv2 open/close */
+class LV2_Lib_Manager
+{
+public:
+    LV2_Lib_Manager() {}
+
+    ~LV2_Lib_Manager()
+    {
+        for (std::vector<LV2LibraryInfo>::iterator it=libraries.begin(), end=libraries.end(); it != end; ++it)
+        {
+            LV2LibraryInfo& libinfo (*it);
+
+            if ( libinfo.handle )
+                dlclose( libinfo.handle );
+        }
+
+        libraries.clear();
+    }
+
+    const LV2_Descriptor* get_descriptor_for_uri(const std::string& binary, const char* uri)
+    {
+        if (void* const handle = dlopen(binary.c_str(), RTLD_LAZY))
+        {
+            if (LV2_Descriptor_Function descfn = (LV2_Descriptor_Function)dlsym(handle, "lv2_descriptor"))
+            {
+                uint32_t i=0;
+                const LV2_Descriptor* desc;
+                while ((desc = descfn(i++)) != NULL)
+                {
+                    if ( ::strcmp(desc->URI, uri) == 0)
+                        break;
+                }
+                if ( ! desc ) return NULL;
+
+                LV2LibraryInfo info;
+                info.binary = binary;
+                info.handle = handle;
+                info.desc   = desc;
+                libraries.push_back( info );
+
+                return desc;
+            }
+        }
+
+        return NULL;
+    }
+
+private:
+    struct LV2LibraryInfo {
+        std::string binary;
+        void*       handle;
+        const LV2_Descriptor* desc;
+    };
+    std::vector<LV2LibraryInfo> libraries;
+};
 
