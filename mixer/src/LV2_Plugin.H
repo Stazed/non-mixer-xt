@@ -35,6 +35,20 @@ public:
     
     bool load_plugin ( const char* uri );
 
+#ifdef PRESET_SUPPORT
+    LilvWorld* get_lilv_world() {return m_lilvWorld;}
+    const LilvPlugin* get_slv2_plugin() const {return m_plugin; }
+    const LilvPlugins* get_lilv_plugins() const {return m_lilvPlugins; }
+    void set_control_value(unsigned long port_index, float value);
+    void update_control_parameters(int choice);
+#endif
+    
+#ifdef LV2_STATE_SAVE
+    void save_LV2_plugin_state(const std::string directory);
+    void restore_LV2_plugin_state(const std::string directory);
+    std::string get_plugin_save_directory(const std::string directory);
+#endif
+
 #ifdef LV2_WORKER_SUPPORT
     void ui_port_event( uint32_t port_index, uint32_t buffer_size, uint32_t protocol, const void* buffer );
     void send_atom_to_plugin( uint32_t port_index, uint32_t buffer_size, const void* buffer);

@@ -125,11 +125,165 @@ static void mixer_lv2_set_port_value ( const char *port_symbol,
 
         pLv2Plugin->set_control_value(port_index, paramValue);
     }
-    
+
     lilv_node_free(symbol);
+}
+
+void
+LV2_Plugin::set_control_value(unsigned long port_index, float value)
+{
+    for ( unsigned int i = 0; i < control_input.size(); ++i )
+    {
+        if ( port_index == control_input[i].hints.plug_port_index )
+        {
+            control_input[i].control_value(value);
+          //  DMESSAGE("Port Index = %d: Value = %f", port_index, value);
+            break;
+        }
+    }
+}
+
+void 
+LV2_Plugin::update_control_parameters(int choice)
+{
+    const Lv2WorldClass& lv2World = Lv2WorldClass::getInstance();
+
+    DMESSAGE("PresetList[%d].URI = %s", choice, PresetList[choice].URI);
+
+    LilvState *state = lv2World.getStateFromURI(PresetList[choice].URI, _uridMapFt);
+    lilv_state_restore(state, m_instance,  mixer_lv2_set_port_value, this, 0, NULL);
+
+    lilv_state_free(state);
 }
 #endif
 
+#ifdef LV2_STATE_SAVE
+static const void*
+get_port_value(const char* port_symbol,
+               void*       user_data,
+               uint32_t*   size,
+               uint32_t*   type)
+{
+    LV2_Plugin* pm =  static_cast<LV2_Plugin *> (user_data);
+
+    const LilvPlugin *plugin = pm->get_slv2_plugin();
+
+    if (plugin == NULL)
+    {
+        *size = *type = 0;
+        return NULL;
+    }
+
+    LilvWorld* world = pm->get_lilv_world();
+
+    LilvNode *symbol = lilv_new_string(world, port_symbol);
+
+    const LilvPort *port = lilv_plugin_get_port_by_symbol(plugin, symbol);
+    free(symbol);
+
+    if (port)
+    {
+        const unsigned long port_index = lilv_port_get_index(plugin, port);
+
+        for (unsigned int i = 0; i < pm->control_input.size(); ++i)
+        {
+            if(port_index == pm->control_input[i].hints.plug_port_index)
+            {
+                *size = sizeof(float);
+                *type = Plugin_Module_URI_Atom_Float;
+                pm->control_input[i].hints.current_value = pm->control_input[i].control_value();
+                return &pm->control_input[i].hints.current_value;
+            }
+        }
+    }
+
+    *size = *type = 0;
+    return NULL;
+}
+
+void
+LV2_Plugin::save_LV2_plugin_state(const std::string directory)
+{
+    DMESSAGE("Saving plugin state to %s", directory.c_str());
+
+    LilvState* const state =
+        lilv_state_new_from_instance(m_plugin,
+                                 m_instance,
+                                 _uridMapFt,
+                                 NULL,
+                                 directory.c_str(),
+                                 directory.c_str(),
+                                 directory.c_str(),
+                                 get_port_value,
+                                 this,
+                                 LV2_STATE_IS_POD | LV2_STATE_IS_PORTABLE,
+                                 NULL);
+
+    lilv_state_save(
+        m_lilvWorld, _uridMapFt, _uridUnmapFt, state, NULL, directory.c_str(), "state.ttl");
+
+    lilv_state_free(state);
+}
+
+void
+LV2_Plugin::restore_LV2_plugin_state(const std::string directory)
+{
+    std::string path = directory;
+    path.append("/state.ttl");
+
+    LilvState* state      = NULL;
+
+    state = lilv_state_new_from_file(m_lilvWorld, _uridMapFt, NULL, path.c_str());
+
+    if (!state)
+    {
+        WARNING("Failed to load state from %s", path.c_str());
+        return;
+    }
+
+    DMESSAGE("Restoring plugin state from %s", path.c_str());
+
+    lilv_state_restore(state, m_instance,  mixer_lv2_set_port_value, this, 0, _idata->lv2.features);
+
+    lilv_state_free(state);
+}
+
+/**
+ This generates the LV2 plugin state save directory we use for big plugins - specifically synths.
+ */
+std::string
+LV2_Plugin::get_plugin_save_directory(const std::string directory)
+{
+    std::string project_base = directory;
+
+    if(project_base.empty())
+        return "";
+
+    std::string slabel = "/";
+    slabel += label();
+
+    /* Just replacing spaces in the plugin label with '_' cause it looks better */
+    std::replace( slabel.begin(), slabel.end(), ' ', '_');
+
+    project_base += slabel;
+
+    /* This generates the random directory suffix '.nABCD' to support multiple instances */
+    char id_str[6];
+
+    id_str[0] = 'n';
+    id_str[5] = 0;
+
+    for ( int i = 1; i < 5; i++)
+        id_str[i] = 'A' + (rand() % 25);
+
+    project_base += ".";
+    project_base += id_str;
+
+    DMESSAGE("project_base = %s", project_base.c_str());
+
+    return project_base;
+}
+#endif
 
 #ifdef LV2_WORKER_SUPPORT
 
