@@ -69,7 +69,7 @@ static int temporaryErrorHandler(Display*, XErrorEvent*)
 static void mixer_lv2_set_port_value ( const char *port_symbol,
 	void *user_data, const void *value, uint32_t size, uint32_t type )
 {
-    Plugin_Module *pLv2Plugin = static_cast<Plugin_Module *> (user_data);
+    LV2_Plugin *pLv2Plugin = static_cast<LV2_Plugin *> (user_data);
     if (pLv2Plugin == NULL)
             return;
 
@@ -155,7 +155,7 @@ worker_write_packet(ZixRing* const    target,
 static void
 update_ui( void *data)
 {
-    Plugin_Module* plug_ui =  static_cast<Plugin_Module *> (data);
+    LV2_Plugin* plug_ui =  static_cast<LV2_Plugin *> (data);
     /* Emit UI events. */
     ControlChange ev;
     const size_t  space = zix_ring_read_space( plug_ui->plugin_to_ui );
@@ -190,7 +190,7 @@ non_worker_respond(LV2_Worker_Respond_Handle handle,
                     uint32_t                  size,
                     const void*               data)
 {
-    Plugin_Module* worker = static_cast<Plugin_Module *> (handle);
+    LV2_Plugin* worker = static_cast<LV2_Plugin *> (handle);
 
     DMESSAGE("non_worker_respond");
     return worker_write_packet(worker->responses, size, data);
@@ -199,7 +199,7 @@ non_worker_respond(LV2_Worker_Respond_Handle handle,
 static void*
 worker_func(void* data)
 {
-    Plugin_Module* worker = static_cast<Plugin_Module *> (data);
+    LV2_Plugin* worker = static_cast<LV2_Plugin *> (data);
     void*       buf    = NULL;
     while (true)
     {
@@ -247,7 +247,7 @@ lv2_non_worker_schedule(LV2_Worker_Schedule_Handle handle,
                      uint32_t                   size,
                      const void*                data)
 {
-    Plugin_Module* worker = static_cast<Plugin_Module *> (handle);
+    LV2_Plugin* worker = static_cast<LV2_Plugin *> (handle);
 
     LV2_Worker_Status st = LV2_WORKER_SUCCESS;
 
@@ -282,7 +282,7 @@ lv2_non_worker_schedule(LV2_Worker_Schedule_Handle handle,
 }
 
 static int
-patch_set_get(Plugin_Module* plugin,
+patch_set_get(LV2_Plugin* plugin,
               const LV2_Atom_Object* obj,
               const LV2_Atom_URID**  property,
               const LV2_Atom**       value)
@@ -307,7 +307,7 @@ patch_set_get(Plugin_Module* plugin,
 }
 
 static int
-patch_put_get(Plugin_Module*  plugin,
+patch_put_get(LV2_Plugin*  plugin,
               const LV2_Atom_Object*  obj,
               const LV2_Atom_Object** body)
 {
@@ -334,7 +334,7 @@ patch_put_get(Plugin_Module*  plugin,
 static int
 x_resize(LV2UI_Feature_Handle handle, int width, int height)
 {
-    Plugin_Module *pLv2Plugin = static_cast<Plugin_Module *> (handle);
+    LV2_Plugin *pLv2Plugin = static_cast<LV2_Plugin *> (handle);
     if (pLv2Plugin == NULL)
         return 1;
 
@@ -353,8 +353,8 @@ x_resize(LV2UI_Feature_Handle handle, int width, int height)
 #ifdef LV2_EXTERNAL_UI
 static void mixer_lv2_ui_closed ( LV2UI_Controller ui_controller )
 {
-    Plugin_Module *pLv2Plugin
-            = static_cast<Plugin_Module *> (ui_controller);
+    LV2_Plugin *pLv2Plugin
+            = static_cast<LV2_Plugin *> (ui_controller);
     if (pLv2Plugin == nullptr)
             return;
 
@@ -1006,7 +1006,7 @@ _Pragma("GCC diagnostic pop")
 #ifdef LV2_WORKER_SUPPORT
 // FIXME change to LV2_Plugin* plug
 void
-LV2_Plugin::non_worker_init(Plugin_Module* plug,
+LV2_Plugin::non_worker_init(LV2_Plugin* plug,
                  const LV2_Worker_Interface* iface,
                  bool                        threaded)
 {
@@ -1072,7 +1072,7 @@ LV2_Plugin::non_worker_destroy( void )
 }
 // FIXME change to LV2_Plugin* plug
 int
-LV2_Plugin::send_to_ui(Plugin_Module* plug, uint32_t port_index, uint32_t type, uint32_t size, const void* body)
+LV2_Plugin::send_to_ui(LV2_Plugin* plug, uint32_t port_index, uint32_t type, uint32_t size, const void* body)
 {
     typedef struct {
     ControlChange change;
@@ -1506,7 +1506,7 @@ LV2_Plugin::get_atom_output_events( void )
 static uint32_t
 ui_port_index(void* const controller, const char* port_symbol)
 {
-    Plugin_Module *pLv2Plugin = static_cast<Plugin_Module *> (controller);
+    LV2_Plugin *pLv2Plugin = static_cast<LV2_Plugin *> (controller);
     if (pLv2Plugin == NULL)
         return LV2UI_INVALID_PORT_INDEX;
 
@@ -1534,13 +1534,13 @@ ui_port_index(void* const controller, const char* port_symbol)
 }
 
 static void
-send_to_plugin(void* const handle,              // Plugin_Module
+send_to_plugin(void* const handle,              // LV2_Plugin
                     uint32_t    port_index,     // what port to send it to
                     uint32_t    buffer_size,    // OU = float or atom port
                     uint32_t    protocol,       // type of event 
                     const void* buffer)         // param value sizeof(float) or atom event  (sizeof(LV2_Atom))
 {
-    Plugin_Module *pLv2Plugin = static_cast<Plugin_Module *> (handle);
+    LV2_Plugin *pLv2Plugin = static_cast<LV2_Plugin *> (handle);
     if (pLv2Plugin == NULL)
         return;
     

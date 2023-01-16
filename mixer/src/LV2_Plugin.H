@@ -35,23 +35,25 @@ public:
     
     bool load_plugin ( const char* uri );
 
-
+#ifdef LV2_WORKER_SUPPORT
+    void ui_port_event( uint32_t port_index, uint32_t buffer_size, uint32_t protocol, const void* buffer );
+    void send_atom_to_plugin( uint32_t port_index, uint32_t buffer_size, const void* buffer);
+#endif
+    
 private:
 
     void init ( void );
 
 #ifdef LV2_WORKER_SUPPORT
-    void non_worker_init(Plugin_Module* plug,
+    void non_worker_init(LV2_Plugin* plug,
                  const LV2_Worker_Interface* iface,
                  bool threaded);
 
     void non_worker_emit_responses( LilvInstance* instance );
     void non_worker_finish( void );
     void non_worker_destroy( void );
-    static int send_to_ui(Plugin_Module* plug, uint32_t port_index, uint32_t type, uint32_t size, const void* body );
-    void ui_port_event( uint32_t port_index, uint32_t buffer_size, uint32_t protocol, const void* buffer );
+    static int send_to_ui(LV2_Plugin* plug, uint32_t port_index, uint32_t type, uint32_t size, const void* body );
     void send_file_to_plugin( int port, const std::string &filename );
-    void send_atom_to_plugin( uint32_t port_index, uint32_t buffer_size, const void* buffer);
     void apply_ui_events( uint32_t nframes, unsigned int port );
     void set_lv2_port_properties ( Port * port, bool writable );
     void get_atom_output_events( void );
