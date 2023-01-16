@@ -23,6 +23,7 @@
  */
 
 #include <math.h>
+#include <dsp.h>
 
 #include "LADSPA_Plugin.H"
 
@@ -31,12 +32,21 @@
 
 LADSPA_Plugin::LADSPA_Plugin ( ) : Plugin_Module( )
 {
-    // TODO
+    init();
+
+   // FIXME check this
+   // color( fl_color_average(  fl_rgb_color( 0x99, 0x7c, 0x3a ), FL_BACKGROUND_COLOR, 1.0f ));
+    
+   // end();
+
+   // log_create();
 }
 
 LADSPA_Plugin::~LADSPA_Plugin ( )
+
 {
-    // TODO
+    log_destroy();
+    plugin_instances( 0 );
 }
 
 static LADSPAInfo *ladspainfo;
@@ -284,23 +294,95 @@ LADSPA_Plugin::load_plugin(unsigned long id)
 void
 LADSPA_Plugin::init ( void )
 {
-    // TODO
+    Plugin_Module::init();
+   // _latency = 0;
+   // _last_latency = 0;
+    _idata = new ImplementationData();
+    /* module will be bypassed until plugin is loaded */
+   // _bypass = true;
+   // _crosswire = false;
+    _is_lv2 = false;
 }
 
 void
 LADSPA_Plugin::process ( nframes_t nframes )
 {
-    // TODO
+    handle_port_connection_change();
+
+    if ( unlikely( bypass() ) )
+    {
+        /* If this is a mono to stereo plugin, then duplicate the input channel... */
+        /* There's not much we can do to automatically support other configurations. */
+        if ( ninputs() == 1 && noutputs() == 2 )
+        {
+            buffer_copy( (sample_t*)audio_output[1].buffer(), (sample_t*)audio_input[0].buffer(), nframes );
+        }
+
+        _latency = 0;
+    }
+    else
+    {
+
+        for ( unsigned int i = 0; i < _idata->handle.size(); ++i )
+            _idata->descriptor->run( _idata->handle[i], nframes );
+        
+        _latency = get_module_latency();
+    }
 }
 
 void
 LADSPA_Plugin::get ( Log_Entry &e ) const
 {
-    // TODO
+
+    e.add( ":plugin_id", _idata->descriptor->UniqueID );
+
+    /* these help us display the module on systems which are missing this plugin */
+    e.add( ":plugin_ins", _plugin_ins );
+    e.add( ":plugin_outs", _plugin_outs );
+
+    Module::get( e );
 }
 
 void
 LADSPA_Plugin::set ( Log_Entry &e )
 {
-    // TODO
+    int n = 0;
+
+    /* we need to have number() defined before we create the control inputs in load() */
+    for ( int i = 0; i < e.size(); ++i )
+    {
+        const char *s, *v;
+
+        e.get( i, &s, &v );
+
+    	if ( ! strcmp(s, ":number" ) )
+        {
+	    n = atoi(v);
+        }
+    }
+
+    /* need to call this to set label even for version 0 modules */
+    number(n);
+    
+    for ( int i = 0; i < e.size(); ++i )
+    {
+        const char *s, *v;
+
+        e.get( i, &s, &v );
+
+        if ( ! strcmp( s, ":plugin_id" ) )
+        {
+            load_plugin( (unsigned long) atoll ( v ) );
+        }
+        else if ( ! strcmp( s, ":plugin_ins" ) )
+        {
+            _plugin_ins = atoi( v );
+        }
+        else if ( ! strcmp( s, ":plugin_outs" ) )
+        {
+            _plugin_outs = atoi( v );
+        }
+    }
+
+    Module::set( e );
 }
