@@ -165,11 +165,8 @@ private:
     bool load_ladspa ( unsigned long id );
     bool load_lv2 ( const char* uri );
 
-    volatile nframes_t _latency;
     nframes_t _last_latency;
     
-    void init ( void );
-
     void bbox ( int &X, int &Y, int &W, int &H )
         {
             X = x();
@@ -182,7 +179,6 @@ public:
 
     ImplementationData *_idata;
 
-private:
     int _plugin_ins;
     int _plugin_outs;
 #ifdef LV2_WORKER_SUPPORT
@@ -200,6 +196,7 @@ private:
 #endif
     bool _crosswire;
 
+private:
     static void *discover_thread ( void * );
  
     
@@ -210,8 +207,6 @@ private:
     void deactivate ( void );
     
     bool apply ( sample_t *buf, nframes_t nframes );
-
-    bool plugin_instances ( unsigned int );
 
     void connect_ports ( void );
 
@@ -308,6 +303,10 @@ public:
     MODULE_CLONE_FUNC( Plugin_Module );
 
 protected:
+
+    volatile nframes_t _latency;
+    void init ( void );
+    bool plugin_instances ( unsigned int );
 
     void get ( Log_Entry &e ) const;
     void set ( Log_Entry &e );
