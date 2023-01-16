@@ -332,7 +332,14 @@ static LV2_Lib_Manager lv2_lib_manager;
 
 LV2_Plugin::LV2_Plugin ( ) : Plugin_Module( )
 {
-    // TODO
+    init();
+
+   // FIXME check this
+   // color( fl_color_average(  fl_rgb_color( 0x99, 0x7c, 0x3a ), FL_BACKGROUND_COLOR, 1.0f ));
+    
+   // end();
+
+   // log_create();
 }
 
 LV2_Plugin::~LV2_Plugin ( )
@@ -1038,11 +1045,95 @@ LV2_Plugin::process ( nframes_t nframes )
 void
 LV2_Plugin::get ( Log_Entry &e ) const
 {
-    // TODO
+    e.add( ":lv2_plugin_uri", _idata->lv2.descriptor->URI );
+ 
+    /* these help us display the module on systems which are missing this plugin */
+    e.add( ":plugin_ins", _plugin_ins );
+    e.add( ":plugin_outs", _plugin_outs );
+
+    Module::get( e );
 }
 
 void
 LV2_Plugin::set ( Log_Entry &e )
 {
-    // TODO
+    int n = 0;
+    std::string restore = "";
+
+    /* we need to have number() defined before we create the control inputs in load() */
+    for ( int i = 0; i < e.size(); ++i )
+    {
+        const char *s, *v;
+
+        e.get( i, &s, &v );
+
+    	if ( ! strcmp(s, ":number" ) )
+        {
+	    n = atoi(v);
+        }
+    }
+
+    /* need to call this to set label even for version 0 modules */
+    number(n);
+
+    for ( int i = 0; i < e.size(); ++i )
+    {
+        const char *s, *v;
+
+        e.get( i, &s, &v );
+
+        if ( ! strcmp( s, ":lv2_plugin_uri" ) )
+        {
+#ifdef LV2_WORKER_SUPPORT
+            _loading_from_file = true;
+#endif
+            load_plugin( v );
+        }
+        else if ( ! strcmp( s, ":plugin_ins" ) )
+        {
+            _plugin_ins = atoi( v );
+        }
+        else if ( ! strcmp( s, ":plugin_outs" ) )
+        {
+            _plugin_outs = atoi( v );
+        }
+        else if ( ! strcmp( s, ":custom_data" ) )
+        {
+            if(!export_import_strip.empty())
+            {
+                std::string path = export_import_strip;
+
+                std::size_t found = path.find_last_of("/\\");
+                restore = (path.substr(0, found));
+                restore += "/";
+                restore += v;
+            }
+            else
+            {
+                restore = project_directory;
+                restore += "/";
+                restore += v;
+                m_project_directory = restore;
+            }
+        }
+    }
+
+    Module::set( e );
+#ifdef LV2_WORKER_SUPPORT
+    for ( unsigned int i = 0; i < atom_input.size(); ++i )
+    {
+        if ( atom_input[i]._need_file_update )
+        {
+            send_file_to_plugin( i, get_file( i ) );
+        }
+    }
+#endif
+
+    if (!restore.empty())
+    {
+        /* some of these plugins need time to initialize before restoring */
+        usleep(50000);  // 1/2 second
+
+        restore_LV2_plugin_state(restore);
+    }
 }
