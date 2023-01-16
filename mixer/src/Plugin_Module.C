@@ -1515,6 +1515,7 @@ Plugin_Module::get_module_latency ( void ) const
 bool
 Plugin_Module::load ( Module::Picked picked )
 {
+    // FIXME this join etc is not necessary since we now do this in main
     if ( !ladspainfo )
     {
         if ( ! plugin_discover_thread )
