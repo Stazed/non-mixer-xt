@@ -24,6 +24,7 @@
 
 #pragma once
 
+#include "Module.H"
 #include "Plugin_Module.H"
 
 
