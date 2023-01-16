@@ -26,6 +26,7 @@
 
 #include "Module.H"
 #include "Plugin_Module.H"
+#include "CarlaUtils.H"
 
 
 class LV2_Plugin : public Plugin_Module {
@@ -63,7 +64,29 @@ private:
     void process_midi_in_events( uint32_t nframes, unsigned int port );
     void process_midi_out_events( uint32_t nframes, unsigned int port );
 #endif
-
+#ifdef USE_SUIL
+    bool try_custom_ui();
+    bool custom_ui_instantiate();
+    const LilvUI* try_X11_ui (const char* native_ui_type);
+#ifdef LV2_EXTERNAL_UI
+    const LilvUI* try_external_ui (const char* native_ui_type);
+#endif
+    const LilvUI* try_showInterface_ui(const char* native_ui_type);
+    bool send_to_custom_ui( uint32_t port_index, uint32_t size, uint32_t type, const void* buf );
+    void update_custom_ui();
+    void update_ui_settings();
+    void custom_update_ui();
+    static void custom_update_ui ( void * );
+    void init_x();
+    void close_custom_ui();
+    Window getChildWindow() const;
+#ifdef USE_CARLA
+    void show_custom_ui();
+    void hide_custom_ui();
+    void setSize(const uint width, const uint height, const bool forceUpdate, const bool resizeChild);
+    bool isUiResizable() const;   
+#endif  // USE_CARLA
+#endif  // USE_SUIL
 
 public:
 

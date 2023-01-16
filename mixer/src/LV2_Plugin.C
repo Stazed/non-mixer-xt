@@ -23,12 +23,46 @@
  */
 
 #include "LV2_Plugin.H"
+#include <lv2/instance-access/instance-access.h>
+#include <X11/Xatom.h>
+#include "NonMixerPluginUI_X11Icon.h"
 #include <dsp.h>
 #include "Chain.H"
 
+class Chain;    // forward declaration
+
+static const uint X11Key_Escape = 9;
 #  define MSG_BUFFER_SIZE 1024
 
-class Chain;
+#ifdef USE_SUIL
+const std::vector<std::string> v_ui_types
+{
+    LV2_UI__X11UI,
+    LV2_UI__GtkUI,
+    LV2_UI__Gtk3UI,
+    LV2_UI__Qt4UI,
+    LV2_UI__Qt5UI
+};
+#endif
+
+#ifdef USE_CARLA
+static bool gErrorTriggered = false;
+# if defined(__GNUC__) && (__GNUC__ >= 5) && ! defined(__clang__)
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wzero-as-null-pointer-constant"
+# endif
+static pthread_mutex_t gErrorMutex = PTHREAD_MUTEX_INITIALIZER;
+# if defined(__GNUC__) && (__GNUC__ >= 5) && ! defined(__clang__)
+#  pragma GCC diagnostic pop
+# endif
+
+static int temporaryErrorHandler(Display*, XErrorEvent*)
+{
+    gErrorTriggered = true;
+    return 0;
+}
+#endif // USE_CARLA
+
 
 #ifdef PRESET_SUPPORT
 // LV2 Presets: port value setter.
@@ -369,7 +403,7 @@ LV2_Plugin::~LV2_Plugin ( )
     {
         if(m_use_externalUI)
         {
-            Fl::remove_timeout(&Plugin_Module::custom_update_ui, this); // FIXME LV2_Plugin
+            Fl::remove_timeout(&LV2_Plugin::custom_update_ui, this);
             if (m_lv2_ui_widget)
                 LV2_EXTERNAL_UI_HIDE((LV2_External_UI_Widget *) m_lv2_ui_widget);
         }
@@ -1465,6 +1499,937 @@ LV2_Plugin::get_atom_output_events( void )
 }
 
 #endif  // LV2_WORKER_SUPPORT
+
+
+#ifdef USE_SUIL
+
+static uint32_t
+ui_port_index(void* const controller, const char* port_symbol)
+{
+    Plugin_Module *pLv2Plugin = static_cast<Plugin_Module *> (controller);
+    if (pLv2Plugin == NULL)
+        return LV2UI_INVALID_PORT_INDEX;
+
+    const LilvPlugin *plugin = pLv2Plugin->get_slv2_plugin();
+    if (plugin == NULL)
+        return LV2UI_INVALID_PORT_INDEX;
+
+    DMESSAGE("port_symbol = %s", port_symbol);
+
+    LilvWorld* world = pLv2Plugin->get_lilv_world();
+
+    LilvNode *symbol = lilv_new_string(world, port_symbol);
+
+    const LilvPort *port = lilv_plugin_get_port_by_symbol(plugin, symbol);
+    lilv_node_free(symbol);
+
+    if(!port)
+        return LV2UI_INVALID_PORT_INDEX;
+
+    const unsigned long port_index = lilv_port_get_index(plugin, port);
+
+    DMESSAGE("port_index = %U", port_index);
+
+    return port ? port_index : LV2UI_INVALID_PORT_INDEX;
+}
+
+static void
+send_to_plugin(void* const handle,              // Plugin_Module
+                    uint32_t    port_index,     // what port to send it to
+                    uint32_t    buffer_size,    // OU = float or atom port
+                    uint32_t    protocol,       // type of event 
+                    const void* buffer)         // param value sizeof(float) or atom event  (sizeof(LV2_Atom))
+{
+    Plugin_Module *pLv2Plugin = static_cast<Plugin_Module *> (handle);
+    if (pLv2Plugin == NULL)
+        return;
+    
+    if(pLv2Plugin->m_exit)
+        return;
+
+    if (protocol == 0U)
+    {
+        if (buffer_size != sizeof(float))
+        {
+            DMESSAGE("ERROR invalid buffer size for control");
+            return;
+        }
+
+        /* Set flag to tell set_control_value() that custom ui does not need update */
+        pLv2Plugin->_is_from_custom_ui = true;
+
+        /* Pass the control information to the plugin and other generic ui widgets */
+        pLv2Plugin->set_control_value(port_index, *(const float*)buffer);
+    }
+    else if (protocol == Plugin_Module_URI_Atom_eventTransfer) 
+    {
+        DMESSAGE("UI SENT LV2_ATOM__eventTransfer");
+        pLv2Plugin->send_atom_to_plugin( port_index, buffer_size, buffer );
+    }
+    else
+    {
+        DMESSAGE("UI wrote with unsupported protocol %u (%s)\n", protocol);
+        return;
+    }
+}
+
+bool
+LV2_Plugin::try_custom_ui()
+{
+    /* Toggle show and hide */
+    if(m_ui_instance)
+    {
+        if (fIsVisible)
+        {
+            close_custom_ui();
+            return true;
+        }
+        else
+        {
+            show_custom_ui();
+            return true;
+        }
+    }
+
+    _idata->lv2.ext.ext_data.data_access =
+        lilv_instance_get_descriptor(m_instance)->extension_data;
+    const LV2UI_Idle_Interface* idle_iface = NULL;
+    const LV2UI_Show_Interface* show_iface = NULL; 
+    
+    if( custom_ui_instantiate() )
+    {
+        if(m_ui_instance)
+        {
+            idle_iface = _idata->lv2.ext.idle_iface = (const LV2UI_Idle_Interface*)suil_instance_extension_data(
+                m_ui_instance, LV2_UI__idleInterface);
+
+            _idata->lv2.ext.resize_ui = (const LV2UI_Resize*)suil_instance_extension_data(
+                m_ui_instance, LV2_UI__resize);
+
+            if( m_use_showInterface )
+            {
+                show_iface = _idata->lv2.ext.ui_showInterface = (const LV2UI_Show_Interface*)suil_instance_extension_data(
+                    m_ui_instance, LV2_UI__showInterface);
+            }
+#ifdef LV2_EXTERNAL_UI
+            else if(m_use_externalUI)
+            {
+                m_lv2_ui_widget = suil_instance_get_widget(m_ui_instance);
+                m_lv2_ui_handle = (LV2UI_Handle)
+					suil_instance_get_handle(m_ui_instance);
+            }
+#endif
+            else   // X11 embedded
+            {
+#ifdef USE_CARLA
+                fChildWindow = getChildWindow();
+#endif
+            }
+        }
+    }
+    else
+    {
+        return false;
+    }
+
+    /* The custom ui needs to know the current settings of the plugin upon init */
+    update_ui_settings();
+    
+    if(m_use_showInterface)
+    {
+        if(idle_iface && show_iface)
+        {
+#ifdef USE_CARLA
+            show_custom_ui();
+            DMESSAGE("Running showInterface");
+#endif
+            return true;
+        }
+    }
+#ifdef LV2_EXTERNAL_UI
+    else if(m_use_externalUI)
+    {
+        show_custom_ui();
+        DMESSAGE("Running external UI");
+        return true;
+    }
+#endif
+    else if(m_use_X11_interface)   /* Run the X11 embedded */
+    {
+#ifdef USE_CARLA
+        show_custom_ui();
+        DMESSAGE("Running embedded X custom UI");
+#endif
+        return true;
+    }
+
+    return false;
+}
+
+bool
+LV2_Plugin::custom_ui_instantiate()
+{
+    m_ui_host = suil_host_new(send_to_plugin, ui_port_index, NULL, NULL);
+
+    /* Get a plugin UI */
+    m_uis = lilv_plugin_get_uis(m_plugin);
+
+    m_use_showInterface = false;
+    const char* native_ui_type;
+
+    /* Try showInterface first */
+    for(unsigned int i = 0; i < v_ui_types.size(); ++i)
+    {
+        m_ui = try_showInterface_ui(v_ui_types[i].c_str());
+        if(m_ui)
+        {
+            m_use_showInterface = true;
+            native_ui_type = v_ui_types[i].c_str();
+            MESSAGE("Using Show Interface = %s", v_ui_types[i].c_str());
+            break;
+        }
+    }
+
+    /* We didn't find showInterface so try to find an embeddable X11 UI */
+    if(!m_use_showInterface)
+    {
+        m_ui = try_X11_ui(v_ui_types[0].c_str());
+        if(m_ui)
+        {
+            native_ui_type = v_ui_types[0].c_str();
+            m_use_X11_interface = true;
+        }
+    }
+
+    if(!m_ui)
+    {
+#ifdef LV2_EXTERNAL_UI
+        m_ui = try_external_ui(LV2_EXTERNAL_UI__Widget);
+        if(m_ui)
+        {
+            native_ui_type = LV2_EXTERNAL_UI__Widget;
+            m_use_externalUI = true;
+        }
+        else
+        {
+#endif
+            MESSAGE("NO CUSTOM UI SUPPORTED");
+            return false;
+#ifdef LV2_EXTERNAL_UI
+        }
+#endif
+    }
+
+    void * parent = NULL;
+
+    if(m_use_X11_interface)   /* If embedded X11 */
+    {
+        /* We seem to have an accepted ui, so lets try to embed it in an X window*/
+        init_x();
+#ifdef USE_CARLA
+        parent = (LV2UI_Widget) fHostWindow;
+#endif
+    }
+
+#ifdef LV2_EXTERNAL_UI
+    m_lv2_ui_external_host.ui_closed = mixer_lv2_ui_closed;
+    m_lv2_ui_external_host.plugin_human_id = base_label();
+    m_lv2_ui_external_feature.URI = LV2_EXTERNAL_UI__Host;
+    m_lv2_ui_external_feature.data = &m_lv2_ui_external_host;
+#endif
+
+    const LV2_Feature parent_feature {LV2_UI__parent, parent};
+
+    const LV2_Feature instance_feature = {
+        LV2_INSTANCE_ACCESS_URI, lilv_instance_get_handle(m_instance)};
+
+    const LV2_Feature data_feature = {LV2_DATA_ACCESS_URI,
+                                      &_idata->lv2.ext.ext_data};
+
+    DMESSAGE("parent = %p: parent_feature->data = %p", parent, parent_feature.data);
+    const LV2_Feature idle_feature = {LV2_UI__idleInterface, NULL};
+
+    const LV2_Feature* ui_features[] = {_idata->lv2.features[Plugin_Feature_URID_Map],
+                                        _idata->lv2.features[Plugin_Feature_URID_Unmap],
+                                        &instance_feature,
+                                        &data_feature,
+                                      //  &jalv->features.log_feature,
+                                        &parent_feature,
+                                        _idata->lv2.features[Plugin_Feature_Options],
+                                        &idle_feature,
+                                       // &jalv->features.request_value_feature,
+                                       _idata->lv2.features[Plugin_Feature_Resize],
+#ifdef LV2_EXTERNAL_UI
+                                        &m_lv2_ui_external_feature,
+#endif
+                                        NULL};
+
+    const char* bundle_uri  = lilv_node_as_uri(lilv_ui_get_bundle_uri(m_ui));
+    const char* binary_uri  = lilv_node_as_uri(lilv_ui_get_binary_uri(m_ui));
+    char*       bundle_path = lilv_file_uri_parse(bundle_uri, NULL);
+    char*       binary_path = lilv_file_uri_parse(binary_uri, NULL);
+
+    /* This is the real deal */
+    m_ui_instance =
+      suil_instance_new(m_ui_host,
+                        this,
+                        native_ui_type,
+                        lilv_node_as_uri(lilv_plugin_get_uri(m_plugin)),
+                        lilv_node_as_uri(lilv_ui_get_uri(m_ui)),
+                        lilv_node_as_uri(m_ui_type),
+                        bundle_path,
+                        binary_path,
+                        ui_features);
+
+    lilv_free(binary_path);
+    lilv_free(bundle_path);
+
+    if( !m_ui_instance )
+    {
+        DMESSAGE("m_ui_instance == NULL");
+        return false;
+    }
+    else
+    {
+        DMESSAGE("Got valid m_ui_instance");
+    }
+
+    return true;
+}
+
+const LilvUI*
+LV2_Plugin::try_X11_ui (const char* native_ui_type)
+{
+    const LilvUI* native_ui = NULL;
+
+    if (native_ui_type)
+    {
+        LilvNode* host_type = lilv_new_uri(m_lilvWorld, native_ui_type);
+
+        LILV_FOREACH (uis, u, m_uis)
+        {
+            const LilvUI*   ui   = lilv_uis_get(m_uis, u);
+            const bool      supported =
+              lilv_ui_is_supported(ui, suil_ui_supported, host_type, &m_ui_type);
+
+            if (supported)
+            {
+                DMESSAGE("GOT UI X11");
+                lilv_node_free(host_type);
+                host_type = NULL;
+                native_ui = ui;
+            }
+        }
+
+        if(host_type)
+            lilv_node_free(host_type);
+    }
+
+    return native_ui;
+}
+
+#ifdef LV2_EXTERNAL_UI
+const LilvUI*
+LV2_Plugin::try_external_ui (const char* native_ui_type)
+{
+    const LilvUI* native_ui = NULL;
+
+    if (native_ui_type)
+    {
+        LilvNode* host_type = lilv_new_uri(m_lilvWorld, native_ui_type);
+
+        LILV_FOREACH (uis, u, m_uis)
+        {
+            const LilvUI*   ui   = lilv_uis_get(m_uis, u);
+            const bool      supported =
+              lilv_ui_is_supported(ui, suil_ui_supported, host_type, &m_ui_type);
+
+            if (supported)
+            {
+                DMESSAGE("GOT EXTERNAL");
+                lilv_node_free(host_type);
+                host_type = NULL;
+                native_ui = ui;
+            }
+        }
+
+        if(host_type)
+            lilv_node_free(host_type);
+    }
+
+    return native_ui;
+}
+#endif  // LV2_EXTERNAL_UI
+
+const LilvUI*
+LV2_Plugin::try_showInterface_ui(const char* native_ui_type)
+{
+    LilvNode*   lv2_extensionData = lilv_new_uri(m_lilvWorld, LV2_CORE__extensionData);
+    LilvNode*   ui_showInterface = lilv_new_uri(m_lilvWorld, LV2_UI__showInterface);
+    const LilvUI* native_ui = NULL;
+
+    /* Try to find a UI with ui:showInterface */
+    if(m_uis)
+    {
+        LILV_FOREACH (uis, u, m_uis)
+        {
+            const LilvUI*   ui      = lilv_uis_get(m_uis, u);
+            const LilvNode* ui_node = lilv_ui_get_uri(ui);
+
+            lilv_world_load_resource(m_lilvWorld, ui_node);
+
+            const bool supported = lilv_world_ask(m_lilvWorld,
+                                                  ui_node,
+                                                  lv2_extensionData,
+                                                  ui_showInterface);
+
+            lilv_world_unload_resource(m_lilvWorld, ui_node);
+
+            if (supported)
+            {
+                native_ui = ui;
+                DMESSAGE("GOT ShowInterface CUSTOM UI");
+                break;
+            }
+            else
+            {
+                DMESSAGE("NO ShowInterface %s", native_ui_type);
+                return NULL;
+            }
+        }
+    }
+    else
+    {
+        DMESSAGE("NO m_uis");
+        return NULL;
+    }
+
+    LilvNode* host_type = lilv_new_uri(m_lilvWorld, native_ui_type);
+
+    if (!lilv_ui_is_supported(
+              native_ui, suil_ui_supported, host_type, &m_ui_type))
+    {
+          native_ui = NULL;
+    }
+
+    if(host_type)
+        lilv_node_free(host_type);
+
+    return native_ui;
+}
+
+bool
+LV2_Plugin::send_to_custom_ui( uint32_t port_index, uint32_t size, uint32_t protocol, const void* buf )
+{
+    /* port_index coming in is internal number - so convert to plugin .ttl number */
+    port_index = control_input[port_index].hints.plug_port_index;
+
+   // DMESSAGE("Port_index = %u: Value = %f", port_index, *(const float*)buf);
+    if(m_ui_instance)
+    {
+        suil_instance_port_event(
+            m_ui_instance, port_index, size, protocol, buf );
+    }
+
+    return true;
+}
+
+/**
+ Send the current LV2 plugin output settings to the custom ui
+ */
+void
+LV2_Plugin::update_custom_ui()
+{
+    if(!m_ui_instance)
+        return;
+
+    for ( unsigned int i = 0; i < control_output.size(); ++i)
+    {
+        float value = control_output[i].control_value();
+        uint32_t port_index = control_output[i].hints.plug_port_index;
+
+        suil_instance_port_event(
+            m_ui_instance, port_index, sizeof(float), 0, &value );
+    }
+}
+
+/**
+ Send the current LV2 plugin input settings to the custom ui.
+ */
+void
+LV2_Plugin::update_ui_settings()
+{
+    if(!m_ui_instance)
+        return;
+
+    for ( unsigned int i = 0; i < control_input.size(); ++i)
+    {
+        float value = isnan(control_input[i].control_value()) ? 0.0f : control_input[i].control_value();
+        uint32_t port_index = control_input[i].hints.plug_port_index;
+
+        suil_instance_port_event(
+            m_ui_instance, port_index, sizeof(float), 0, &value );
+    }
+}
+
+/**
+ Callback for custom ui idle interface
+ */
+void 
+LV2_Plugin::custom_update_ui ( void *v )
+{
+    ((LV2_Plugin*)v)->custom_update_ui();
+}
+
+/**
+ The idle callback to update_custom_ui()
+ */
+void
+LV2_Plugin::custom_update_ui()
+{
+#ifdef LV2_EXTERNAL_UI
+    if(m_use_externalUI)
+    {
+        if (m_lv2_ui_widget)
+            LV2_EXTERNAL_UI_RUN((LV2_External_UI_Widget *) m_lv2_ui_widget);
+    }
+    else
+#endif
+    if(m_use_X11_interface)    // X11 embedded
+    {
+#ifdef USE_CARLA
+        // prevent recursion
+        if (fIsIdling) return;
+
+        int nextWidth = 0;
+        int nextHeight = 0;
+
+        fIsIdling = true;
+
+        for (XEvent event; XPending(fDisplay) > 0;)
+        {
+            XNextEvent(fDisplay, &event);
+
+            if (! fIsVisible)
+                continue;
+
+            char* type = nullptr;
+
+            switch (event.type)
+            {
+            case ConfigureNotify:
+                CARLA_SAFE_ASSERT_CONTINUE(event.xconfigure.width > 0);
+                CARLA_SAFE_ASSERT_CONTINUE(event.xconfigure.height > 0);
+
+                if (event.xconfigure.window == fHostWindow)
+                {
+                    const uint width  = static_cast<uint>(event.xconfigure.width);
+                    const uint height = static_cast<uint>(event.xconfigure.height);
+
+                    if (fChildWindow != 0)
+                    {
+                        if (! fChildWindowConfigured)
+                        {
+                            pthread_mutex_lock(&gErrorMutex);
+                            const XErrorHandler oldErrorHandler = XSetErrorHandler(temporaryErrorHandler);
+                            gErrorTriggered = false;
+
+                            XSizeHints sizeHints;
+                            carla_zeroStruct(sizeHints);
+
+                            if (XGetNormalHints(fDisplay, fChildWindow, &sizeHints) && !gErrorTriggered)
+                            {
+                                XSetNormalHints(fDisplay, fHostWindow, &sizeHints);
+                            }
+                            else
+                            {
+                                WARNING("Caught errors while accessing child window");
+                                fChildWindow = 0;
+                            }
+
+                            fChildWindowConfigured = true;
+                            XSetErrorHandler(oldErrorHandler);
+                            pthread_mutex_unlock(&gErrorMutex);
+                        }
+
+                        if (fChildWindow != 0)
+                            XResizeWindow(fDisplay, fChildWindow, width, height);
+                    }
+                }
+                else if (fChildWindowMonitoring && event.xconfigure.window == fChildWindow && fChildWindow != 0)
+                {
+                    nextWidth = event.xconfigure.width;
+                    nextHeight = event.xconfigure.height;
+                }
+                break;
+
+            case ClientMessage:
+                type = XGetAtomName(fDisplay, event.xclient.message_type);
+                CARLA_SAFE_ASSERT_CONTINUE(type != nullptr);
+
+                if (std::strcmp(type, "WM_PROTOCOLS") == 0)
+                {
+                    fIsVisible = false;
+                }
+                break;
+
+            case KeyRelease:
+                if (event.xkey.keycode == X11Key_Escape)
+                {
+                    fIsVisible = false;
+                }
+                break;
+
+            case FocusIn:
+                if (fChildWindow == 0)
+                    fChildWindow = getChildWindow();
+                if (fChildWindow != 0)
+                {
+                    XWindowAttributes wa;
+                    carla_zeroStruct(wa);
+
+                    if (XGetWindowAttributes(fDisplay, fChildWindow, &wa) && wa.map_state == IsViewable)
+                        XSetInputFocus(fDisplay, fChildWindow, RevertToPointerRoot, CurrentTime);
+                }
+                break;
+            }
+
+            if (type != nullptr)
+                XFree(type);
+            else if (fEventProc != nullptr && event.type != FocusIn && event.type != FocusOut)
+                fEventProc(&event);
+        }
+
+        if (nextWidth != 0 && nextHeight != 0 && fChildWindow != 0)
+        {
+            XSizeHints sizeHints;
+            carla_zeroStruct(sizeHints);
+
+            if (XGetNormalHints(fDisplay, fChildWindow, &sizeHints))
+                XSetNormalHints(fDisplay, fHostWindow, &sizeHints);
+
+            XResizeWindow(fDisplay, fHostWindow, static_cast<uint>(nextWidth), static_cast<uint>(nextHeight));
+            XFlush(fDisplay);
+        }
+
+        fIsIdling = false;
+#endif  //  USE_CARLA
+    }
+
+    if( _idata->lv2.ext.idle_iface)
+    {
+        if (_idata->lv2.ext.idle_iface->idle(suil_instance_get_handle(m_ui_instance)))
+        {
+            DMESSAGE("INTERFACE CLOSED");
+            fIsVisible = false;
+        }
+    }
+
+    if(fIsVisible)
+    {
+        update_custom_ui();
+        Fl::repeat_timeout( 0.03f, &LV2_Plugin::custom_update_ui, this );
+    }
+    else
+    {
+        close_custom_ui();
+    }
+}
+
+void
+LV2_Plugin::init_x()
+{
+#ifdef USE_CARLA
+    fChildWindowMonitoring = fIsResizable = isUiResizable();
+    
+    fDisplay = XOpenDisplay(nullptr);
+    CARLA_SAFE_ASSERT_RETURN(fDisplay != nullptr,);
+
+    const int screen = DefaultScreen(fDisplay);
+
+    XSetWindowAttributes attr;
+    carla_zeroStruct(attr);
+
+    attr.event_mask = KeyPressMask|KeyReleaseMask|FocusChangeMask;
+
+    if (fChildWindowMonitoring)
+        attr.event_mask |= StructureNotifyMask|SubstructureNotifyMask;
+
+    fHostWindow = XCreateWindow(fDisplay, RootWindow(fDisplay, screen),
+                                0, 0, 300, 300, 0,
+                                DefaultDepth(fDisplay, screen),
+                                InputOutput,
+                                DefaultVisual(fDisplay, screen),
+                                CWBorderPixel|CWEventMask, &attr);
+
+    CARLA_SAFE_ASSERT_RETURN(fHostWindow != 0,);
+
+    XSetStandardProperties(fDisplay, fHostWindow, label(), label(), None, NULL, 0, NULL);
+
+    XGrabKey(fDisplay, X11Key_Escape, AnyModifier, fHostWindow, 1, GrabModeAsync, GrabModeAsync);
+
+    Atom wmDelete = XInternAtom(fDisplay, "WM_DELETE_WINDOW", True);
+    XSetWMProtocols(fDisplay, fHostWindow, &wmDelete, 1);
+
+    const pid_t pid = getpid();
+    const Atom _nwp = XInternAtom(fDisplay, "_NET_WM_PID", False);
+    XChangeProperty(fDisplay, fHostWindow, _nwp, XA_CARDINAL, 32, PropModeReplace, (const uchar*)&pid, 1);
+
+    const Atom _nwi = XInternAtom(fDisplay, "_NET_WM_ICON", False);
+    XChangeProperty(fDisplay, fHostWindow, _nwi, XA_CARDINAL, 32, PropModeReplace, (const uchar*)sNonMixerX11Icon, sNonMixerX11IconSize);
+
+    const Atom _wt = XInternAtom(fDisplay, "_NET_WM_WINDOW_TYPE", False);
+
+    // Setting the window to both dialog and normal will produce a decorated floating dialog
+    // Order is important: DIALOG needs to come before NORMAL
+    const Atom _wts[2] = {
+        XInternAtom(fDisplay, "_NET_WM_WINDOW_TYPE_DIALOG", False),
+        XInternAtom(fDisplay, "_NET_WM_WINDOW_TYPE_NORMAL", False)
+    };
+    XChangeProperty(fDisplay, fHostWindow, _wt, XA_ATOM, 32, PropModeReplace, (const uchar*)&_wts, 2);
+#endif
+}
+
+void
+LV2_Plugin::close_custom_ui()
+{
+    DMESSAGE("Closing Custom Interface");
+    Fl::remove_timeout(&LV2_Plugin::custom_update_ui, this);
+
+    if( m_use_showInterface )
+    {
+        _idata->lv2.ext.ui_showInterface->hide(suil_instance_get_handle(m_ui_instance));
+        fIsVisible = false;
+
+        /* For some unknown reason the Calf plugins idle interface does not get reset
+           after the above ->hide is called. Any subsequent call to ->show then fails.
+           So, instead we destroy the custom UI here and then re-create on show. */
+        suil_instance_free(m_ui_instance);
+        m_ui_instance = NULL;
+        suil_host_free(m_ui_host);
+        m_ui_host = NULL;
+    }
+#ifdef LV2_EXTERNAL_UI
+    else if( m_use_externalUI )
+    {
+        if (m_lv2_ui_widget)
+            LV2_EXTERNAL_UI_HIDE((LV2_External_UI_Widget *) m_lv2_ui_widget);
+
+        fIsVisible = false;
+
+        if(m_ui_instance)
+            suil_instance_free(m_ui_instance);
+
+        m_ui_instance = NULL;
+
+        suil_host_free(m_ui_host);
+        m_ui_host = NULL;
+    }
+#endif
+    else    // X11
+    {
+#ifdef USE_CARLA
+        hide_custom_ui();
+#endif
+    }
+}
+
+Window
+LV2_Plugin::getChildWindow() const
+{
+#ifdef USE_CARLA
+    CARLA_SAFE_ASSERT_RETURN(fDisplay != nullptr, 0);
+    CARLA_SAFE_ASSERT_RETURN(fHostWindow != 0, 0);
+
+    Window rootWindow, parentWindow, ret = 0;
+    Window* childWindows = nullptr;
+    uint numChildren = 0;
+
+    XQueryTree(fDisplay, fHostWindow, &rootWindow, &parentWindow, &childWindows, &numChildren);
+
+    if (numChildren > 0 && childWindows != nullptr)
+    {
+        ret = childWindows[0];
+        XFree(childWindows);
+    }
+
+    return ret;
+#endif
+}
+
+#ifdef USE_CARLA
+void
+LV2_Plugin::show_custom_ui()
+{
+    if( m_use_showInterface )
+    {
+        _idata->lv2.ext.ui_showInterface->show(suil_instance_get_handle(m_ui_instance));
+        fIsVisible = true;
+
+        Fl::add_timeout( 0.03f, &LV2_Plugin::custom_update_ui, this );
+        return;
+    }
+#ifdef LV2_EXTERNAL_UI
+    if( m_use_externalUI )
+    {
+        if (m_lv2_ui_widget)
+            LV2_EXTERNAL_UI_SHOW((LV2_External_UI_Widget *) m_lv2_ui_widget);
+
+        fIsVisible = true;
+        Fl::add_timeout( 0.03f, &LV2_Plugin::custom_update_ui, this );
+        return;
+    }
+#endif
+    CARLA_SAFE_ASSERT_RETURN(fDisplay != nullptr,);
+    CARLA_SAFE_ASSERT_RETURN(fHostWindow != 0,);
+
+    if (fFirstShow)
+    {
+        if (const Window childWindow = getChildWindow())
+        {
+            if (! fSetSizeCalledAtLeastOnce)
+            {
+                int width = 0;
+                int height = 0;
+
+                XWindowAttributes attrs;
+                carla_zeroStruct(attrs);
+
+                pthread_mutex_lock(&gErrorMutex);
+                const XErrorHandler oldErrorHandler = XSetErrorHandler(temporaryErrorHandler);
+                gErrorTriggered = false;
+
+                if (XGetWindowAttributes(fDisplay, childWindow, &attrs))
+                {
+                    width = attrs.width;
+                    height = attrs.height;
+                }
+
+                XSetErrorHandler(oldErrorHandler);
+                pthread_mutex_unlock(&gErrorMutex);
+
+                if (width == 0 && height == 0)
+                {
+                    XSizeHints sizeHints;
+                    carla_zeroStruct(sizeHints);
+
+                    if (XGetNormalHints(fDisplay, childWindow, &sizeHints))
+                    {
+                        if (sizeHints.flags & PSize)
+                        {
+                            width = sizeHints.width;
+                            height = sizeHints.height;
+                        }
+                        else if (sizeHints.flags & PBaseSize)
+                        {
+                            width = sizeHints.base_width;
+                            height = sizeHints.base_height;
+                        }
+                    }
+                }
+
+                if (width > 1 && height > 1)
+                    setSize(static_cast<uint>(width), static_cast<uint>(height), false, fIsResizable);
+            }
+
+            const Atom _xevp = XInternAtom(fDisplay, "_XEventProc", False);
+
+            pthread_mutex_lock(&gErrorMutex);
+            const XErrorHandler oldErrorHandler(XSetErrorHandler(temporaryErrorHandler));
+            gErrorTriggered = false;
+
+            Atom actualType;
+            int actualFormat;
+            ulong nitems, bytesAfter;
+            uchar* data = nullptr;
+
+            XGetWindowProperty(fDisplay, childWindow, _xevp, 0, 1, False, AnyPropertyType,
+                               &actualType, &actualFormat, &nitems, &bytesAfter, &data);
+
+            XSetErrorHandler(oldErrorHandler);
+            pthread_mutex_unlock(&gErrorMutex);
+
+            if (nitems == 1 && ! gErrorTriggered)
+            {
+                fEventProc = *reinterpret_cast<EventProcPtr*>(data);
+                XMapRaised(fDisplay, childWindow);
+            }
+        }
+    }
+
+    fIsVisible = true;
+    fFirstShow = false;
+
+    XMapRaised(fDisplay, fHostWindow);
+    XSync(fDisplay, False);
+
+    Fl::add_timeout( 0.03f, &LV2_Plugin::custom_update_ui, this );
+}
+
+void
+LV2_Plugin::hide_custom_ui()
+{
+    CARLA_SAFE_ASSERT_RETURN(fDisplay != nullptr,);
+    CARLA_SAFE_ASSERT_RETURN(fHostWindow != 0,);
+
+    fIsVisible = false;
+    XUnmapWindow(fDisplay, fHostWindow);
+    XFlush(fDisplay);
+}
+
+void
+LV2_Plugin::setSize(const uint width, const uint height, const bool forceUpdate, const bool resizeChild)
+{
+    CARLA_SAFE_ASSERT_RETURN(fDisplay != nullptr,);
+    CARLA_SAFE_ASSERT_RETURN(fHostWindow != 0,);
+
+    fSetSizeCalledAtLeastOnce = true;
+    XResizeWindow(fDisplay, fHostWindow, width, height);
+
+    if (fChildWindow != 0 && resizeChild)
+        XResizeWindow(fDisplay, fChildWindow, width, height);
+
+    if (! fIsResizable)
+    {
+        XSizeHints sizeHints;
+        carla_zeroStruct(sizeHints);
+
+        sizeHints.flags      = PSize|PMinSize|PMaxSize;
+        sizeHints.width      = static_cast<int>(width);
+        sizeHints.height     = static_cast<int>(height);
+        sizeHints.min_width  = static_cast<int>(width);
+        sizeHints.min_height = static_cast<int>(height);
+        sizeHints.max_width  = static_cast<int>(width);
+        sizeHints.max_height = static_cast<int>(height);
+
+        XSetNormalHints(fDisplay, fHostWindow, &sizeHints);
+    }
+
+    if (forceUpdate)
+        XSync(fDisplay, False);
+}
+
+bool
+LV2_Plugin::isUiResizable() const
+{
+    CARLA_SAFE_ASSERT_RETURN(_idata->lv2.rdf_data != nullptr, false);
+
+    for (uint32_t i=0; i < _idata->lv2.rdf_data->FeatureCount; ++i)
+    {
+        if (std::strcmp(_idata->lv2.rdf_data->Features[i].URI, LV2_UI__fixedSize) == 0)
+            return false;
+
+        if (std::strcmp(_idata->lv2.rdf_data->Features[i].URI, LV2_UI__noUserResize) == 0)
+            return false;
+    }
+
+    return true;
+}
+
+#endif  // USE_CARLA
+#endif  // USE_SUIL
+
+
 
 
 void
