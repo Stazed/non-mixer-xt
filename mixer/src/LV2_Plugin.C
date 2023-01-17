@@ -1032,17 +1032,308 @@ LV2_Plugin::load_plugin ( const char* uri )
     return instances;
 }
 
+// FIXME parent
+bool
+LV2_Plugin::configure_inputs( int n )
+{
+    unsigned int inst = _idata->handle.size();
+    
+    /* The synth case - no inputs and JACK module has one */
+    if( ninputs() == 0 && n == 1)
+    {
+        _crosswire = false;
+    }
+    else if ( ninputs() != n )
+    {
+        _crosswire = false;
+
+        if ( n != ninputs() )
+        {
+            if ( 1 == n && plugin_ins() > 1 )
+            {
+                DMESSAGE( "Cross-wiring plugin inputs" );
+                _crosswire = true;
+
+                audio_input.clear();
+
+                for ( int i = n; i--; )
+                    audio_input.push_back( Port( this, Port::INPUT, Port::AUDIO ) );
+            }
+            else if ( n >= plugin_ins() &&
+                      ( plugin_ins() == 1 && plugin_outs() == 1 ) )
+            {
+                DMESSAGE( "Running multiple instances of plugin" );
+
+                audio_input.clear();
+                audio_output.clear();
+
+                for ( int i = n; i--; )
+                {
+                    add_port( Port( this, Port::INPUT, Port::AUDIO ) );
+                    add_port( Port( this, Port::OUTPUT, Port::AUDIO ) );
+                }
+
+                inst = n;
+            }
+            else if ( n == plugin_ins() )
+            {
+                DMESSAGE( "Plugin input configuration is a perfect match" );
+            }
+            else
+            {
+                DMESSAGE( "Unsupported input configuration" );
+                return false;
+            }
+        }
+    }
+
+    if ( loaded() )
+    {
+        bool b = bypass();
+        if ( inst != _idata->handle.size() )
+        {
+            if ( !b )
+                deactivate();
+            
+            if ( plugin_instances( inst ) )
+                instances( inst );
+            else
+                return false;
+            
+            if ( !b )
+                activate();
+        }
+    }
+
+    return true;
+}
+
+// FIXME parent
+void
+LV2_Plugin::handle_port_connection_change ( void )
+{
+//    DMESSAGE( "Connecting audio ports" );
+
+    if ( loaded() )
+    {
+        if ( _crosswire )
+        {
+            for ( int i = 0; i < plugin_ins(); ++i )
+                set_input_buffer( i, audio_input[0].buffer() );
+        }
+        else
+        {
+            for ( unsigned int i = 0; i < audio_input.size(); ++i )
+                set_input_buffer( i, audio_input[i].buffer() );
+        }
+
+        for ( unsigned int i = 0; i < audio_output.size(); ++i )
+            set_output_buffer( i, audio_output[i].buffer() );
+    }
+}
+
+void
+LV2_Plugin::handle_sample_rate_change ( nframes_t sample_rate )
+{
+    if ( ! _idata->lv2.rdf_data )
+        return;
+
+    _idata->lv2.options.sampleRate = sample_rate;
+
+    if ( _idata->lv2.ext.options && _idata->lv2.ext.options->set )
+    {
+        for ( unsigned int i = 0; i < _idata->handle.size(); ++i )
+            _idata->lv2.ext.options->set( _idata->handle[i], &(_idata->lv2.options.opts[Plugin_Module_Options::SampleRate]) );
+    }
+
+    unsigned int nport = 0;
+
+    for ( unsigned int i = 0; i < _idata->lv2.rdf_data->PortCount; ++i )
+    {
+        if ( LV2_IS_PORT_INPUT( _idata->lv2.rdf_data->Ports[i].Types ) &&
+             LV2_IS_PORT_CONTROL( _idata->lv2.rdf_data->Ports[i].Types ) )
+        {
+            if ( LV2_IS_PORT_DESIGNATION_SAMPLE_RATE( _idata->lv2.rdf_data->Ports[i].Designation ) )
+            {
+                control_input[nport].control_value( sample_rate );
+                break;
+            }
+            ++nport;
+        }
+    }
+}
+
+void
+LV2_Plugin::resize_buffers ( nframes_t buffer_size )
+{
+    Module::resize_buffers( buffer_size );
+
+    if ( ! _idata->lv2.rdf_data )
+        return;
+
+    _idata->lv2.options.maxBufferSize = buffer_size;
+    _idata->lv2.options.minBufferSize = buffer_size;
+
+    if ( _idata->lv2.ext.options && _idata->lv2.ext.options->set )
+    {
+        for ( unsigned int i = 0; i < _idata->handle.size(); ++i )
+        {
+            _idata->lv2.ext.options->set( _idata->handle[i], &(_idata->lv2.options.opts[Plugin_Module_Options::MaxBlockLenth]) );
+            _idata->lv2.ext.options->set( _idata->handle[i], &(_idata->lv2.options.opts[Plugin_Module_Options::MinBlockLenth]) );
+        }
+    }
+}
+
+bool
+LV2_Plugin::plugin_instances ( unsigned int n )
+{
+    if ( _idata->handle.size() > n )
+    {
+        for ( int i = _idata->handle.size() - n; i--; )
+        {
+            DMESSAGE( "Destroying plugin instance" );
+
+            LV2_Handle h = _idata->handle.back();
+
+            if ( _idata->lv2.descriptor->deactivate )
+                _idata->lv2.descriptor->deactivate( h );
+            if ( _idata->lv2.descriptor->cleanup )
+                _idata->lv2.descriptor->cleanup( h );
+
+            _idata->handle.pop_back();
+        }
+    }
+    else if ( _idata->handle.size() < n )
+    {
+        for ( int i = n - _idata->handle.size(); i--; )
+        {
+            DMESSAGE( "Instantiating plugin... with sample rate %lu", (unsigned long)sample_rate());
+
+            void* h;
+
+            m_instance = lilv_plugin_instantiate(m_plugin,  sample_rate(), _idata->lv2.features);
+
+            if ( ! m_instance )
+            {
+                WARNING( "Failed to instantiate plugin" );
+                return false;
+            }
+            else
+            {
+                h = m_instance->lv2_handle;
+                _idata->lv2.descriptor = m_instance->lv2_descriptor;    // probably not necessary
+            }
+
+            DMESSAGE( "Instantiated: %p", h );
+
+            _idata->handle.push_back( h );
+
+            DMESSAGE( "Connecting control ports..." );
+
+            int ij = 0;
+            int oj = 0;
+#ifdef LV2_WORKER_SUPPORT
+            int aji = 0;
+            int ajo = 0;
+#endif
+            for ( unsigned int k = 0; k < _idata->lv2.rdf_data->PortCount; ++k )
+            {
+                if ( LV2_IS_PORT_CONTROL( _idata->lv2.rdf_data->Ports[k].Types ) )
+                {
+                    if ( LV2_IS_PORT_INPUT( _idata->lv2.rdf_data->Ports[k].Types ) )
+                        _idata->lv2.descriptor->connect_port( h, k, (float*)control_input[ij++].buffer() );
+                    else if ( LV2_IS_PORT_OUTPUT( _idata->lv2.rdf_data->Ports[k].Types ) )
+                        _idata->lv2.descriptor->connect_port( h, k, (float*)control_output[oj++].buffer() );
+                }
+                // we need to connect non audio/control ports to NULL
+                else if ( ! LV2_IS_PORT_AUDIO( _idata->lv2.rdf_data->Ports[k].Types ) &&
+                         !LV2_IS_PORT_ATOM_SEQUENCE ( _idata->lv2.rdf_data->Ports[k].Types ))
+                    _idata->lv2.descriptor->connect_port( h, k, NULL );
+
+#ifdef LV2_WORKER_SUPPORT
+                if (LV2_IS_PORT_ATOM_SEQUENCE ( _idata->lv2.rdf_data->Ports[k].Types ))
+                {
+                    if ( LV2_IS_PORT_INPUT( _idata->lv2.rdf_data->Ports[k].Types ) )
+                    {
+                        if ( atom_input[aji].event_buffer() )
+                            lv2_evbuf_free( atom_input[aji].event_buffer() );
+
+                        const size_t buf_size = ATOM_BUFFER_SIZE;
+                        atom_input[aji].event_buffer( lv2_evbuf_new(buf_size,
+                                                              _uridMapFt->map(_uridMapFt->handle,
+                                                                              LV2_ATOM__Chunk),
+                                                              _uridMapFt->map(_uridMapFt->handle,
+                                                                              LV2_ATOM__Sequence)) );
+
+                        _idata->lv2.descriptor->connect_port( h, k, lv2_evbuf_get_buffer(atom_input[aji].event_buffer()));
+
+                        DMESSAGE("ATOM IN event_buffer = %p", lv2_evbuf_get_buffer(atom_input[aji].event_buffer()));
+
+                        /* This sets the capacity */
+                        lv2_evbuf_reset(atom_input[aji].event_buffer(), true);
+
+                        aji++;
+                    }
+                    else if ( LV2_IS_PORT_OUTPUT( _idata->lv2.rdf_data->Ports[k].Types ) )
+                    {
+
+                        if ( atom_output[ajo].event_buffer() )
+                            lv2_evbuf_free( atom_output[ajo].event_buffer() );
+
+                        const size_t buf_size = ATOM_BUFFER_SIZE;
+                        atom_output[ajo].event_buffer( lv2_evbuf_new(buf_size,
+                                                              _uridMapFt->map(_uridMapFt->handle,
+                                                                              LV2_ATOM__Chunk),
+                                                              _uridMapFt->map(_uridMapFt->handle,
+                                                                              LV2_ATOM__Sequence)) );
+
+                        _idata->lv2.descriptor->connect_port( h, k, lv2_evbuf_get_buffer( atom_output[ajo].event_buffer() ));
+
+                        /* This sets the capacity */
+                        lv2_evbuf_reset(atom_output[ajo].event_buffer(), false);
+
+                        DMESSAGE("ATOM OUT event_buffer = %p", lv2_evbuf_get_buffer( atom_output[ajo].event_buffer() ) );
+
+                        ajo++;
+                    }
+                }
+#endif
+            }
+
+            // connect ports to magic bogus value to aid debugging.
+            for ( unsigned int k = 0; k < _idata->lv2.rdf_data->PortCount; ++k )
+                if ( LV2_IS_PORT_AUDIO( _idata->lv2.rdf_data->Ports[k].Types ) )
+                    _idata->lv2.descriptor->connect_port( h, k, (float*)0x42 );
+        }
+    }
+
+    return true;
+}
+
+// FIXME parent
+void
+LV2_Plugin::bypass ( bool v )
+{
+    if ( v != bypass() )
+    {
+        if ( v )
+            deactivate();
+        else
+            activate();
+    }
+}
+
 void
 LV2_Plugin::init ( void )
 {
-    Plugin_Module::init();
-  //  _latency = 0;
+  //  Plugin_Module::init();    // FIXME
+    _latency = 0;
   //  _last_latency = 0;
     _idata = new ImplementationData();
     /* module will be bypassed until plugin is loaded */
- //   _bypass = true;
- //   _crosswire = false;
-  //  _is_lv2 = false;
+    _bypass = true;
+    _crosswire = false;
+    _is_lv2 = true;
     m_project_directory = "";
 
  //   align( (Fl_Align)FL_ALIGN_CENTER | FL_ALIGN_INSIDE );
@@ -1157,8 +1448,116 @@ _Pragma("GCC diagnostic pop")
 #endif  // USE_SUIL
 }
 
+void
+LV2_Plugin::set_input_buffer ( int n, void *buf )
+{
+    void* h;
+
+    if ( instances() > 1 )
+    {
+        h = _idata->handle[n];
+        n = 0;
+    }
+    else
+    {
+        h = _idata->handle[0];
+    }
+
+    for ( unsigned int i = 0; i < _idata->lv2.rdf_data->PortCount; ++i )
+    {
+        if ( LV2_IS_PORT_INPUT( _idata->lv2.rdf_data->Ports[i].Types ) &&
+             LV2_IS_PORT_AUDIO( _idata->lv2.rdf_data->Ports[i].Types ) )
+        {
+            if ( n-- == 0 )
+                _idata->lv2.descriptor->connect_port( h, i, (float*)buf );
+        }
+    }
+}
+
+bool
+LV2_Plugin::loaded ( void ) const
+{
+    return _idata->handle.size() > 0 && ( _idata->lv2.rdf_data && _idata->lv2.descriptor);
+}
+
+void
+LV2_Plugin::set_output_buffer ( int n, void *buf )
+{
+    void* h;
+
+    if ( instances() > 1 )
+    {
+        h = _idata->handle[n];
+        n = 0;
+    }
+    else
+        h = _idata->handle[0];
+
+    for ( unsigned int i = 0; i < _idata->lv2.rdf_data->PortCount; ++i )
+    {
+        if ( LV2_IS_PORT_OUTPUT( _idata->lv2.rdf_data->Ports[i].Types ) &&
+            LV2_IS_PORT_AUDIO( _idata->lv2.rdf_data->Ports[i].Types ) )
+        {
+            if ( n-- == 0 )
+                _idata->lv2.descriptor->connect_port( h, i, (float*)buf );
+        }
+    }
+}
+
+void
+LV2_Plugin::activate ( void )
+{
+    if ( !loaded() )
+        return;
+
+    DMESSAGE( "Activating plugin \"%s\"", label() );
+
+    if ( !bypass() )
+        FATAL( "Attempt to activate already active plugin" );
+
+    if ( chain() )
+        chain()->client()->lock();
+
+    if ( _idata->lv2.descriptor->activate )
+    {
+        for ( unsigned int i = 0; i < _idata->handle.size(); ++i )
+        {
+            _idata->lv2.descriptor->activate( _idata->handle[i] );
+        }
+    }
+
+    _bypass = false;
+
+    if ( chain() )
+        chain()->client()->unlock();
+}
+
+void
+LV2_Plugin::deactivate( void )
+{
+    if ( !loaded() )
+        return;
+
+    DMESSAGE( "Deactivating plugin \"%s\"", label() );
+
+    if ( chain() )
+        chain()->client()->lock();
+
+    _bypass = true;
+
+    if ( _idata->lv2.descriptor->deactivate )
+    {
+        for ( unsigned int i = 0; i < _idata->handle.size(); ++i )
+        {
+            _idata->lv2.descriptor->deactivate( _idata->handle[i] );
+        }
+    }
+
+    if ( chain() )
+        chain()->client()->unlock();
+}
+
 #ifdef LV2_WORKER_SUPPORT
-// FIXME change to LV2_Plugin* plug
 void
 LV2_Plugin::non_worker_init(LV2_Plugin* plug,
                  const LV2_Worker_Interface* iface,
@@ -1224,7 +1623,7 @@ LV2_Plugin::non_worker_destroy( void )
         free(response);
     }
 }
-// FIXME change to LV2_Plugin* plug
+
 int
 LV2_Plugin::send_to_ui(LV2_Plugin* plug, uint32_t port_index, uint32_t type, uint32_t size, const void* body)
 {
@@ -2584,7 +2983,25 @@ LV2_Plugin::isUiResizable() const
 #endif  // USE_SUIL
 
 
+nframes_t
+LV2_Plugin::get_module_latency ( void ) const
+{
+    // FIXME: we should probably cache this value
+    unsigned int nport = 0;
 
+    for ( unsigned int i = 0; i < _idata->lv2.rdf_data->PortCount; ++i )
+    {
+        if ( LV2_IS_PORT_OUTPUT( _idata->lv2.rdf_data->Ports[i].Types ) &&
+             LV2_IS_PORT_CONTROL( _idata->lv2.rdf_data->Ports[i].Types ) )
+        {
+            if ( LV2_IS_PORT_DESIGNATION_LATENCY( _idata->lv2.rdf_data->Ports[i].Designation ) )
+                return control_output[nport].control_value();
+            ++nport;
+        }
+    }
+
+    return 0;
+}
 
 void
 LV2_Plugin::process ( nframes_t nframes )

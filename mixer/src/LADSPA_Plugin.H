@@ -41,7 +41,7 @@ public:
     void handle_port_connection_change ( void );
     void resize_buffers ( nframes_t buffer_size );
 
-    virtual bool bypass ( void ) const { return _bypass; }
+    virtual bool bypass ( void ) const { return _bypass; }  // FIXME parent
     virtual void bypass ( bool v );
 
 private:
@@ -59,6 +59,7 @@ public:
     LADSPA_Plugin ( );
     virtual ~LADSPA_Plugin();
 
+//    virtual nframes_t get_module_latency ( void ) const;
     virtual void process ( nframes_t );
 
 protected:

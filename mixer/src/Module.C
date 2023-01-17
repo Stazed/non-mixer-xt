@@ -1171,7 +1171,7 @@ Module::insert_menu_cb ( const Fl_Menu_ *m )
         if ( picked.unique_id == 0 )
             return;
         
-#if 1
+#if 0   // FIXME remove when finished
         Plugin_Module *m = new Plugin_Module();
 
         if(!m->load( picked ))
@@ -1413,7 +1413,7 @@ Module::handle ( int m )
                 if(_is_lv2)
                 {
 #ifdef USE_SUIL
-                    Plugin_Module *pm = static_cast<Plugin_Module *> (this);
+                    LV2_Plugin *pm = static_cast<LV2_Plugin *> (this);
                     if(!pm->try_custom_ui())
                     {
                         command_open_parameter_editor();
@@ -1465,7 +1465,7 @@ Module::handle ( int m )
                 if(_is_lv2)
                 {
 #ifdef USE_SUIL
-                    Plugin_Module *pm = static_cast<Plugin_Module *> (this);
+                    LV2_Plugin *pm = static_cast<LV2_Plugin *> (this);
                     if(!pm->try_custom_ui())
                     {
                         command_open_parameter_editor();

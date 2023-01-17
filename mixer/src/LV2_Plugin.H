@@ -37,6 +37,14 @@ public:
     
     bool load_plugin ( const char* uri );
 
+    bool configure_inputs ( int );
+    void handle_port_connection_change ( void );
+    void handle_sample_rate_change ( nframes_t sample_rate );
+    void resize_buffers ( nframes_t buffer_size );
+
+    virtual bool bypass ( void ) const { return _bypass; }  // FIXME parent
+    virtual void bypass ( bool v );
+
 #ifdef PRESET_SUPPORT
     LilvWorld* get_lilv_world() {return m_lilvWorld;}
     const LilvPlugin* get_slv2_plugin() const {return m_plugin; }
@@ -55,10 +63,18 @@ public:
     void ui_port_event( uint32_t port_index, uint32_t buffer_size, uint32_t protocol, const void* buffer );
     void send_atom_to_plugin( uint32_t port_index, uint32_t buffer_size, const void* buffer);
 #endif
+#ifdef USE_SUIL
+    bool try_custom_ui();
+#endif
     
 private:
 
     void init ( void );
+    void set_input_buffer ( int n, void *buf );
+    void set_output_buffer ( int n, void *buf );
+    void activate ( void );
+    void deactivate ( void );
+    bool loaded ( void ) const;
 
 #ifdef LV2_WORKER_SUPPORT
     void non_worker_init(LV2_Plugin* plug,
@@ -83,7 +99,6 @@ private:
     void process_midi_out_events( uint32_t nframes, unsigned int port );
 #endif
 #ifdef USE_SUIL
-    bool try_custom_ui();
     bool custom_ui_instantiate();
     const LilvUI* try_X11_ui (const char* native_ui_type);
 #ifdef LV2_EXTERNAL_UI
@@ -111,10 +126,12 @@ public:
     LV2_Plugin ( );
     virtual ~LV2_Plugin();
 
+    virtual nframes_t get_module_latency ( void ) const;
     virtual void process ( nframes_t );
 
 protected:
 
+    bool plugin_instances ( unsigned int );
     void get ( Log_Entry &e ) const;
     void set ( Log_Entry &e );
 

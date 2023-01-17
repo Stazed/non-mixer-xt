@@ -314,6 +314,7 @@ LADSPA_Plugin::loaded ( void ) const
     return _idata->handle.size() > 0 && ( _idata->descriptor != NULL );
 }
 
+// FIXME parent
 void
 LADSPA_Plugin::bypass ( bool v )
 {
@@ -326,6 +327,7 @@ LADSPA_Plugin::bypass ( bool v )
     }
 }
 
+// FIXME parent
 bool
 LADSPA_Plugin::configure_inputs( int n )
 {
@@ -401,6 +403,7 @@ LADSPA_Plugin::configure_inputs( int n )
     return true;
 }
 
+// FIXME parent
 void
 LADSPA_Plugin::handle_port_connection_change ( void )
 {
