@@ -24,6 +24,7 @@
 #include "LV2_RDF_Utils.hpp"
 #include "CarlaUtils.H"
 #include "ImplementationData.H"
+#include "LADSPAInfo.h"
 #include <ladspa.h>
 #include <lv2/data-access/data-access.h>
 #include "zix/ring.h"
@@ -178,6 +179,8 @@ private:
 public:
 
     ImplementationData *_idata;
+
+    LADSPAInfo *_ladspainfo;
 
     int _plugin_ins;
     int _plugin_outs;

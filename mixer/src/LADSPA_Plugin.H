@@ -31,11 +31,16 @@ class LADSPA_Plugin : public Plugin_Module {
 
 public:
 
+    ImplementationData *_idata;
+
     bool load_plugin ( unsigned long id );
+
+    virtual bool get_impulse_response ( sample_t *buf, nframes_t nframes );
 
 private:
 
     void init ( void );
+    bool apply ( sample_t *buf, nframes_t nframes );
 
 public:
 
@@ -46,6 +51,7 @@ public:
 
 protected:
 
+    bool plugin_instances ( unsigned int );
     void get ( Log_Entry &e ) const;
     void set ( Log_Entry &e );
 

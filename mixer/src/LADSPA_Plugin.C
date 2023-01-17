@@ -54,6 +54,8 @@ static LADSPAInfo *ladspainfo;
 bool
 LADSPA_Plugin::load_plugin(unsigned long id)
 {
+    ladspainfo = _ladspainfo;
+
     _is_lv2 = false;
     _idata->descriptor = ladspainfo->GetDescriptorByID( id );
 
@@ -329,6 +331,141 @@ LADSPA_Plugin::process ( nframes_t nframes )
         _latency = get_module_latency();
     }
 }
+
+
+bool
+LADSPA_Plugin::plugin_instances ( unsigned int n )
+{
+    if ( _idata->handle.size() > n )
+    {
+        for ( int i = _idata->handle.size() - n; i--; )
+        {
+            DMESSAGE( "Destroying plugin instance" );
+
+            LADSPA_Handle h = _idata->handle.back();
+
+            if ( _idata->descriptor->deactivate )
+                _idata->descriptor->deactivate( h );
+            if ( _idata->descriptor->cleanup )
+                _idata->descriptor->cleanup( h );
+
+            _idata->handle.pop_back();
+        }
+    }
+    else if ( _idata->handle.size() < n )
+    {
+        for ( int i = n - _idata->handle.size(); i--; )
+        {
+            DMESSAGE( "Instantiating plugin... with sample rate %lu", (unsigned long)sample_rate());
+
+            void* h;
+
+            if ( ! (h = _idata->descriptor->instantiate( _idata->descriptor, sample_rate() ) ) )
+            {
+                WARNING( "Failed to instantiate plugin" );
+                return false;
+            }
+
+            DMESSAGE( "Instantiated: %p", h );
+
+            _idata->handle.push_back( h );
+
+            DMESSAGE( "Connecting control ports..." );
+
+            int ij = 0;
+            int oj = 0;
+
+            for ( unsigned int k = 0; k < _idata->descriptor->PortCount; ++k )
+            {
+                if ( LADSPA_IS_PORT_CONTROL( _idata->descriptor->PortDescriptors[k] ) )
+                {
+                    if ( LADSPA_IS_PORT_INPUT( _idata->descriptor->PortDescriptors[k] ) )
+                        _idata->descriptor->connect_port( h, k, (LADSPA_Data*)control_input[ij++].buffer() );
+                    else if ( LADSPA_IS_PORT_OUTPUT( _idata->descriptor->PortDescriptors[k] ) )
+                        _idata->descriptor->connect_port( h, k, (LADSPA_Data*)control_output[oj++].buffer() );
+                }
+            }
+
+            // connect ports to magic bogus value to aid debugging.
+            for ( unsigned int k = 0; k < _idata->descriptor->PortCount; ++k )
+                if ( LADSPA_IS_PORT_AUDIO( _idata->descriptor->PortDescriptors[k] ) )
+                    _idata->descriptor->connect_port( h, k, (LADSPA_Data*)0x42 );
+        }
+    }
+
+    return true;
+}
+
+bool 
+LADSPA_Plugin::get_impulse_response ( sample_t *buf, nframes_t nframes )
+{
+    apply( buf, nframes );
+    
+    if ( buffer_is_digital_black( buf + 1, nframes - 1 ))
+        /* no impulse response... */
+        return false;
+
+    return true;
+}
+
+/** Instantiate a temporary version of the LADSPA plugin, and run it (in place) against the provided buffer */
+bool
+LADSPA_Plugin::apply ( sample_t *buf, nframes_t nframes )
+{
+// actually osc or UI    THREAD_ASSERT( UI );
+
+    void* h;
+
+    if ( ! (h = _idata->descriptor->instantiate( _idata->descriptor, sample_rate() ) ) )
+    {
+        WARNING( "Failed to instantiate plugin" );
+        return false;
+    }
+
+    int ij = 0;
+    int oj = 0;
+
+    for ( unsigned int k = 0; k < _idata->descriptor->PortCount; ++k )
+    {
+        if ( LADSPA_IS_PORT_CONTROL( _idata->descriptor->PortDescriptors[k] ) )
+        {
+            if ( LADSPA_IS_PORT_INPUT( _idata->descriptor->PortDescriptors[k] ) )
+                _idata->descriptor->connect_port( h, k, (LADSPA_Data*)control_input[ij++].buffer() );
+            else if ( LADSPA_IS_PORT_OUTPUT( _idata->descriptor->PortDescriptors[k] ) )
+                _idata->descriptor->connect_port( h, k, (LADSPA_Data*)control_output[oj++].buffer() );
+        }
+    }
+
+    if ( _idata->descriptor->activate )
+        _idata->descriptor->activate( h );
+
+    int tframes = 512;
+    float tmp[tframes];
+
+    memset( tmp, 0, sizeof( float ) * tframes );
+
+    for ( unsigned int k = 0; k < _idata->descriptor->PortCount; ++k )
+        if ( LADSPA_IS_PORT_AUDIO( _idata->descriptor->PortDescriptors[k] ) )
+            _idata->descriptor->connect_port( h, k, tmp );
+
+    /* flush any parameter interpolation */
+    _idata->descriptor->run( h, tframes );
+
+    for ( unsigned int k = 0; k < _idata->descriptor->PortCount; ++k )
+        if ( LADSPA_IS_PORT_AUDIO( _idata->descriptor->PortDescriptors[k] ) )
+            _idata->descriptor->connect_port( h, k, buf );
+
+    /* run for real */
+    _idata->descriptor->run( h, nframes );
+
+    if ( _idata->descriptor->deactivate )
+        _idata->descriptor->deactivate( h );
+    if ( _idata->descriptor->cleanup )
+        _idata->descriptor->cleanup( h );
+
+    return true;
+}
+
 
 void
 LADSPA_Plugin::get ( Log_Entry &e ) const

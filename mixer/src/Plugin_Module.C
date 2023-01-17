@@ -41,7 +41,6 @@
 #include "debug.h"
 
 #define HAVE_LIBLRDF 1
-#include "LADSPAInfo.h"
 
 #include "Chain.H"
 
@@ -579,6 +578,7 @@ Plugin_Module::set ( Log_Entry &e )
 void
 Plugin_Module::init ( void )
 {
+    _ladspainfo = ladspainfo;
     _latency = 0;
     _last_latency = 0;
     _idata = new ImplementationData();

@@ -32,6 +32,8 @@
 class LV2_Plugin : public Plugin_Module {
 
 public:
+
+    ImplementationData *_idata;
     
     bool load_plugin ( const char* uri );
 
