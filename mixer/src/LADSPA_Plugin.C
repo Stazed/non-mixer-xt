@@ -24,6 +24,7 @@
 
 #include <math.h>
 #include <dsp.h>
+#include "Chain.H"
 
 #include "LADSPA_Plugin.H"
 
@@ -296,15 +297,184 @@ LADSPA_Plugin::load_plugin(unsigned long id)
 void
 LADSPA_Plugin::init ( void )
 {
+    // FIXME check this
     Plugin_Module::init();
-   // _latency = 0;
+    _latency = 0;
    // _last_latency = 0;
     _idata = new ImplementationData();
     /* module will be bypassed until plugin is loaded */
-   // _bypass = true;
-   // _crosswire = false;
+    _bypass = true;
+    _crosswire = false;
     _is_lv2 = false;
 }
+
+bool
+LADSPA_Plugin::loaded ( void ) const
+{
+    return _idata->handle.size() > 0 && ( _idata->descriptor != NULL );
+}
+
+void
+LADSPA_Plugin::bypass ( bool v )
+{
+    if ( v != bypass() )
+    {
+        if ( v )
+            deactivate();
+        else
+            activate();
+    }
+}
+
+bool
+LADSPA_Plugin::configure_inputs( int n )
+{
+    unsigned int inst = _idata->handle.size();
+    
+    /* The synth case - no inputs and JACK module has one */
+    if( ninputs() == 0 && n == 1)
+    {
+        _crosswire = false;
+    }
+    else if ( ninputs() != n )
+    {
+        _crosswire = false;
+
+        if ( n != ninputs() )
+        {
+            if ( 1 == n && plugin_ins() > 1 )
+            {
+                DMESSAGE( "Cross-wiring plugin inputs" );
+                _crosswire = true;
+
+                audio_input.clear();
+
+                for ( int i = n; i--; )
+                    audio_input.push_back( Port( this, Port::INPUT, Port::AUDIO ) );
+            }
+            else if ( n >= plugin_ins() &&
+                      ( plugin_ins() == 1 && plugin_outs() == 1 ) )
+            {
+                DMESSAGE( "Running multiple instances of plugin" );
+
+                audio_input.clear();
+                audio_output.clear();
+
+                for ( int i = n; i--; )
+                {
+                    add_port( Port( this, Port::INPUT, Port::AUDIO ) );
+                    add_port( Port( this, Port::OUTPUT, Port::AUDIO ) );
+                }
+
+                inst = n;
+            }
+            else if ( n == plugin_ins() )
+            {
+                DMESSAGE( "Plugin input configuration is a perfect match" );
+            }
+            else
+            {
+                DMESSAGE( "Unsupported input configuration" );
+                return false;
+            }
+        }
+    }
+
+    if ( loaded() )
+    {
+        bool b = bypass();
+        if ( inst != _idata->handle.size() )
+        {
+            if ( !b )
+                deactivate();
+            
+            if ( plugin_instances( inst ) )
+                instances( inst );
+            else
+                return false;
+            
+            if ( !b )
+                activate();
+        }
+    }
+
+    return true;
+}
+
+void
+LADSPA_Plugin::handle_port_connection_change ( void )
+{
+//    DMESSAGE( "Connecting audio ports" );
+
+    if ( loaded() )
+    {
+        if ( _crosswire )
+        {
+            for ( int i = 0; i < plugin_ins(); ++i )
+                set_input_buffer( i, audio_input[0].buffer() );
+        }
+        else
+        {
+            for ( unsigned int i = 0; i < audio_input.size(); ++i )
+                set_input_buffer( i, audio_input[i].buffer() );
+        }
+
+        for ( unsigned int i = 0; i < audio_output.size(); ++i )
+            set_output_buffer( i, audio_output[i].buffer() );
+    }
+}
+
+void
+LADSPA_Plugin::resize_buffers ( nframes_t buffer_size )
+{
+    Module::resize_buffers( buffer_size );
+}
+
+void
+LADSPA_Plugin::activate ( void )
+{
+    if ( !loaded() )
+        return;
+
+    DMESSAGE( "Activating plugin \"%s\"", label() );
+
+    if ( !bypass() )
+        FATAL( "Attempt to activate already active plugin" );
+
+    if ( chain() )
+        chain()->client()->lock();
+
+    if ( _idata->descriptor->activate )
+        for ( unsigned int i = 0; i < _idata->handle.size(); ++i )
+            _idata->descriptor->activate( _idata->handle[i] );
+
+    _bypass = false;
+
+    if ( chain() )
+        chain()->client()->unlock();
+}
+
+void
+LADSPA_Plugin::deactivate( void )
+{
+    if ( !loaded() )
+        return;
+
+    DMESSAGE( "Deactivating plugin \"%s\"", label() );
+
+    if ( chain() )
+        chain()->client()->lock();
+
+    _bypass = true;
+
+    if ( _idata->descriptor->deactivate )
+        for ( unsigned int i = 0; i < _idata->handle.size(); ++i )
+            _idata->descriptor->deactivate( _idata->handle[i] );
+
+    if ( chain() )
+        chain()->client()->unlock();
+}
+
 
 void
 LADSPA_Plugin::process ( nframes_t nframes )
@@ -324,7 +494,6 @@ LADSPA_Plugin::process ( nframes_t nframes )
     }
     else
     {
-
         for ( unsigned int i = 0; i < _idata->handle.size(); ++i )
             _idata->descriptor->run( _idata->handle[i], nframes );
         
@@ -406,6 +575,58 @@ LADSPA_Plugin::get_impulse_response ( sample_t *buf, nframes_t nframes )
         return false;
 
     return true;
+}
+
+void
+LADSPA_Plugin::set_input_buffer ( int n, void *buf )
+{
+    void* h;
+
+    if ( instances() > 1 )
+    {
+        h = _idata->handle[n];
+        n = 0;
+    }
+    else
+    {
+        h = _idata->handle[0];
+    }
+
+    for ( unsigned int i = 0; i < _idata->descriptor->PortCount; ++i )
+    {
+        if ( LADSPA_IS_PORT_INPUT( _idata->descriptor->PortDescriptors[i] ) &&
+             LADSPA_IS_PORT_AUDIO( _idata->descriptor->PortDescriptors[i] ) )
+        {
+            if ( n-- == 0 )
+                _idata->descriptor->connect_port( h, i, (LADSPA_Data*)buf );
+        }
+    }
+}
+
+void
+LADSPA_Plugin::set_output_buffer ( int n, void *buf )
+{
+    void* h;
+
+    if ( instances() > 1 )
+    {
+        h = _idata->handle[n];
+        n = 0;
+    }
+    else
+    {
+        h = _idata->handle[0];
+    }
+
+    for ( unsigned int i = 0; i < _idata->descriptor->PortCount; ++i )
+    {
+        if ( LADSPA_IS_PORT_OUTPUT( _idata->descriptor->PortDescriptors[i] ) &&
+             LADSPA_IS_PORT_AUDIO( _idata->descriptor->PortDescriptors[i] ) )
+        {
+            if ( n-- == 0 )
+                _idata->descriptor->connect_port( h, i, (LADSPA_Data*)buf );
+        }
+    }
 }
 
 /** Instantiate a temporary version of the LADSPA plugin, and run it (in place) against the provided buffer */

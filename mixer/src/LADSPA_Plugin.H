@@ -36,11 +36,23 @@ public:
     bool load_plugin ( unsigned long id );
 
     virtual bool get_impulse_response ( sample_t *buf, nframes_t nframes );
+    
+    bool configure_inputs ( int );
+    void handle_port_connection_change ( void );
+    void resize_buffers ( nframes_t buffer_size );
+
+    virtual bool bypass ( void ) const { return _bypass; }
+    virtual void bypass ( bool v );
 
 private:
 
     void init ( void );
     bool apply ( sample_t *buf, nframes_t nframes );
+    void set_input_buffer ( int n, void *buf );
+    void set_output_buffer ( int n, void *buf );
+    void activate ( void );
+    void deactivate ( void );
+    bool loaded ( void ) const;
 
 public:
 
