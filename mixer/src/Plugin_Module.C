@@ -55,20 +55,6 @@ Plugin_Module::~Plugin_Module ( )
     log_destroy();
 }
 
-
-
-void
-Plugin_Module::get ( Log_Entry &e ) const
-{
-}
-
-void
-Plugin_Module::set ( Log_Entry &e )
-{
-}
-
-
-
 void
 Plugin_Module::init ( void )
 {
@@ -462,39 +448,7 @@ Plugin_Module::get_all_plugins ( void )
 }
 
 void
-Plugin_Module::bypass ( bool v )
-{
-}
-
-nframes_t
-Plugin_Module::get_module_latency ( void ) const
-{
-    return 0;
-}
-
-void
-Plugin_Module::handle_port_connection_change ( void )
-{
-}
-
-void
-Plugin_Module::handle_sample_rate_change ( nframes_t sample_rate )
-{
-}
-
-void
 Plugin_Module::resize_buffers ( nframes_t buffer_size )
 {
     Module::resize_buffers( buffer_size );
-}
-
-bool 
-Plugin_Module::get_impulse_response ( sample_t *buf, nframes_t nframes )
-{
-    return false;
-}
-
-void
-Plugin_Module::process ( nframes_t nframes )
-{
 }
