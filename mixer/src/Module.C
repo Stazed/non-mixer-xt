@@ -1170,19 +1170,6 @@ Module::insert_menu_cb ( const Fl_Menu_ *m )
         
         if ( picked.unique_id == 0 )
             return;
-        
-#if 0   // FIXME remove when finished
-        Plugin_Module *m = new Plugin_Module();
-
-        if(!m->load( picked ))
-        {
-            fl_alert( "%s could not be loaded", m->base_label() );
-            delete m;
-            return;
-        }
-
-        mod = m;
-#else
 
         if(picked.is_lv2)
         {
@@ -1208,7 +1195,6 @@ Module::insert_menu_cb ( const Fl_Menu_ *m )
 
             mod = m;
         }
-#endif
     }
 
     if ( mod )

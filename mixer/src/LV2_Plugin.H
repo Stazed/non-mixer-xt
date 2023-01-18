@@ -63,7 +63,7 @@ public:
     void handle_sample_rate_change ( nframes_t sample_rate );
     void resize_buffers ( nframes_t buffer_size );
 
-    virtual bool bypass ( void ) const { return _bypass; }  // FIXME parent
+    virtual bool bypass ( void ) const { return _bypass; }
     virtual void bypass ( bool v );
 
 #ifdef PRESET_SUPPORT

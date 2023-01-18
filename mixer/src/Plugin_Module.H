@@ -23,6 +23,10 @@
 #include "Loggable.H"
 #include "LADSPAInfo.h"
 
+// To fix backward incompatible files:
+// sed -i -e '/:plugin_id/s/Plugin_Module/LADSPA_Plugin/' snapshot
+// sed -i -e '/:lv2_plugin_uri/s/Plugin_Module/LV2_Plugin/' snapshot
+
 class Fl_Menu_Button;
 class Thread;
 

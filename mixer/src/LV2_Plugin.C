@@ -593,7 +593,6 @@ LV2_Plugin::~LV2_Plugin ( )
     free(ui_event_buf);
 #endif
 
-    // FIXME check this
     log_destroy();
     plugin_instances( 0 );
     
@@ -1032,7 +1031,6 @@ LV2_Plugin::load_plugin ( const char* uri )
     return instances;
 }
 
-// FIXME parent
 bool
 LV2_Plugin::configure_inputs( int n )
 {
@@ -1108,7 +1106,6 @@ LV2_Plugin::configure_inputs( int n )
     return true;
 }
 
-// FIXME parent
 void
 LV2_Plugin::handle_port_connection_change ( void )
 {
@@ -1310,7 +1307,6 @@ LV2_Plugin::plugin_instances ( unsigned int n )
     return true;
 }
 
-// FIXME parent
 void
 LV2_Plugin::bypass ( bool v )
 {
@@ -1326,24 +1322,15 @@ LV2_Plugin::bypass ( bool v )
 void
 LV2_Plugin::init ( void )
 {
-  //  Plugin_Module::init();    // FIXME
+    _is_lv2 = true;
+    Plugin_Module::init();    // FIXME
     _latency = 0;
-  //  _last_latency = 0;
     _idata = new ImplementationData();
     /* module will be bypassed until plugin is loaded */
     _bypass = true;
     _crosswire = false;
-    _is_lv2 = true;
     m_project_directory = "";
 
- //   align( (Fl_Align)FL_ALIGN_CENTER | FL_ALIGN_INSIDE );
-//     color( (Fl_Color)fl_color_average( FL_MAGENTA, FL_WHITE, 0.5f ) );
-
- //   int tw, th, tx, ty;
-
- //   bbox( tx, ty, tw, th );
-
-    // init lv2 stuff
     _idata->lv2.options.maxBufferSize = buffer_size();
     _idata->lv2.options.minBufferSize = buffer_size();
     _idata->lv2.options.sampleRate    = sample_rate();

@@ -34,17 +34,10 @@
 LADSPA_Plugin::LADSPA_Plugin ( ) : Plugin_Module( )
 {
     init();
-
-   // FIXME check this
-   // color( fl_color_average(  fl_rgb_color( 0x99, 0x7c, 0x3a ), FL_BACKGROUND_COLOR, 1.0f ));
-    
-   // end();
-
     log_create();
 }
 
 LADSPA_Plugin::~LADSPA_Plugin ( )
-
 {
     log_destroy();
     plugin_instances( 0 );
@@ -297,15 +290,13 @@ LADSPA_Plugin::load_plugin(unsigned long id)
 void
 LADSPA_Plugin::init ( void )
 {
-    // FIXME check this
+    _is_lv2 = false;
     Plugin_Module::init();
     _latency = 0;
-   // _last_latency = 0;
     _idata = new ImplementationData();
     /* module will be bypassed until plugin is loaded */
     _bypass = true;
     _crosswire = false;
-    _is_lv2 = false;
 }
 
 bool
@@ -314,7 +305,6 @@ LADSPA_Plugin::loaded ( void ) const
     return _idata->handle.size() > 0 && ( _idata->descriptor != NULL );
 }
 
-// FIXME parent
 void
 LADSPA_Plugin::bypass ( bool v )
 {
@@ -327,7 +317,6 @@ LADSPA_Plugin::bypass ( bool v )
     }
 }
 
-// FIXME parent
 bool
 LADSPA_Plugin::configure_inputs( int n )
 {
@@ -403,7 +392,6 @@ LADSPA_Plugin::configure_inputs( int n )
     return true;
 }
 
-// FIXME parent
 void
 LADSPA_Plugin::handle_port_connection_change ( void )
 {
