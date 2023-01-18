@@ -32,7 +32,7 @@ class SpectrumView;
 
 #include <vector>
 #include <list>
-#include "Plugin_Module.H"
+#include "LV2_Plugin.H"
 
 class Module_Parameter_Editor : public Fl_Double_Window
 {

@@ -97,7 +97,7 @@ Module_Parameter_Editor::Module_Parameter_Editor ( Module *module ) : Fl_Double_
         if (_module->_is_lv2)
         {
 #ifdef PRESET_SUPPORT
-            Plugin_Module *pm = static_cast<Plugin_Module *> (_module);
+            LV2_Plugin *pm = static_cast<LV2_Plugin *> (_module);
             
             if( !pm->PresetList.empty() )
             {
@@ -551,7 +551,7 @@ Module_Parameter_Editor::make_controls ( void )
 void
 Module_Parameter_Editor::set_preset_controls(int choice)
 {
-    Plugin_Module *pm = static_cast<Plugin_Module *> (_module);
+    LV2_Plugin *pm = static_cast<LV2_Plugin *> (_module);
     pm->update_control_parameters(choice);
 }
 #endif
@@ -706,7 +706,7 @@ Module_Parameter_Editor::save_plugin_state(const std::string filename)
     std::string directory = filename;
     directory.append("/");
 
-    Plugin_Module *pm = static_cast<Plugin_Module *> (_module);
+    LV2_Plugin *pm = static_cast<LV2_Plugin *> (_module);
     pm->save_LV2_plugin_state(directory);
 }
 
@@ -732,7 +732,7 @@ Module_Parameter_Editor::cb_restore_state_handle ( Fl_Widget *w, void *v )
 void
 Module_Parameter_Editor::restore_plugin_state(const std::string directory)
 {
-    Plugin_Module *pm = static_cast<Plugin_Module *> (_module);
+    LV2_Plugin *pm = static_cast<LV2_Plugin *> (_module);
     pm->restore_LV2_plugin_state(directory);
 }
 #endif
@@ -844,7 +844,7 @@ Module_Parameter_Editor::reload ( void )
 void
 Module_Parameter_Editor::set_plugin_file(int port, const std::string &filename )
 {
-    Plugin_Module *pm = static_cast<Plugin_Module *> (_module);
+    LV2_Plugin *pm = static_cast<LV2_Plugin *> (_module);
     pm->send_file_to_plugin(port, filename);
 }
 #endif

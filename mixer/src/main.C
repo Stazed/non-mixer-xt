@@ -46,6 +46,8 @@
 #include "Gain_Module.H"
 #include "Spatializer_Module.H"
 #include "Plugin_Module.H"
+#include "LADSPA_Plugin.H"
+#include "LV2_Plugin.H"
 #include "JACK_Module.H"
 #include "Meter_Module.H"
 #include "Meter_Indicator_Module.H"
@@ -169,6 +171,8 @@ main ( int argc, char **argv )
     LOG_REGISTER_CREATE( Mixer_Strip );
     LOG_REGISTER_CREATE( Chain );
     LOG_REGISTER_CREATE( Plugin_Module );
+    LOG_REGISTER_CREATE( LV2_Plugin );
+    LOG_REGISTER_CREATE( LADSPA_Plugin );
     LOG_REGISTER_CREATE( Gain_Module );
     LOG_REGISTER_CREATE( Spatializer_Module );
     LOG_REGISTER_CREATE( Meter_Module );

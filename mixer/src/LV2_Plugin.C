@@ -531,7 +531,7 @@ LV2_Plugin::LV2_Plugin ( ) : Plugin_Module( )
     
    // end();
 
-   // log_create();
+    log_create();
 }
 
 LV2_Plugin::~LV2_Plugin ( )
@@ -594,8 +594,8 @@ LV2_Plugin::~LV2_Plugin ( )
 #endif
 
     // FIXME check this
- //   log_destroy();
- //   plugin_instances( 0 );
+    log_destroy();
+    plugin_instances( 0 );
     
 #ifdef PRESET_SUPPORT
     lilv_world_free(m_lilvWorld);

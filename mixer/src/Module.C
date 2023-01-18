@@ -237,7 +237,7 @@ Module::get ( Log_Entry &e ) const
         if ( _use_custom_data  )
         {
             Module *m = (Module *) this;
-            Plugin_Module *pm = static_cast<Plugin_Module *> (m);
+            LV2_Plugin *pm = static_cast<LV2_Plugin *> (m);
 
             /* Export directory location */
             if(!export_import_strip.empty())
@@ -568,7 +568,7 @@ Module::handle_control_changed ( Port *p )
         }
         else
         {
-            Plugin_Module *pm = static_cast<Plugin_Module *> (m);
+            LV2_Plugin *pm = static_cast<LV2_Plugin *> (m);
 
             int i = m->control_input_port_index( p );
             float value = p->control_value();

@@ -40,7 +40,7 @@ LADSPA_Plugin::LADSPA_Plugin ( ) : Plugin_Module( )
     
    // end();
 
-   // log_create();
+    log_create();
 }
 
 LADSPA_Plugin::~LADSPA_Plugin ( )
@@ -478,6 +478,19 @@ LADSPA_Plugin::deactivate( void )
         chain()->client()->unlock();
 }
 
+nframes_t
+LADSPA_Plugin::get_module_latency ( void ) const
+{
+    for ( unsigned int i = ncontrol_outputs(); i--; )
+    {
+        if ( !strcasecmp( "latency", control_output[i].name() ) )
+        {
+            return control_output[i].control_value();
+        }
+    }
+
+    return 0;
+}
 
 void
 LADSPA_Plugin::process ( nframes_t nframes )

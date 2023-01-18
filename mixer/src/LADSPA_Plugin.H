@@ -59,8 +59,11 @@ public:
     LADSPA_Plugin ( );
     virtual ~LADSPA_Plugin();
 
-//    virtual nframes_t get_module_latency ( void ) const;
-    virtual void process ( nframes_t );
+    nframes_t get_module_latency ( void ) const;
+    void process ( nframes_t );
+
+    LOG_CREATE_FUNC( LADSPA_Plugin );
+    MODULE_CLONE_FUNC( LADSPA_Plugin );
 
 protected:
 
