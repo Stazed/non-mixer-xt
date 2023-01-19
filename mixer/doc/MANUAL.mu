@@ -527,6 +527,12 @@
 
 > $ mv Project-A Project-B
 
+  To load legacy projects, you must convert any snapshot files to the new
+  format by running the following commands from the project directory:
+
+> $ sed -i -e '/:plugin_id/s/Plugin_Module/LADSPA_Plugin/' snapshot
+> $ sed -i -e '/:lv2_plugin_uri/s/Plugin_Module/LV2_Plugin/' snapshot
+
 ::: JACK I/O
 
   Each mixer strip is presented as a separate JACK "client". This

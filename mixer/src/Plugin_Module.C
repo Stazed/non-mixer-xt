@@ -28,6 +28,7 @@
 #include <FL/fl_draw.H>
 #include <FL/Fl_Group.H>
 #include <FL/Fl_Menu_Button.H>
+#include <FL/fl_ask.H>
 
 #include "Plugin_Module.H"
 #include "Mixer_Strip.H"
@@ -451,4 +452,10 @@ void
 Plugin_Module::resize_buffers ( nframes_t buffer_size )
 {
     Module::resize_buffers( buffer_size );
+}
+
+void
+Plugin_Module::set ( Log_Entry &e )
+{
+    fl_alert( "Non-mixer ERROR - This snapshot contains legacy unsupported modules.\nSee Help/Projects to convert to the new format!" );
 }

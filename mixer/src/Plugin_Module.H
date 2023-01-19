@@ -137,6 +137,6 @@ protected:
     void init ( void );
 
     void get ( Log_Entry &e ) const{};
-    void set ( Log_Entry &e ){};
+    void set ( Log_Entry &e );
 
 };
