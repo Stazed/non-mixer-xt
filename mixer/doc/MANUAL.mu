@@ -260,7 +260,7 @@
 = Spatializer
 	= Provides advanced Ambisonics spatialization with distance simulation.
 = Plugin
-	= Hosts a LADSPA plugin
+	= Hosts a LADSPA/LV2 plugin
 
 ::::: OSC Control
 
@@ -346,20 +346,41 @@
   boundaries. The normal module I\/O constraints also apply to pasted
   modules.
 
+  For LV2 instrument plugins (Synths) that have zero audio inputs
+  such as zynaddsubfx, special handling is required. The zero
+  input plugins can only be inserted directly after the default 'JACK'
+  input module. Also, the number of jack inputs must be set to one. From
+  a default mixer strip, right click on the default 'Gain' module and
+  select 'Insert/Plugin'. The plugin chooser will now display any
+  available zero input instruments. After the zero input instrument is
+  added to the chain, the single 'Jack' input will be removed from
+  the strip. If the instrument plugin has any audio inputs, then the plugin
+  can be inserted at any location in the chain that normally applies to
+  other plugins.
+
+  The mixer will also create any 'MIDI' inputs or outputs that are exposed
+  by the LV2 plugin.
+
 ::::: Module Parameter Editor
 
 / Module Parameter Editor
 < module-parameter-editor.png
 
-  The Module Parameter Editor is used to alter the values of a
-  module's parameters, and in addition, to bind its parameters to
-  controls. A menu button in the upper left-hand corner allows you to
-  select between knob, vertical slider and horizontal slider controls.
+  The Module Parameter Editor is used to alter the values of a module's
+  parameters, and in addition, to bind its parameters to controls.
+  For LV2 plugins, a 'Presets' menu is available in the upper left corner
+  for plugins that have exposed available presets. Also, the current state
+  of the plugin can be saved to file, or restored from the file chooser
+  buttons at the top of the editor. For plugins with greater than twelve
+  control parameters, a scroller will appear. Right click on any parameter
+  to show the control binding menu. Select bind to create a control parameter
+  for the /Controls/ view. For simplicity, only one control at a time may
+  be bound to a given parameter.
 
-  Underneath each control is a bind button. Clicking adds a new
-  control to the chain's /Controls/ view and binds it to the parameter
-  in question. For simplicity, only one control at a time may be bound
-  to a given parameter.
+  For LV2 plugins that have custom UIs that are supported, left click on the
+  plugin module will open the custom UI. To open the module parameter editor
+  when the plugin has a custom UI, use 'CTRL-Space' when the module is focused,
+  or right click on the plugin module and select /Edit Parameters/.
 
 ::::: Controls
 

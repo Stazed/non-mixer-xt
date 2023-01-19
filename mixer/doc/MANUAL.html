@@ -270,7 +270,7 @@ Non Mixer has several built-in modules. They are:
 <dt><em>Spatializer</em></dt>
 <dd>Provides advanced Ambisonics spatialization with distance simulation.</dd>
 <dt><em>Plugin</em></dt>
-<dd>Hosts a LADSPA plugin</dd>
+<dd>Hosts a LADSPA/LV2 plugin</dd>
 </dl>
 <h5 id="n:1.2.3.1.1.">1.2.3.1.1. OSC Control</h5>
 <p>
@@ -341,6 +341,12 @@ Control+Right-clicking on a module causes it to be removed from the chain (modul
 <p>
 The focused module may also be controlled via the keyboard. <tt>Menu</tt> brings up the context menu for the focused module. <tt>Space</tt> opens the module parameter editor, <tt>b</tt> toggles the bypassed state, and <tt>Delete</tt> removes the module from the chain (without confirmation!). <tt>Control-X</tt>, <tt>Control-C</tt> and <tt>Control-V</tt>, cut, copy, and paste modules, respectively. Modules may be copied within or across chain boundaries. The normal module I/O constraints also apply to pasted modules.
 </p>
+<p>
+For LV2 instrument plugins <b>(Synths)</b> that have zero audio inputs such as zynaddsubfx, special handling is required. The zero input plugins can only be inserted directly after the default <i>JACK</i> input module. Also, the number of jack inputs must be set to one. From a default mixer strip, right click on the default <i>Gain</i> module and select <i>Insert/Plugin</i>. The plugin chooser will now display any available zero input instruments. After the zero input instrument is added to the chain, the single <i>Jack</i> input will be removed from the strip. If the instrument plugin has any audio inputs, then the plugin can be inserted at any location in the chain that normally applies to other plugins.
+</p>
+<p>
+The mixer will also create any <b>MIDI</b> inputs or outputs that are exposed by the LV2 plugin.
+</p>
 <h5 id="n:1.2.3.1.4.">1.2.3.1.4. Module Parameter Editor</h5>
 <center><div class="fig image"><table id="Fig.1.5" border=1>
 <caption>
@@ -350,10 +356,10 @@ The focused module may also be controlled via the keyboard. <tt>Menu</tt> brings
 <tr><td><img src="module-parameter-editor.png" alt="fig. 1.5"></td></tr>
 </table></div></center>
 <p>
-The Module Parameter Editor is used to alter the values of a module's parameters, and in addition, to bind its parameters to controls. A menu button in the upper left-hand corner allows you to select between knob, vertical slider and horizontal slider controls.
+The Module Parameter Editor is used to alter the values of a module's parameters, and in addition, to bind its parameters to controls. For LV2 plugins, a <i>Presets</i> menu is available in the upper left corner for plugins that have exposed available presets. Also, the current state of the plugin can be saved to file, or restored from the file chooser buttons at the top of the editor. For plugins with greater than twelve control parameters, a scroller will appear. Right click on any parameter to show the control binding menu. Select bind to create a control parameter for the <i>Controls</i> view. For simplicity, only one control at a time may be bound to a given parameter.
 </p>
-<p>
-Underneath each control is a bind button. Clicking adds a new control to the chain's <i>Controls</i> view and binds it to the parameter in question. For simplicity, only one control at a time may be bound to a given parameter.
+</p>
+For LV2 plugins that have custom UIs that are supported, left click on the plugin module will open the custom UI. To open the module parameter editor when the plugin has a custom UI, use <tt>CTRL-Space</tt> when the module is focused, or right click on the plugin module and select <i>Edit Parameters</i>.
 </p>
 <h5 id="n:1.2.3.1.5.">1.2.3.1.5. Controls</h5>
 <center><div class="fig image"><table id="Fig.1.6" border=1>
