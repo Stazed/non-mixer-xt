@@ -40,6 +40,8 @@
 static LADSPAInfo *ladspainfo;
 Thread* Plugin_Module::plugin_discover_thread;
 
+static bool warn_legacy_once = false;
+
 Plugin_Module::Plugin_Module ( ) : Module( 50, 35, name() )
 {
     init();
@@ -457,5 +459,11 @@ Plugin_Module::resize_buffers ( nframes_t buffer_size )
 void
 Plugin_Module::set ( Log_Entry &e )
 {
-    fl_alert( "Non-mixer ERROR - This snapshot contains legacy unsupported modules.\nSee Help/Projects to convert to the new format!" );
+    if(!warn_legacy_once)
+    {
+        fl_alert( "Non-mixer ERROR - This snapshot contains legacy unsupported modules.\n"
+                "See Help/Projects to convert to the new format!" );
+
+        warn_legacy_once = true;
+    }
 }
