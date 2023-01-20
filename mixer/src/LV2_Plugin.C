@@ -599,7 +599,6 @@ LV2_Plugin::~LV2_Plugin ( )
 bool
 LV2_Plugin::load_plugin ( const char* uri )
 {
-    _is_lv2 = true;
     _idata->lv2.rdf_data = lv2_rdf_new( uri, true );
 
 #ifdef PRESET_SUPPORT
@@ -984,11 +983,18 @@ LV2_Plugin::load_plugin ( const char* uri )
     {
         set_lv2_port_properties( &atom_output[i], false );
     }
-    
+
+    if ( control_input.size() > 100  )
+        _use_custom_data = true;
+    else if (audio_input.empty())
+        _use_custom_data = true;
+    else if ( _is_instrument )
+        _use_custom_data = true;
+
     if ( _atom_ins || _atom_outs )
     {
         /* Not restoring state, load the plugin as a preset to get default files if any */
-        if ( ! _loading_from_file  )
+        if ( ! _loading_from_file && !_use_custom_data )
         {
             _loading_from_file = false;
 
@@ -1015,13 +1021,6 @@ LV2_Plugin::load_plugin ( const char* uri )
             _idata->lv2.ext.options->set( _idata->handle[i], &(_idata->lv2.options.opts[Plugin_Module_Options::MinBlockLenth]) );
         }
     }
-
-    if ( control_input.size() > 100  )  // FIXME find out how to determine if plugin has custom data
-        _use_custom_data = true;
-    else if (audio_input.empty())
-        _use_custom_data = true;
-    else if ( _is_instrument )
-        _use_custom_data = true;
 
     return instances;
 }
@@ -3018,7 +3017,8 @@ LV2_Plugin::process ( nframes_t nframes )
             apply_ui_events(  nframes, i );
 #ifdef LV2_MIDI_SUPPORT
             /* JACK MIDI in to plugin MIDI in */
-            process_midi_in_events( nframes, i );
+            if(_midi_ins)
+                process_midi_in_events( nframes, i );
 #endif
         }
 #endif
@@ -3033,7 +3033,8 @@ LV2_Plugin::process ( nframes_t nframes )
         /* plugin MIDI out to JACK MIDI out */
         for( unsigned int i = 0; i < atom_output.size(); ++i )
         {
-            process_midi_out_events( nframes, i );
+            if(_midi_outs)
+                process_midi_out_events( nframes, i );
         }
 #endif  // LV2_MIDI_SUPPORT
 
