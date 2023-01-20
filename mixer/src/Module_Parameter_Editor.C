@@ -101,7 +101,7 @@ Module_Parameter_Editor::Module_Parameter_Editor ( Module *module ) : Fl_Double_
             
             if( !pm->PresetList.empty() )
             {
-                { Fl_Choice *o = LV2_presets_choice = new Fl_Choice( 0, 0, 200, 24 );
+                { Fl_Choice *o = LV2_presets_choice = new Fl_Choice( 5, 0, 200, 24 );
                     for(unsigned i = 0; i < pm->PresetList.size(); ++i)
                     {
                         std::string temp = pm->PresetList[i].Label;

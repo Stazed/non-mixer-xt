@@ -526,11 +526,6 @@ LV2_Plugin::LV2_Plugin ( ) : Plugin_Module( )
 {
     init();
 
-   // FIXME check this
-   // color( fl_color_average(  fl_rgb_color( 0x99, 0x7c, 0x3a ), FL_BACKGROUND_COLOR, 1.0f ));
-    
-   // end();
-
     log_create();
 }
 
