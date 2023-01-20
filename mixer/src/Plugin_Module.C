@@ -44,8 +44,6 @@ static bool warn_legacy_once = false;
 
 Plugin_Module::Plugin_Module ( ) : Module( 50, 35, name() )
 {
-    init();
-
     color( fl_color_average(  fl_rgb_color( 0x99, 0x7c, 0x3a ), FL_BACKGROUND_COLOR, 1.0f ));
     
     end();

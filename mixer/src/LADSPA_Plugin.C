@@ -292,11 +292,7 @@ LADSPA_Plugin::init ( void )
 {
     _is_lv2 = false;
     Plugin_Module::init();
-    _latency = 0;
     _idata = new ImplementationData();
-    /* module will be bypassed until plugin is loaded */
-    _bypass = true;
-    _crosswire = false;
 }
 
 bool

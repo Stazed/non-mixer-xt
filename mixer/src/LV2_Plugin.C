@@ -1318,12 +1318,9 @@ void
 LV2_Plugin::init ( void )
 {
     _is_lv2 = true;
-    Plugin_Module::init();    // FIXME
-    _latency = 0;
+    Plugin_Module::init();
+
     _idata = new ImplementationData();
-    /* module will be bypassed until plugin is loaded */
-    _bypass = true;
-    _crosswire = false;
     m_project_directory = "";
 
     _idata->lv2.options.maxBufferSize = buffer_size();
