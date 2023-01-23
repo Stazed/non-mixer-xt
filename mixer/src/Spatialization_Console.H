@@ -20,8 +20,13 @@
 #pragma once
 
 #include <FL/Fl_Double_Window.H>
-#include <Module.H>
+#include "Module.H"
+#ifdef USE_CMAKE
+#include "../../nonlib/Loggable.H"
+#else
 #include "Loggable.H"
+#endif
+
 
 class Fl_Pack;
 class Fl_Flowpack;

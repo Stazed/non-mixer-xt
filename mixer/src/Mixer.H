@@ -25,8 +25,11 @@
 #include <FL/Fl_Scroll.H>
 #include <FL/Fl_Pack.H>
 #include "Mixer_Strip.H"
-
+#ifdef USE_CMAKE
+#include "../../nonlib/Thread.H"
+#else
 #include "Thread.H"
+#endif
 
 extern std::string project_directory;
 extern std::string export_import_strip;

@@ -20,7 +20,11 @@
 #include <FL/Fl.H>
 #include <FL/Fl_Browser.H>
 #include <FL/Fl_Input.H>
+#ifdef USE_CMAKE
+#include "../../FL/Fl_Scalepack.H"
+#else
 #include <FL/Fl_Scalepack.H>
+#endif
 #include "Plugin_Chooser_UI.H"
 #include "Plugin_Module.H"
 #include "Plugin_Chooser.H"

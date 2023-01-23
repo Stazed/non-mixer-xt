@@ -17,7 +17,7 @@
 /* Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 /*******************************************************************************/
 
-#include <Mixer.H>
+#include "Mixer.H"
 #include "Group.H"
 #include "Chain.H"
 #include "Mixer_Strip.H"

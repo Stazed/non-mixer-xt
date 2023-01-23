@@ -18,7 +18,13 @@
 /*******************************************************************************/
 
 #include <lo/lo.h>
+
+#ifdef USE_CMAKE
+#include "../nonlib/debug.h"
+#else
 #include "debug.h"
+#endif
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -28,7 +34,11 @@
 
 #include "Endpoint.H"
 
+#ifdef USE_CMAKE
+#include "../nonlib/Thread.H"
+#else
 #include "Thread.H"
+#endif
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 

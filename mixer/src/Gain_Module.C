@@ -18,7 +18,11 @@
 /*******************************************************************************/
 
 #include <math.h>
+#ifdef USE_CMAKE
+#include "../../nonlib/dsp.h"
+#else
 #include <dsp.h>
+#endif
 
 #include "Gain_Module.H"
 

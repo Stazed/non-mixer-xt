@@ -20,7 +20,6 @@
 #include "const.h"
 
 #include <math.h>
-#include <dsp.h>
 
 #include "Mono_Pan_Module.H"
 

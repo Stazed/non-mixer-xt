@@ -19,7 +19,6 @@
 
 #include <FL/fl_draw.H>
 #include "AUX_Module.H"
-#include "dsp.h"
 
 /* The purpose of this module is to provide auxiliary outputs, with
  * gain. This allows one to create a 'send' type topology without

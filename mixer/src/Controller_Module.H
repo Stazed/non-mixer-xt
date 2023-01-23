@@ -21,8 +21,13 @@
 
 #include "Module.H"
 #include <vector>
+#ifdef USE_CMAKE
+#include "../../nonlib/JACK/Port.H"
+#include "../../nonlib/OSC/Endpoint.H"
+#else
 #include "JACK/Port.H"
 #include "OSC/Endpoint.H"
+#endif
 
 class Fl_Menu_Button;
 class Fl_Menu_;

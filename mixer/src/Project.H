@@ -20,7 +20,11 @@
 const char template_dir[] = "share/non-daw/templates";
 const char user_template_dir[] = "~/.non-daw/templates";
 
+#ifdef USE_CMAKE
+#include "../../nonlib/types.h"
+#else
 #include "types.h"
+#endif
 
 class Project
 {

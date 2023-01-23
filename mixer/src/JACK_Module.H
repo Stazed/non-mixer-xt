@@ -22,7 +22,12 @@
 class Fl_Box;
 class Fl_Browser;
 #include "Module.H"
+#ifdef USE_CMAKE
+#include "../../nonlib/JACK/Port.H"
+#else
 #include "JACK/Port.H"
+#endif
+
 #include <vector>
 
 class JACK_Module : public Module

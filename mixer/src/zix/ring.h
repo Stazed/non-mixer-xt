@@ -17,7 +17,7 @@
 #ifndef ZIX_RING_H
 #define ZIX_RING_H
 
-#include "zix/common.h"
+#include "common.h"
 
 #include <stdint.h>
 

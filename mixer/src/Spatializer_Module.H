@@ -20,7 +20,11 @@
 #pragma once
 
 #include "JACK_Module.H"
-#include "dsp.h"
+#ifdef USE_CMAKE
+#include "../../nonlib/dsp.h"
+#else
+#include <dsp.h>
+#endif
 #include <vector>
 
 class filter;

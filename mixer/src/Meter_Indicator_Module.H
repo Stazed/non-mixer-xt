@@ -21,7 +21,11 @@
 
 #include "Module.H"
 #include <vector>
+#ifdef USE_CMAKE
+#include "../../nonlib/JACK/Port.H"
+#else
 #include "JACK/Port.H"
+#endif
 
 class Fl_Valuator;
 class Fl_Scalepack;

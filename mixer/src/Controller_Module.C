@@ -22,6 +22,24 @@
 
 #include <stdio.h>
 
+#ifdef USE_CMAKE
+#include "../../FL/menu_popup.H"
+#include "../../FL/test_press.H"
+#include "../../FL/Fl_DialX.H"
+#include "../../FL/Fl_Labelpad_Group.H"
+#include "../../FL/Fl_Value_SliderX.H"
+#include "../../nonlib/OSC/Endpoint.H"
+#include "../../nonlib/string_util.h"
+#else
+#include "FL/Fl_DialX.H"
+#include "FL/menu_popup.H"
+#include "FL/test_press.H"
+#include "FL/Fl_Labelpad_Group.H"
+#include "FL/Fl_Value_SliderX.H"
+#include "OSC/Endpoint.H"
+#include "string_util.h"
+#endif
+
 #include <FL/Fl.H>
 #include <FL/Fl_Box.H>
 #include <FL/fl_ask.H>
@@ -31,20 +49,13 @@
 #include <FL/Fl_Menu_.H>
 #include <FL/Fl_Light_Button.H>
 #include <FL/fl_draw.H>
-#include "FL/Fl_DialX.H"
-#include "FL/Fl_Labelpad_Group.H"
-#include "FL/Fl_Value_SliderX.H"
 #include "Panner.H"
-#include "FL/test_press.H"
-#include "FL/menu_popup.H"
 
 #include "Chain.H"
-#include "OSC/Endpoint.H"
 
 // needed for mixer->endpoint
 #include "Mixer.H"
 #include "Spatialization_Console.H"
-#include "string_util.h"
 
 
 

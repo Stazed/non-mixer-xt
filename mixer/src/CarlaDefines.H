@@ -20,7 +20,7 @@
 
 /* IDE Helper */
 #ifndef REAL_BUILD
-# include "config.h"
+//# include "config.h"
 #endif
 
 /* Compatibility with non-clang compilers */

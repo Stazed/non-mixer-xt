@@ -17,7 +17,7 @@
 #ifndef ZIX_SEM_H
 #define ZIX_SEM_H
 
-#include "zix/common.h"
+#include "common.h"
 
 #ifdef __APPLE__
 #  include <mach/mach.h>

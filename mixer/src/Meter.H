@@ -23,7 +23,11 @@
 #include <FL/Fl.H>
 #include <FL/Fl_Widget.H>
 #include <FL/Fl_Valuator.H>
+#ifdef USE_CMAKE
+#include "../../FL/test_press.H"
+#else
 #include "FL/test_press.H"
+#endif
 
 class Meter : public Fl_Valuator
 {

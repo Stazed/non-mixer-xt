@@ -19,7 +19,11 @@
 
 #pragma once
 
+#ifdef USE_CMAKE
+#include "../../nonlib/NSM/Client.H"
+#else
 #include "NSM/Client.H"
+#endif
 
 class NSM_Client : public NSM::Client
 {

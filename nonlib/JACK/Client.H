@@ -24,7 +24,12 @@
 #ifdef HAVE_JACK_METADATA
 #	include <jack/metadata.h>
 #endif
+
+#ifdef USE_CMAKE
+#include "../nonlib/Mutex.H"
+#else
 #include <Mutex.H>
+#endif
 
 typedef jack_nframes_t nframes_t;
 typedef jack_default_audio_sample_t sample_t;

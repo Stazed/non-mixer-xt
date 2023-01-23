@@ -23,7 +23,11 @@
  */
 
 #include <math.h>
-#include <dsp.h>
+#ifdef USE_CMAKE
+#include "../../nonlib/dsp.h"
+#else
+#include "dsp.h"
+#endif
 #include "Chain.H"
 
 #include "LADSPA_Plugin.H"

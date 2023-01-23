@@ -39,16 +39,24 @@
 #include "AUX_Module.H"
 #include "Spatializer_Module.H"
 
+#ifdef USE_CMAKE
+#include "../../FL/focus_frame.H"
+#include "../../FL/test_press.H"
+#include "../../FL/menu_popup.H"
+#include "../../nonlib/OSC/Endpoint.H"
+#include "../../nonlib/string_util.h"
+#else
 #include "FL/focus_frame.H"
-#include <FL/Fl_Menu_Button.H>
 #include "FL/test_press.H"
 #include "FL/menu_popup.H"
+#include "OSC/Endpoint.H"
+#include "string_util.h"
+#endif
+
+#include <FL/Fl_Menu_Button.H>
 #include "Mixer.H"
 
 #include "Plugin_Chooser.H"
-#include "OSC/Endpoint.H"
-
-#include "string_util.h"
 
 #include "time.h"
 

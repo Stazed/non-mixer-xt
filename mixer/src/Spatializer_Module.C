@@ -20,7 +20,6 @@
 #include <FL/fl_draw.H>
 #include <FL/Fl_Box.H>
 #include "Spatializer_Module.H"
-#include "dsp.h"
 #include "Module_Parameter_Editor.H"
 
 static const float max_distance = 15.0f;

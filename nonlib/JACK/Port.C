@@ -26,8 +26,12 @@
 #include <errno.h>
 
 #include <assert.h>
-#include "debug.h"
 
+#ifdef USE_CMAKE
+#include "../nonlib/debug.h"
+#else
+#include "debug.h"
+#endif
 namespace JACK
 {
 

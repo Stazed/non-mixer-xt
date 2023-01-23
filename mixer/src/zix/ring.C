@@ -14,7 +14,7 @@
   OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
-#include "zix/ring.h"
+#include "ring.h"
 
 #include <stdlib.h>
 #include <string.h>

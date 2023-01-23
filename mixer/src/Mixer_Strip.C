@@ -34,12 +34,23 @@
 
 #include "Project.H"
 #include "Mixer_Strip.H"
-#include <dsp.h>
-#include <string.h>
+#ifdef USE_CMAKE
+#include "../../nonlib/dsp.h"
+#include "../../nonlib/debug.h"
+#include "../../FL/test_press.H"
+#include "../../FL/Fl_Flowpack.H"
+#include "../../FL/focus_frame.H"
+#include "../../FL/menu_popup.H"
+#else
+#include "dsp.h"
 #include "debug.h"
-
-
+#include "FL/test_press.H"
 #include "FL/Fl_Flowpack.H"
+#include "FL/focus_frame.H"
+#include "FL/menu_popup.H"
+#endif
+
+#include <string.h>
 #include <FL/Fl_Input.H>
 #include <FL/fl_ask.H>
 #include <FL/Fl_Color_Chooser.H>
@@ -51,15 +62,10 @@
 #include "Meter_Module.H"
 #include "Controller_Module.H"
 #include "Meter_Indicator_Module.H"
-#include "debug.h"
-#include "FL/focus_frame.H"
 #include <FL/Fl_Menu_Button.H>
-#include "FL/test_press.H"
-#include "FL/menu_popup.H"
 #include <FL/Fl_File_Chooser.H>
 #include <FL/Fl_Choice.H>
 #include "Group.H"
-#include "FL/focus_frame.H"
 
 extern Mixer *mixer;
 extern char *clipboard_dir;

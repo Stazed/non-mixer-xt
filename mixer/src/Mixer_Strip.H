@@ -22,9 +22,20 @@
 #include <FL/Fl.H>
 #include "DPM.H"
 #include "Panner.H"
+#ifdef USE_CMAKE
+#include "../../FL/Fl_Scalepack.H"
+#include "../../FL/Fl_Flip_Button.H"
+#include "../../FL/Fl_Sometimes_Input.H"
+#include "../../nonlib/JACK/Port.H"
+#include "../../nonlib/Loggable.H"
+#else
 #include <FL/Fl_Scalepack.H>
-#include <FL/Fl_Pack.H>
 #include <FL/Fl_Flip_Button.H>
+#include "../FL/Fl_Sometimes_Input.H"
+#include <JACK/Port.H>
+#include "Loggable.H"
+#endif
+#include <FL/Fl_Pack.H>
 #include <FL/Fl_Dial.H>
 #include <FL/Fl_Group.H>
 #include <FL/Fl_Box.H>
@@ -32,12 +43,7 @@
 #include <FL/Fl_Value_Slider.H>
 #include <FL/Fl_Counter.H>
 #include <FL/Fl_Progress.H>
-#include <JACK/Port.H>
 
-
-#include "../FL/Fl_Sometimes_Input.H"
-
-#include "Loggable.H"
 class Chain;
 class Fl_Flowpack;
 class Controller_Module;

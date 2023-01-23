@@ -23,14 +23,23 @@
 #include <FL/Fl_Group.H>
 
 #include <stdlib.h>
+
+#ifdef USE_CMAKE
+#include "../../nonlib/debug.h"
+#include "../../nonlib/Thread.H"
+#include "../../nonlib/Loggable.H"
+#include "../../nonlib/JACK/Port.H"
+#include "../../nonlib/OSC/Endpoint.H"
+#else
 #include "debug.h"
-#include <vector>
-
 #include "Thread.H"
-
 #include "Loggable.H"
 #include "JACK/Port.H"
 #include "OSC/Endpoint.H"
+#endif
+
+#include <vector>
+
 #include "ImplementationData.H"
 #include <list>
 #include <algorithm>

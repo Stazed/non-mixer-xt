@@ -20,7 +20,11 @@
 #pragma once
 
 #include "Module.H"
+#ifdef USE_CMAKE
+#include "../../nonlib/Loggable.H"
+#else
 #include "Loggable.H"
+#endif
 #include "LADSPAInfo.h"
 
 // To fix backward incompatible files:

@@ -21,7 +21,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+
+#ifdef USE_CMAKE
+#include "../nonlib/debug.h"
+#else
 #include "debug.h"
+#endif
 
 namespace MIDI
 {

@@ -17,7 +17,7 @@
 #ifndef ZIX_THREAD_H
 #define ZIX_THREAD_H
 
-#include "zix/common.h"
+#include "common.h"
 
 #ifdef _WIN32
 #  include <windows.h>

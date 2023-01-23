@@ -28,26 +28,44 @@
 #include <FL/Fl_Menu_Bar.H>
 #include <FL/fl_ask.H>
 #include <FL/Fl.H>
+
+#ifdef USE_CMAKE
+#include "../../FL/New_Project_Dialog.H"
+#include "../../FL/Fl_Flowpack.H"
+#include "../../FL/Fl_Menu_Settings.H"
+#include "../../FL/About_Dialog.H"
+#include "../../FL/Fl_Value_SliderX.H"
+#include "../../nonlib/file.h"
+#include "../../nonlib/debug.h"
+#include "../../nonlib/OSC/Endpoint.H"
+#include "../../nonlib/string_util.h"
+#else
 #include <FL/New_Project_Dialog.H>
 #include <FL/Fl_Flowpack.H>
-#include "Project.H"
 #include <FL/Fl_Menu_Settings.H>
 #include <FL/About_Dialog.H>
+#include <FL/Fl_Value_SliderX.H>
+#include "file.h"
+#include "debug.h"
+#include "OSC/Endpoint.H"
+#include "string_util.h"
+#endif
+
+#include "Project.H"
 #include <FL/Fl_File_Chooser.H>
 #include <FL/Fl_Theme_Chooser.H>
-#include <FL/Fl_Value_SliderX.H>
-#include <Spatialization_Console.H>
-#include "file.h"
+#include <FL/Fl_Tooltip.H>
+#include "Spatialization_Console.H"
 #include "Group.H"
 #include <string.h>
-#include "debug.h"
 #include <unistd.h>
 #include <sys/types.h>
 
-#include "OSC/Endpoint.H"
 #include <lo/lo.h>
 
 #include "Controller_Module.H"
+#include "NSM.H"
+#include "Chain.H"
 
 /* const double FEEDBACK_UPDATE_FREQ = 1.0f; */
 const double FEEDBACK_UPDATE_FREQ = 1.0f / 30.0f;
@@ -55,12 +73,6 @@ const double FEEDBACK_UPDATE_FREQ = 1.0f / 30.0f;
 extern char *user_config_dir;
 extern char *instance_name;
 
-#include "debug.h"
-#include "string_util.h"
-
-#include "NSM.H"
-#include <FL/Fl_Tooltip.H>
-#include "Chain.H"
 
 extern NSM_Client *nsm;
 extern std::vector<std::string>remove_custom_data_directories;
