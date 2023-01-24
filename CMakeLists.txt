@@ -93,12 +93,6 @@ endif ()
 
 #pkg_check_modules(FONTCONFIG REQUIRED fontconfig>=0.22)
 
-#    conf.check_cc(msg='Checking for jack_port_get_latency_range()',
-#                  define_name='HAVE_JACK_PORT_GET_LATENCY_RANGE',
-#                  fragment='#include <jack/jack.h>\nint main (int argc, char**argv) { jack_port_get_latency_range( (jack_port_t*)0, JackCaptureLatency, (jack_latency_range_t *)0 ); }',
-#                  mandatory=False);
-
-
 include(CheckSymbolExists)
 
 set(CMAKE_REQUIRED_LIBRARIES "jack")
@@ -109,6 +103,15 @@ if(JACK_METADATA)
 else(JACK_METADATA)
     message(STATUS "Jack metadata not found")
 endif(JACK_METADATA)
+
+check_symbol_exists(jack_port_get_latency_range "jack/jack.h" JACK_LATENCY_RANGE)
+if(JACK_LATENCY_RANGE)
+    add_definitions(-D'HAVE_JACK_PORT_GET_LATENCY_RANGE=1')
+    message(STATUS "Found jack_port_get_latency_range")
+else(JACK_LATENCY_RANGE)
+    message(STATUS "jack_port_get_latency_range not found")
+endif(JACK_LATENCY_RANGE)
+
 
 check_symbol_exists(mlock "sys/mman.h" MLOCK)
 if(MLOCK)
@@ -240,6 +243,7 @@ package_status(LILV_FOUND          "LILV support . . . . . . . . . . . . . . . .
 package_status(SUIL_FOUND          "SUIL support . . . . . . . . . . . . . . . . . . . . . .:"  )
 package_status(LIBLO_FOUND         "Liblo support. . . . . . . . . . . . . . . . . . . . . .:"  )
 package_status(JACK_METADATA       "Jack metadata support. . . . . . . . . . . . . . . . . .:"  )
+package_status(JACK_LATENCY_RANGE  "Jack port latency range support. . . . . . . . . . . . .:"  )
 
 message (STATUS)
 message (STATUS                    "____________________ User Options________________________"  )
