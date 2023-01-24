@@ -101,6 +101,7 @@ endif ()
 
 include(CheckSymbolExists)
 
+set(CMAKE_REQUIRED_LIBRARIES "jack")
 check_symbol_exists(jack_get_property "jack/metadata.h" JACK_METADATA)
 if(JACK_METADATA)
     add_definitions(-D'HAVE_JACK_METADATA=1')
