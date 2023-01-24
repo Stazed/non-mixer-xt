@@ -135,3 +135,6 @@ target_link_libraries(midi-mapper-xt PRIVATE
 )
 
 install (TARGETS midi-mapper-xt RUNTIME DESTINATION bin)
+
+install (FILES non-mixer-xt.desktop.in
+    DESTINATION share/applications RENAME non-mixer-xt.desktop)

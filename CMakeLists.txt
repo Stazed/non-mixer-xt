@@ -10,8 +10,6 @@ set (CMAKE_SKIP_RULE_DEPENDENCY OFF)
 add_definitions(-D'VERSION="${PACKAGE_VERSION}"')
 add_definitions(-D'WEBSITE="github.com.Stazed.non-mixer-xt"')
 add_definitions(-D'PACKAGE="non-mixer-xt"')
-#add_definitions(-D'DATADIR="${CMAKE_INSTALL_PREFIX}/share/non-mixer-xt"')
-add_definitions(-D'HELPDIR="${CMAKE_INSTALL_PREFIX}/share/doc/non-mixer-xt"')
 add_definitions(-D'PIXMAP_PATH="${CMAKE_INSTALL_PREFIX}/share/pixmaps"')
 add_definitions(-D'DOCUMENT_PATH="${CMAKE_INSTALL_PREFIX}/share/doc"')
 add_definitions(-D'USE_CMAKE=1')
@@ -194,15 +192,10 @@ else (BuildForDebug)
     endif(EnableOptimizations)
 endif (BuildForDebug)
 
-
 add_subdirectory(mixer)
-#add_subdirectory(nonlib)
-#add_subdirectory(FL)
-
-#add_subdirectory(src)
-#add_subdirectory(icons)
-#add_subdirectory(doc)
-#add_subdirectory(pixmaps)
+add_subdirectory(mixer/icons)
+add_subdirectory(mixer/doc)
+add_subdirectory(mixer/pixmaps)
 
 
 ##Summarize The Full Configuration

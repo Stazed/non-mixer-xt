@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Non Mixer XT
+Comment=Modular Digital Audio Workstation - Mixer
+Comment[fr]=Station de travail audio-numérique modulaire - Mixeur
+Exec=non-mixer-xt
+Terminal=false
+Type=Application
+Icon=non-mixer
+Categories=AudioVideo;Audio;
+X-NSM-capable=true
