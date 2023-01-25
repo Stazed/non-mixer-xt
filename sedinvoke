@@ -1,0 +1,21 @@
+To convert existing raysession projects using legacy Non-Mixer, do the following:
+
+Make a backup copy of your raysession projects in case something goes wrong.
+
+Run the following commands invoking the sedcmd and sedcmd_patch files on the raysession project files:
+You must replace "Ray_Session_Name" with the your raysession project name and "user_name" with your
+user name.
+
+$ sed -i -f sedcmd "/home/user_name/Ray Sessions/Ray_Session_Name/raysession.xml"
+$ sed -i -f sedcmd_patch "/home/user_name/Ray Sessions/Ray_Session_Name/Ray_Session_Name.patch.xml"
+
+
+From within the raysession Ray_Session_Name.nonmixer folder run the following:
+
+$ sed -i 's/The Non-Mixer /The Non-Mixer-XT /' info
+$ sed -i -e '/:plugin_id/s/Plugin_Module/LADSPA_Plugin/' snapshot
+$ sed -i -e '/:lv2_plugin_uri/s/Plugin_Module/LV2_Plugin/' snapshot
+
+In some cases the .nonmixer folder will be prefixed with "Non-Mixer" and a new "Non-Mixer-XT.m_xt"
+folder will be created by raysession. In this case you will have to copy the contents of the Non-Mixer.nonmixer
+folder into the Non-Mixer-XT.m_xt folder.
