@@ -3,23 +3,23 @@
 <meta name="generator" content="Bluefish 2.2.12" >
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <link type="text/css" rel="stylesheet" href="mup.css">
-<title>Non Mixer User Manual</title>
+<title>Non Mixer XT User Manual</title>
 </head>
 <body>
 
 <div id=cover>
-<h1>Non Mixer User Manual</h1>
+<h1>Non Mixer XT User Manual</h1>
 <h3></h3>
-<address>
+<!--<address>
 Jonathan Moore Liles <a href="mailto:male@tuxfamily.org">&lt;male@tuxfamily.org&gt;</a><br>
 <br>
-
-</address><hr></div>
+</address>-->
+<hr></div>
 <div id=body>
 <div id=toc>
 <h1 id=toc>Table Of Contents</h1>
 <ul>
-<li><a href="#n:1.">1. Non Mixer User Manual</a>
+<li><a href="#n:1.">1. Non Mixer XT User Manual</a>
 <ul><li><a href="#n:1.1.">1.1. Mixer Groups</a>
 
 <ul><li><a href="#n:1.1.1.">1.1.1. How to Choose Groupings</a>
@@ -73,7 +73,7 @@ Jonathan Moore Liles <a href="mailto:male@tuxfamily.org">&lt;male@tuxfamily.org&
 <ul><li><a href="#n:1.4.1.">1.4.1. JACK I/O</a>
 
 </ul></ul></ul></ul><hr></div>
-<h1 id="n:1.">1. Non Mixer User Manual</h1>
+<h1 id="n:1.">1. Non Mixer XT User Manual</h1>
 <center><div class="fig image"><table id="Fig.1.1" border=1>
 <caption>
 <strong>Fig. 1.1.</strong> Mixer
@@ -102,7 +102,7 @@ After the project has been created. Hit <tt>a</tt> or choose <tt>Mixer/Add Strip
 <tr><td><img src="group-dropdown.png" alt="fig. "></td></tr>
 </table></div></center>
 <p>
-Groups serve several purposes. Firstly, they allow for some organization of strips. Groups also allow parallel relationships of mixer strips to be made explicit. This has important performance implications in JACK2. Non Mixer supports an unlimited number of groups, each of which can contain an unlimited number of mixer strips.
+Groups serve several purposes. Firstly, they allow for some organization of strips. Groups also allow parallel relationships of mixer strips to be made explicit. This has important performance implications in JACK2. Non Mixer XT supports an unlimited number of groups, each of which can contain an unlimited number of mixer strips.
 </p>
 <h3 id="n:1.1.1.">1.1.1. How to Choose Groupings</h3>
 <p>
@@ -113,7 +113,7 @@ To put it another way, if you have 100 inputs strips with identical output confi
 </p>
 <h3 id="n:1.1.2.">1.1.2. Considering JACK Overhead</h3>
 <p>
-JACK provides immense flexibility. But, as in most situations, that flexibility comes with a cost. In JACK the cost is a context switch per client. This applies <i>even for many clients which belong to the same process</i>, as in Non Mixer. Various factors go into determining the price of a context switch on any given system. It's not very expensive, but it does add up. It becomes problematic in sessions involving many clients (think 100s), each of which having a small DSP load (often smaller than the cost of JACK's context context switch). JACK <b>could</b> be smart enough to recognize that some clients belong to the same process and could be executed serially without requiring a context switch, but at the time of writing neither JACK1 nor JACK2's scheduling is that smart.
+JACK provides immense flexibility. But, as in most situations, that flexibility comes with a cost. In JACK the cost is a context switch per client. This applies <i>even for many clients which belong to the same process</i>, as in Non Mixer XT. Various factors go into determining the price of a context switch on any given system. It's not very expensive, but it does add up. It becomes problematic in sessions involving many clients (think 100s), each of which having a small DSP load (often smaller than the cost of JACK's context context switch). JACK <b>could</b> be smart enough to recognize that some clients belong to the same process and could be executed serially without requiring a context switch, but at the time of writing neither JACK1 nor JACK2's scheduling is that smart.
 </p>
 <p>
 If you're mixing a normal song (couple of dozen tracks) at low latency, this overhead will probably account for less than 1% of the total DSP load. If you're mixing an entire orchestra at ultra-low latency, then it might account for a quarter or more of the total DSP load.
@@ -242,7 +242,7 @@ The signal chain view of a mixer strip provides a way to view and manipulate the
 <tr><td><img src="modules.png" alt="fig. 1.4"></td></tr>
 </table></div></center>
 <p>
-All signal processing in Non Mixer occurs in <i>Modules</i>. Modules are signal processing abstractions providing ports for audio and control I/O and, in addition, some simple user interface. Sink and source modules carry audio out of and into JACK.
+All signal processing in Non Mixer XT occurs in <i>Modules</i>. Modules are signal processing abstractions providing ports for audio and control I/O and, in addition, some simple user interface. Sink and source modules carry audio out of and into JACK.
 </p>
 <p>
 Modules are displayed as named blocks. Some modules (e.g. the Meter module) may have additional GUI components.
@@ -254,7 +254,7 @@ Each module has zero or more audio I/O ports and zero or more control ports. Aud
 An indicator in the upper left-hand corner of each module block indicates whether the module has any parameters bound to controls.
 </p>
 <p>
-Non Mixer has several built-in modules. They are:
+Non Mixer XT has several built-in modules. They are:
 </p>
 <dl>
 <dt><em>JACK</em></dt>
@@ -320,7 +320,7 @@ Automatic translation between MIDI and Non's OSC Signals can be achieved by addi
 Non-MIDI-Mapper provides JACK MIDI input and output ports that can be connected to a suitable controller device.
 </p>
 <p>
-In Non-Mixer, the <tt>Remote Control/Start Learning</tt> menu item enters learning mode in which Non Mixer can be taught which controls to associated with which MIDI messages by clicking a control in Non-Mixer and moving the desired control on the MIDI device. <tt>Remote Control/End Learning</tt> ends the learning session.
+In Non-Mixer, the <tt>Remote Control/Start Learning</tt> menu item enters learning mode in which Non Mixer XT can be taught which controls to associated with which MIDI messages by clicking a control in Non-Mixer and moving the desired control on the MIDI device. <tt>Remote Control/End Learning</tt> ends the learning session.
 </p>
 <p>
 The mapping will be saved with the NSM session.
@@ -405,7 +405,7 @@ processing Control Voltage signals at full audio resolution  anyway.
 <tr><td><img src="spatializer-module.png" alt="fig. "></td></tr>
 </table></div></center>
 <p>
-The Spatializer Module included with Non Mixer allows one to not only control the position of a sound source (angle and elevation), but also to control it's apparent distance from the listener.
+The Spatializer Module included with Non Mixer XT allows one to not only control the position of a sound source (angle and elevation), but also to control it's apparent distance from the listener.
 </p>
 <p>
 Distance cues are based on physical properties--the speed of sound in air, the damping effect of humidity, the ratio of reverb early and late reflections, the volume of the sound. 
@@ -414,7 +414,7 @@ Distance cues are based on physical properties--the speed of sound in air, the d
 In legacy mixers, all of these properties must be controlled individually by the engineer. This is nearly always a process of trial and error. Much of a studio engineers' skill lies in his ability to guess at these values and arrive at a reasonably realistic sounding result.
 </p>
 <p>
-Non Mixer eliminates the guesswork and combines all of these controls into a single spatialization point encoding both a sound source's position relative to the listener and its distance. No matter where the point is placed, the result will be realistic.
+Non Mixer XT eliminates the guesswork and combines all of these controls into a single spatialization point encoding both a sound source's position relative to the listener and its distance. No matter where the point is placed, the result will be realistic.
 </p>
 <p>
 Use of the Spatializer Modules eliminates much complexity from the mixing process. No more back and forth, no more guessing at values for reverb sends and predelay and EQ. The Spatializer does it all for you.
@@ -446,7 +446,7 @@ The main outputs of the strip should go to a master bus, into which the output o
 </p>
 <h6 id="n:1.2.3.1.6.2.">1.2.3.1.6.2. LADSPA Plugins</h6>
 <p>
-There are several Ambisonics panners/encoders released as LADSPA plugins. When one of these plugins is added to a strip, Non Mixer will detect its parameter signature and create a Spatialization Control for it just as with the Spatializer Module.
+There are several Ambisonics panners/encoders released as LADSPA plugins. When one of these plugins is added to a strip, Non Mixer XT will detect its parameter signature and create a Spatialization Control for it just as with the Spatializer Module.
 </p>
 <center><div class="fig image"><table id="Fig.1.7" border=1>
 <caption>
@@ -496,9 +496,10 @@ $ mv Project-A Project-B
 </pre></td></tr>
 </table></div>
 <p>
-To load legacy projects, you must convert any snapshot files to the new format by running the following commands from the project directory:
+To load legacy projects, you must convert any info/snapshot files to the new format by running the following commands from the project directory:
 </p>
 <div class="fig example"><table width=100%><tr><td><pre>
+$ sed -i 's/The Non-Mixer /The Non-Mixer-XT /' info
 $ sed -i -e '/:plugin_id/s/Plugin_Module/LADSPA_Plugin/' snapshot
 $ sed -i -e '/:lv2_plugin_uri/s/Plugin_Module/LV2_Plugin/' snapshot
 </pre></td></tr>

@@ -2,7 +2,6 @@
 install (FILES
     controls.png
     group-dropdown.png
-    icon.png
     MANUAL.html
     mixer-strips.png
     module-parameter-editor.png
