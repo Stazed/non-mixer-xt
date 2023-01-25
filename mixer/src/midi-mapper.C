@@ -51,9 +51,9 @@ using namespace MIDI;
 /* simple program to translate from MIDI<->OSC Signals using a fixed mapping  */
 
 #undef APP_NAME
-const char *APP_NAME = "non-midi-mapper";
+const char *APP_NAME = "midi-mapper-xt";
 #undef APP_TITLE
-const char *APP_TITLE = "Non-MIDI-Mapper";
+const char *APP_TITLE = "MIDI-Mapper-xt";
 #undef VERSION
 const char *VERSION = "1.1";
 
@@ -493,7 +493,7 @@ save_settings ( void )
     if ( !fp )
         return false;
 
-    fprintf( fp, "# Non-MIDI-Mapper version %i\n", FILE_VERSION );
+    fprintf( fp, "# MIDI-Mapper-XT version %i\n", FILE_VERSION );
     
     for ( std::map<int,std::string>::const_iterator i = sig_map_ordered.begin();
           i != sig_map_ordered.end();
@@ -544,7 +544,7 @@ load_settings ( void )
 
     int version = 0;
 
-    if ( 1 == fscanf( fp, "# Non-MIDI-Mapper version %i\n", &version ) )
+    if ( 1 == fscanf( fp, "# MIDI-Mapper-XT version %i\n", &version ) )
     {
     }
     else
@@ -1040,7 +1040,7 @@ main ( int argc, char **argv )
     {
         delete engine;
         delete nsm;
-        fprintf(stderr, "Attention!!! -- non-midi-mapper can only be used as an NSM client!!!\n");
+        fprintf(stderr, "Attention!!! -- midi-mapper-xt can only be used as an NSM client!!!\n");
         exit(0);
     }
     
