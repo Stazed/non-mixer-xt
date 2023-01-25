@@ -210,20 +210,20 @@ Panner::draw_the_box ( int tx, int ty, int tw, int th )
         if ( projection() == POLAR )
         {
             if ( th <= 92 )
-                i = Fl_Shared_Image::get( PIXMAP_PATH "/non-mixer/panner-sphere-92x92.png" );
+                i = Fl_Shared_Image::get( PIXMAP_PATH "/non-mixer-xt/panner-sphere-92x92.png" );
             else if ( th <= 502 )
-                i = Fl_Shared_Image::get( PIXMAP_PATH "/non-mixer/panner-sphere-502x502.png" );
+                i = Fl_Shared_Image::get( PIXMAP_PATH "/non-mixer-xt/panner-sphere-502x502.png" );
             else if ( th <= 802 )
-                i = Fl_Shared_Image::get( PIXMAP_PATH "/non-mixer/panner-sphere-802x802.png" );
+                i = Fl_Shared_Image::get( PIXMAP_PATH "/non-mixer-xt/panner-sphere-802x802.png" );
         }
         else
         {
             if ( th <= 92 )
-                i = Fl_Shared_Image::get( PIXMAP_PATH "/non-mixer/panner-plane-92x92.png" );
+                i = Fl_Shared_Image::get( PIXMAP_PATH "/non-mixer-xt/panner-plane-92x92.png" );
             else if ( th <= 502 )
-                i = Fl_Shared_Image::get( PIXMAP_PATH "/non-mixer/panner-plane-502x502.png" );
+                i = Fl_Shared_Image::get( PIXMAP_PATH "/non-mixer-xt/panner-plane-502x502.png" );
             else if ( th <= 802 )
-                i = Fl_Shared_Image::get( PIXMAP_PATH "/non-mixer/panner-plane-802x802.png" );
+                i = Fl_Shared_Image::get( PIXMAP_PATH "/non-mixer-xt/panner-plane-802x802.png" );
         }
 
         if ( i && i->h() != th )

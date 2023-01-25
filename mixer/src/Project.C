@@ -54,7 +54,7 @@ const int PROJECT_VERSION = 1;
 
 const char *Project::_errstr[] =
 {
-    "Not a Non-Mixer project",
+    "Not a Non-Mixer-XT project",
     "Locked by another process",
     "Access denied",
     "Incompatible project version"
@@ -235,7 +235,7 @@ Project::validate ( const char *name )
     if ( ! exists( "info" ) ||
          ! exists( "snapshot" ))
     {
-        WARNING( "Not a Non-Mixer project: \"%s\"", name );
+        WARNING( "Not a Non-Mixer-XT project: \"%s\"", name );
         r = false;
     }
 

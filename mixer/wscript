@@ -8,7 +8,7 @@ import os
 PACKAGE_VERSION = '1.3.0'
 
 # Variables for 'waf dist'
-APPNAME = 'non-mixer'
+APPNAME = 'non-mixer-xt'
 VERSION = PACKAGE_VERSION
 
 # Mandatory variables
@@ -81,22 +81,22 @@ src/Spatialization_Console.C
 src/zix/ring.C
 src/lv2/lv2_evbuf.c
 ''',
-              target       = 'non-mixer',
+              target       = 'non-mixer-xt',
               includes     = ['.', 'src', '..', '../nonlib'],
               use = ['nonlib', 'fl_widgets'],
               uselib = [ 'JACK', 'LIBLO', 'LRDF', 'LILV', 'SUIL', 'XLIB', 'NTK', 'NTK_IMAGES', 'PTHREAD', 'DL', 'M' ],
               install_path = '${BINDIR}')
 
     bld.program( source = 'src/midi-mapper.C',
-                 target       = 'non-midi-mapper',
+                 target       = 'midi-mapper-xt',
                  includes     = ['.', 'src', '..', '../nonlib'],
                  use = ['nonlib', 'fl_widgets'],
                  uselib = [ 'JACK', 'LIBLO', 'LRDF', 'NTK', 'NTK_IMAGES', 'PTHREAD', 'DL', 'M' ],
                  install_path = '${BINDIR}')
     
     bld( features = 'subst',
-         source = 'non-mixer.desktop.in',
-         target = 'non-mixer.desktop',
+         source = 'non-mixer-xt.desktop.in',
+         target = 'non-mixer-xt.desktop',
          encoding = 'utf8',
          install_path = "${DATADIR}" + '/applications',
          BIN_PATH = bld.env.BINDIR )
@@ -115,4 +115,4 @@ src/lv2/lv2_evbuf.c
 
     bld.install_files( '/'.join( [ '${DATADIR}/doc', APPNAME ] ), bld.path.ant_glob( 'doc/*.html doc/*.png' ) )
 
-    bld.symlink_as( '${BINDIR}/' + APPNAME + '-noui', APPNAME )
+#    bld.symlink_as( '${BINDIR}/' + APPNAME + '-noui', APPNAME )

@@ -388,11 +388,11 @@ void Mixer::cb_menu(Fl_Widget* o) {
     }
     else if ( ! strcmp( picked, "&Help/&About" ) )
     {
-        About_Dialog ab( PIXMAP_PATH "/non-mixer/icon-256x256.png" );
+        About_Dialog ab( PIXMAP_PATH "/non-mixer-xt/icon-256x256.png" );
 
         ab.logo_box->label( VERSION );
 
-        ab.title->label( "Non Mixer" );
+        ab.title->label( "Non Mixer XT" );
 
         ab.copyright->label( "Copyright (C) 2008-2013 Jonathan Moore Liles" );
         ab.credits->label(
@@ -404,16 +404,18 @@ void Mixer::cb_menu(Fl_Widget* o) {
             "You can help now by donating time, money,\n"
             "and/or replacing the rest of Linux Audio\n"
             "with fast, light, reliable alternatives.\n" );
-
+#ifdef USE_CMAKE
+        ab.website_url->label( WEBSITE );
+#else
         ab.website_url->label( "http://non.tuxfamily.org" );
-
+#endif
         ab.run();
     }
     else if ( !strcmp( picked, "&Help/&Manual" ))
     {
         char *pat;
 
-        asprintf( &pat, "file://%s.html", DOCUMENT_PATH "/non-mixer/MANUAL" );
+        asprintf( &pat, "file://%s.html", DOCUMENT_PATH "/non-mixer-xt/MANUAL" );
 
         open_url( pat );
 
@@ -595,7 +597,7 @@ Mixer::Mixer ( int X, int Y, int W, int H, const char *L ) :
 //        o->box( Fl_Scroll::BOTH );
         {
             Fl_Flowpack *o = mixer_strips = new Fl_Flowpack( X, Y + 24, W, H - ( 18*2 + 24 ));
-//            label( "Non-Mixer" );
+//            label( "Non-Mixer-XT" );
             align( (Fl_Align)(FL_ALIGN_CENTER | FL_ALIGN_INSIDE) );
             o->flow( false );
             o->box( FL_FLAT_BOX );

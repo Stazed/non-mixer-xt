@@ -1756,7 +1756,7 @@ LV2_Plugin::send_file_to_plugin( int port, const std::string &filename )
 {
     DMESSAGE("File = %s", filename.c_str());
     
-    /* Set the file for non-mixer here - may be redundant some times */
+    /* Set the file for non-mixer-xt here - may be redundant some times */
     atom_input[port]._file = filename;
     
     uint32_t size = filename.size() + 1;

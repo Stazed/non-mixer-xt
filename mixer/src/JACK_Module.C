@@ -229,7 +229,7 @@ get_connections_for_ports ( std::vector<Module::Port> ports )
             char *strip_name = 0;
             //      char *client_name = 0;
            
-            if ( 2 == sscanf( *c, "Non-Mixer.%m[^:/]/%m[^:]:", &client_id, &strip_name ) )
+            if ( 2 == sscanf( *c, "Non-Mixer-XT.%m[^:/]/%m[^:]:", &client_id, &strip_name ) )
             {
                 free( client_id );
                 char *s = NULL;
@@ -237,7 +237,7 @@ get_connections_for_ports ( std::vector<Module::Port> ports )
                 free( strip_name );
                 strip_name = s;
             }
-            else if ( 2 == sscanf( *c, "Non-Mixer.%m[^:(] (%m[^:)]):", &client_id, &strip_name ) )
+            else if ( 2 == sscanf( *c, "Non-Mixer-XT.%m[^:(] (%m[^:)]):", &client_id, &strip_name ) )
             {
                 free( client_id );
                 char *s = NULL;

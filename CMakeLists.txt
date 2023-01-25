@@ -8,7 +8,7 @@ set (PACKAGE_VERSION "2.0.0")
 set (CMAKE_SKIP_RULE_DEPENDENCY OFF)
 
 add_definitions(-D'VERSION="${PACKAGE_VERSION}"')
-add_definitions(-D'WEBSITE="github.com.Stazed.non-mixer-xt"')
+add_definitions(-D'WEBSITE="https://github.com/Stazed/non-mixer-xt"')
 add_definitions(-D'PACKAGE="non-mixer-xt"')
 add_definitions(-D'PIXMAP_PATH="${CMAKE_INSTALL_PREFIX}/share/pixmaps"')
 add_definitions(-D'DOCUMENT_PATH="${CMAKE_INSTALL_PREFIX}/share/doc"')

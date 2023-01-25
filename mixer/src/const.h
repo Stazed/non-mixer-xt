@@ -19,6 +19,6 @@
 
 #pragma once
 
-#define APP_NAME "Non-Mixer"
-#define APP_TITLE "The Non-Mixer"
-#define __MODULE__ "non-mixer"
+#define APP_NAME "Non-Mixer-XT"
+#define APP_TITLE "The Non-Mixer-XT"
+#define __MODULE__ "non-mixer-xt"

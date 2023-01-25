@@ -41,19 +41,17 @@ if ( logo_box->image() )
 {
 	((Fl_Shared_Image*)logo_box->image())->release();
 	logo_box->image( 0 );
-}} open selected
-      private xywh {879 215 560 695} type Double
-      visible
+}} open
+      private xywh {879 215 560 695} type Double visible
     } {
       Fl_Tabs {} {open
         xywh {0 352 558 296}
       } {
         Fl_Group {} {
-          label Credits open
+          label Credits open selected
           xywh {2 386 553 261}
         } {
           Fl_Box credits {
-            label {}
             xywh {5 389 545 249} box ROUNDED_BOX color 46 labelsize 18
           }
         }
@@ -87,9 +85,9 @@ You should have received a copy of the GNU General Public License along with thi
         xywh {400 660 76 30}
       }
       Fl_Button website_url {
-        label {http://non-daw.tuxfamily.org}
+        label {https://github.com/Stazed/non-mixer-xt}
         callback {open_url( o->label() );}
-        xywh {125 660 245 30} color 14 labeltype SHADOW_LABEL labelcolor 6
+        xywh {95 660 290 30} color 14 labeltype SHADOW_LABEL labelcolor 6
       }
       Fl_Box title {
         label TITLE

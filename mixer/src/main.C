@@ -73,7 +73,7 @@
 #include "FL/Fl_PNG_Image.H"
 
 /* TODO: put these in a header */
-#define USER_CONFIG_DIR ".non-mixer/"
+#define USER_CONFIG_DIR ".non-mixer-xt/"
 
 const double NSM_CHECK_INTERVAL = 0.25f;
 
@@ -148,7 +148,7 @@ int
 main ( int argc, char **argv )
 {
 #if USE_SUIL
-  suil_init(&argc, &argv, SUIL_ARG_NONE);
+    suil_init(&argc, &argv, SUIL_ARG_NONE);
 #endif
     bool no_ui = false;
 
@@ -238,6 +238,8 @@ main ( int argc, char **argv )
     }
 
     {
+#if 0
+        /* There is no need for this - it's the same as 'non-mixer-xt -u' from command line */
         char *name = strdup( argv[0] );
         char *n = basename( name );
 
@@ -248,7 +250,7 @@ main ( int argc, char **argv )
 	}
 
         free( name );
-
+#endif
 	if ( NULL == getenv("DISPLAY") )
 	{
 	    DMESSAGE("Not running UI: $DISPLAY environment variable unset");
@@ -273,7 +275,7 @@ main ( int argc, char **argv )
 
     
     {
-        Fl_Double_Window *o = main_window = new Fl_Double_Window( 800, 600, "Non Mixer" );
+        Fl_Double_Window *o = main_window = new Fl_Double_Window( 800, 600, "Non Mixer XT" );
         {
             main_window->xclass( APP_NAME );
 
