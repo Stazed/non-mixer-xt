@@ -396,18 +396,20 @@ void Mixer::cb_menu(Fl_Widget* o) {
 
         ab.copyright->label( "Copyright (C) 2008-2013 Jonathan Moore Liles" );
         ab.credits->label(
-            "Non Mixer was written from scratch by\n"
-            "Jonathan Moore Liles for his own use\n"
+            "Legacy Non Mixer by Jonathan Moore Liles.\n"
+            "Filipe Coelho - initial LV2 implementation and\n"
+            "X11 embedded support from the Carla project.\n"
+            "David Robillard for LV2 atom ports and MIDI\n"
+            "event support from the Jalv project.\n"
+            "Rui Nuno Capela for LV2 showInterface, external\n"
+            "UI, and presets from the Qtractor project.\n"
+            "Non Mixer XT modifications by Stazed.\n"
             "(see the manual).\n"
-            "\n"
-            "Nobody planned. Nobody helped.\n"
-            "You can help now by donating time, money,\n"
-            "and/or replacing the rest of Linux Audio\n"
-            "with fast, light, reliable alternatives.\n" );
+        );
 #ifdef USE_CMAKE
         ab.website_url->label( WEBSITE );
 #else
-        ab.website_url->label( "http://non.tuxfamily.org" );
+        ab.website_url->label( "https://github.com/Stazed/non-mixer-xt" );
 #endif
         ab.run();
     }

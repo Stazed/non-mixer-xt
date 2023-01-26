@@ -82,7 +82,7 @@ Jonathan Moore Liles <a href="mailto:male@tuxfamily.org">&lt;male@tuxfamily.org&
 <tr><td><img src="non-mixer-complex.png" alt="fig. 1.1"></td></tr>
 </table></div></center>
 <p>
-The Non-Mixer is a stand-alone audio mixer, utilizing JACK as an audio subsystem. At the time of writing, the architecture of Non-Mixer is unique. By making the mixer stand-alone, concepts such as busses, sends, and inserts are eliminated, as the same goals can be achieved by simply adding more strips to the mixer.
+The Non-Mixer-XT is a stand-alone audio mixer, utilizing JACK as an audio subsystem. At the time of writing, the architecture of Non-Mixer-XT is unique. By making the mixer stand-alone, concepts such as busses, sends, and inserts are eliminated, as the same goals can be achieved by simply adding more strips to the mixer.
 </p>
 <p>
 Start by creating a new project (menu item <tt>Project/New</tt>).
@@ -314,13 +314,13 @@ Non-DAW accesses these same signals via a more advanced signal routing layer on 
 </p>
 <h5 id="n:1.2.3.1.2.">1.2.3.1.2. MIDI Control</h5>
 <p>
-Automatic translation between MIDI and Non's OSC Signals can be achieved by adding the headless program <tt>non-midi-mapper</tt> (included in the Non-Mixer distribution) to an NSM session.
+Automatic translation between MIDI and Non's OSC Signals can be achieved by adding the headless program <tt>midi-mapper-xt</tt> (included in the Non-Mixer-XT distribution) to an NSM session.
 </p>
 <p>
-Non-MIDI-Mapper provides JACK MIDI input and output ports that can be connected to a suitable controller device.
+MIDI-Mapper-XT provides JACK MIDI input and output ports that can be connected to a suitable controller device.
 </p>
 <p>
-In Non-Mixer, the <tt>Remote Control/Start Learning</tt> menu item enters learning mode in which Non Mixer XT can be taught which controls to associated with which MIDI messages by clicking a control in Non-Mixer and moving the desired control on the MIDI device. <tt>Remote Control/End Learning</tt> ends the learning session.
+In Non-Mixer-XT, the <tt>Remote Control/Start Learning</tt> menu item enters learning mode in which Non Mixer XT can be taught which controls to associated with which MIDI messages by clicking a control in Non-Mixer-XT and moving the desired control on the MIDI device. <tt>Remote Control/End Learning</tt> ends the learning session.
 </p>
 <p>
 The mapping will be saved with the NSM session.
@@ -385,7 +385,7 @@ achieve finer resolution.
 The control voltage concept should be familiar to anyone who has experience with analog modular synthesizers. MIDI, while having definite advantages in many respects, multiplexes control data in such a way as to make connecting one MIDI control to a parameter involve a significant inconvenience, usually requiring the adjustment of settings on both ends of the connection in order to separate the control data streams.
 </p>
 <p>
-Control Voltages, on the other hand, provide a simple 1:1 source to sink relationship and offer much higher resolution, both in time and value, than can be natively expressed through MIDI. The chief advantage of CV in the context of Non-DAW is the ease with which an control sequence can be connected to a mixer module parameter. If you have a MIDI controller that you'd like to use to control parameters of Non-Mixer, consider <i>jm2cv</i>, a JACK MIDI to Control Voltage daemon which was written by Peter Nelson specifically for use with Non-Mixer. jm2cv can be acquired by:
+Control Voltages, on the other hand, provide a simple 1:1 source to sink relationship and offer much higher resolution, both in time and value, than can be natively expressed through MIDI. The chief advantage of CV in the context of Non-DAW is the ease with which an control sequence can be connected to a mixer module parameter. If you have a MIDI controller that you'd like to use to control parameters of Non-Mixer-XT, consider <i>jm2cv</i>, a JACK MIDI to Control Voltage daemon which was written by Peter Nelson specifically for use with Non-Mixer-XT. jm2cv can be acquired by:
 </p>
 <div class="fig example"><table width=100%><tr><td><pre>
 git clone git://fuzzle.org/jm2cv.git
@@ -456,7 +456,7 @@ There are several Ambisonics panners/encoders released as LADSPA plugins. When o
 <tr><td><img src="spatialization-on-strip.png" alt="fig. 1.7"></td></tr>
 </table></div></center>
 <p>
-Whenever a module is added to a strip whose set of parameters include parameters named Azimuth and Elevation (and perhaps Radius), Non-Mixer will detect this and automatically attach a Spatializer control to these parameters. The Spatializer will be displayed at the bottom of the mixer strip. A larger version of the control may also be found in the Module Parameter Editor.
+Whenever a module is added to a strip whose set of parameters include parameters named Azimuth and Elevation (and perhaps Radius), Non-Mixer-XT will detect this and automatically attach a Spatializer control to these parameters. The Spatializer will be displayed at the bottom of the mixer strip. A larger version of the control may also be found in the Module Parameter Editor.
 </p>
 <center><div class="fig image"><table id="Fig.1.8" border=1>
 <caption>
@@ -489,7 +489,7 @@ There are two projections available, Planar and Spherical. The range of the view
 </p>
 <h2 id="n:1.4.">1.4. Projects</h2>
 <p>
-A Non-Mixer project is a directory where Non-Mixer keeps the strip settings, project specific settings, and some meta-data.  A project is completely self-contained. You can rename a project as simply as:
+A Non-Mixer-XT project is a directory where Non-Mixer-XT keeps the strip settings, project specific settings, and some meta-data.  A project is completely self-contained. You can rename a project as simply as:
 </p>
 <div class="fig example"><table width=100%><tr><td><pre>
 $ mv Project-A Project-B
