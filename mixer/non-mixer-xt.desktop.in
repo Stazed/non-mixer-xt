@@ -5,6 +5,6 @@ Comment[fr]=Station de travail audio-numérique modulaire - Mixeur
 Exec=non-mixer-xt
 Terminal=false
 Type=Application
-Icon=non-mixer
+Icon=non-mixer-xt
 Categories=AudioVideo;Audio;
 X-NSM-capable=true
