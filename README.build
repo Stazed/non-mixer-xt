@@ -9,7 +9,7 @@ This repository contains all of the non-* software.
 If you just cloned the non repository or just executed git pull, then
 you should also run
 
-    git submodule update --init
+    git submodule update --remote
 
 to pull down the latest NTK code required by Non. Git does *not* do
 this automatically.

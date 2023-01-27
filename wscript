@@ -11,7 +11,7 @@ top = '.'
 out = 'build'
 
 common = [ 'nonlib', 'FL' ]
-projects = [ 'timeline', 'mixer', 'sequencer', 'session-manager' ]
+projects = [ 'mixer' ]
 
 def options(opt):
     # opt.add_option('--use-system-ntk', action='store_true', default=False,
