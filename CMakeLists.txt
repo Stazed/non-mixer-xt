@@ -55,11 +55,8 @@ set (BuildOptionsDebug
 find_package (PkgConfig REQUIRED)
 
 #dependencies
-#SET(FLTK_SKIP_OPENGL TRUE) 
-#find_package(FLTK REQUIRED)
 find_package(X11 REQUIRED)
-#find_package(Freetype REQUIRED)
-#find_package(ZLIB REQUIRED)
+
 find_package(Threads REQUIRED)
 if(THREADS_HAVE_PTHREAD_ARG)
   set_property(TARGET non-mixer-xt PROPERTY COMPILE_OPTIONS "-pthread")
@@ -88,8 +85,6 @@ check_include_file (ladspa.h HAVE_LADSPA_H)
 if (NOT HAVE_LADSPA_H)
     message(FATAL_ERROR "Ladspa required but not found")
 endif ()
-
-#pkg_check_modules(FONTCONFIG REQUIRED fontconfig>=0.22)
 
 include(CheckSymbolExists)
 
@@ -143,21 +138,10 @@ if(NOT TARGET uninstall)
         COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
 endif()
 
-#mark_as_advanced (FONTCONFIG_LIBRARIES)
 mark_as_advanced (CMAKE_BUILD_TYPE)
 mark_as_advanced (CMAKE_INSTALL_PREFIX)
-#mark_as_advanced (FLTK_DIR)
-#mark_as_advanced (FLTK_MATH_LIBRARY)
 mark_as_advanced (LIBDL)
 mark_as_advanced (LIBM)
-
-#if(BuildRakarrackPlus)
-#    install(FILES COPYING AUTHORS ChangeLog NEWS README README.md PACKAGERS.README
-#        DESTINATION share/doc/rakarrack-plus)
-#endif(BuildRakarrackPlus)
-#TODO move from /data to main
-#install(FILES rakarrack-plus-plus.desktop
-#    DESTINATION share/applications)
 
 if (BuildForDebug)
     set (CMAKE_BUILD_TYPE "Debug")
@@ -220,7 +204,6 @@ package_status(USE_SSE2            "Use sse2 . . . . . . . . . . . . . . . . . .
 message (STATUS)
 message (STATUS                    "______________________Library____________________________"  )
 package_status(PKG_CONFIG_FOUND    "PkgConfig. . . . . . . . . . . . . . . . . . . . . . . .:"  )
-#package_status(FLTK_FOUND          "FLTK toolkit . . . . . . . . . . . . . . . . . . . . . .:"  )
 package_status(NTK_FOUND           "NTK toolkit. . . . . . . . . . . . . . . . . . . . . . .:"  )
 package_status(X11_FOUND           "X11 support. . . . . . . . . . . . . . . . . . . . . . .:"  )
 package_status(Threads_FOUND       "pthread support (libpthread) . . . . . . . . . . . . . .:"  )

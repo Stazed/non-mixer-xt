@@ -24,7 +24,6 @@ set (ProgSources
     ../FL/Fl_Scalepack.C
     ../FL/Fl_Text_Edit_Window.C
     ../FL/Fl_Value_SliderX.C
-    ../FL/Fl_DialX.C
     ../FL/Fl_SliderX.C
     ../FL/New_Project_Dialog.C
     src/Plugin_Chooser_UI.C
@@ -64,10 +63,8 @@ set (ProgSources
 )
 
 set(ExternLibraries
-#    ${FLTK_LIBRARIES}
     ${NTK_IMAGES_LIBRARIES}
     ${NTK_LIBRARIES}
-#    ${OPENGL_LIBRARIES}
     ${JACK_LINK_LIBRARIES}
     ${CMAKE_THREAD_LIBS_INIT}
     ${X11_LIBRARIES}
@@ -83,23 +80,13 @@ add_executable (non-mixer-xt ${ProgSources} src/main.C)
 
 target_include_directories (
     non-mixer-xt PRIVATE
-#    ${FLTK_INCLUDE_DIRS}
     ${NTK_INCLUDE_DIRS}
     ${JACK_INCLUDE_DIRS}
     ${LRDF_INCLUDE_DIRS}
     ${LILV_INCLUDE_DIRS}
     ${SUIL_INCLUDE_DIRS}
-#    ${FONTCONFIG_INCLUDE_DIRS}
-
     ${X11_INCLUDE_DIRS}
-#    ${XFT_INCLUDE_DIRS}
-#    ${XRENDER_INCLUDE_DIRS}
-#    ${XPM_INCLUDE_DIRS}
-#    ${FREETYPE_INCLUDE_DIRS}
-#    ${ZLIB_INCLUDE_DIRS}
     ${LIBLO_INCLUDE_DIRS}
-#    "${CMAKE_CURRENT_SOURCE_DIR}/UI"
-#    "${CMAKE_CURRENT_BINARY_DIR}/UI"
 )
 
 target_link_libraries (non-mixer-xt ${ExternLibraries})
