@@ -238,7 +238,7 @@ public:
         }
 
 
-    void freewheel ( bool starting )
+    void freewheel ( bool /*starting*/ )
         {
         }
 
@@ -247,7 +247,7 @@ public:
             return 0;
         }
 
-    int buffer_size ( nframes_t nframes )
+    int buffer_size ( nframes_t /*nframes*/ )
         {
             return 0;
         }
@@ -673,7 +673,7 @@ create_engine ( void )
 
 
 static int 
-command_open ( const char *name, const char *display_name, const char *client_id, char **out_msg, void *userdata )
+command_open ( const char *name, const char * /*display_name*/, const char *client_id, char ** /*out_msg*/, void * /*userdata*/ )
 {
     if ( instance_name )
         free( instance_name );
@@ -698,7 +698,7 @@ command_open ( const char *name, const char *display_name, const char *client_id
 }
 
 static int
-command_save ( char **out_msg, void *userdata )
+command_save ( char ** /*out_msg*/, void * /*userdata*/ )
 {
     if ( save_settings() )
     {
@@ -710,7 +710,7 @@ command_save ( char **out_msg, void *userdata )
 }
 
 static int
-command_broadcast ( const char *path, lo_message msg, void *userdata )
+command_broadcast ( const char *path, lo_message msg, void * /*userdata*/ )
 {
     lo_message_get_argc( msg );
 //    lo_arg **argv = lo_message_get_argv( msg );
@@ -1007,7 +1007,7 @@ void handle_control_change ( nrpn_state *nrpn_state, midievent &e )
 
 
 int
-main ( int argc, char **argv )
+main ( int /*argc*/, char **argv )
 {
     nrpn_state nrpn_state[16];
 

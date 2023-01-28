@@ -128,7 +128,7 @@ Plugin_Module::can_support_inputs ( int n )
 }
 
 bool
-Plugin_Module::configure_inputs( int n )
+Plugin_Module::configure_inputs( int /*n*/ )
 {
     return false;
 }
@@ -460,7 +460,7 @@ Plugin_Module::resize_buffers ( nframes_t buffer_size )
 }
 
 void
-Plugin_Module::set ( Log_Entry &e )
+Plugin_Module::set ( Log_Entry & )
 {
     if(!warn_legacy_once)
     {

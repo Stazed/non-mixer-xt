@@ -66,5 +66,5 @@ public:
     
     static const char *path ( void ) { return _path; }
     static const char *created_on ( void ) { return _created_on; }
-    static const bool is_opening_closing ( void ) { return _is_opening_closing; }
+    static bool is_opening_closing ( void ) { return _is_opening_closing; }
 };

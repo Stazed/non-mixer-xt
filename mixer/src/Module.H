@@ -672,7 +672,7 @@ public:
     virtual void process ( nframes_t ) = 0;
 
     /* called whenever the module is initialized or when the sample rate is changed at runtime */
-    virtual void handle_sample_rate_change ( nframes_t sample_rate ) {}
+    virtual void handle_sample_rate_change ( nframes_t /*sample_rate*/ ) {}
         
     /* called whenever the value of a control port is changed.
        This can be used to take appropriate action from the GUI thread */
@@ -686,7 +686,7 @@ public:
 
     /* module should create a new context, run against this impulse,
      * and return true if there's anything worth reporting */
-    virtual bool get_impulse_response ( sample_t *buf, nframes_t nframes )
+    virtual bool get_impulse_response ( sample_t * /*buf*/, nframes_t /*nframes*/ )
         {
             return false;
         }

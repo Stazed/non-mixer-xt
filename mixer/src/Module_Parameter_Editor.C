@@ -717,7 +717,7 @@ Module_Parameter_Editor::save_plugin_state(const std::string filename)
 }
 
 void
-Module_Parameter_Editor::cb_restore_state_handle ( Fl_Widget *w, void *v )
+Module_Parameter_Editor::cb_restore_state_handle ( Fl_Widget *, void *v )
 {
     /* TODO Set file chooser location based on ... */
     std::string file_chooser_location = "";

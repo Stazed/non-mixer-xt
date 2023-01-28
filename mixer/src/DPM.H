@@ -89,7 +89,7 @@ public:
     
     static
     void
-    blend ( int nbreaks, int* b, Fl_Color *c, Fl_Color bc )
+    blend ( int nbreaks, int* b, Fl_Color *c, Fl_Color /*bc*/ )
         {
             for ( int i = 0; i < nbreaks - 1; i++ )
             {

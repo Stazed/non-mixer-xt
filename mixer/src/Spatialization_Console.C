@@ -184,7 +184,7 @@ Spatialization_Console::make_controls ( void )
 }
 
 void
-Spatialization_Console::cb_panner_value_handle ( Fl_Widget *w, void *v )
+Spatialization_Console::cb_panner_value_handle ( Fl_Widget *, void *v )
 {
 //    callback_data *cd = (callback_data*)v;
     

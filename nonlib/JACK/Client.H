@@ -57,9 +57,9 @@ namespace JACK
         volatile bool _active;
 
         static int sample_rate_changed ( nframes_t srate, void *arg );
-        virtual int sample_rate_changed ( nframes_t srate ) { return 0; }
+        virtual int sample_rate_changed ( nframes_t /*srate*/ ) { return 0; }
         static void port_connect ( jack_port_id_t a, jack_port_id_t b, int connect, void *arg );
-        virtual void port_connect ( jack_port_id_t a, jack_port_id_t b, int connect ) { }
+        virtual void port_connect ( jack_port_id_t, jack_port_id_t, int /*connect*/ ) { }
         static void shutdown ( void *arg );
         virtual void shutdown ( void ) = 0;
         static int process ( nframes_t nframes, void *arg );
@@ -78,7 +78,7 @@ namespace JACK
         virtual void thread_init ( void ) = 0;
 
         static void latency ( jack_latency_callback_mode_t mode, void *arg );
-        virtual void latency ( jack_latency_callback_mode_t mode ) { }
+        virtual void latency ( jack_latency_callback_mode_t /*mode*/ ) { }
         
         Client ( const Client &rhs );
         Client & operator = ( const Client &rhs );

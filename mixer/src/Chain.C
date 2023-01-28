@@ -1101,7 +1101,7 @@ Chain::sample_rate_change ( nframes_t nframes )
 
 /* handle jack port connection change */
 void
-Chain::port_connect ( jack_port_id_t a, jack_port_id_t b, int connect )
+Chain::port_connect ( jack_port_id_t a, jack_port_id_t b, int /*connect*/ )
 {
     if ( _deleting )
         return;

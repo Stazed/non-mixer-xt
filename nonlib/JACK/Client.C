@@ -221,8 +221,10 @@ namespace JACK
     Client::freewheeling ( bool yes )
     {
         if ( jack_set_freewheel( _client, yes ) )
+        {
             ;
 //            WARNING( "Unkown error while setting freewheeling mode" );
+        }
     }
     
     const char *

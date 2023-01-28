@@ -459,7 +459,7 @@ Mixer::update_cb ( void )
 
 
 static void
-progress_cb ( int p, void *v )
+progress_cb ( int p, void * )
 {
     static int oldp = 0;
 
@@ -633,7 +633,7 @@ Mixer::Mixer ( int X, int Y, int W, int H, const char *L ) :
 
 /* translate message addressed to strip number to appropriate strip */
 int
-Mixer::osc_strip_by_number ( const char *path, const char *types, lo_arg **argv, int argc, lo_message msg, void *user_data )
+Mixer::osc_strip_by_number ( const char *path, const char * /*types*/, lo_arg ** /*argv*/, int /*argc*/, lo_message msg, void *user_data )
 {
     int n;
     char *rem;
@@ -1042,7 +1042,7 @@ Mixer::get_unique_group_name ( const char *name )
 }
 
 void
-Mixer::handle_dirty ( int d, void *v )
+Mixer::handle_dirty ( int d, void * )
 {
     //Mixer *m = (Mixer*)v;
     if ( !nsm )

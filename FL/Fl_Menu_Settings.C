@@ -246,7 +246,7 @@ path_pop ( char *path )
 }
 
 void
-Fl_Menu_Settings::load ( Fl_Menu_ *bar, const Fl_Menu_Item *item, FILE *fp, int depth, char *path, int pmax )
+Fl_Menu_Settings::load ( Fl_Menu_ *bar, const Fl_Menu_Item *item, FILE *fp, int depth, char *path, int /*pmax*/ )
 {
     char line[256];
 

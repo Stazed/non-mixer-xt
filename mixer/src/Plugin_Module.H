@@ -96,7 +96,7 @@ private:
 
 public:
 
-    virtual bool get_impulse_response ( sample_t *buf, nframes_t nframes ){return false;};
+    virtual bool get_impulse_response ( sample_t * /*buf*/, nframes_t /*nframes*/ ){return false;};
 
     virtual nframes_t get_module_latency ( void ) const{return 0;};
 
@@ -124,12 +124,12 @@ public:
 #endif
 
     virtual bool bypass ( void ) const { return _bypass; }
-    virtual void bypass ( bool v ){};
+    virtual void bypass ( bool /*v*/ ){};
 
     virtual void process ( nframes_t ){};
 
     void handle_port_connection_change ( void ){};
-    void handle_sample_rate_change ( nframes_t sample_rate ){};
+    void handle_sample_rate_change ( nframes_t /*sample_rate*/ ){};
     void resize_buffers ( nframes_t buffer_size );
 
     LOG_CREATE_FUNC( Plugin_Module );
@@ -140,7 +140,7 @@ protected:
     volatile nframes_t _latency;
     void init ( void );
 
-    void get ( Log_Entry &e ) const{};
+    void get ( Log_Entry & /*e*/ ) const{};
     void set ( Log_Entry &e );
 
 };

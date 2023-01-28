@@ -123,7 +123,7 @@ Controller_Module::handle_chain_name_changed()
 }
 
 void
-Controller_Module::handle_control_disconnect ( Module::Port *p )
+Controller_Module::handle_control_disconnect ( Module::Port * /*p*/ )
 {
     if ( type() == SPATIALIZATION )
     {
@@ -783,7 +783,7 @@ static Fl_Menu_Button *peer_menu;
 static const char *peer_prefix;
 
 void
-Controller_Module::peer_callback( OSC::Signal *sig,  OSC::Signal::State state, void *v )
+Controller_Module::peer_callback( OSC::Signal *sig,  OSC::Signal::State /*state*/, void *v )
 {
     char *s;
 
@@ -842,7 +842,7 @@ Controller_Module::add_osc_peers_to_menu ( Fl_Menu_Button *m, const char *prefix
 }
 
 void
-Controller_Module::add_osc_connections_to_menu ( Fl_Menu_Button *m, const char *prefix )
+Controller_Module::add_osc_connections_to_menu ( Fl_Menu_Button *, const char *prefix )
 {
     /* peer_menu = m; */
     const char *peer_prefix = prefix;
