@@ -105,6 +105,15 @@ else(JACK_LATENCY_RANGE)
     message(STATUS "jack_port_get_latency_range not found")
 endif(JACK_LATENCY_RANGE)
 
+CHECK_CXX_SOURCE_COMPILES(
+    "int main ( char**argv, int argc ) {
+    const char *s = (const char*)
+    __builtin_assume_aligned( 0, 16 );
+    return 0; }" HAVE_BUILTIN_ALIGNED)
+
+if(HAVE_BUILTIN_ALIGNED)
+    add_definitions(-D'HAS_BUILTIN_ASSUME_ALIGNED=1')
+endif(HAVE_BUILTIN_ALIGNED)
 
 check_symbol_exists(mlock "sys/mman.h" MLOCK)
 if(MLOCK)
@@ -220,6 +229,7 @@ package_status(SUIL_FOUND          "SUIL support . . . . . . . . . . . . . . . .
 package_status(LIBLO_FOUND         "Liblo support. . . . . . . . . . . . . . . . . . . . . .:"  )
 package_status(JACK_METADATA       "Jack metadata support. . . . . . . . . . . . . . . . . .:"  )
 package_status(JACK_LATENCY_RANGE  "Jack port latency range support. . . . . . . . . . . . .:"  )
+package_status(HAVE_BUILTIN_ALIGNED "Has builtin assume aligned . . . . . . . . . . . . . . .:"  )
 
 message (STATUS)
 message (STATUS                    "____________________ User Options________________________"  )
