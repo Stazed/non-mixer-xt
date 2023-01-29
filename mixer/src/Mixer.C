@@ -79,7 +79,11 @@ extern std::vector<std::string>remove_custom_data_directories;
 
 Spatialization_Console *Mixer::spatialization_console = 0;
 
-
+struct both_slashes {
+    bool operator()(char a, char b) const {
+        return a == '/' && b == '/';
+    }
+};
 
 void
 Mixer::show_tooltip ( const char *s )
@@ -216,7 +220,11 @@ void Mixer::command_new ( void )
     if ( path )
     {
         project_directory = path;
-        if ( ! Project::create( path, NULL ) )
+
+        /* Clean the path of any extra slashes since it can cause problems with plugin link saving */
+        project_directory.erase(std::unique(project_directory.begin(), project_directory.end(), both_slashes()), project_directory.end());
+
+        if ( ! Project::create( project_directory.c_str(), NULL ) )
         {
             fl_alert( "Error creating project!" );
             project_directory = "";

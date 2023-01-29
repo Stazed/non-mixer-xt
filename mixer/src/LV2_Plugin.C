@@ -253,7 +253,7 @@ LV2_Plugin::restore_LV2_plugin_state(const std::string directory)
 }
 
 /**
- This generates the LV2 plugin state save directory we use for big plugins - specifically synths.
+ This generates the LV2 plugin state save directory we use for customData.
  */
 std::string
 LV2_Plugin::get_plugin_save_directory(const std::string directory)
@@ -437,6 +437,28 @@ lv2_non_worker_schedule(LV2_Worker_Schedule_Handle handle,
     }
 
     return st;
+}
+
+char*
+lv2_make_path(LV2_State_Make_Path_Handle handle, const char* path)
+{
+    LV2_Plugin* pm = static_cast<LV2_Plugin *> (handle);
+
+    DMESSAGE("make path file = %s", path);
+
+    char *user_dir;
+    if(pm->m_project_directory.empty())
+    {
+        asprintf( &user_dir, "%s/%s", getenv( "HOME" ), path );
+        return user_dir;
+    }
+    else
+    {
+        std::string file = pm->m_project_directory;
+        file += "/";
+        file += path;
+        return (char*) file.c_str();
+    }
 }
 
 static int
@@ -1344,6 +1366,10 @@ _Pragma("GCC diagnostic pop")
     uridUnmapFt->handle                 = _idata;
     uridUnmapFt->unmap                  = ImplementationData::_lv2_urid_unmap;
     
+    LV2_State_Make_Path* const nonMakePath  = new LV2_State_Make_Path;
+    nonMakePath->handle                 = this;
+    nonMakePath->path                   = lv2_make_path;
+
 #ifdef LV2_WORKER_SUPPORT
     LV2_Worker_Schedule* const m_lv2_schedule  = new LV2_Worker_Schedule;
     m_lv2_schedule->handle              = this;
@@ -1384,6 +1410,9 @@ _Pragma("GCC diagnostic pop")
 
     _idata->lv2.features[Plugin_Feature_URID_Unmap]->URI  = LV2_URID__unmap;
     _idata->lv2.features[Plugin_Feature_URID_Unmap]->data = uridUnmapFt;
+    
+    _idata->lv2.features[Plugin_Feature_Make_path]->URI   = LV2_STATE__makePath;
+    _idata->lv2.features[Plugin_Feature_Make_path]->data  = nonMakePath;
 #ifdef LV2_WORKER_SUPPORT
     _idata->lv2.features[Plugin_Feature_Worker_Schedule]->URI  = LV2_WORKER__schedule;
     _idata->lv2.features[Plugin_Feature_Worker_Schedule]->data = m_lv2_schedule;

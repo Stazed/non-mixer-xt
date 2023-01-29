@@ -40,6 +40,7 @@ enum Plugin_Module_Supported_Features {
     Plugin_Feature_URI_Map,
     Plugin_Feature_URID_Map,
     Plugin_Feature_URID_Unmap,
+    Plugin_Feature_Make_path,
 #ifdef LV2_WORKER_SUPPORT
     Plugin_Feature_Worker_Schedule,
 #endif
@@ -258,6 +259,9 @@ _Pragma("GCC diagnostic pop")
 
         if ( lv2.features[Plugin_Feature_URID_Unmap] && lv2.features[Plugin_Feature_URID_Unmap]->data )
             delete (LV2_URID_Unmap*)lv2.features[Plugin_Feature_URID_Unmap]->data;
+
+        if ( lv2.features[Plugin_Feature_Make_path] && lv2.features[Plugin_Feature_Make_path]->data )
+            delete (LV2_State_Make_Path*)lv2.features[Plugin_Feature_Make_path]->data;
 #ifdef LV2_WORKER_SUPPORT
         if ( lv2.features[Plugin_Feature_Worker_Schedule] && lv2.features[Plugin_Feature_Worker_Schedule]->data )
             delete (LV2_Worker_Schedule*)lv2.features[Plugin_Feature_Worker_Schedule]->data;
