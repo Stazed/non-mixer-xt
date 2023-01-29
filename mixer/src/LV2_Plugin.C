@@ -1604,7 +1604,7 @@ LV2_Plugin::non_worker_emit_responses( LilvInstance* instance)
             {
                 DMESSAGE("Got work response");
                 _idata->lv2.ext.worker->work_response(
-                    instance->lv2_handle, size, responses);
+                    instance->lv2_handle, size, response);
             }
         }
     }
