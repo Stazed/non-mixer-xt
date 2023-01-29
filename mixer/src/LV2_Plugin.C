@@ -1748,18 +1748,20 @@ write_control_change(   ZixRing* const    target,
                         const void* const body,
                         const uint32_t    body_size)
 {
-    if (zix_ring_write_space( target ) >= header_size + body_size)
-    {
-        DMESSAGE("Write to .plugin_events ----- ");
-        zix_ring_write(target, header, header_size);
-        zix_ring_write(target, body, body_size);
-        return 0;
-    }
-    else
+    ZixRingTransaction tx = zix_ring_begin_write(target);
+    if (zix_ring_amend_write(target, &tx, header, header_size) ||
+        zix_ring_amend_write(target, &tx, body, body_size))
     {
         WARNING( "UI => Plugin buffer overflow!" );
-        return 1;
+        return -1;
     }
+
+    zix_ring_commit_write(target, &tx);
+
+    /* It appears that some UIs send the info too fast and we get a buffer overflow
+       so we slow it down here. Value based on trial and error. LSP sampler. */
+    usleep(200);
+    return 0;
 }
 
 int
@@ -1819,7 +1821,7 @@ LV2_Plugin::apply_ui_events( uint32_t nframes, unsigned int port )
         DMESSAGE("APPLY UI");
         if(zix_ring_read(ui_to_plugin, (char*)&ev, sizeof(ev)) != sizeof(ev))
         {
-            DMESSAGE("Failed to read header from UI ring buffer\n");
+            WARNING("Failed to read header from UI ring buffer\n");
             break;
         }
 
@@ -1835,18 +1837,9 @@ LV2_Plugin::apply_ui_events( uint32_t nframes, unsigned int port )
         
         if (zix_ring_read(ui_to_plugin, &buffer, ev.size) != ev.size)
         {
-            DMESSAGE("Failed to read from UI ring buffer\n");
+            WARNING("Failed to read from UI ring buffer\n");
             break;
         }
-
-/*        assert(ev.index < jalv->num_ports);
-        struct Port* const port = &jalv->ports[ev.index];
-        if (ev.protocol == 0)
-        {
-                assert(ev.size == sizeof(float));
-                port->control = *(float*)body;
-        }
-*/
         else if (ev.protocol == Plugin_Module_URI_Atom_eventTransfer)
         {
             LV2_Evbuf_Iterator    e    = lv2_evbuf_end( atom_input[port].event_buffer() ); 
@@ -2115,7 +2108,7 @@ send_to_plugin(void* const handle,              // LV2_Plugin
     {
         if (buffer_size != sizeof(float))
         {
-            DMESSAGE("ERROR invalid buffer size for control");
+            WARNING("ERROR invalid buffer size for control");
             return;
         }
 
@@ -3061,7 +3054,7 @@ LV2_Plugin::process ( nframes_t nframes )
         {
             _idata->lv2.descriptor->run( _idata->handle[i], nframes );
         }
-            
+
 #ifdef LV2_MIDI_SUPPORT
         /* plugin MIDI out to JACK MIDI out */
         for( unsigned int i = 0; i < atom_output.size(); ++i )
