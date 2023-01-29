@@ -646,6 +646,7 @@ LV2_Plugin::load_plugin ( const char* uri )
     _bpm = 120.0f;
     _rolling = false;
     _is_instrument = false;
+    _supports_time_position = false;
 #endif
 
     /* We use custom data for instrument plugins */
@@ -766,6 +767,11 @@ LV2_Plugin::load_plugin ( const char* uri )
             {
                 if ( LV2_IS_PORT_INPUT( _idata->lv2.rdf_data->Ports[i].Types ) )
                 {
+                    if(LV2_PORT_SUPPORTS_TIME_POSITION(_idata->lv2.rdf_data->Ports[i].Types))
+                    {
+                        _supports_time_position = true;
+                        DMESSAGE("LV2_PORT_SUPPORTS_TIME_POSITION");
+                    }
 #ifdef LV2_MIDI_SUPPORT
                     if(LV2_PORT_SUPPORTS_MIDI_EVENT(_idata->lv2.rdf_data->Ports[i].Types))
                     {
@@ -1862,9 +1868,11 @@ LV2_Plugin::apply_ui_events( uint32_t nframes, unsigned int port )
 
 #ifdef LV2_MIDI_SUPPORT
 void
-LV2_Plugin::process_midi_in_events( uint32_t nframes, unsigned int port )
+LV2_Plugin::process_atom_in_events( uint32_t nframes, unsigned int port )
 {
-    if ( atom_input[port].jack_port())
+    LV2_Evbuf_Iterator iter = lv2_evbuf_begin(atom_input[port].event_buffer());
+
+    if ( _supports_time_position )
     {
         // Get Jack transport position
         jack_position_t pos;
@@ -1913,13 +1921,16 @@ LV2_Plugin::process_midi_in_events( uint32_t nframes, unsigned int port )
         _rolling  = rolling;
 
         // Write transport change event if applicable
-        LV2_Evbuf_Iterator iter = lv2_evbuf_begin(atom_input[port].event_buffer());
         if (xport_changed)
         {
           lv2_evbuf_write(
             &iter, 0, 0, lv2_pos->type, lv2_pos->size, LV2_ATOM_BODY(lv2_pos));
         }
+    }
 
+    /* Process any MIDI events from jack */
+    if ( atom_input[port].jack_port())
+    {
         void *buf = atom_input[port].jack_port()->buffer( nframes );
 
         for (uint32_t i = 0; i < jack_midi_get_event_count(buf); ++i)
@@ -3042,9 +3053,8 @@ LV2_Plugin::process ( nframes_t nframes )
 
             apply_ui_events(  nframes, i );
 #ifdef LV2_MIDI_SUPPORT
-            /* JACK MIDI in to plugin MIDI in */
-            if(_midi_ins)
-                process_midi_in_events( nframes, i );
+            /* Includes JACK MIDI in to plugin MIDI in and Time base */
+            process_atom_in_events( nframes, i );
 #endif
         }
 #endif

@@ -152,6 +152,7 @@ public:
     float     _bpm;             ///< Transport tempo in beats per minute
     bool      _rolling;         ///< Transport speed (0=stop, 1=play)
     bool      _is_instrument;
+    bool      _supports_time_position;
 #endif
 
 #ifdef LV2_WORKER_SUPPORT
@@ -191,7 +192,7 @@ private:
                  const void* const body);
 #endif  // LV2_WORKER_SUPPORT
 #ifdef LV2_MIDI_SUPPORT
-    void process_midi_in_events( uint32_t nframes, unsigned int port );
+    void process_atom_in_events( uint32_t nframes, unsigned int port );
     void process_midi_out_events( uint32_t nframes, unsigned int port );
 #endif
 #ifdef USE_SUIL
