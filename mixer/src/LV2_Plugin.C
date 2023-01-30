@@ -646,7 +646,6 @@ LV2_Plugin::load_plugin ( const char* uri )
     _bpm = 120.0f;
     _rolling = false;
     _is_instrument = false;
-    _supports_time_position = false;
 #endif
 
     /* We use custom data for instrument plugins */
@@ -767,11 +766,6 @@ LV2_Plugin::load_plugin ( const char* uri )
             {
                 if ( LV2_IS_PORT_INPUT( _idata->lv2.rdf_data->Ports[i].Types ) )
                 {
-                    if(LV2_PORT_SUPPORTS_TIME_POSITION(_idata->lv2.rdf_data->Ports[i].Types))
-                    {
-                        _supports_time_position = true;
-                        DMESSAGE("LV2_PORT_SUPPORTS_TIME_POSITION");
-                    }
 #ifdef LV2_MIDI_SUPPORT
                     if(LV2_PORT_SUPPORTS_MIDI_EVENT(_idata->lv2.rdf_data->Ports[i].Types))
                     {
@@ -796,6 +790,12 @@ LV2_Plugin::load_plugin ( const char* uri )
 #ifdef LV2_MIDI_SUPPORT
                     }
 #endif
+                    if(LV2_PORT_SUPPORTS_TIME_POSITION(_idata->lv2.rdf_data->Ports[i].Types))
+                    {
+                        atom_input[_atom_ins]._supports_time_position = true;
+                        DMESSAGE("LV2_PORT_SUPPORTS_TIME_POSITION: index = %d", i);
+                    }
+
                     atom_input[_atom_ins].hints.plug_port_index = i;
                     _atom_ins++;
                 }
@@ -1898,7 +1898,7 @@ LV2_Plugin::process_atom_in_events( uint32_t nframes, unsigned int port )
 {
     LV2_Evbuf_Iterator iter = lv2_evbuf_begin(atom_input[port].event_buffer());
 
-    if ( _supports_time_position )
+    if ( atom_input[port]._supports_time_position )
     {
         // Get Jack transport position
         jack_position_t pos;

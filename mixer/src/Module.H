@@ -230,6 +230,7 @@ public:
                 _label = NULL;
                 _clear_input_buffer = false;
                 _need_file_update = false;
+                _supports_time_position = false;
 #endif
 		/* _feedback_value = -2; */
 		_pending_feedback = false;
@@ -260,6 +261,7 @@ public:
                 _label = p._label;
                 _clear_input_buffer = p._clear_input_buffer;
                 _need_file_update = p._need_file_update;
+                _supports_time_position = p._supports_time_position;
 #endif
 		/* _feedback_value = p._feedback_value; */
             }
@@ -483,6 +485,7 @@ public:
         LV2_URID    _property_mapped;        ///< Iff type == PROPERTY
         bool _clear_input_buffer;
         bool _need_file_update;
+        bool _supports_time_position;
         std::string _file;
     private:
 #endif

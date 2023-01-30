@@ -163,7 +163,6 @@ public:
     float     _bpm;             ///< Transport tempo in beats per minute
     bool      _rolling;         ///< Transport speed (0=stop, 1=play)
     bool      _is_instrument;
-    bool      _supports_time_position;
 #endif
 
 #ifdef LV2_WORKER_SUPPORT
