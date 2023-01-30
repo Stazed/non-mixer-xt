@@ -1281,7 +1281,9 @@ LV2_Plugin::plugin_instances ( unsigned int n )
                         if ( atom_input[aji].event_buffer() )
                             lv2_evbuf_free( atom_input[aji].event_buffer() );
 
-                        const size_t buf_size = ATOM_BUFFER_SIZE;
+                        const size_t buf_size = get_atom_buffer_size(k);
+                        DMESSAGE("Atom IN buffer size = %d", buf_size);
+
                         atom_input[aji].event_buffer( lv2_evbuf_new(buf_size,
                                                               _uridMapFt->map(_uridMapFt->handle,
                                                                               LV2_ATOM__Chunk),
@@ -1303,7 +1305,9 @@ LV2_Plugin::plugin_instances ( unsigned int n )
                         if ( atom_output[ajo].event_buffer() )
                             lv2_evbuf_free( atom_output[ajo].event_buffer() );
 
-                        const size_t buf_size = ATOM_BUFFER_SIZE;
+                        const size_t buf_size = get_atom_buffer_size(k);
+                        DMESSAGE("Atom OUT buffer size = %d", buf_size);
+
                         atom_output[ajo].event_buffer( lv2_evbuf_new(buf_size,
                                                               _uridMapFt->map(_uridMapFt->handle,
                                                                               LV2_ATOM__Chunk),
@@ -1329,6 +1333,14 @@ LV2_Plugin::plugin_instances ( unsigned int n )
                     _idata->lv2.descriptor->connect_port( h, k, (float*)0x42 );
         }
     }
+
+    /* Create Plugin <=> UI communication buffers */
+    ui_event_buf     = malloc(m_atom_buf_size);
+    ui_to_plugin = zix_ring_new(m_atom_buf_size);
+    plugin_to_ui = zix_ring_new(m_atom_buf_size);
+
+    zix_ring_mlock(ui_to_plugin);
+    zix_ring_mlock(plugin_to_ui);
 
     return true;
 }
@@ -1382,12 +1394,12 @@ _Pragma("GCC diagnostic pop")
     m_lv2_schedule->schedule_work       = lv2_non_worker_schedule;
 
     _loading_from_file = false;
-    ui_event_buf     = malloc(ATOM_BUFFER_SIZE);
     zix_sem_init(&sem, 0);
     threaded = false;
     zix_sem_init(&work_lock, 1);
     m_exit = false;
     m_safe_restore = false;
+    m_atom_buf_size = ATOM_BUFFER_SIZE;
 #endif
 
 #ifdef USE_SUIL
@@ -1422,14 +1434,8 @@ _Pragma("GCC diagnostic pop")
 #ifdef LV2_WORKER_SUPPORT
     _idata->lv2.features[Plugin_Feature_Worker_Schedule]->URI  = LV2_WORKER__schedule;
     _idata->lv2.features[Plugin_Feature_Worker_Schedule]->data = m_lv2_schedule;
-
-    /* Create Plugin <=> UI communication buffers */
-    ui_to_plugin = zix_ring_new(ATOM_BUFFER_SIZE);
-    plugin_to_ui = zix_ring_new(ATOM_BUFFER_SIZE);
-    
-    zix_ring_mlock(ui_to_plugin);
-    zix_ring_mlock(plugin_to_ui);
 #endif
+
 #ifdef USE_SUIL
     _idata->lv2.features[Plugin_Feature_Resize]->URI  = LV2_UI__resize;
     _idata->lv2.features[Plugin_Feature_Resize]->data = uiResizeFt;
@@ -1783,6 +1789,29 @@ LV2_Plugin::write_atom_event(ZixRing* target, const uint32_t    port_index,
     {size, type}};
 
     return write_control_change(target, &header, sizeof(header), body, size);
+}
+
+size_t
+LV2_Plugin::get_atom_buffer_size(int port_index)
+{
+    const LilvPort* lilv_port = lilv_plugin_get_port_by_index(m_plugin, port_index);
+    const LilvNode * minimumSize = lilv_new_uri(m_lilvWorld, LV2_RESIZE_PORT__minimumSize);
+
+    LilvNode* min_size = lilv_port_get(m_plugin, lilv_port, minimumSize);
+
+    size_t buf_size = ATOM_BUFFER_SIZE;
+
+    if (min_size && lilv_node_is_int(min_size))
+    {
+        buf_size = lilv_node_as_int(min_size);
+        buf_size = buf_size * N_BUFFER_CYCLES;
+        
+        m_atom_buf_size =  m_atom_buf_size > buf_size ? m_atom_buf_size : buf_size;
+    }
+
+    lilv_node_free(min_size);
+
+    return m_atom_buf_size;
 }
 
 void

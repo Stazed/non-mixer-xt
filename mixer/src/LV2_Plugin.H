@@ -41,6 +41,16 @@
 
 #define ATOM_BUFFER_SIZE 16384  // 4096 * 4
 
+/**
+   Size factor for UI ring buffers -- JALV
+
+   The ring size is a few times the size of an event output to give the UI a
+   chance to keep up.  Experiments with Ingen, which can highly saturate its
+   event output, led me to this value.  It really ought to be enough for
+   anybody(TM).
+*/
+#define N_BUFFER_CYCLES 16
+
 extern std::string project_directory;
 extern std::string export_import_strip;
 extern std::vector<std::string>remove_custom_data_directories;
@@ -106,6 +116,7 @@ public:
     ZixSem  work_lock;      ///< Lock for plugin work() method
     bool    m_exit;         ///< True iff execution is finished
     bool    m_safe_restore;   ///< Plugin restore() is thread-safe
+    size_t  m_atom_buf_size;
 #endif
     
 #ifdef USE_SUIL
@@ -190,6 +201,7 @@ private:
                  const uint32_t    size,
                  const LV2_URID    type,
                  const void* const body);
+    size_t get_atom_buffer_size(int port_index);
 #endif  // LV2_WORKER_SUPPORT
 #ifdef LV2_MIDI_SUPPORT
     void process_atom_in_events( uint32_t nframes, unsigned int port );
