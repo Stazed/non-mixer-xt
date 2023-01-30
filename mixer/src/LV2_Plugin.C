@@ -1764,9 +1764,6 @@ write_control_change(   ZixRing* const    target,
 
     zix_ring_commit_write(target, &tx);
 
-    /* It appears that some UIs send the info too fast and we get a buffer overflow
-       so we slow it down here. Value based on trial and error. LSP sampler. */
-    usleep(200);
     return 0;
 }
 
@@ -1941,9 +1938,9 @@ LV2_Plugin::process_atom_in_events( uint32_t nframes, unsigned int port )
             lv2_evbuf_write(
               &iter, ev.time, 0, Plugin_Module_URI_Midi_event, ev.size, ev.buffer);
         }
-
-        atom_input[port]._clear_input_buffer = true;
     }
+
+    atom_input[port]._clear_input_buffer = true;
 }
 
 void
@@ -2133,6 +2130,10 @@ send_to_plugin(void* const handle,              // LV2_Plugin
     {
         DMESSAGE("UI SENT LV2_ATOM__eventTransfer");
         pLv2Plugin->send_atom_to_plugin( port_index, buffer_size, buffer );
+
+        /* It appears that some UIs send the info too fast and we get a buffer overflow
+        so we slow it down here. Value based on trial and error. LSP sampler. */
+        usleep(200);
     }
     else
     {
