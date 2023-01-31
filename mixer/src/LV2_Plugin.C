@@ -1284,11 +1284,11 @@ LV2_Plugin::plugin_instances ( unsigned int n )
                         const size_t buf_size = get_atom_buffer_size(k);
                         DMESSAGE("Atom IN buffer size = %d", buf_size);
 
-                        atom_input[aji].event_buffer( lv2_evbuf_new(buf_size,
-                                                              _uridMapFt->map(_uridMapFt->handle,
-                                                                              LV2_ATOM__Chunk),
-                                                              _uridMapFt->map(_uridMapFt->handle,
-                                                                              LV2_ATOM__Sequence)) );
+                        atom_input[aji].event_buffer(
+                                lv2_evbuf_new(buf_size,
+                                Plugin_Module_URI_Atom_Chunk,
+                                Plugin_Module_URI_Atom_Sequence)
+                        );
 
                         _idata->lv2.descriptor->connect_port( h, k, lv2_evbuf_get_buffer(atom_input[aji].event_buffer()));
 
@@ -1308,11 +1308,11 @@ LV2_Plugin::plugin_instances ( unsigned int n )
                         const size_t buf_size = get_atom_buffer_size(k);
                         DMESSAGE("Atom OUT buffer size = %d", buf_size);
 
-                        atom_output[ajo].event_buffer( lv2_evbuf_new(buf_size,
-                                                              _uridMapFt->map(_uridMapFt->handle,
-                                                                              LV2_ATOM__Chunk),
-                                                              _uridMapFt->map(_uridMapFt->handle,
-                                                                              LV2_ATOM__Sequence)) );
+                        atom_output[ajo].event_buffer(
+                                lv2_evbuf_new(buf_size,
+                                Plugin_Module_URI_Atom_Chunk,
+                                Plugin_Module_URI_Atom_Sequence)
+                        );
 
                         _idata->lv2.descriptor->connect_port( h, k, lv2_evbuf_get_buffer( atom_output[ajo].event_buffer() ));
 

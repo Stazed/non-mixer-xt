@@ -62,7 +62,7 @@ enum Plugin_Module_URIs {
     Plugin_Module_URI_BufSize_MinLength,
     Plugin_Module_URI_Parameter_SampleRate,
 #ifdef LV2_WORKER_SUPPORT
-    Plugin_Module_URI_Worker_Schedule,
+    Plugin_Module_URI_Atom_Sequence,
     Plugin_Module_URI_Atom_Chunk,
     Plugin_Module_URI_Atom_eventTransfer,
     Plugin_Module_URI_patch_Property,
@@ -303,7 +303,7 @@ _Pragma("GCC diagnostic pop")
             return Plugin_Module_URI_Parameter_SampleRate;
 #ifdef LV2_WORKER_SUPPORT
         if ( ::strcmp(uri, LV2_ATOM__Sequence) == 0 )
-            return Plugin_Module_URI_Worker_Schedule;
+            return Plugin_Module_URI_Atom_Sequence;
         if ( ::strcmp(uri, LV2_ATOM__Chunk) == 0 )
             return Plugin_Module_URI_Atom_Chunk;
         if ( ::strcmp(uri, LV2_ATOM__eventTransfer) == 0 )
