@@ -1647,30 +1647,6 @@ LV2_Plugin::non_worker_destroy( void )
     }
 }
 
-int
-LV2_Plugin::send_to_ui(LV2_Plugin* plug, uint32_t port_index, uint32_t type, uint32_t size, const void* body)
-{
-    typedef struct {
-    ControlChange change;
-    LV2_Atom      atom;
-    } Header;
-
-    const Header header = {
-    {port_index, Plugin_Module_URI_Atom_eventTransfer, (uint32_t) sizeof(LV2_Atom) + size},
-    {size, type}};
-
-    ZixRingTransaction tx = zix_ring_begin_write(plug->plugin_to_ui);
-    if (zix_ring_amend_write(plug->plugin_to_ui, &tx, &header, sizeof(header)) ||
-        zix_ring_amend_write(plug->plugin_to_ui, &tx, body, size))
-    {
-        WARNING( "Plugin => UI buffer overflow!" );
-        return -1;
-    }
-
-    zix_ring_commit_write(plug->plugin_to_ui, &tx);
-    return 0;
-}
-
 void
 LV2_Plugin::ui_port_event( uint32_t port_index, uint32_t buffer_size, uint32_t protocol, const void* buffer )
 {
@@ -1727,13 +1703,11 @@ LV2_Plugin::send_atom_to_plugin( uint32_t port_index, uint32_t buffer_size, cons
     if(m_exit)
         return;
 
-    DMESSAGE("Port Index B4 = %d", port_index);
     for ( unsigned int i = 0; i < atom_input.size(); ++i )
     {
         if ( port_index == atom_input[i].hints.plug_port_index )
         {
             port_index = i;
-            DMESSAGE("Port Index AFTER = %d", port_index);
             break;
         }
     }
@@ -1741,11 +1715,11 @@ LV2_Plugin::send_atom_to_plugin( uint32_t port_index, uint32_t buffer_size, cons
     const LV2_Atom* const atom = (const LV2_Atom*)buffer;
     if (buffer_size < sizeof(LV2_Atom))
     {
-        DMESSAGE("UI wrote impossible atom size");
+        WARNING("UI wrote impossible atom size");
     }
     else if (sizeof(LV2_Atom) + atom->size != buffer_size)
     {
-        DMESSAGE("UI wrote corrupt atom size");
+        WARNING("UI wrote corrupt atom size");
     }
     else
     {
@@ -1764,7 +1738,7 @@ write_control_change(   ZixRing* const    target,
     if (zix_ring_amend_write(target, &tx, header, header_size) ||
         zix_ring_amend_write(target, &tx, body, body_size))
     {
-        WARNING( "UI => Plugin buffer overflow!" );
+        WARNING( "UI => Plugin or Plugin => UI buffer overflow" );
         return -1;
     }
 
@@ -1788,6 +1762,7 @@ LV2_Plugin::write_atom_event(ZixRing* target, const uint32_t    port_index,
     {port_index, Plugin_Module_URI_Atom_eventTransfer, (uint32_t) sizeof(LV2_Atom) + size},
     {size, type}};
 
+   // DMESSAGE("SENDING ATOM TO PLUGIN - %d", header.atom.type);
     return write_control_change(target, &header, sizeof(header), body, size);
 }
 
@@ -2004,7 +1979,7 @@ LV2_Plugin::process_atom_out_events( uint32_t nframes, unsigned int port )
         if(m_ui_instance && fIsVisible )
         {
             DMESSAGE("SEND to UI index = %d", atom_output[port].hints.plug_port_index);
-            send_to_ui(this, atom_output[port].hints.plug_port_index, type, size, body);
+            write_atom_event(plugin_to_ui, atom_output[port].hints.plug_port_index, size, type, body);
         }
     }
 
@@ -2137,10 +2112,6 @@ send_to_plugin(void* const handle,              // LV2_Plugin
     {
         DMESSAGE("UI SENT LV2_ATOM__eventTransfer");
         pLv2Plugin->send_atom_to_plugin( port_index, buffer_size, buffer );
-
-        /* It appears that some UIs send the info too fast and we get a buffer overflow
-        so we slow it down here. Value based on trial and error. LSP sampler. */
-        usleep(200);
     }
     else
     {
