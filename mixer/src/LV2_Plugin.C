@@ -558,6 +558,9 @@ LV2_Plugin::LV2_Plugin ( ) : Plugin_Module( )
 
 LV2_Plugin::~LV2_Plugin ( )
 {
+    /* In case the user left the custom ui up */
+    m_exit = true;
+
     /* This is the case when the user manually removes a Plugin. We set the
      _is_removed = true, and add any custom data directory to the remove directories
      vector. If the user saves the project then we remove any items in the vector.
@@ -572,9 +575,6 @@ LV2_Plugin::~LV2_Plugin ( )
     }
 
 #ifdef USE_SUIL
-    /* In case the user left the custom ui up */
-    m_exit = true;
-
     if (fIsVisible)
     {
         if(m_use_externalUI)
@@ -605,7 +605,6 @@ LV2_Plugin::~LV2_Plugin ( )
 #ifdef LV2_WORKER_SUPPORT
     if ( _idata->lv2.ext.worker )
     {
-        m_exit = true;
         non_worker_finish();
         non_worker_destroy();
     }
