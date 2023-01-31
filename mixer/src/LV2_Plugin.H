@@ -195,7 +195,6 @@ private:
     static int send_to_ui(LV2_Plugin* plug, uint32_t port_index, uint32_t type, uint32_t size, const void* body );
     void apply_ui_events( uint32_t nframes, unsigned int port );
     void set_lv2_port_properties ( Port * port, bool writable );
-    void get_atom_output_events( void );
     int write_atom_event(ZixRing* target, const uint32_t port_index,
                  const uint32_t    size,
                  const LV2_URID    type,
@@ -204,7 +203,7 @@ private:
 #endif  // LV2_WORKER_SUPPORT
 #ifdef LV2_MIDI_SUPPORT
     void process_atom_in_events( uint32_t nframes, unsigned int port );
-    void process_midi_out_events( uint32_t nframes, unsigned int port );
+    void process_atom_out_events( uint32_t nframes, unsigned int port );
 #endif
 #ifdef USE_SUIL
     bool custom_ui_instantiate();

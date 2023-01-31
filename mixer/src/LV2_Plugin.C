@@ -125,7 +125,7 @@ static void mixer_lv2_set_port_value ( const char *port_symbol,
 
         const unsigned long port_index = lilv_port_get_index(plugin, port);
 
-       // DMESSAGE("PORT INDEX = %lu: paramValue = %f: VALUE = %p", port_index, paramValue, value);
+        // DMESSAGE("PORT INDEX = %lu: paramValue = %f: VALUE = %p", port_index, paramValue, value);
 
         pLv2Plugin->set_control_value(port_index, paramValue);
     }
@@ -334,6 +334,7 @@ update_ui( void *data)
 
         if ( plug_ui->m_ui_instance )   // Custom UI
         {
+            //DMESSAGE("SUIL INSTANCE - index = %d",ev.index);
             suil_instance_port_event(plug_ui->m_ui_instance, ev.index, ev.size, ev.protocol, buf);
         }
         else    // Generic UI
@@ -1973,36 +1974,42 @@ LV2_Plugin::process_atom_in_events( uint32_t nframes, unsigned int port )
 }
 
 void
-LV2_Plugin::process_midi_out_events( uint32_t nframes, unsigned int port )
+LV2_Plugin::process_atom_out_events( uint32_t nframes, unsigned int port )
 {
+    void* buf = NULL;
+
     if ( atom_output[port].jack_port() )
     {
-        void* buf = NULL;
-
         buf = atom_output[port].jack_port()->buffer( nframes );
         jack_midi_clear_buffer(buf);
+    }
 
-        for (LV2_Evbuf_Iterator i = lv2_evbuf_begin(atom_output[port].event_buffer());
-             lv2_evbuf_is_valid(i);
-             i = lv2_evbuf_next(i))
+    for (LV2_Evbuf_Iterator i = lv2_evbuf_begin(atom_output[port].event_buffer());
+         lv2_evbuf_is_valid(i);
+         i = lv2_evbuf_next(i))
+    {
+        // Get event from LV2 buffer
+        uint32_t frames    = 0;
+        uint32_t subframes = 0;
+        LV2_URID type      = 0;
+        uint32_t size      = 0;
+        void*    body      = NULL;
+        lv2_evbuf_get(i, &frames, &subframes, &type, &size, &body);
+        
+        if (buf && type == Plugin_Module_URI_Midi_event)
         {
-            // Get event from LV2 buffer
-            uint32_t frames    = 0;
-            uint32_t subframes = 0;
-            LV2_URID type      = 0;
-            uint32_t size      = 0;
-            void*    body      = NULL;
-            lv2_evbuf_get(i, &frames, &subframes, &type, &size, &body);
-
-            if (buf && type == Plugin_Module_URI_Midi_event)
-            {
-                 // DMESSAGE("Write MIDI event to Jack output");
-                  jack_midi_event_write(buf, frames, (jack_midi_data_t*) body, size);
-            }
+            DMESSAGE("Write MIDI event to Jack output");
+            jack_midi_event_write(buf, frames, (jack_midi_data_t*) body, size);
         }
 
-        lv2_evbuf_reset(atom_output[port].event_buffer(), false);
+        if(m_ui_instance && fIsVisible )
+        {
+            DMESSAGE("SEND to UI index = %d", atom_output[port].hints.plug_port_index);
+            send_to_ui(this, atom_output[port].hints.plug_port_index, type, size, body);
+        }
     }
+
+    lv2_evbuf_reset(atom_output[port].event_buffer(), false);
 }
 
 #endif  // LV2_MIDI_SUPPORT
@@ -2064,34 +2071,6 @@ LV2_Plugin::set_lv2_port_properties (Port * port, bool writable )
     lilv_node_free(patch_readable);
     lilv_node_free(patch_writable);
 }
-
-void
-LV2_Plugin::get_atom_output_events( void )
-{
-    for ( unsigned int k = 0; k < atom_output.size(); ++k )
-    {
-        for (LV2_Evbuf_Iterator i = lv2_evbuf_begin(atom_output[k].event_buffer());
-            lv2_evbuf_is_valid(i);
-            i = lv2_evbuf_next(i))
-        {
-            // Get event from LV2 buffer
-            uint32_t frames    = 0;
-            uint32_t subframes = 0;
-            uint32_t type      = 0;
-            uint32_t size      = 0;
-            void* body         = NULL;
-            lv2_evbuf_get(i, &frames, &subframes, &type, &size, &body);
-
-           // DMESSAGE("GOT ATOM EVENT BUFFER Port Index = %d", atom_output[k].hints.plug_port_index);
-
-            send_to_ui(this, atom_output[k].hints.plug_port_index, type, size, body);
-        }
-
-        /* Clear event output for plugin to write to on next cycle */
-        lv2_evbuf_reset(atom_output[k].event_buffer(), false);
-    }            
-}
-
 #endif  // LV2_WORKER_SUPPORT
 
 
@@ -3066,12 +3045,8 @@ LV2_Plugin::process ( nframes_t nframes )
     }
     else
     {
- 
+
 #ifdef LV2_WORKER_SUPPORT
-
-        /* Pulls any atom output from the plugin and writes to the zix buffer - to send to the UI*/
-        get_atom_output_events();
-
         for( unsigned int i = 0; i < atom_input.size(); ++i )
         {
             if ( atom_input[i]._clear_input_buffer )
@@ -3081,11 +3056,11 @@ LV2_Plugin::process ( nframes_t nframes )
                 lv2_evbuf_reset(atom_input[i].event_buffer(), true);
             }
 
-            apply_ui_events(  nframes, i );
 #ifdef LV2_MIDI_SUPPORT
             /* Includes JACK MIDI in to plugin MIDI in and Time base */
             process_atom_in_events( nframes, i );
 #endif
+            apply_ui_events(  nframes, i );
         }
 #endif
 
@@ -3096,11 +3071,10 @@ LV2_Plugin::process ( nframes_t nframes )
         }
 
 #ifdef LV2_MIDI_SUPPORT
-        /* plugin MIDI out to JACK MIDI out */
+        /* Atom out to custom UI and plugin MIDI out to JACK MIDI out */
         for( unsigned int i = 0; i < atom_output.size(); ++i )
         {
-            if(_midi_outs)
-                process_midi_out_events( nframes, i );
+            process_atom_out_events( nframes, i );
         }
 #endif  // LV2_MIDI_SUPPORT
 
