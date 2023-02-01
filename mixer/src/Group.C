@@ -69,9 +69,9 @@ Group::~Group ( )
 	(*i)->clear_group();
     }
 
+    
     if ( _name )
         free( _name );
-    
     deactivate();
 }
 
@@ -174,6 +174,9 @@ Group::buffer_size ( nframes_t nframes )
 void
 Group::port_connect( jack_port_id_t a, jack_port_id_t b, int connect )
 {
+    if(stop_process)
+        return;
+
     for ( std::list<Mixer_Strip*>::iterator i = strips.begin();
           i != strips.end();
           ++i )
