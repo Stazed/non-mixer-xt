@@ -1793,12 +1793,12 @@ void
 LV2_Plugin::send_file_to_plugin( int port, const std::string &filename )
 {
     DMESSAGE("File = %s", filename.c_str());
-    
+
     /* Set the file for non-mixer-xt here - may be redundant some times */
     atom_input[port]._file = filename;
-    
+
     uint32_t size = filename.size() + 1;
-    
+
     // Copy forge since it is used by process thread
     LV2_Atom_Forge       forge =  this->m_forge;
     LV2_Atom_Forge_Frame frame;
@@ -1813,12 +1813,12 @@ LV2_Plugin::send_file_to_plugin( int port, const std::string &filename )
     lv2_atom_forge_write(&forge, (const void*)filename.c_str(), size);
 
     const LV2_Atom* atom = lv2_atom_forge_deref(&forge, frame.ref);
-    
+
     write_atom_event(ui_to_plugin, port, atom->size, atom->type, atom + 1U);
 }
 
 void
-LV2_Plugin::apply_ui_events( uint32_t nframes, unsigned int port )
+LV2_Plugin::apply_ui_events( uint32_t nframes)
 {
     ControlChange ev  = {0U, 0U, 0U};
     const size_t  space = zix_ring_read_space(ui_to_plugin);
@@ -1841,28 +1841,36 @@ LV2_Plugin::apply_ui_events( uint32_t nframes, unsigned int port )
             } head;
             uint8_t body[MSG_BUFFER_SIZE];
         } buffer;
-        
+
         if (zix_ring_read(ui_to_plugin, &buffer, ev.size) != ev.size)
         {
             WARNING("Failed to read from UI ring buffer\n");
             break;
         }
-        else if (ev.protocol == Plugin_Module_URI_Atom_eventTransfer)
+
+        if (ev.protocol == Plugin_Module_URI_Atom_eventTransfer)
         {
-            LV2_Evbuf_Iterator    e    = lv2_evbuf_end( atom_input[port].event_buffer() ); 
-            const LV2_Atom* const atom = &buffer.head.atom;
+            for( unsigned int i = 0; i < atom_input.size(); ++i )
+            {
+                /* Check if we are sending this to the correct atom port */
+                if(atom_input[i].hints.plug_port_index == ev.index)
+                {
+                    LV2_Evbuf_Iterator    e    = lv2_evbuf_end( atom_input[i].event_buffer() ); 
+                    const LV2_Atom* const atom = &buffer.head.atom;
 
-            DMESSAGE("LV2 ATOM eventTransfer atom type = %d", atom->type);
+                    DMESSAGE("LV2 ATOM eventTransfer atom type = %d: port = %d: index = %d", atom->type, i, ev.index);
+                    DMESSAGE("atom_input[port].hints.plug_port_index = %d", atom_input[i].hints.plug_port_index);
+                    lv2_evbuf_write(&e, nframes, 0, atom->type, atom->size,
+                                    (const uint8_t*)LV2_ATOM_BODY_CONST(atom));
 
-            lv2_evbuf_write(&e, nframes, 0, atom->type, atom->size,
-                            (const uint8_t*)LV2_ATOM_BODY_CONST(atom));
-
-            atom_input[port]._clear_input_buffer = true;
+                    atom_input[i]._clear_input_buffer = true;
+                    return;
+                }
+            }
         }
         else
         {
             WARNING("Unknown control change protocol %u", ev.protocol);
-            atom_input[port]._clear_input_buffer = true;
         }
     }
 }
@@ -1927,6 +1935,7 @@ LV2_Plugin::process_atom_in_events( uint32_t nframes, unsigned int port )
           lv2_evbuf_write(
             &iter, 0, 0, lv2_pos->type, lv2_pos->size, LV2_ATOM_BODY(lv2_pos));
         }
+        atom_input[port]._clear_input_buffer = true;
     }
 
     /* Process any MIDI events from jack */
@@ -1942,9 +1951,10 @@ LV2_Plugin::process_atom_in_events( uint32_t nframes, unsigned int port )
             lv2_evbuf_write(
               &iter, ev.time, 0, Plugin_Module_URI_Midi_event, ev.size, ev.buffer);
         }
+        atom_input[port]._clear_input_buffer = true;
     }
-
-    atom_input[port]._clear_input_buffer = true;
+   // DMESSAGE("ATOM PORT number = %d", port);
+   // atom_input[port]._clear_input_buffer = true;
 }
 
 void
@@ -3030,9 +3040,9 @@ LV2_Plugin::process ( nframes_t nframes )
             /* Includes JACK MIDI in to plugin MIDI in and Time base */
             process_atom_in_events( nframes, i );
 #endif
-            apply_ui_events(  nframes, i );
         }
 #endif
+        apply_ui_events( nframes );
 
         // Run the plugin for LV2
         for ( unsigned int i = 0; i < _idata->handle.size(); ++i )
