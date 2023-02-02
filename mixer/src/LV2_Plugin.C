@@ -2685,6 +2685,9 @@ LV2_Plugin::custom_update_ui()
     if(fIsVisible)
     {
         update_custom_ui();
+
+        /* Read the zix buffer sent from the plugin and sends to the UI */
+        update_ui( this );
         Fl::repeat_timeout( 0.03f, &LV2_Plugin::custom_update_ui, this );
     }
     else
@@ -3071,9 +3074,6 @@ LV2_Plugin::process ( nframes_t nframes )
                 _idata->lv2.ext.worker->end_run(m_instance->lv2_handle);
             }
         }
-
-        /* Read the zix buffer sent from the plugin and sends to the UI */
-        update_ui( this );
 #endif
 
         _latency = get_module_latency();
