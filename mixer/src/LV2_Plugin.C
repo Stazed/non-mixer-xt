@@ -342,6 +342,8 @@ update_ui( void *data)
             plug_ui->ui_port_event( ev.index, ev.size, ev.protocol, buf );
         }
     }
+
+    Fl::repeat_timeout( 0.03f, &update_ui, data );
 }
 
 static LV2_Worker_Status
@@ -560,6 +562,8 @@ LV2_Plugin::~LV2_Plugin ( )
 {
     /* In case the user left the custom ui up */
     m_exit = true;
+
+    Fl::remove_timeout( &update_ui, this );
 
     /* This is the case when the user manually removes a Plugin. We set the
      _is_removed = true, and add any custom data directory to the remove directories
@@ -1053,6 +1057,11 @@ LV2_Plugin::load_plugin ( const char* uri )
             _idata->lv2.ext.options->set( _idata->handle[i], &(_idata->lv2.options.opts[Plugin_Module_Options::MinBlockLenth]) );
         }
     }
+
+    /* Read the zix buffer sent from the plugin and sends to the UI.
+       This needs to have a separate timeout from custom ui since it
+       can also apply to generic UI events.*/
+    Fl::add_timeout( 0.03f, &update_ui, this );
 
     return instances;
 }
@@ -2685,9 +2694,6 @@ LV2_Plugin::custom_update_ui()
     if(fIsVisible)
     {
         update_custom_ui();
-
-        /* Read the zix buffer sent from the plugin and sends to the UI */
-        update_ui( this );
         Fl::repeat_timeout( 0.03f, &LV2_Plugin::custom_update_ui, this );
     }
     else
