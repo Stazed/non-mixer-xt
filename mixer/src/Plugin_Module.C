@@ -155,6 +155,8 @@ Plugin_Module::configure_midi_inputs ()
 
         if( !atom_input[i].jack_port()->activate() )
         {
+            delete atom_input[i].jack_port();
+            atom_input[i].jack_port(NULL);
             WARNING( "Failed to activate JACK MIDI IN port" );
             return;
         }
@@ -182,6 +184,8 @@ Plugin_Module::configure_midi_outputs ()
 
         if( !atom_output[i].jack_port()->activate() )
         {
+            delete atom_output[i].jack_port();
+            atom_output[i].jack_port(NULL);
             WARNING( "Failed to activate JACK MIDI OUT port" );
             return;
         }

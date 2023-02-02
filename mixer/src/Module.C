@@ -118,18 +118,24 @@ Module::~Module ( )
         if(!(atom_input[i].type() == Port::MIDI))
             continue;
 
-        atom_input[i].disconnect();
-        atom_input[i].jack_port()->shutdown();
-        delete atom_input[i].jack_port();
+        if(atom_input[i].jack_port())
+        {
+            atom_input[i].disconnect();
+            atom_input[i].jack_port()->shutdown();
+            delete atom_input[i].jack_port();
+        }
     } 
     for ( unsigned int i = 0; i < atom_output.size(); ++i )
     {
         if(!(atom_output[i].type() == Port::MIDI))
             continue;
 
-        atom_output[i].disconnect();
-        atom_output[i].jack_port()->shutdown();
-        delete atom_output[i].jack_port();
+        if(atom_output[i].jack_port())
+        {
+            atom_output[i].disconnect();
+            atom_output[i].jack_port()->shutdown();
+            delete atom_output[i].jack_port();
+        }
     }
 #endif
     for ( unsigned int i = 0; i < control_input.size(); ++i )
@@ -1579,8 +1585,11 @@ Module::freeze_ports ( void )
         if(!(atom_input[i].type() == Port::MIDI))
             continue;
 
-        atom_input[i].jack_port()->freeze();
-        atom_input[i].jack_port()->shutdown();
+        if(atom_input[i].jack_port())
+        {
+            atom_input[i].jack_port()->freeze();
+            atom_input[i].jack_port()->shutdown();
+        }
     }
 
     for ( unsigned int i = 0; i < atom_output.size(); ++i )
@@ -1588,8 +1597,11 @@ Module::freeze_ports ( void )
         if(!(atom_output[i].type() == Port::MIDI))
             continue;
 
-        atom_output[i].jack_port()->freeze();
-        atom_output[i].jack_port()->shutdown();
+        if(atom_output[i].jack_port())
+        {
+            atom_output[i].jack_port()->freeze();
+            atom_output[i].jack_port()->shutdown();
+        }
     }
 #endif
 }
