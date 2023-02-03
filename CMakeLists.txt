@@ -43,7 +43,7 @@ set (BuildOptions_Native
     CACHE STRING "Native compiler options"
 )
 set (BuildOptionsBasic
-    "-std=c++11 -Wno-unused-parameter -O3 -fomit-frame-pointer -ffast-math -pipe"
+    "-std=c++11 -Wno-unused-parameter -Wno-unused-result -O3 -fomit-frame-pointer -ffast-math -pipe"
     CACHE STRING "basic X86 complier options"
 )
 
