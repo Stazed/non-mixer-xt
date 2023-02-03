@@ -1368,16 +1368,22 @@ Module::handle_chain_name_changed ( )
             if(!(atom_input[i].type() == Port::MIDI))
                 continue;
 
-            atom_input[i].jack_port()->trackname( chain()->name() );
-            atom_input[i].jack_port()->rename();
+            if(atom_input[i].jack_port())
+            {
+                atom_input[i].jack_port()->trackname( chain()->name() );
+                atom_input[i].jack_port()->rename();
+            }
         }
         for ( unsigned int i = 0; i < atom_output.size(); i++ )
         {
             if(!(atom_output[i].type() == Port::MIDI))
                 continue;
 
-            atom_output[i].jack_port()->trackname( chain()->name() );
-            atom_output[i].jack_port()->rename();
+            if(atom_output[i].jack_port())
+            {
+                atom_output[i].jack_port()->trackname( chain()->name() );
+                atom_output[i].jack_port()->rename();
+            }
         }
 #endif
     }
@@ -1647,9 +1653,12 @@ Module::thaw_ports ( void )
         if(!(atom_input[i].type() == Port::MIDI))
             continue;
 
-        atom_input[i].jack_port()->client( chain()->client() );
-        atom_input[i].jack_port()->trackname( trackname );
-        atom_input[i].jack_port()->thaw();
+        if(atom_input[i].jack_port())
+        {
+            atom_input[i].jack_port()->client( chain()->client() );
+            atom_input[i].jack_port()->trackname( trackname );
+            atom_input[i].jack_port()->thaw();
+        }
     }
 
     for ( unsigned int i = 0; i < atom_output.size(); ++i )
@@ -1659,9 +1668,12 @@ Module::thaw_ports ( void )
         if(!(atom_output[i].type() == Port::MIDI))
             continue;
 
-        atom_output[i].jack_port()->client( chain()->client() );
-        atom_output[i].jack_port()->trackname( trackname );
-        atom_output[i].jack_port()->thaw();
+        if(atom_output[i].jack_port())
+        {
+            atom_output[i].jack_port()->client( chain()->client() );
+            atom_output[i].jack_port()->trackname( trackname );
+            atom_output[i].jack_port()->thaw();
+        }
     }
 #endif
 }
