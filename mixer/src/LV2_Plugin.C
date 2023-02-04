@@ -1821,7 +1821,7 @@ LV2_Plugin::send_file_to_plugin( int port, const std::string &filename )
 }
 
 void
-LV2_Plugin::apply_ui_events( uint32_t nframes, unsigned int port)
+LV2_Plugin::apply_ui_events( uint32_t nframes )
 {
     ControlChange ev  = {0U, 0U, 0U};
     const size_t  space = zix_ring_read_space(ui_to_plugin);
@@ -1853,18 +1853,22 @@ LV2_Plugin::apply_ui_events( uint32_t nframes, unsigned int port)
 
         if (ev.protocol == Plugin_Module_URI_Atom_eventTransfer)
         {
-            /* Check if we are sending this to the correct atom port */
-            if(atom_input[port].hints.plug_port_index == ev.index)
+            for(unsigned int port = 0; port < atom_input.size(); ++port)
             {
-                LV2_Evbuf_Iterator    e    = lv2_evbuf_end( atom_input[port].event_buffer() ); 
-                const LV2_Atom* const atom = &buffer.head.atom;
+                /* Check if we are sending this to the correct atom port */
+                if(atom_input[port].hints.plug_port_index == ev.index)
+                {
+                    LV2_Evbuf_Iterator    e    = lv2_evbuf_end( atom_input[port].event_buffer() ); 
+                        const LV2_Atom* const atom = &buffer.head.atom;
 
-                DMESSAGE("LV2 ATOM eventTransfer atom type = %d: port = %d: index = %d", atom->type, port, ev.index);
-                DMESSAGE("atom_input[port].hints.plug_port_index = %d", atom_input[port].hints.plug_port_index);
-                lv2_evbuf_write(&e, nframes, 0, atom->type, atom->size,
-                                (const uint8_t*)LV2_ATOM_BODY_CONST(atom));
+                    DMESSAGE("LV2 ATOM eventTransfer atom type = %d: port = %d: index = %d", atom->type, port, ev.index);
+                    DMESSAGE("atom_input[port].hints.plug_port_index = %d", atom_input[port].hints.plug_port_index);
+                        lv2_evbuf_write(&e, nframes, 0, atom->type, atom->size,
+                                        (const uint8_t*)LV2_ATOM_BODY_CONST(atom));
 
-                atom_input[port]._clear_input_buffer = true;
+                    atom_input[port]._clear_input_buffer = true;
+                    break;
+                }
             }
         }
         else
@@ -3038,9 +3042,10 @@ LV2_Plugin::process ( nframes_t nframes )
 #ifdef LV2_MIDI_SUPPORT
             /* Includes JACK MIDI in to plugin MIDI in and Time base */
             process_atom_in_events( nframes, i );
-            apply_ui_events( nframes, i );
 #endif
         }
+
+        apply_ui_events( nframes );
 #endif
         // Run the plugin for LV2
         for ( unsigned int i = 0; i < _idata->handle.size(); ++i )

@@ -192,7 +192,7 @@ private:
     void non_worker_emit_responses( LilvInstance* instance );
     void non_worker_finish( void );
     void non_worker_destroy( void );
-    void apply_ui_events( uint32_t nframes, unsigned int port);
+    void apply_ui_events( uint32_t nframes );
     void set_lv2_port_properties ( Port * port, bool writable );
     int write_atom_event(ZixRing* target, const uint32_t port_index,
                  const uint32_t    size,
