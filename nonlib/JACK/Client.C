@@ -24,11 +24,7 @@
 
 
 
-#ifdef USE_CMAKE
 #include "../nonlib/debug.h"
-#else
-#include "debug.h"
-#endif
 
 #ifdef __SSE2_MATH__
 #include <xmmintrin.h>

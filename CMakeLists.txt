@@ -12,7 +12,6 @@ add_definitions(-D'WEBSITE="https://github.com/Stazed/non-mixer-xt"')
 add_definitions(-D'PACKAGE="non-mixer-xt"')
 add_definitions(-D'PIXMAP_PATH="${CMAKE_INSTALL_PREFIX}/share/pixmaps"')
 add_definitions(-D'DOCUMENT_PATH="${CMAKE_INSTALL_PREFIX}/share/doc"')
-add_definitions(-D'USE_CMAKE=1')
 
 include(CheckCSourceCompiles)
 include(CheckCXXCompilerFlag)

@@ -20,11 +20,8 @@
 #pragma once
 
 #include "JACK_Module.H"
-#ifdef USE_CMAKE
 #include "../../nonlib/dsp.h"
-#else
-#include "dsp.h"
-#endif
+
 
 class AUX_Module : public JACK_Module
 {

@@ -63,7 +63,6 @@
 #include <FL/Fl_Menu.H>
 #include <FL/fl_ask.H>
 
-#ifdef USE_CMAKE
 #include "../../FL/Fl_Flip_Button.H"
 #include "../../FL/Fl_Flowpack.H"
 #include "../../FL/Fl_Packscroller.H"
@@ -71,15 +70,6 @@
 #include "../../FL/test_press.H"
 #include "../../nonlib/debug.h"
 #include "../../nonlib/dsp.h"
-#else
-#include <FL/Fl_Flip_Button.H>
-#include "FL/Fl_Flowpack.H"
-#include "FL/Fl_Packscroller.H"
-#include "FL/menu_popup.H"
-#include "FL/test_press.H"
-#include "debug.h"
-#include <dsp.h>
-#endif
 
 #include <FL/Fl_Tabs.H>
 #include "FL/Fl_Scroll.H"

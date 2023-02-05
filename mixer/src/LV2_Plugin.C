@@ -26,11 +26,9 @@
 #include <lv2/instance-access/instance-access.h>
 #include <X11/Xatom.h>
 #include "NonMixerPluginUI_X11Icon.h"
-#ifdef USE_CMAKE
+
 #include "../../nonlib/dsp.h"
-#else
-#include "dsp.h"
-#endif
+
 #include "Chain.H"
 
 class Chain;    // forward declaration

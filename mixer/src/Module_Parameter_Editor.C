@@ -29,21 +29,14 @@
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Menu_Button.H>
 #include <FL/Fl_Counter.H>
-#ifdef USE_CMAKE
+
 #include "../../FL/Fl_Flowpack.H"
 #include "../../FL/Fl_Labelpad_Group.H"
 #include "../../FL/Fl_Value_SliderX.H"
 #include "../../FL/test_press.H"
 #include "../../FL/menu_popup.H"
 #include "../../nonlib/debug.h"
-#else
-#include "FL/Fl_Flowpack.H"
-#include "FL/Fl_Labelpad_Group.H"
-#include "FL/Fl_Value_SliderX.H"
-#include "FL/test_press.H"
-#include "FL/menu_popup.H"
-#include "debug.h"
-#endif
+
 #include <FL/Fl_Scroll.H>
 #include "Module.H"
 #include "Module_Parameter_Editor.H"

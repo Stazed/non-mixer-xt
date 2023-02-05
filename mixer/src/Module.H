@@ -24,19 +24,11 @@
 
 #include <stdlib.h>
 
-#ifdef USE_CMAKE
 #include "../../nonlib/debug.h"
 #include "../../nonlib/Thread.H"
 #include "../../nonlib/Loggable.H"
 #include "../../nonlib/JACK/Port.H"
 #include "../../nonlib/OSC/Endpoint.H"
-#else
-#include "debug.h"
-#include "Thread.H"
-#include "Loggable.H"
-#include "JACK/Port.H"
-#include "OSC/Endpoint.H"
-#endif
 
 #include <vector>
 

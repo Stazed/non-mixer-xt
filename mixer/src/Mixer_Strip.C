@@ -34,21 +34,13 @@
 
 #include "Project.H"
 #include "Mixer_Strip.H"
-#ifdef USE_CMAKE
+
 #include "../../nonlib/dsp.h"
 #include "../../nonlib/debug.h"
 #include "../../FL/test_press.H"
 #include "../../FL/Fl_Flowpack.H"
 #include "../../FL/focus_frame.H"
 #include "../../FL/menu_popup.H"
-#else
-#include "dsp.h"
-#include "debug.h"
-#include "FL/test_press.H"
-#include "FL/Fl_Flowpack.H"
-#include "FL/focus_frame.H"
-#include "FL/menu_popup.H"
-#endif
 
 #include <string.h>
 #include <FL/Fl_Input.H>

@@ -21,11 +21,7 @@
 
 #include <lo/lo.h>
 
-#ifdef USE_CMAKE
 #include "../nonlib/Thread.H"
-#else
-#include "Thread.H"
-#endif
 
 #include <list>
 #include <string>

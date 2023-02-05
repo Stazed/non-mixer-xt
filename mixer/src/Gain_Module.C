@@ -18,15 +18,9 @@
 /*******************************************************************************/
 
 #include <math.h>
-#ifdef USE_CMAKE
-#include "../../nonlib/dsp.h"
-#else
-#include <dsp.h>
-#endif
 
 #include "Gain_Module.H"
 
-
 
 Gain_Module::Gain_Module ( )
     : Module ( 50, 24, name() )

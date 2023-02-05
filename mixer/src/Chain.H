@@ -23,13 +23,8 @@
 #include <FL/Fl_Pack.H>
 #include <FL/Fl_Button.H>
 
-#ifdef USE_CMAKE
 #include "../../nonlib/Loggable.H"
 #include "../../nonlib/JACK/Port.H"
-#else
-#include "Loggable.H"
-#include "JACK/Port.H"
-#endif
 
 #include "Module.H"
 #include <vector>

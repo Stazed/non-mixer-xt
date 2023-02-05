@@ -33,15 +33,9 @@
 #include <FL/Fl_Shared_Image.H>
 #include <FL/Fl_Pack.H>
 
-#ifdef USE_CMAKE
 #include "../../nonlib/Thread.H"
 #include "../../nonlib/debug.h"
 #include "../../nonlib/Loggable.H"
-#else
-#include "Thread.H"
-#include "debug.h"
-#include "Loggable.H"
-#endif
 
 #include "Mixer.H"
 #include "Project.H"

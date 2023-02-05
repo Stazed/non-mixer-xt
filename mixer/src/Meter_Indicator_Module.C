@@ -29,17 +29,12 @@
 #include <FL/Fl_Light_Button.H>
 
 #include "FL/Fl_Dial.H"
-#ifdef USE_CMAKE
+
 #include "../../FL/Fl_Labelpad_Group.H"
 #include "../../FL/Fl_Scalepack.H"
 #include "../../FL/test_press.H"
 #include "../../nonlib/dsp.h"
-#else
-#include "FL/Fl_Labelpad_Group.H"
-#include "FL/Fl_Scalepack.H"
-#include "FL/test_press.H"
-#include "dsp.h"
-#endif
+
 #include <FL/fl_draw.H>
 
 #include "Chain.H"

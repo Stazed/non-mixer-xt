@@ -17,11 +17,8 @@
 /* Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 /*******************************************************************************/
 
-#ifdef USE_CMAKE
 #include "../nonlib/debug.h"
-#else
-#include "debug.h"
-#endif
+
 #include "event_list.H"
 
 /* The operations we perform on event lists are clumsy with STL lists

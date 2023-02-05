@@ -16,21 +16,13 @@
 /* Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 /*******************************************************************************/
 
-#ifdef USE_CMAKE
 #include "../../nonlib/JACK/Client.H"
 #include "../../nonlib/JACK/Port.H"
 #include "../../nonlib/OSC/Endpoint.H"
 #include "../../nonlib/MIDI/midievent.H"
 #include "../../nonlib/debug.h"
 #include "../../nonlib/nsm.h"
-#else
-#include <JACK/Client.H>
-#include <JACK/Port.H>
-#include <OSC/Endpoint.H>
-#include <MIDI/midievent.H>
-#include "debug.h"
-#include <nsm.h>
-#endif
+
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <math.h>

@@ -24,17 +24,9 @@
 #include <FL/Fl_Single_Window.H>
 #include <FL/fl_draw.H>
 
-#ifdef USE_CMAKE
 #include "../../FL/Fl_Scalepack.H"
 #include "../../FL/test_press.H"
 #include "../../nonlib/JACK/Port.H"
-#include "../../nonlib/dsp.h"
-#else
-#include "FL/Fl_Scalepack.H"
-#include "FL/test_press.H"
-#include "JACK/Port.H"
-#include "dsp.h"
-#endif
 
 #include "Meter_Module.H"
 #include "DPM.H"

@@ -34,11 +34,7 @@
 #include "Mixer_Strip.H"
 #include "Chain.H"
 
-#ifdef USE_CMAKE
 #include "../../nonlib/debug.h"
-#else
-#include "debug.h"
-#endif
 
 #define HAVE_LIBLRDF 1
 

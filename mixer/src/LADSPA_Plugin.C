@@ -23,13 +23,10 @@
  */
 
 #include <math.h>
-#ifdef USE_CMAKE
-#include "../../nonlib/dsp.h"
-#else
-#include "dsp.h"
-#endif
-#include "Chain.H"
 
+#include "../../nonlib/dsp.h"
+
+#include "Chain.H"
 #include "LADSPA_Plugin.H"
 
 #define HAVE_LIBLRDF 1

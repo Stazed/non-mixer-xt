@@ -22,21 +22,12 @@
 
 #include <stdio.h>
 
-#ifdef USE_CMAKE
 #include "../../FL/menu_popup.H"
 #include "../../FL/test_press.H"
 #include "../../FL/Fl_Labelpad_Group.H"
 #include "../../FL/Fl_Value_SliderX.H"
 #include "../../nonlib/OSC/Endpoint.H"
 #include "../../nonlib/string_util.h"
-#else
-#include "FL/menu_popup.H"
-#include "FL/test_press.H"
-#include "FL/Fl_Labelpad_Group.H"
-#include "FL/Fl_Value_SliderX.H"
-#include "OSC/Endpoint.H"
-#include "string_util.h"
-#endif
 
 #include <FL/Fl.H>
 #include <FL/Fl_Box.H>

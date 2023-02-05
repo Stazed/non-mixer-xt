@@ -22,15 +22,12 @@
 #include <FL/Fl.H>
 #include <stdio.h>
 #include <math.h>
-// #include <FL/fl_draw.H>
 
 #include <FL/Fl_Shared_Image.H>
 #include <FL/Fl_Tiled_Image.H>
-#ifdef USE_CMAKE
+
 #include "../../nonlib/debug.h"
-#else
-#include "debug.h"
-#endif
+
 
 /* 2D Panner widget. Supports various multichannel configurations. */
 

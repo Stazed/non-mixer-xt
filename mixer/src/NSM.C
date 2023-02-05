@@ -22,13 +22,9 @@
 #include "NSM.H"
 #include "Project.H"
 
-#ifdef USE_CMAKE
 #include "../../nonlib/debug.h"
 #include "../../nonlib/OSC/Endpoint.H"
-#else
-#include "debug.h"
-#include "OSC/Endpoint.H"
-#endif
+
 
 extern char *instance_name;
 extern Mixer *mixer;

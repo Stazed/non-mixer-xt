@@ -19,12 +19,7 @@
 #define CARLA_UTILS_HPP_INCLUDED
 
 #include "CarlaDefines.H"
-
-#ifdef USE_CMAKE
 #include "../../nonlib/debug.h"
-#else
-#include "debug.h"
-#endif
 
 #include <cassert>
 #include <cstdarg>

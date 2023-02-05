@@ -24,17 +24,12 @@
 #include <FL/fl_ask.H>
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Pack.H>
-#ifdef USE_CMAKE
+
 #include "../../FL/Fl_Scalepack.H"
 #include "../../nonlib/dsp.h"
 #include "../../FL/img_io_input_connector_10x10_png.h"
 #include "../../FL/img_io_output_connector_10x10_png.h"
-#else
-#include <FL/Fl_Scalepack.H>
-#include "dsp.h"
-#include <FL/img_io_input_connector_10x10_png.h>
-#include <FL/img_io_output_connector_10x10_png.h>
-#endif
+
 #include <FL/Enumerations.H>
 
 #include "Chain.H"

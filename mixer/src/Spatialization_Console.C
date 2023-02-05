@@ -34,11 +34,7 @@
 #include "Mixer_Strip.H"
 #include "Mixer.H"
 
-#ifdef USE_CMAKE
 #include "../../nonlib/debug.h"
-#else
-#include "debug.h"
-#endif
 
 #include <FL/Fl_Menu_Bar.H>
 

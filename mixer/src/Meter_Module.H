@@ -20,11 +20,8 @@
 #pragma once
 
 #include "Module.H"
-#ifdef USE_CMAKE
+
 #include "../../nonlib/dsp.h"
-#else
-#include "dsp.h"
-#endif
 
 #include <vector>
 

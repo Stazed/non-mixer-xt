@@ -20,11 +20,9 @@
 #pragma once
 
 #include "Module.H"
-#ifdef USE_CMAKE
+
 #include "../../nonlib/Loggable.H"
-#else
-#include "Loggable.H"
-#endif
+
 #include "LADSPAInfo.h"
 
 class Fl_Menu_Button;

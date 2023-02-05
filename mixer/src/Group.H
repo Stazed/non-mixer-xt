@@ -22,17 +22,10 @@
 #include <list>
 class Mixer_Strip;
 
-#ifdef USE_CMAKE
 #include "../../nonlib/Mutex.H"
 #include "../../nonlib/JACK/Client.H"
 #include "../../nonlib/Loggable.H"
 #include "../../nonlib/Thread.H"
-#else
-#include "Mutex.H"
-#include "JACK/Client.H"
-#include "Thread.H"
-#include "Loggable.H"
-#endif
 
 class Port;
 

@@ -32,15 +32,10 @@
 #include <unistd.h>
 
 #include "const.h"
-#ifdef USE_CMAKE
+
 #include "../../nonlib/debug.h"
 #include "../../nonlib/Loggable.H"
 #include "../../nonlib/file.h"
-#else
-#include "debug.h"
-#include "Loggable.H"
-#include "file.h"
-#endif
 
 #include "Project.H"
 
