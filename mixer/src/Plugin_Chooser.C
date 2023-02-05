@@ -35,6 +35,8 @@
 #include <algorithm>
 
 static    std::vector <Plugin_Module::Plugin_Info*> _plugin_rows;
+static int previous_favorites = 1;
+static int plugin_type = 0;
 
 Module::Picked
 Plugin_Chooser::plugin_chooser ( int ninputs )
@@ -43,6 +45,9 @@ Plugin_Chooser::plugin_chooser ( int ninputs )
 
     Plugin_Chooser *o = new Plugin_Chooser( 0,0,735,500,"Plugin Chooser");
 
+    o->ui->favorites_button->value(previous_favorites);
+    o->ui->all_button->value(previous_favorites ? 0 : 1);
+    o->ui->type_choice->value(plugin_type);
     o->ui->inputs_input->value( ninputs );
 
     o->search( "", "", "Any", ninputs, 0, o->ui->favorites_button->value(), o->ui->type_choice->text() );
@@ -62,6 +67,9 @@ Plugin_Chooser::plugin_chooser ( int ninputs )
         picked.is_lv2 = false;
         picked.unique_id = o->value();
     }
+
+    previous_favorites = o->ui->favorites_button->value();
+    plugin_type = o->ui->type_choice->value();
 
     delete o;
 
