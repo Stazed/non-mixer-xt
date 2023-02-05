@@ -72,13 +72,12 @@ pkg_check_modules(SUIL REQUIRED suil-0>=0.10.0)
 pkg_check_modules(NTK ntk REQUIRED)
 pkg_check_modules(NTK_IMAGES ntk_images REQUIRED)
 
-#FIXME
-find_program(FLTK_FLUID_EXECUTABLE ntk-fluid)
-if(FLTK_FLUID_EXECUTABLE)
-    message(STATUS "Found NTK fluid")
-else(FLTK_FLUID_EXECUTABLE)
-    message(STATUS "NTK fluid not found")
-endif(FLTK_FLUID_EXECUTABLE)
+#find_program(FLTK_FLUID_EXECUTABLE ntk-fluid)
+#(FLTK_FLUID_EXECUTABLE)
+#    message(STATUS "Found NTK fluid")
+#else(FLTK_FLUID_EXECUTABLE)
+#    message(STATUS "NTK fluid not found")
+#endif(FLTK_FLUID_EXECUTABLE)
 
 # Check for LADSPA headers.
 check_include_file (ladspa.h HAVE_LADSPA_H)

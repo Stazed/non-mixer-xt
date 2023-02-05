@@ -26,7 +26,7 @@ set (ProgSources
     ../FL/Fl_Value_SliderX.C
     ../FL/Fl_SliderX.C
     ../FL/New_Project_Dialog.C
-    src/Plugin_Chooser_UI.C
+    ../FL/Plugin_Chooser_UI.C
     ../FL/event_name.C
     ../FL/menu_popup.C
     ../FL/test_press.C
@@ -49,7 +49,6 @@ set (ProgSources
     src/Module.C
     src/Module_Parameter_Editor.C
     src/Mono_Pan_Module.C
-    src/Plugin_Chooser_UI.fl
     src/Plugin_Chooser.C
     src/NSM.C
     src/Panner.C

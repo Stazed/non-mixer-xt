@@ -3,11 +3,7 @@
 #ifndef Plugin_Chooser_UI_H
 #define Plugin_Chooser_UI_H
 #include <FL/Fl.H>
-#ifdef USE_CMAKE
-#include "../../FL/Fl_Scalepack.H"
-#else
-#include <FL/Fl_Scalepack.H>
-#endif
+#include "Fl_Scalepack.H"
 #include <FL/Fl_Table_Row.H>
 #include <FL/Fl_Group.H>
 #include <FL/Fl_Round_Button.H>
