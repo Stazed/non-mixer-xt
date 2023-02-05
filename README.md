@@ -1,5 +1,11 @@
 Non-Mixer-XT README
 ===================
+
+Screenshot
+----------
+
+![screenshot](https://raw.github.com/Stazed/non-mixer/xt/mixer/doc/non-mixer-xt-1.0.0.png "Non-Mixer-XT Release 1.0.0"
+
 Non-Mixer-XT build instructions:
 --------------------------------
 
