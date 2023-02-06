@@ -25,6 +25,7 @@
 #include "LV2_Plugin.H"
 #include <lv2/instance-access/instance-access.h>
 #include <X11/Xatom.h>
+#include <unistd.h>    // usleep()
 #include "NonMixerPluginUI_X11Icon.h"
 
 #include "../../nonlib/dsp.h"
