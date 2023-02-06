@@ -734,7 +734,7 @@ LV2_Plugin::load_plugin ( const char* uri )
 
 		if (m_safe_restore)   // FIXME
                 {
-                    MESSAGE( "Plugin Has safe_restore - TODO" );
+                    DMESSAGE( "Plugin Has safe_restore - TODO" );
                    // non_worker_init(this, _idata->lv2.ext.state, false);
 		}
             }
@@ -1019,7 +1019,7 @@ LV2_Plugin::load_plugin ( const char* uri )
         set_lv2_port_properties( &atom_output[i], false );
     }
 
-    if ( control_input.size() > 100  )
+    if ( control_input.size() > 50  )
         _use_custom_data = true;
     else if (audio_input.empty())
         _use_custom_data = true;

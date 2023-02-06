@@ -1,10 +1,13 @@
-Non-Mixer-XT README
-===================
+Non-Mixer-XT
+============
 
 Screenshot
 ----------
 
-![screenshot](https://raw.github.com/Stazed/non/xt/mixer/doc/non-mixer-xt-1.0.0.png "Non-Mixer-XT Release 1.0.0")
+![screenshot](https://raw.github.com/Stazed/non-mixer-xt/master/mixer/doc/non-mixer-xt-1.0.0.png "Non-Mixer-XT Release 1.0.0")
+
+Non-Mixer-XT is a reboot of original Non-Mixer with eXTended LV2 support. LV2 support includes X11, ShowInterface and External custom UI support. In addition, MIDI support with JACK timebase support and much more. The generic parameter editor has been redesigned to accommodate larger LV2 plugins, preset support and state save and restore.
+
 
 Non-Mixer-XT build instructions:
 --------------------------------
@@ -27,10 +30,10 @@ Getting NTK:
 
 Your distribution may have the NTK library. If not, then do the following to build and install the NTK submodule.
 
-If you just cloned the non repository or just executed git pull, then you should also run :
+If you just cloned the non-mixer-xt repository or just executed git pull, then you should also run :
 
 ```bash
-    git submodule update --init --remote
+    git submodule update --init
 ```
 
 to pull down the latest NTK code required by Non. Git does *not* do this automatically.
