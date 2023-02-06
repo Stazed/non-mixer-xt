@@ -26,7 +26,7 @@
 
 #include "Module.H"
 #include "Plugin_Module.H"
-#include "CarlaUtils.H"
+#include "XTUtils.H"
 #include "LV2_RDF_Utils.hpp"
 #include "ImplementationData.H"
 #include "zix/ring.h"

@@ -97,23 +97,23 @@ static void mixer_lv2_set_port_value ( const char *port_symbol,
         switch (type)
         {
             case Plugin_Module_URI_Atom_Bool:
-            CARLA_SAFE_ASSERT_RETURN(size == sizeof(int32_t),);
+            NON_SAFE_ASSERT_RETURN(size == sizeof(int32_t),);
             paramValue = *(const int32_t*)value != 0 ? 1.0f : 0.0f;
             break;
             case Plugin_Module_URI_Atom_Double:
-            CARLA_SAFE_ASSERT_RETURN(size == sizeof(double),);
+            NON_SAFE_ASSERT_RETURN(size == sizeof(double),);
             paramValue = static_cast<float>((*(const double*)value));
             break;
             case Plugin_Module_URI_Atom_Int:
-            CARLA_SAFE_ASSERT_RETURN(size == sizeof(int32_t),);
+            NON_SAFE_ASSERT_RETURN(size == sizeof(int32_t),);
             paramValue = static_cast<float>(*(const int32_t*)value);
             break;
             case Plugin_Module_URI_Atom_Float:
-            CARLA_SAFE_ASSERT_RETURN(size == sizeof(float),);
+            NON_SAFE_ASSERT_RETURN(size == sizeof(float),);
             paramValue = *(const float*)value;
             break;
             case Plugin_Module_URI_Atom_Long:
-            CARLA_SAFE_ASSERT_RETURN(size == sizeof(int64_t),);
+            NON_SAFE_ASSERT_RETURN(size == sizeof(int64_t),);
             paramValue = static_cast<float>(*(const int64_t*)value);
             break;
             default:
@@ -2577,8 +2577,8 @@ LV2_Plugin::custom_update_ui()
             switch (event.type)
             {
             case ConfigureNotify:
-                CARLA_SAFE_ASSERT_CONTINUE(event.xconfigure.width > 0);
-                CARLA_SAFE_ASSERT_CONTINUE(event.xconfigure.height > 0);
+                NON_SAFE_ASSERT_CONTINUE(event.xconfigure.width > 0);
+                NON_SAFE_ASSERT_CONTINUE(event.xconfigure.height > 0);
 
                 if (event.xconfigure.window == fHostWindow)
                 {
@@ -2594,7 +2594,7 @@ LV2_Plugin::custom_update_ui()
                             gErrorTriggered = false;
 
                             XSizeHints sizeHints;
-                            carla_zeroStruct(sizeHints);
+                            non_zeroStruct(sizeHints);
 
                             if (XGetNormalHints(fDisplay, fChildWindow, &sizeHints) && !gErrorTriggered)
                             {
@@ -2624,7 +2624,7 @@ LV2_Plugin::custom_update_ui()
 
             case ClientMessage:
                 type = XGetAtomName(fDisplay, event.xclient.message_type);
-                CARLA_SAFE_ASSERT_CONTINUE(type != nullptr);
+                NON_SAFE_ASSERT_CONTINUE(type != nullptr);
 
                 if (std::strcmp(type, "WM_PROTOCOLS") == 0)
                 {
@@ -2645,7 +2645,7 @@ LV2_Plugin::custom_update_ui()
                 if (fChildWindow != 0)
                 {
                     XWindowAttributes wa;
-                    carla_zeroStruct(wa);
+                    non_zeroStruct(wa);
 
                     if (XGetWindowAttributes(fDisplay, fChildWindow, &wa) && wa.map_state == IsViewable)
                         XSetInputFocus(fDisplay, fChildWindow, RevertToPointerRoot, CurrentTime);
@@ -2662,7 +2662,7 @@ LV2_Plugin::custom_update_ui()
         if (nextWidth != 0 && nextHeight != 0 && fChildWindow != 0)
         {
             XSizeHints sizeHints;
-            carla_zeroStruct(sizeHints);
+            non_zeroStruct(sizeHints);
 
             if (XGetNormalHints(fDisplay, fChildWindow, &sizeHints))
                 XSetNormalHints(fDisplay, fHostWindow, &sizeHints);
@@ -2702,12 +2702,12 @@ LV2_Plugin::init_x()
     fChildWindowMonitoring = fIsResizable = isUiResizable();
     
     fDisplay = XOpenDisplay(nullptr);
-    CARLA_SAFE_ASSERT_RETURN(fDisplay != nullptr,);
+    NON_SAFE_ASSERT_RETURN(fDisplay != nullptr,);
 
     const int screen = DefaultScreen(fDisplay);
 
     XSetWindowAttributes attr;
-    carla_zeroStruct(attr);
+    non_zeroStruct(attr);
 
     attr.event_mask = KeyPressMask|KeyReleaseMask|FocusChangeMask;
 
@@ -2721,7 +2721,7 @@ LV2_Plugin::init_x()
                                 DefaultVisual(fDisplay, screen),
                                 CWBorderPixel|CWEventMask, &attr);
 
-    CARLA_SAFE_ASSERT_RETURN(fHostWindow != 0,);
+    NON_SAFE_ASSERT_RETURN(fHostWindow != 0,);
 
     XSetStandardProperties(fDisplay, fHostWindow, label(), label(), None, NULL, 0, NULL);
 
@@ -2797,8 +2797,8 @@ Window
 LV2_Plugin::getChildWindow() const
 {
 #ifdef USE_CARLA
-    CARLA_SAFE_ASSERT_RETURN(fDisplay != nullptr, 0);
-    CARLA_SAFE_ASSERT_RETURN(fHostWindow != 0, 0);
+    NON_SAFE_ASSERT_RETURN(fDisplay != nullptr, 0);
+    NON_SAFE_ASSERT_RETURN(fHostWindow != 0, 0);
 
     Window rootWindow, parentWindow, ret = 0;
     Window* childWindows = nullptr;
@@ -2839,8 +2839,8 @@ LV2_Plugin::show_custom_ui()
         return;
     }
 #endif
-    CARLA_SAFE_ASSERT_RETURN(fDisplay != nullptr,);
-    CARLA_SAFE_ASSERT_RETURN(fHostWindow != 0,);
+    NON_SAFE_ASSERT_RETURN(fDisplay != nullptr,);
+    NON_SAFE_ASSERT_RETURN(fHostWindow != 0,);
 
     if (fFirstShow)
     {
@@ -2852,7 +2852,7 @@ LV2_Plugin::show_custom_ui()
                 int height = 0;
 
                 XWindowAttributes attrs;
-                carla_zeroStruct(attrs);
+                non_zeroStruct(attrs);
 
                 pthread_mutex_lock(&gErrorMutex);
                 const XErrorHandler oldErrorHandler = XSetErrorHandler(temporaryErrorHandler);
@@ -2870,7 +2870,7 @@ LV2_Plugin::show_custom_ui()
                 if (width == 0 && height == 0)
                 {
                     XSizeHints sizeHints;
-                    carla_zeroStruct(sizeHints);
+                    non_zeroStruct(sizeHints);
 
                     if (XGetNormalHints(fDisplay, childWindow, &sizeHints))
                     {
@@ -2928,8 +2928,8 @@ LV2_Plugin::show_custom_ui()
 void
 LV2_Plugin::hide_custom_ui()
 {
-    CARLA_SAFE_ASSERT_RETURN(fDisplay != nullptr,);
-    CARLA_SAFE_ASSERT_RETURN(fHostWindow != 0,);
+    NON_SAFE_ASSERT_RETURN(fDisplay != nullptr,);
+    NON_SAFE_ASSERT_RETURN(fHostWindow != 0,);
 
     fIsVisible = false;
     XUnmapWindow(fDisplay, fHostWindow);
@@ -2939,8 +2939,8 @@ LV2_Plugin::hide_custom_ui()
 void
 LV2_Plugin::setSize(const uint width, const uint height, const bool forceUpdate, const bool resizeChild)
 {
-    CARLA_SAFE_ASSERT_RETURN(fDisplay != nullptr,);
-    CARLA_SAFE_ASSERT_RETURN(fHostWindow != 0,);
+    NON_SAFE_ASSERT_RETURN(fDisplay != nullptr,);
+    NON_SAFE_ASSERT_RETURN(fHostWindow != 0,);
 
     fSetSizeCalledAtLeastOnce = true;
     XResizeWindow(fDisplay, fHostWindow, width, height);
@@ -2951,7 +2951,7 @@ LV2_Plugin::setSize(const uint width, const uint height, const bool forceUpdate,
     if (! fIsResizable)
     {
         XSizeHints sizeHints;
-        carla_zeroStruct(sizeHints);
+        non_zeroStruct(sizeHints);
 
         sizeHints.flags      = PSize|PMinSize|PMaxSize;
         sizeHints.width      = static_cast<int>(width);
@@ -2971,7 +2971,7 @@ LV2_Plugin::setSize(const uint width, const uint height, const bool forceUpdate,
 bool
 LV2_Plugin::isUiResizable() const
 {
-    CARLA_SAFE_ASSERT_RETURN(_idata->lv2.rdf_data != nullptr, false);
+    NON_SAFE_ASSERT_RETURN(_idata->lv2.rdf_data != nullptr, false);
 
     for (uint32_t i=0; i < _idata->lv2.rdf_data->FeatureCount; ++i)
     {
