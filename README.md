@@ -4,7 +4,7 @@ Non-Mixer-XT
 Screenshot
 ----------
 
-![screenshot](https://raw.github.com/Stazed/non-mixer-xt/master/mixer/doc/non-mixer-xt-1.0.0.png "Non-Mixer-XT Release 1.0.0")
+![screenshot](https://raw.github.com/Stazed/non-mixer-xt/main/mixer/doc/non-mixer-xt-1.0.0.png "Non-Mixer-XT Release 1.0.0")
 
 Non-Mixer-XT is a reboot of original Non-Mixer with eXTended LV2 support. LV2 support includes X11, ShowInterface and External custom UI support. In addition, MIDI support with JACK timebase support and much more. The generic parameter editor has been redesigned to accommodate larger LV2 plugins, preset support and state save and restore.
 
