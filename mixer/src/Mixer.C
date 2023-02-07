@@ -250,10 +250,24 @@ void Mixer::cb_menu(Fl_Widget* o) {
 
     if (! strcmp( picked, "&Project/&New") )
     {
+        if(mixer_strips->children() || !project_directory.empty())
+        {
+            fl_alert("Error: You cannot open/create a new project\n"
+                    "if any existing project is open or\n"
+                    "if any mixer strips are present.");
+            return;
+        }
         command_new();
     }
     else if (! strcmp( picked, "&Project/&Open" ) )
     {
+        if(mixer_strips->children() || !project_directory.empty())
+        {
+            fl_alert("Error: You cannot open/create a new project\n"
+                    "if any existing project is open or\n"
+                    "if any mixer strips are present.");
+            return;
+        }
         char *path = read_line( user_config_dir, "default_path");
 
         const char *name = fl_dir_chooser( "Open Project", path );
@@ -1330,6 +1344,7 @@ Mixer::command_save ( void )
     {
         command_new();
         update_menu();
+        mixer->redraw();    // To update the project label because this is a new project
     }    
 
     save_project_settings();
