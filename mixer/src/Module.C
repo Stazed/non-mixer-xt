@@ -289,6 +289,7 @@ Module::get ( Log_Entry &e ) const
         char *s = get_parameters();
         if ( strlen( s ) )
             e.add( ":parameter_values", s );
+
         delete[] s;
     }
 #ifdef LV2_WORKER_SUPPORT
@@ -865,6 +866,12 @@ char *
 Module::get_parameters ( void ) const
 {
     int len = control_input.size() * 50;
+
+    /* To have something to return because valgrind indicates invalid read/write
+     * if control_input.size() == 0 and new char[ len ] is created with 0 size */
+    if( !control_input.size() )
+        len = 1;
+
     char *s = new char[ len ];
     
     s[0] = 0;

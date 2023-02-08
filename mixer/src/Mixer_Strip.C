@@ -94,6 +94,8 @@ Mixer_Strip::Mixer_Strip( const char *strip_name ) : Fl_Group( 0, 0, 120, 600 )
 /* virgin strip created from journal */
 Mixer_Strip::Mixer_Strip() : Fl_Group( 0, 0, 120, 600 )
 {
+    _number = 0;
+
     init();
 
     log_create();
