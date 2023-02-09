@@ -84,7 +84,8 @@ std::string export_import_strip = "";
 std::vector<std::string>remove_custom_data_directories;
 
 /* Maximum number of audio, aux, control ports*/
-const int MAX_PORTS = 34;
+const int MAX_PORTS = 34;   // extern
+bool is_startup = true;     // extern
 
 #include <errno.h>
 

@@ -50,6 +50,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>    // usleep()
 
 #include "Chain.H"
 #include "Module.H"
@@ -82,7 +83,6 @@
 #include "Mixer.H"
 extern char *instance_name;
 
-
 
 /* Chain::Chain ( int X, int Y, int W, int H, const char *L ) : */
 /*     Fl_Group( X, Y, W, H, L) */
@@ -1097,12 +1097,22 @@ Chain::port_connect ( jack_port_id_t a, jack_port_id_t b, int /*connect*/ )
         return;
 
     /* this is called from JACK non-RT thread... */
-   
+
     if ( jack_port_is_mine( client()->jack_client(), jack_port_by_id( client()->jack_client(), a ) ) ||
          jack_port_is_mine( client()->jack_client(), jack_port_by_id( client()->jack_client(), b ) ))
     {
-        update_connection_status(this);
-       // Fl::awake( Chain::update_connection_status, this );   // Caused intermittent crash on NSM start
+        /* When the mixer is first starting under NSM, the call to Fl::awake would sometimes
+           occur before the initial main() Fl:wait() which would cause an intermittent segfault.
+           So the usleep(5000) is to allow the main() time to initialize before. */
+        if(is_startup)
+        {
+            is_startup = false;
+            usleep(5000);
+        }
+
+        /* Fl::awake() means use the main thread to process. Needed because a race condition would occur
+           if connections are changed when the UI is visible and redraw is triggered from multiple events. */
+        Fl::awake( Chain::update_connection_status, this );
     }
 }
 
