@@ -851,6 +851,7 @@ LV2_Plugin::load_plugin ( const char* uri )
             if ( LV2_IS_PORT_CONTROL( _idata->lv2.rdf_data->Ports[i].Types ) )
             {
                 const LV2_RDF_Port& rdfport ( _idata->lv2.rdf_data->Ports[i] );
+                DMESSAGE("Port Symbol = %s", rdfport.Symbol);
 
                 Port::Direction d = Port::INPUT;
 
@@ -906,7 +907,7 @@ LV2_Plugin::load_plugin ( const char* uri )
                 if ( LV2_IS_PORT_INTEGER( rdfport.Properties ) )
                 {
                     p.hints.type = Port::Hints::LV2_INTEGER;
-                    
+
                     if( LV2_IS_PORT_ENUMERATION(rdfport.Properties) )
                     {
                         p.hints.type = Port::Hints::LV2_INTEGER_ENUMERATION;
@@ -2044,12 +2045,12 @@ LV2_Plugin::set_lv2_port_properties (Port * port, bool writable )
     LilvNode* rdfs_label;
     rdfs_label = lilv_new_uri(world, LILV_NS_RDFS "label");
     
-    port->_label  = lilv_world_get(world, port->_property, rdfs_label, NULL);
-    port->_symbol = lilv_world_get_symbol(world, port->_property);
+    port->_lilv_label  = lilv_world_get(world, port->_property, rdfs_label, NULL);
+    port->_lilv_symbol = lilv_world_get_symbol(world, port->_property);
     port->_property_mapped = _idata->_lv2_urid_map(_idata, lilv_node_as_uri( port->_property ));
     
-    DMESSAGE("Properties label = %s", lilv_node_as_string(port->_label));
-    DMESSAGE("Properties symbol = %s", lilv_node_as_string(port->_symbol));
+    DMESSAGE("Properties label = %s", lilv_node_as_string(port->_lilv_label));
+    DMESSAGE("Properties symbol = %s", lilv_node_as_string(port->_lilv_symbol));
     DMESSAGE("Property mapped = %u", port->_property_mapped);
 
     lilv_nodes_free(properties);

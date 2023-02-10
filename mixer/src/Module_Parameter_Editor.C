@@ -459,7 +459,7 @@ Module_Parameter_Editor::make_controls ( void )
 
         Fl_Widget *w;
 
-        Fl_Button *o = new Fl_Button( 75, (y_location*24) + 24, 200, 24, lilv_node_as_string(p->_symbol) );
+        Fl_Button *o = new Fl_Button( 75, (y_location*24) + 24, 200, 24, lilv_node_as_string(p->_lilv_symbol) );
 
         w = o;
         o->selection_color( fc );
@@ -608,7 +608,7 @@ Module_Parameter_Editor::cb_filechooser_handle ( Fl_Widget *w, void *v )
     std::string file_chooser_location = previous_file.substr(0, found);
 
     /* File chooser window title */
-    std::string title = lilv_node_as_string(cd->base_widget->_module->atom_input[cd->port_number[0]]._label);
+    std::string title = lilv_node_as_string(cd->base_widget->_module->atom_input[cd->port_number[0]]._lilv_label);
 
     char *filename;
 

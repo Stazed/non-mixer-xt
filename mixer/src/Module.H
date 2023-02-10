@@ -218,8 +218,8 @@ public:
                 _evbuf = NULL;
                 _tmpevbuf = NULL;
                 _property = NULL;
-                _symbol = NULL;
-                _label = NULL;
+                _lilv_symbol = NULL;
+                _lilv_label = NULL;
                 _clear_input_buffer = false;
                 _need_file_update = false;
                 _supports_time_position = false;
@@ -249,8 +249,8 @@ public:
                 _evbuf = p._evbuf;
                 _tmpevbuf = p._tmpevbuf;
                 _property = p._property;
-                _symbol = p._symbol;
-                _label = p._label;
+                _lilv_symbol = p._lilv_symbol;
+                _lilv_label = p._lilv_label;
                 _clear_input_buffer = p._clear_input_buffer;
                 _need_file_update = p._need_file_update;
                 _supports_time_position = p._supports_time_position;
@@ -472,9 +472,9 @@ public:
     public:
         // FIXME encapsulate
         const LilvNode* _property;
-        LilvNode*   _symbol;          ///< Symbol
-	LilvNode*   _label;           ///< Human readable label
-        LV2_URID    _property_mapped;        ///< Iff type == PROPERTY
+        LilvNode*   _lilv_symbol;       ///< Symbol
+	LilvNode*   _lilv_label;             ///< Human readable label
+        LV2_URID    _property_mapped;   ///< Iff type == PROPERTY
         bool _clear_input_buffer;
         bool _need_file_update;
         bool _supports_time_position;
