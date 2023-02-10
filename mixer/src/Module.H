@@ -204,6 +204,12 @@ public:
         Port ( Module *module, Direction direction, Type type, const char *name = 0 )
             {
                 _name = name;
+                /* On port creation, we set _symbol to name for internal/LADSPA plugins that don't 
+                   have a symbol for OSC path. For LV2 we replace after creation with the actual symbol */
+                if(name)
+                {
+                    _symbol = name;
+                }
                 _direction = direction;
                 _type = type;
                 _buf = 0;
@@ -232,6 +238,7 @@ public:
         Port ( const Port& p )
             {
                 _name = p._name;
+                _symbol = p._symbol;
                 _direction = p._direction;
                 _type = p._type;
                 _buf = p._buf;
@@ -276,10 +283,11 @@ public:
 #endif
             }
 
-
 	nframes_t nframes ( void ) const { return _nframes; }
 	void  nframes ( nframes_t n) { _nframes = n; }
         const char *name ( void ) const { return _name; }
+        const char *symbol ( void ) const { return _symbol.c_str(); }
+        void set_symbol (const char * symbol) { ( _symbol = symbol); }
         Type type ( void ) const { return _type; }
         Direction direction ( void ) const  { return _direction; }
 
@@ -461,6 +469,7 @@ public:
         Type _type;
         Direction _direction;
         const char *_name;
+        std::string _symbol;
         void *_buf;
         nframes_t _nframes;
         Module *_module;

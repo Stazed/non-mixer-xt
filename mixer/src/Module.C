@@ -613,7 +613,7 @@ Module::Port::generate_osc_path ()
         return NULL;
     }
 
-    asprintf( &path, "/strip/%s/%s/%s", module()->chain()->name(), p->module()->label(), p->name() );
+    asprintf( &path, "/strip/%s/%s/%s", module()->chain()->name(), p->module()->label(), p->symbol() );
 
     char *s = escape_url( path );
     

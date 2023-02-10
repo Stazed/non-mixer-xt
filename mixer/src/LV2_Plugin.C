@@ -851,7 +851,6 @@ LV2_Plugin::load_plugin ( const char* uri )
             if ( LV2_IS_PORT_CONTROL( _idata->lv2.rdf_data->Ports[i].Types ) )
             {
                 const LV2_RDF_Port& rdfport ( _idata->lv2.rdf_data->Ports[i] );
-                DMESSAGE("Port Symbol = %s", rdfport.Symbol);
 
                 Port::Direction d = Port::INPUT;
 
@@ -865,7 +864,10 @@ LV2_Plugin::load_plugin ( const char* uri )
                 }
 
                 Port p( this, d, Port::CONTROL, rdfport.Name );
-                
+
+                /* Used for OSC path creation unique symbol */
+                p.set_symbol(rdfport.Symbol);
+
                 if ( LV2_HAVE_MINIMUM_PORT_POINT( rdfport.Points.Hints ) )
                 {
                     p.hints.ranged = true;
