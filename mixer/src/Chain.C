@@ -76,12 +76,11 @@
 #include "FL/Fl_Scroll.H"
 #include <FL/fl_draw.H>
 
-
 #include "Group.H"
-
 #include "Mixer_Strip.H"
 #include "Mixer.H"
 extern char *instance_name;
+static bool is_startup = true;
 
 
 /* Chain::Chain ( int X, int Y, int W, int H, const char *L ) : */

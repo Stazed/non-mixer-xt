@@ -32,7 +32,6 @@
 #include "Group.H"
 
 extern const int MAX_PORTS;
-extern bool is_startup;
 
 class Mixer_Strip;
 class Fl_Flowpack;
