@@ -66,6 +66,14 @@ static int temporaryErrorHandler(Display*, XErrorEvent*)
 }
 #endif // USE_CARLA
 
+const std::vector<std::string> v_customData_special
+{
+    "http://kxstudio.sf.net/carla/plugins/carlapatchbay",
+    "http://kxstudio.sf.net/carla/plugins/carlarack",
+    "http://kxstudio.sf.net/carla/plugins/carlapatchbay16",
+    "http://kxstudio.sf.net/carla/plugins/carlapatchbay32"
+};
+
 
 #ifdef PRESET_SUPPORT
 // LV2 Presets: port value setter.
@@ -444,6 +452,9 @@ lv2_non_worker_schedule(LV2_Worker_Schedule_Handle handle,
 char*
 lv2_make_path(LV2_State_Make_Path_Handle handle, const char* path)
 {
+    /* FIXME this needs to convert to UTF-8 encoding, temporarily disabling */
+    return NULL;
+
     LV2_Plugin* pm = static_cast<LV2_Plugin *> (handle);
 
     DMESSAGE("make path file = %s", path);
@@ -1028,6 +1039,18 @@ LV2_Plugin::load_plugin ( const char* uri )
         _use_custom_data = true;
     else if ( _is_instrument )
         _use_custom_data = true;
+
+    if( !_use_custom_data )
+    {
+        for ( unsigned int i = 0; i < v_customData_special.size(); ++i)
+        {
+            if ( strcmp( uri, v_customData_special[i].c_str() ) )
+            {
+                _use_custom_data = true;
+                break;
+            }
+        }
+    }
 
     if ( _atom_ins || _atom_outs )
     {
