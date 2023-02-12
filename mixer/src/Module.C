@@ -1835,8 +1835,15 @@ Module::command_open_parameter_editor ( void )
 {
     if ( _editor )
     {
-        _editor->show();
-        set_dirty();
+        if(_editor->visible())
+        {
+            _editor->hide();
+        }
+        else
+        {
+            _editor->show();
+            set_dirty();
+        }
     }
     else if ( ncontrol_inputs() && nvisible_control_inputs() )
     {
