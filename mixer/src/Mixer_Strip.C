@@ -915,13 +915,19 @@ Mixer_Strip::menu_cb ( const Fl_Menu_ *m )
         char *suggested_name;
         asprintf( &suggested_name, "%s.strip", name() );
 
-        const char *s = fl_file_chooser( "Export strip to filename:", "*.strip", suggested_name, 0 );
+#define EXT ".strip"
+        char *stripname = fl_file_chooser( "Export strip to filename:", "(*" EXT")", suggested_name, 0 );
+        if ( stripname == NULL )
+            return;
+ 
+        stripname = fl_filename_setext( stripname, EXT );
+#undef EXT
 
         free( suggested_name );
 
-        if ( s )
+        if ( stripname )
 	{
-	    if ( export_strip( s ) )
+	    if ( export_strip( stripname ) )
 		fl_message( "Strip exported." );
 	    else
 		fl_alert("Failed to export strip");
