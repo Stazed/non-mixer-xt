@@ -87,10 +87,11 @@ Plugin_Chooser::search ( const char *name, const char *author, const char *categ
         if ( strcasestr( p->name.c_str(), name ) &&
              strcasestr( p->author.c_str(), author ) )
         {
-            /* We don't support these - probably MIDI only. The Gain module must have at least one out */
+#if 0
+            /* MIDI only. Looks like these work now! */
             if ( p->audio_outputs == 0 )
                 continue;
-
+#endif
             /* MAX_PORTS is an arbitrary limit, could be more if we really needed it */
             if ( p->audio_outputs > MAX_PORTS)
                 continue;
