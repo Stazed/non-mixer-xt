@@ -2358,6 +2358,7 @@ LV2_Plugin::custom_ui_instantiate()
                                         &idle_feature,
                                        // &jalv->features.request_value_feature,
                                        _idata->lv2.features[Plugin_Feature_Resize],
+                                       _idata->lv2.features[Plugin_Feature_Make_path],
 #ifdef LV2_EXTERNAL_UI
                                         &m_lv2_ui_external_feature,
 #endif
