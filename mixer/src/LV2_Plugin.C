@@ -452,25 +452,39 @@ lv2_non_worker_schedule(LV2_Worker_Schedule_Handle handle,
 char*
 lv2_make_path(LV2_State_Make_Path_Handle handle, const char* path)
 {
-    /* FIXME this needs to convert to UTF-8 encoding, temporarily disabling */
-    return NULL;
-
     LV2_Plugin* pm = static_cast<LV2_Plugin *> (handle);
 
-    DMESSAGE("make path file = %s", path);
-
     char *user_dir;
-    if(pm->m_project_directory.empty())
+    if(project_directory.empty())
     {
-        asprintf( &user_dir, "%s/%s", getenv( "HOME" ), path );
-        return user_dir;
+        asprintf( &user_dir, "%s/%s/", getenv( "HOME" ), path );
+
+        unsigned int destlen = strlen(user_dir);
+
+        char * dst = (char *) malloc(sizeof(char) * ( destlen + 1 ) );
+
+        fl_utf8froma(dst, destlen, user_dir, strlen(user_dir) );
+
+        return dst;
     }
     else
     {
-        std::string file = pm->m_project_directory;
+        std::string file = project_directory;
+
+        if(!pm->m_project_directory.empty())
+            file = pm->m_project_directory;
+
         file += "/";
         file += path;
-        return (char*) file.c_str();
+        file += "/";
+
+        unsigned int destlen = file.size();
+
+        char * dst = (char *) malloc(sizeof(char) * ( destlen + 1 ) );
+
+        fl_utf8froma(dst, destlen, file.c_str(), file.size());
+
+        return dst;
     }
 }
 
@@ -1044,7 +1058,7 @@ LV2_Plugin::load_plugin ( const char* uri )
     {
         for ( unsigned int i = 0; i < v_customData_special.size(); ++i)
         {
-            if ( strcmp( uri, v_customData_special[i].c_str() ) )
+            if ( !strcmp( uri, v_customData_special[i].c_str() ) )
             {
                 _use_custom_data = true;
                 break;
