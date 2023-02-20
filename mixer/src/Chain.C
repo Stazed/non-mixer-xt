@@ -1102,11 +1102,11 @@ Chain::port_connect ( jack_port_id_t a, jack_port_id_t b, int /*connect*/ )
     {
         /* When the mixer is first starting under NSM, the call to Fl::awake would sometimes
            occur before the initial main() Fl:wait() which would cause an intermittent segfault.
-           So the usleep(5000) is to allow the main() time to initialize before. */
+           So the usleep(50000) is to allow the main() time to initialize before. */
         if(is_startup)
         {
             is_startup = false;
-            usleep(5000);
+            usleep(50000);
         }
 
         /* Fl::awake() means use the main thread to process. Needed because a race condition would occur

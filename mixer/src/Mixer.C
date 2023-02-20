@@ -58,6 +58,8 @@
 /* const double FEEDBACK_UPDATE_FREQ = 1.0f; */
 const double FEEDBACK_UPDATE_FREQ = 1.0f / 30.0f;
 
+static bool is_startup = true;
+
 extern char *user_config_dir;
 extern char *instance_name;
 
@@ -477,7 +479,17 @@ progress_cb ( int p, void * )
         {
             nsm->progress( p / 100.0f );
         }
-      //  Fl::check(); // This caused intermittent crash on NSM start
+
+        /* When the mixer is first starting under NSM, the call to Fl::check would sometimes
+           occur before the initial main() Fl:wait() which would cause an intermittent segfault.
+           So the usleep(50000) is to allow the main() time to initialize before. */
+        if(is_startup)
+        {
+            is_startup = false;
+            usleep(50000);
+        }
+
+        Fl::check();    // Not sure why this is needed here...
     }
 }
 
