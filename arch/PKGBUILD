@@ -1,0 +1,34 @@
+# Maintainer: Your name here <your@email.here>
+
+pkgname=non-mixer-xt
+pkgver=1.0.1
+pkgrel=1
+pkgdesc="Jack audio mixer (non-mixer) with eXTended LV2 support"
+arch=('x86_64' 'i686')
+url="https://github.com/Stazed/non-mixer-xt"
+license=('GPL2')
+provides=("${pkgname}")
+conflicts=("${pkgname}")
+depends=('ntk' 'jack' 'liblo' 'ladspa' 'liblrdf' 'lv2' 'lilv' 'suil')
+makedepends=('git' 'cmake')
+source=("git+https://Stazed@github.com/Stazed/non-mixer-xt.git#branch=main")
+md5sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/${pkgname}"
+  git describe --long --tags | sed 's/Release-//;s/-/./g'
+}
+
+build() {
+  mkdir -p "$srcdir/build"
+  cd "$srcdir/build"
+  cmake "$srcdir/${pkgname}" \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX="/usr"
+  make
+}
+
+package() {
+  cd "$srcdir/build"
+  make DESTDIR="$pkgdir" install
+}
