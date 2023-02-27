@@ -71,7 +71,8 @@ const std::vector<std::string> v_customData_special
     "http://kxstudio.sf.net/carla/plugins/carlapatchbay",
     "http://kxstudio.sf.net/carla/plugins/carlarack",
     "http://kxstudio.sf.net/carla/plugins/carlapatchbay16",
-    "http://kxstudio.sf.net/carla/plugins/carlapatchbay32"
+    "http://kxstudio.sf.net/carla/plugins/carlapatchbay32",
+    "https://distrho.kx.studio/plugins/cardinal#fx"
 };
 
 
