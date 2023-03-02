@@ -569,6 +569,12 @@ namespace OSC
             o = (Signal*)user_data;
             f = argv[0]->f;
         }
+        else if ( ! strcmp( types, "i" ) )
+        {
+            /* accept a value for signal named in path */
+            o = (Signal*)user_data;
+            f = argv[0]->i;
+        }
         else if ( ! types || 0 == types[0] )
         {
             /* reply with current value */
@@ -727,6 +733,11 @@ namespace OSC
                 {
 //                    DMESSAGE( "recording value %f", argv[0]->f );
                     i->second.current_value = argv[0]->f;
+                }
+                if ( !strcmp(types, "i" ))
+                {
+//                    DMESSAGE( "recording value %i", argv[0]->i );
+                    i->second.current_value = argv[0]->i;
                 }
 
 		/* FIXME: this was intended to break feedback cycles, but it actually
