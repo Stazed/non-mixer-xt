@@ -734,6 +734,11 @@ namespace OSC
 //                    DMESSAGE( "recording value %f", argv[0]->f );
                     i->second.current_value = argv[0]->f;
                 }
+                if ( !strcmp(types, "i" ))
+                {
+//                    DMESSAGE( "recording value %i", argv[0]->i );
+                    i->second.current_value = argv[0]->i;
+                }
 
 		/* FIXME: this was intended to break feedback cycles, but it actually
 		 results in some feedback values not being sent at all */
