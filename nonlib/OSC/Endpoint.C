@@ -569,6 +569,12 @@ namespace OSC
             o = (Signal*)user_data;
             f = argv[0]->f;
         }
+        else if ( ! strcmp( types, "i" ) )
+        {
+            /* accept a value for signal named in path */
+            o = (Signal*)user_data;
+            f = argv[0]->i;
+        }
         else if ( ! types || 0 == types[0] )
         {
             /* reply with current value */
