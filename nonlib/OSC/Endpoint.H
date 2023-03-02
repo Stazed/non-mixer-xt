@@ -131,6 +131,7 @@ namespace OSC
     };
 
     typedef int (*signal_handler) ( float value, void *user_data );
+    typedef int (*signal_feedback_handler) ( void *user_data );
 
     class Signal
     {
@@ -163,6 +164,7 @@ namespace OSC
         Direction _direction;
 
         signal_handler _handler;
+        signal_feedback_handler _feedback_handler;
         void *_user_data;
         Parameter_Limits _parameter_limits;
         
@@ -203,6 +205,7 @@ namespace OSC
 
         /* publishes value to targets */
         void value ( float v );
+        void value_no_callback ( float v );
         /* get current value */
         float value ( void ) const { return _value; }
 
@@ -350,7 +353,7 @@ namespace OSC
 //        bool connect_signal ( OSC::Signal *s, const char *peer_name, int signal_id );
         bool connect_signal ( OSC::Signal *s, const char *peer_and_path );
 
-        Signal * add_signal ( const char *path, Signal::Direction dir, float min, float max, float default_value, signal_handler handler, void *user_data );
+        Signal * add_signal ( const char *path, Signal::Direction dir, float min, float max, float default_value, signal_handler handler, signal_feedback_handler feedback_handler, void *user_data );
         Method *add_method ( const char *path, const char *typespec, lo_method_handler handler, void *user_data, const char *argument_description );
         void del_method ( const char *path, const char *typespec );
         void del_method ( Method* method );

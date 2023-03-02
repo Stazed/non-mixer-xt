@@ -198,6 +198,7 @@ public:
 
         static int osc_control_change_exact ( float v, void *user_data );
         static int osc_control_change_cv ( float v, void *user_data );
+        static int osc_control_update_signals ( void *user_data );
 
         Hints hints;
 
@@ -303,6 +304,7 @@ public:
         
 #endif
         OSC::Signal *scaled_signal ( void ) { return _scaled_signal; }
+        OSC::Signal *unscaled_signal ( void ) { return _unscaled_signal; }
 
         int _by_number_number;
         char *_by_number_path;

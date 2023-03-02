@@ -180,7 +180,16 @@ namespace OSC
     /*         return NULL; */
     /* } */
     /*  */
-
+
+    void
+    Signal::value_no_callback ( float f )
+    {
+        if ( f == _value )
+            return;
+
+        _value = f;
+    }
+
 
     void
     Endpoint::error_handler(int num, const char *msg, const char *path)
@@ -564,6 +573,7 @@ namespace OSC
         {
             /* reply with current value */
             o = (Signal*)user_data;
+            if (o->_feedback_handler != NULL) o->_feedback_handler(o->_user_data);
             o->_endpoint->send( lo_message_get_source( msg ), "/reply", path, o->value() );
             return 0;
         }
@@ -572,10 +582,14 @@ namespace OSC
             return -1;
         }
 
-        o->_value = f;
+        if (o->_direction == Signal::Input)
+        {
+            o->_value = f;
 
-        if ( o->_handler )
-            o->_handler( f, o->_user_data );
+            if ( o->_handler )
+                o->_handler( f, o->_user_data );
+        }
+
         
         return 1;
     }
@@ -1092,7 +1106,7 @@ namespace OSC
     }
 
     Signal *
-    Endpoint::add_signal ( const char *path, Signal::Direction dir, float min, float max, float default_value, signal_handler handler, void *user_data )
+    Endpoint::add_signal ( const char *path, Signal::Direction dir, float min, float max, float default_value, signal_handler handler, signal_feedback_handler feedback_handler, void *user_data )
     {
         char *s;
         asprintf( &s, "%s%s", name() ? name() : "", path );
@@ -1102,6 +1116,7 @@ namespace OSC
         free(s);
 
         o->_handler = handler;
+        o->_feedback_handler = feedback_handler;
         o->_user_data = user_data;
         o->_endpoint = this;
 
