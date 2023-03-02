@@ -572,7 +572,7 @@ load_settings ( void )
 
             sig_map[midi_event] = m;
             sig_map[midi_event].signal_name = signal_name;
-            sig_map[midi_event].signal = osc->add_signal( signal_name, OSC::Signal::Output, 0, 1, 0, signal_handler, &sig_map[midi_event] );
+            sig_map[midi_event].signal = osc->add_signal( signal_name, OSC::Signal::Output, 0, 1, 0, signal_handler, NULL, &sig_map[midi_event] );
 
 	    sig_map_ordered[max_signal] = midi_event;
         }
@@ -895,7 +895,7 @@ void emit_signal_for_event ( const char *midi_event, midievent &e, struct nrpn_s
 	m->signal_name = s;
 	m->signal =
 	    osc->add_signal( s, OSC::Signal::Output, 0, 1, 0,
-			     signal_handler,
+			     signal_handler, NULL,
 			     m );
 
 	sig_map_ordered[max_signal] = midi_event;

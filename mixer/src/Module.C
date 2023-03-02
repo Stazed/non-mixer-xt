@@ -653,17 +653,21 @@ Module::Port::change_osc_path ( char *path )
             }
    
             _scaled_signal = mixer->osc_endpoint->add_signal( scaled_path,
-                                                              OSC::Signal::Input,
+                                                              _direction == INPUT ? OSC::Signal::Input : OSC::Signal::Output,
                                                               0.0, 1.0, scaled_default,
-                                                              &Module::Port::osc_control_change_cv, this );
+                                                              &Module::Port::osc_control_change_cv,
+                                                              &Module::Port::osc_control_update_signals,
+                                                              this );
 
             
             _scaled_signal->connection_state_callback( handle_signal_connection_state_changed, this );
 
             _unscaled_signal = mixer->osc_endpoint->add_signal( unscaled_path,
-                                                                OSC::Signal::Input,
+                                                                _direction == INPUT ? OSC::Signal::Input : OSC::Signal::Output,
                                                                 hints.minimum, hints.maximum, hints.default_value,
-                                                                &Module::Port::osc_control_change_exact, this );
+                                                                &Module::Port::osc_control_change_exact,
+                                                                &Module::Port::osc_control_update_signals,
+                                                                this );
         }
         else
         {
@@ -744,6 +748,41 @@ Module::Port::osc_control_change_cv ( float v, void *user_data )
 
     Fl::unlock();
 //    mixer->osc_endpoint->send( lo_message_get_source( msg ), "/reply", path, f );
+
+    return 0;
+}
+
+
+int
+Module::Port::osc_control_update_signals ( void *user_data )
+{
+    Module::Port *p = (Module::Port*)user_data;
+
+    float f = p->control_value();
+
+    if ( p->unscaled_signal() )
+    {
+
+        p->unscaled_signal()->value_no_callback(f);
+    }
+
+    if ( p->scaled_signal() && p->hints.ranged)
+    {
+        // scale value to range.
+
+        float scale = p->hints.maximum - p->hints.minimum;
+        float offset = p->hints.minimum;
+        f =  ( f - offset ) / scale;
+
+        if ( f > 1.0f )
+            f = 1.0f;
+        else if ( f < 0.0f )
+            f = 0.0f;
+
+        p->scaled_signal()->value_no_callback(f);
+    }
+
+    Fl::unlock();
 
     return 0;
 }
@@ -851,6 +890,12 @@ Module::chain ( Chain *v )
         {
             control_input[i].update_osc_port();
         }
+        for ( int i = 0; i < ncontrol_outputs(); ++i )
+        {
+            if ( control_output[i].name() != NULL )
+                control_output[i].update_osc_port();
+        }
+
     }
     else
     {
@@ -1345,6 +1390,13 @@ Module::handle_chain_name_changed ( )
             control_input[i].connected_port()->module()->handle_chain_name_changed();
     
         control_input[i].update_osc_port();
+    }
+    for ( int i = 0; i < ncontrol_outputs(); ++i )
+    {
+        if ( control_output[i].connected() )
+            control_output[i].connected_port()->module()->handle_chain_name_changed();
+        if ( control_output[i].name() != NULL )
+            control_output[i].update_osc_port();
     }
 
     if ( ! chain()->strip()->group()->single() )

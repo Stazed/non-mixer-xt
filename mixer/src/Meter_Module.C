@@ -49,7 +49,8 @@ Meter_Module::Meter_Module ( )
 
     end();
 
-    Port p( this, Port::OUTPUT, Port::CONTROL, "peak level" );
+    // private port for peak meter ui
+    Port p( this, Port::OUTPUT, Port::CONTROL );
     p.hints.type = Port::Hints::LINEAR;
     p.hints.ranged = true;
     p.hints.maximum = 10.0f;
@@ -58,7 +59,18 @@ Meter_Module::Meter_Module ( )
     p.connect_to( new float[1] );
     p.control_value_no_callback( 0 );
 
+    // public port for meter level
+    Port p2( this, Port::OUTPUT, Port::CONTROL, "Level (dB)" );
+    p2.hints.type = Port::Hints::LINEAR;
+    p2.hints.ranged = true;
+    p2.hints.maximum = 6.0f;
+    p2.hints.minimum = -70.0f;
+    p2.hints.dimensions = 1;
+    p2.connect_to( new float[1] );
+    p2.control_value_no_callback( 0 );
+
     add_port( p );
+    add_port( p2 );
 
     log_create();
 }
@@ -95,12 +107,18 @@ Meter_Module::draw ( void )
 void
 Meter_Module::update ( void )
 {
+    float dB = -70.0;
+
     for ( int i = dpm_pack->children(); i--; )
     {
 	DPM* o = ((DPM*)dpm_pack->child( i ));
 
 	const float v = CO_DB( control_value[i] );
 	
+    // use loudest channel for public meter level
+    if ( v > dB )
+        dB = v;
+
 	if ( v > o->value() )
 	    o->value( v );
 
@@ -108,6 +126,9 @@ Meter_Module::update ( void )
 	
         control_value[i] = 0;
     }
+
+    control_output[1].control_value_no_callback(dB);
+
 }
 
 bool
