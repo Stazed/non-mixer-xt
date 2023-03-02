@@ -1396,10 +1396,13 @@ Module::handle_chain_name_changed ( )
     }
     for ( int i = 0; i < ncontrol_outputs(); ++i )
     {
-        if ( control_output[i].connected() )
-            control_output[i].connected_port()->module()->handle_chain_name_changed();
         if ( control_output[i].name() != NULL )
+        {
+            if ( control_output[i].connected() )
+                control_output[i].connected_port()->module()->handle_chain_name_changed();
+
             control_output[i].update_osc_port();
+        }
     }
 
     if ( ! chain()->strip()->group()->single() )
