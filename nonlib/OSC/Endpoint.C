@@ -113,7 +113,7 @@ namespace OSC
         _endpoint->rename_translation_destination( _path, new_path );
 
         free( _path );
-        _path = new_path;
+        _path = strdup(new_path);
     }
 
     void
