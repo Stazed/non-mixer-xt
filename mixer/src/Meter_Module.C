@@ -115,9 +115,9 @@ Meter_Module::update ( void )
 
 	const float v = CO_DB( control_value[i] );
 	
-    // use loudest channel for public meter level
-    if ( v > dB )
-        dB = v;
+        // use loudest channel for public meter level
+        if ( v > dB )
+            dB = v;
 
 	if ( v > o->value() )
 	    o->value( v );

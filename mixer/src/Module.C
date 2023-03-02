@@ -756,7 +756,10 @@ Module::Port::osc_control_change_cv ( float v, void *user_data )
 int
 Module::Port::osc_control_update_signals ( void *user_data )
 {
+
     Module::Port *p = (Module::Port*)user_data;
+
+    Fl:lock()
 
     float f = p->control_value();
 
