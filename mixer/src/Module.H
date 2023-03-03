@@ -62,6 +62,7 @@ class Module : public Fl_Group, public Loggable {
     bool _is_default;
     bool _is_jack_module;
     bool _is_zero_synth;
+    bool _has_name_change;
     char *_base_label;
     nframes_t _nframes;
     
@@ -114,6 +115,10 @@ public:
 
     bool is_zero_input_synth ( void ) const { return  _is_zero_synth; }
     void is_zero_input_synth ( bool v ) {  _is_zero_synth = v; }
+
+    /* Flag to indicate that the Module_Parameter_Editor OSC path needs update */
+    bool has_name_change ( void ) { return _has_name_change; }
+    void has_name_change ( bool v ) { _has_name_change = v; }
     
     virtual void update ( void ) {}
 

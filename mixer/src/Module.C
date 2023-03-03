@@ -197,6 +197,7 @@ Module::init ( void )
     _is_default = false;
     _is_jack_module = false;
     _is_zero_synth = false;
+    _has_name_change = false;
     _editor = 0;
     _chain = 0;
     _instances = 1;
@@ -1386,6 +1387,9 @@ Module::menu ( void ) const
 void
 Module::handle_chain_name_changed ( )
 {
+    // Flag to tell Module_Parameter_Editor that the OSC path tooltip needs update
+    _has_name_change = true;
+
     // pass it along to our connected Controller_Modules, if any.
     for ( int i = 0; i < ncontrol_inputs(); ++i )
     {

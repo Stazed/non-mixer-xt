@@ -925,6 +925,16 @@ Module_Parameter_Editor::menu ( void ) const
 int
 Module_Parameter_Editor::handle ( int m )
 {
+    if(_module->has_name_change())
+    {
+        _module->has_name_change(false);
+        for ( unsigned int i = 0; i < controls_by_port.size(); i++ )
+        {
+            Module::Port *p = &_module->control_input[i];
+            controls_by_port[i]->copy_tooltip( p->osc_path() );   // update the OSC path
+        }
+    }
+
     switch ( m )
     {
         case FL_PUSH:
