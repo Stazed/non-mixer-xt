@@ -955,7 +955,17 @@ Module_Parameter_Editor::handle ( int m )
                 }
                 return 0;
             }
-    
+            break;
+
+        case FL_KEYBOARD:
+        {
+            if ( (Fl::event_key(FL_Control_L) || Fl::event_key(FL_Control_R)) && Fl::event_key(119) )
+            {
+                // ctrl + w -> close editor
+                hide();
+                return 1;
+            }
+        }
     }
     
     return Fl_Group::handle(m);
