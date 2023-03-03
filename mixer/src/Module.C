@@ -644,15 +644,15 @@ Module::Port::change_osc_path ( char *path )
         if ( NULL == _scaled_signal )
         {
             float scaled_default = 0.5f;
-        
+
             if ( hints.ranged )
             {
                 float scale = hints.maximum - hints.minimum;
                 float offset = hints.minimum;
-            
+
                 scaled_default = ( hints.default_value - offset ) / scale;
             }
-   
+
             _scaled_signal = mixer->osc_endpoint->add_signal( scaled_path,
                                                               _direction == INPUT ? OSC::Signal::Input : OSC::Signal::Output,
                                                               0.0, 1.0, scaled_default,
@@ -660,7 +660,6 @@ Module::Port::change_osc_path ( char *path )
                                                               &Module::Port::osc_control_update_signals,
                                                               this );
 
-            
             _scaled_signal->connection_state_callback( handle_signal_connection_state_changed, this );
 
             _unscaled_signal = mixer->osc_endpoint->add_signal( unscaled_path,
@@ -757,7 +756,6 @@ Module::Port::osc_control_change_cv ( float v, void *user_data )
 int
 Module::Port::osc_control_update_signals ( void *user_data )
 {
-
     Module::Port *p = (Module::Port*)user_data;
 
     Fl::lock();
@@ -899,7 +897,6 @@ Module::chain ( Chain *v )
             if ( control_output[i].name() != NULL )
                 control_output[i].update_osc_port();
         }
-
     }
     else
     {

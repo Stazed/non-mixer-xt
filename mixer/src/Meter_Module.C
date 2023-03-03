@@ -39,12 +39,12 @@ Meter_Module::Meter_Module ( )
     dpm_pack = new Fl_Scalepack( x() + 2, y() + 2, w() - 4, h() - 4 );
     dpm_pack->type( FL_HORIZONTAL );
     dpm_pack->spacing( 1 );
-    
+
     control_value = 0;
     peaks = 0;
     meter_sample_period_count = 0;
     meter_sample_periods = 0;
-    
+
     color( fl_darker( fl_darker( FL_BACKGROUND_COLOR )));
 
     end();
@@ -83,10 +83,6 @@ Meter_Module::~Meter_Module ( )
     log_destroy();
 }
 
-
-
-
-
 void Meter_Module::resize ( int X, int Y, int W, int H )
 {
     Fl_Group::resize(X,Y,W,H);
@@ -114,7 +110,7 @@ Meter_Module::update ( void )
 	DPM* o = ((DPM*)dpm_pack->child( i ));
 
 	const float v = CO_DB( control_value[i] );
-	
+
         // use loudest channel for public meter level
         if ( v > dB )
             dB = v;
@@ -123,12 +119,11 @@ Meter_Module::update ( void )
 	    o->value( v );
 
 	o->update();
-	
+
         control_value[i] = 0;
     }
 
     control_output[1].control_value_no_callback(dB);
-
 }
 
 bool

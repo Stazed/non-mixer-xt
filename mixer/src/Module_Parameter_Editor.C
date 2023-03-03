@@ -947,9 +947,9 @@ Module_Parameter_Editor::handle ( int m )
                         _selected_control = i;
 
                         Fl_Menu_Button &m = menu();
-                        
+
                         menu_popup(&m,Fl::event_x(), Fl::event_y());
-                
+
                         return 1;
                     }
                 }
@@ -967,6 +967,6 @@ Module_Parameter_Editor::handle ( int m )
             }
         }
     }
-    
+
     return Fl_Group::handle(m);
 }

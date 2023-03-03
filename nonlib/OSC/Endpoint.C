@@ -734,7 +734,7 @@ namespace OSC
 //                    DMESSAGE( "recording value %f", argv[0]->f );
                     i->second.current_value = argv[0]->f;
                 }
-                if ( !strcmp(types, "i" ))
+                else if ( !strcmp(types, "i" ))
                 {
 //                    DMESSAGE( "recording value %i", argv[0]->i );
                     i->second.current_value = argv[0]->i;
