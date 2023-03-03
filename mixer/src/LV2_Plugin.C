@@ -35,6 +35,8 @@
 class Chain;    // forward declaration
 
 static const uint X11Key_Escape = 9;
+static const uint X11Key_W      = 25;
+
 #  define MSG_BUFFER_SIZE 1024
 
 #ifdef USE_SUIL
@@ -2675,10 +2677,20 @@ LV2_Plugin::custom_update_ui()
                 break;
 
             case KeyRelease:
-                if (event.xkey.keycode == X11Key_Escape)
+                /* Escape key to close */
+                if (event.xkey.keycode == X11Key_Escape )
                 {
                     fIsVisible = false;
                 }
+                /* CTRL W to close */
+                else if(event.xkey.keycode == X11Key_W)
+                {
+                    if ((event.xkey.state & (ShiftMask | ControlMask | Mod1Mask | Mod4Mask)) == (ControlMask))
+                    {
+                        fIsVisible = false;
+                    }
+                }
+                    
                 break;
 
             case FocusIn:
@@ -2768,6 +2780,7 @@ LV2_Plugin::init_x()
     XSetStandardProperties(fDisplay, fHostWindow, label(), label(), None, NULL, 0, NULL);
 
     XGrabKey(fDisplay, X11Key_Escape, AnyModifier, fHostWindow, 1, GrabModeAsync, GrabModeAsync);
+    XGrabKey(fDisplay, X11Key_W, AnyModifier, fHostWindow, 1, GrabModeAsync, GrabModeAsync);
 
     Atom wmDelete = XInternAtom(fDisplay, "WM_DELETE_WINDOW", True);
     XSetWMProtocols(fDisplay, fHostWindow, &wmDelete, 1);
