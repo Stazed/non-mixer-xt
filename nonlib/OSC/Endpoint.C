@@ -190,6 +190,13 @@ namespace OSC
         _value = f;
     }
 
+    void
+    Signal::set_infos ( const char *label, int type)
+    {
+        _parameter_infos.label = label;
+        _parameter_infos.type = type;
+    }
+
 
     void
     Endpoint::error_handler(int num, const char *msg, const char *path)
@@ -234,6 +241,7 @@ namespace OSC
         add_method( "/signal/removed", "s", &Endpoint::osc_sig_removed, this, "" );
         add_method( "/signal/created", "ssfff", &Endpoint::osc_sig_created, this, "" );
         add_method( "/signal/list", NULL, &Endpoint::osc_signal_lister, this, "" );
+        add_method( "/signal/infos", "s", &Endpoint::osc_sig_infos, this, "" );
         add_method( "/reply", NULL, &Endpoint::osc_reply, this, "" );
         add_method( NULL, NULL, &Endpoint::osc_generic, this, "" );
 
@@ -598,6 +606,28 @@ namespace OSC
 
         
         return 1;
+    }
+
+    int
+    Endpoint::osc_sig_infos ( const char *path, const char *types, lo_arg **argv, int argc, lo_message msg, void *user_data )
+    {
+        Endpoint *ep = (Endpoint*)user_data;
+
+        for ( std::list<Signal*>::const_iterator i = ep->_signals.begin(); i != ep->_signals.end(); ++i )
+        {
+            Signal *o = *i;
+            printf("%s %s\n", o->path(), &argv[0]->s);
+
+            if (! strcmp( o->path(), &argv[0]->s) )
+            {
+                ((Endpoint*)user_data)->send( lo_message_get_source( msg ), "/reply", path, o->path(), o->_parameter_infos.type, o->_parameter_infos.label );
+            }
+        }
+
+        ((Endpoint*)user_data)->send( lo_message_get_source( msg ), "/reply", path );
+
+
+        return 0;
     }
 
     const char**
@@ -1576,5 +1606,10 @@ namespace OSC
     Endpoint::send ( lo_address to, const char *path, int v1, int v2, float v3 )
     {
         return lo_send_from( to, _server, LO_TT_IMMEDIATE, path, "iif", v1, v2, v3 );
+    }
+    int
+    Endpoint::send ( lo_address to, const char *path, const char *v1, const char *v2, int v3, const char *v4 )
+    {
+        return lo_send_from( to, _server, LO_TT_IMMEDIATE, path, "ssis", v1, v2, v3, v4 );
     }
 }
