@@ -659,6 +659,7 @@ Module::Port::change_osc_path ( char *path )
                                                               &Module::Port::osc_control_change_cv,
                                                               &Module::Port::osc_control_update_signals,
                                                               this );
+            _scaled_signal->set_infos(name(), hints.type);
 
             _scaled_signal->connection_state_callback( handle_signal_connection_state_changed, this );
 
@@ -668,6 +669,7 @@ Module::Port::change_osc_path ( char *path )
                                                                 &Module::Port::osc_control_change_exact,
                                                                 &Module::Port::osc_control_update_signals,
                                                                 this );
+            _unscaled_signal->set_infos(name(), hints.type);
         }
         else
         {
