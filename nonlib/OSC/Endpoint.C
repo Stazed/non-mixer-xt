@@ -621,11 +621,11 @@ namespace OSC
             if (! strcmp( o->path(), &argv[0]->s) )
             {
                 ((Endpoint*)user_data)->send( lo_message_get_source( msg ), "/reply", path, o->path(), o->_parameter_infos.type, o->_parameter_infos.label );
+                return 0;
             }
         }
 
-        ((Endpoint*)user_data)->send( lo_message_get_source( msg ), "/reply", path );
-
+        ((Endpoint*)user_data)->send( lo_message_get_source( msg ), "/reply", path, &argv[0]->s);
 
         return 0;
     }
