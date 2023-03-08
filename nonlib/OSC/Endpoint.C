@@ -616,7 +616,6 @@ namespace OSC
         for ( std::list<Signal*>::const_iterator i = ep->_signals.begin(); i != ep->_signals.end(); ++i )
         {
             Signal *o = *i;
-            printf("%s %s\n", o->path(), &argv[0]->s);
 
             if (! strcmp( o->path(), &argv[0]->s) )
             {
