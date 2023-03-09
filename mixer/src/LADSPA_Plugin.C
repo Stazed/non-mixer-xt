@@ -279,6 +279,7 @@ LADSPA_Plugin::load_plugin(unsigned long id)
             pb.hints.minimum = 0.0f;
             pb.hints.dimensions = 1;
             pb.hints.visible = false;
+            pb.hints.invisible_with_signals = true;
             pb.connect_to( _bypass );
             add_port( pb );
         }

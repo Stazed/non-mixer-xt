@@ -64,6 +64,7 @@ Gain_Module::Gain_Module ( )
         p.hints.minimum = 0.0f;
         p.hints.dimensions = 1;
         p.hints.visible = false;
+        p.hints.invisible_with_signals = true;
         p.connect_to( _bypass );
         add_port( p );
     }

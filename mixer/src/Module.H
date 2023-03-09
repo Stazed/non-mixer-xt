@@ -182,6 +182,7 @@ public:
             float current_value;
             int dimensions;
             bool visible;
+            bool invisible_with_signals;
             uint32_t plug_port_index;     ///< plugin Index of port control
             std::vector<EnumeratorScalePoints>ScalePoints;
 
@@ -197,6 +198,7 @@ public:
                     current_value = 0.0f;
                     dimensions = 1;
                     visible = true;
+                    invisible_with_signals = false;
                     plug_port_index = 0;
                 }
         };

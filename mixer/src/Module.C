@@ -609,7 +609,7 @@ Module::Port::generate_osc_path ()
 
     // /strip/STRIPNAME/MODULENAME/CONTROLNAME
 
-    if ( ! p->hints.visible )
+    if ( ! p->hints.visible && ! p->hints.invisible_with_signals)
     {
         return NULL;
     }
