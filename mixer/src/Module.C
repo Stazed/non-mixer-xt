@@ -202,7 +202,6 @@ Module::init ( void )
     _chain = 0;
     _instances = 1;
     _bypass = new float(0);
-    // *_bypass = 0.0f;
     _base_label = NULL;
     _number = -2;	/* magic number indicates old instance, before numbering */
     _is_lv2 = false;
