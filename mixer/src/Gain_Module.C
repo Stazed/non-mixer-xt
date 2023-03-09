@@ -63,6 +63,7 @@ Gain_Module::Gain_Module ( )
         p.hints.maximum = 1.0f;
         p.hints.minimum = 0.0f;
         p.hints.dimensions = 1;
+        p.hints.visible = false;
         p.connect_to( _bypass );
         add_port( p );
     }
