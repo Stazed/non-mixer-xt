@@ -56,6 +56,17 @@ Gain_Module::Gain_Module ( )
         add_port( p );
     }
 
+    {
+        Port p( this, Port::INPUT, Port::CONTROL, "dsp/bypass" );
+        p.hints.type = Port::Hints::BOOLEAN;
+        p.hints.ranged = true;
+        p.hints.maximum = 1.0f;
+        p.hints.minimum = 0.0f;
+        p.hints.dimensions = 1;
+        p.connect_to( _bypass );
+        add_port( p );
+    }
+
     end();
 
     log_create();
