@@ -273,6 +273,7 @@ Module_Parameter_Editor::make_controls ( void )
 
     for (unsigned int i = 0; i < module->control_input.size(); ++i )
     {
+        // ignore hidden bypass parameter
         if (i == module->control_input.size() - 1 && module->bypassable())
             continue;
 
@@ -563,6 +564,7 @@ Module_Parameter_Editor::update_control_visibility ( void )
 {
     for ( unsigned int i = 0; i < _module->control_input.size(); ++i )
     {
+        // ignore hidden bypass parameter
         if (i == _module->control_input.size() - 1 && _module->bypassable())
             continue;
 
@@ -767,6 +769,10 @@ Module_Parameter_Editor::handle_control_changed ( Module::Port *p )
 {
     int i = _module->control_input_port_index( p );
    
+    // ignore hidden bypass parameter
+    if (i == (int)_module->control_input.size() - 1 && _module->bypassable())
+        return;
+
     Fl_Widget *w = controls_by_port[i];
 
     if ( i == azimuth_port_number ||
