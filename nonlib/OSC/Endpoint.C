@@ -90,10 +90,8 @@ namespace OSC
     }
 
     void
-    Signal::rename ( const char *path )
+    Signal::rename ( const char *new_path )
     {
-        char *new_path;
-        asprintf( &new_path, "%s%s", _endpoint->name() ? _endpoint->name() : "", path );
 
         DMESSAGE( "Renaming signal %s to %s", this->path(), new_path );
 
@@ -113,7 +111,7 @@ namespace OSC
         _endpoint->rename_translation_destination( _path, new_path );
 
         free( _path );
-        _path = new_path;
+        _path = strdup(new_path);
     }
 
     void
@@ -1148,12 +1146,8 @@ namespace OSC
     Signal *
     Endpoint::add_signal ( const char *path, Signal::Direction dir, float min, float max, float default_value, signal_handler handler, signal_feedback_handler feedback_handler, void *user_data )
     {
-        char *s;
-        asprintf( &s, "%s%s", name() ? name() : "", path );
 
-        Signal *o = new Signal( s, dir );
-        
-        free(s);
+        Signal *o = new Signal( path, dir );
 
         o->_handler = handler;
         o->_feedback_handler = feedback_handler;
