@@ -68,7 +68,8 @@ Plugin_Module::init ( void )
     _latency = 0;
     _last_latency = 0;
     /* module will be bypassed until plugin is loaded */
-    _bypass = true;
+    *((float*)_bypass) = 1.0f;
+
     _crosswire = false;
 
     align( (Fl_Align)FL_ALIGN_CENTER | FL_ALIGN_INSIDE );

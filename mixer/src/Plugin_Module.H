@@ -117,7 +117,7 @@ public:
     void configure_midi_outputs ();
 #endif
 
-    virtual bool bypass ( void ) const { return _bypass; }
+    virtual bool bypass ( void ) const { return *_bypass == 1.0f; }
     virtual void bypass ( bool /*v*/ ){};
 
     virtual void process ( nframes_t ){};

@@ -90,7 +90,7 @@ protected:
 
     Module_Parameter_Editor *_editor;
 
-    volatile bool _bypass;
+    float * _bypass;
 
 public:
 
@@ -625,8 +625,8 @@ public:
             return n;
         }
 
-    virtual bool bypass ( void ) const { return _bypass; }
-    virtual void bypass ( bool v ) { _bypass = v; }
+    virtual bool bypass ( void ) const { return *_bypass == 1.0f; }
+    virtual void bypass ( bool v ) { *_bypass = (float)v; }
 
     virtual bool bypassable ( void ) const
         {

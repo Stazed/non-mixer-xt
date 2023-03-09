@@ -1023,6 +1023,19 @@ LV2_Plugin::load_plugin ( const char* uri )
                 DMESSAGE( "Plugin has control port \"%s\" (default: %f)", rdfport.Name, p.hints.default_value );
             }
         }
+
+        if (bypassable()) {
+            Port pb( this, Port::INPUT, Port::CONTROL, "dsp/bypass" );
+            pb.hints.type = Port::Hints::BOOLEAN;
+            pb.hints.ranged = true;
+            pb.hints.maximum = 1.0f;
+            pb.hints.minimum = 0.0f;
+            pb.hints.dimensions = 1;
+            pb.connect_to( _bypass );
+            add_port( pb );
+        }
+
+
     }
     else
     {
@@ -1600,7 +1613,7 @@ LV2_Plugin::activate ( void )
         }
     }
 
-    _bypass = false;
+    *_bypass = 0.0f;
 
     if ( chain() )
         chain()->client()->unlock();
@@ -1617,7 +1630,7 @@ LV2_Plugin::deactivate( void )
     if ( chain() )
         chain()->client()->lock();
 
-    _bypass = true;
+    *_bypass = 1.0f;
 
     if ( _idata->lv2.descriptor->deactivate )
     {

@@ -41,7 +41,7 @@ public:
     void handle_port_connection_change ( void );
     void resize_buffers ( nframes_t buffer_size );
 
-    virtual bool bypass ( void ) const { return _bypass; }
+    virtual bool bypass ( void ) const { return *_bypass == 1.0f; }
     virtual void bypass ( bool v );
 
 private:
