@@ -273,6 +273,9 @@ Module_Parameter_Editor::make_controls ( void )
 
     for (unsigned int i = 0; i < module->control_input.size(); ++i )
     {
+        if (i == module->control_input.size() - 1 && module->bypassable())
+            continue;
+
         Fl_Widget *w;
 
         Module::Port *p = &module->control_input[i];
@@ -560,6 +563,9 @@ Module_Parameter_Editor::update_control_visibility ( void )
 {
     for ( unsigned int i = 0; i < _module->control_input.size(); ++i )
     {
+        if (i == _module->control_input.size() - 1 && _module->bypassable())
+            continue;
+
         const Module::Port *p = &_module->control_input[i];
 
         if ( p->hints.visible )
