@@ -140,7 +140,7 @@ To enable signal subscription, one must first send the following command to Non-
 - `url`: server url to which update messages will be sent (e.g: `osc.udp://127.0.0.1:12345`)
 
 
-### Subscribe
+#### Subscribe
 
 ```
 /signal/connect ,ss destination_path source_path
@@ -154,7 +154,7 @@ Will make Non-Mixer-XT send a message whenever the signal's value changes. This 
 - `source_path`: osc path of subscribe signal
 
 
-### Unsusbscribe
+#### Unsusbscribe
 
 ```
 /signal/disconnect ,ss destination_path source_path
