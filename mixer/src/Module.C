@@ -201,7 +201,7 @@ Module::init ( void )
     _editor = 0;
     _chain = 0;
     _instances = 1;
-    _bypass = 0;
+    _bypass = new float(0);
     _base_label = NULL;
     _number = -2;	/* magic number indicates old instance, before numbering */
     _is_lv2 = false;
@@ -609,7 +609,7 @@ Module::Port::generate_osc_path ()
 
     // /strip/STRIPNAME/MODULENAME/CONTROLNAME
 
-    if ( ! p->hints.visible )
+    if ( ! p->hints.visible && ! p->hints.invisible_with_signals)
     {
         return NULL;
     }

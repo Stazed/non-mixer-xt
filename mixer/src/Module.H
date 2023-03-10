@@ -90,7 +90,7 @@ protected:
 
     Module_Parameter_Editor *_editor;
 
-    volatile bool _bypass;
+    float * _bypass;
 
 public:
 
@@ -182,6 +182,7 @@ public:
             float current_value;
             int dimensions;
             bool visible;
+            bool invisible_with_signals;
             uint32_t plug_port_index;     ///< plugin Index of port control
             std::vector<EnumeratorScalePoints>ScalePoints;
 
@@ -197,6 +198,7 @@ public:
                     current_value = 0.0f;
                     dimensions = 1;
                     visible = true;
+                    invisible_with_signals = false;
                     plug_port_index = 0;
                 }
         };
@@ -625,8 +627,8 @@ public:
             return n;
         }
 
-    virtual bool bypass ( void ) const { return _bypass; }
-    virtual void bypass ( bool v ) { _bypass = v; }
+    virtual bool bypass ( void ) const { return *_bypass == 1.0f; }
+    virtual void bypass ( bool v ) { *_bypass = (float)v; }
 
     virtual bool bypassable ( void ) const
         {
