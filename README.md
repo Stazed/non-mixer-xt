@@ -76,4 +76,7 @@ To uninstall:
     sudo make uninstall
 ```
 
+Controlling Non-Mixer-XT with OSC:
+-------------
 
+See [OSC.md]
