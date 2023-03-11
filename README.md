@@ -79,4 +79,4 @@ To uninstall:
 Controlling Non-Mixer-XT with OSC:
 -------------
 
-See [OSC.md]
+See [OSC.md](OSC.md)
