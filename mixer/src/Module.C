@@ -564,6 +564,11 @@ Module::handle_control_changed ( Port *p )
     if ( _editor )
         _editor->handle_control_changed ( p );
 
+    // redraw if bypass state changed
+    if (bypassable() && p == &control_input[control_input.size() - 1])
+        redraw();
+
+
 #ifdef USE_SUIL
     Module *m = p->module();
     if (m->_is_lv2)
