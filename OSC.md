@@ -19,14 +19,14 @@ There are two types of signals :
 - **Output** signals (meter level, plugin output control such as a compressor's gain reduction, etc): can only be queried.
 
 
-The OSC path of a signal is automatically generated as follow:
+The OSC path of a signal is automatically generated as follows:
 
 ```
 /strip/[STRIP_NAME]/[MODULE_NAME]/[PARAMETER_NAME]
 ```
 
 Sending a value between `0.0` and `1.0` (integer or float) will change the signal's value,
-sending a message with no value is is considered as a query and will send the signal's current value back to the sender.
+sending a message with no value is considered as a query and will send the signal's current value back to the sender.
 
 
 An alternative path is also available, that uses exact values (integer or float) instead of normalized ones (e.g. gain would go from -70 to +6):
