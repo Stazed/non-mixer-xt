@@ -312,7 +312,7 @@ For the second instance of the Gain module on the strip named 'Foo'.
 There's a possibility to get exact OSC path for module controls. For this you need to switch strip mode to 'Signl', right click a module, for example 'Gain', and open 'Edit parameters' dialog. OSC path will be shown in a statusbar of the main window when you hover a parameter.
 </p>
 <p>
-Non-DAW accesses these same signals via a more advanced signal routing layer on top of OSC. Any module parameter is easily controlled via Control Sequences in Non-DAW without the need to specify an OSC URL.
+Non-Timeline-XT accesses these same signals via a more advanced signal routing layer on top of OSC. Any module parameter is easily controlled via Control Sequences in Non-Timeline-XT without the need to specify an OSC URL.
 </p>
 <h5 id="n:1.2.3.1.2.">1.2.3.1.2. MIDI Control</h5>
 <p>
@@ -376,7 +376,7 @@ For LV2 plugins that have custom UIs that are supported, left click on the plugi
 <tr><td><img src="controls.png" alt="fig. 1.6"></td></tr>
 </table></div></center>
 <p>
-The control view of a chain groups together all of the controls bound to parameters of modules in that chain. The default mode of controls is <i>Manual</i>. Right click on a control to bring up a menu which will allow you to select one of the available control I/O methods to use. When <i>Control Voltage</i> (CV) is selected, a CV input port will be created on the containing mixer strip's JACK client. The control will now accept values from that input. A control bound and configured in this way can then be connected to the output of a Non-DAW control sequence using your favorite connection manager.
+The control view of a chain groups together all of the controls bound to parameters of modules in that chain. The default mode of controls is <i>Manual</i>. Right click on a control to bring up a menu which will allow you to select one of the available control I/O methods to use. When <i>Control Voltage</i> (CV) is selected, a CV input port will be created on the containing mixer strip's JACK client. The control will now accept values from that input. A control bound and configured in this way can then be connected to the output of a Non-Timeline-XT control sequence using your favorite connection manager.
 </p>
 <div class=admonition>
 <table width=100%>
@@ -391,7 +391,7 @@ achieve finer resolution.
 The control voltage concept should be familiar to anyone who has experience with analog modular synthesizers. MIDI, while having definite advantages in many respects, multiplexes control data in such a way as to make connecting one MIDI control to a parameter involve a significant inconvenience, usually requiring the adjustment of settings on both ends of the connection in order to separate the control data streams.
 </p>
 <p>
-Control Voltages, on the other hand, provide a simple 1:1 source to sink relationship and offer much higher resolution, both in time and value, than can be natively expressed through MIDI. The chief advantage of CV in the context of Non-DAW is the ease with which an control sequence can be connected to a mixer module parameter. If you have a MIDI controller that you'd like to use to control parameters of Non-Mixer-XT, consider <i>jm2cv</i>, a JACK MIDI to Control Voltage daemon which was written by Peter Nelson specifically for use with Non-Mixer-XT. jm2cv can be acquired by:
+Control Voltages, on the other hand, provide a simple 1:1 source to sink relationship and offer much higher resolution, both in time and value, than can be natively expressed through MIDI. The chief advantage of CV in the context of Non-Timeline-XT is the ease with which an control sequence can be connected to a mixer module parameter. If you have a MIDI controller that you'd like to use to control parameters of Non-Mixer-XT, consider <i>jm2cv</i>, a JACK MIDI to Control Voltage daemon which was written by Peter Nelson specifically for use with Non-Mixer-XT. jm2cv can be acquired by:
 </p>
 <div class="fig example"><table width=100%><tr><td><pre>
 git clone git://fuzzle.org/jm2cv.git
