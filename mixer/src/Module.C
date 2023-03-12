@@ -759,7 +759,15 @@ Module::Port::osc_control_change_cv ( float v, void *user_data )
     return 0;
 }
 
-
+/**
+ * Updates the signal's value according to the port's value.
+ * Called before sending reply to a query (value-less message).
+ * 
+ * @param user_data
+ *      The control port that needs signal value updated.
+ * @return 
+ *      Zero on success.
+ */
 int
 Module::Port::osc_control_update_signals ( void *user_data )
 {
@@ -899,6 +907,8 @@ Module::chain ( Chain *v )
         {
             control_input[i].update_osc_port();
         }
+
+        // Publish output control signals and update them when the chain changes.
         for ( int i = 0; i < ncontrol_outputs(); ++i )
         {
             if ( control_output[i].name() != NULL )
@@ -1402,6 +1412,8 @@ Module::handle_chain_name_changed ( )
     
         control_input[i].update_osc_port();
     }
+
+    // Publish output control signals and update them when the chain changes.
     for ( int i = 0; i < ncontrol_outputs(); ++i )
     {
         if ( control_output[i].name() != NULL )

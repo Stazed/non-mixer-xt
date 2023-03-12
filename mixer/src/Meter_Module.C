@@ -60,6 +60,8 @@ Meter_Module::Meter_Module ( )
     p.control_value_no_callback( 0 );
 
     // public port for meter level
+    // Additional port for dB value computed at UI update rate
+    // (feedback from the other is not usable).
     Port p2( this, Port::OUTPUT, Port::CONTROL, "Level (dB)" );
     p2.hints.type = Port::Hints::LINEAR;
     p2.hints.ranged = true;
