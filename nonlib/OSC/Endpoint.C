@@ -624,8 +624,6 @@ namespace OSC
             }
         }
 
-        ((Endpoint*)user_data)->send( lo_message_get_source( msg ), "/reply", path, &argv[0]->s);
-
         return 0;
     }
 
