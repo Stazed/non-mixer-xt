@@ -162,7 +162,6 @@ public:
     uint32_t  _position;        ///< Transport position in frames
     float     _bpm;             ///< Transport tempo in beats per minute
     bool      _rolling;         ///< Transport speed (0=stop, 1=play)
-    bool      _is_instrument;
 #endif
 
 #ifdef LV2_WORKER_SUPPORT

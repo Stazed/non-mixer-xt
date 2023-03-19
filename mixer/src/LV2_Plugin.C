@@ -23,6 +23,7 @@
  */
 
 #include "LV2_Plugin.H"
+#include "Module_Parameter_Editor.H"
 #include <lv2/instance-access/instance-access.h>
 #include <X11/Xatom.h>
 #include <unistd.h>    // usleep()
@@ -67,16 +68,6 @@ static int temporaryErrorHandler(Display*, XErrorEvent*)
     return 0;
 }
 #endif // USE_CARLA
-
-const std::vector<std::string> v_customData_special
-{
-    "http://kxstudio.sf.net/carla/plugins/carlapatchbay",
-    "http://kxstudio.sf.net/carla/plugins/carlarack",
-    "http://kxstudio.sf.net/carla/plugins/carlapatchbay16",
-    "http://kxstudio.sf.net/carla/plugins/carlapatchbay32",
-    "https://distrho.kx.studio/plugins/cardinal#fx"
-};
-
 
 #ifdef PRESET_SUPPORT
 // LV2 Presets: port value setter.
@@ -347,7 +338,8 @@ update_ui( void *data)
             //DMESSAGE("SUIL INSTANCE - index = %d",ev.index);
             suil_instance_port_event(plug_ui->m_ui_instance, ev.index, ev.size, ev.protocol, buf);
         }
-        else    // Generic UI
+
+        if( plug_ui->_editor && plug_ui->_editor->visible() )
         {
             plug_ui->ui_port_event( ev.index, ev.size, ev.protocol, buf );
         }
@@ -676,14 +668,7 @@ LV2_Plugin::load_plugin ( const char* uri )
     _position = 0;
     _bpm = 120.0f;
     _rolling = false;
-    _is_instrument = false;
 #endif
-
-    /* We use custom data for instrument plugins */
-   if( _idata->lv2.rdf_data->Type[1] == LV2_PLUGIN_INSTRUMENT)
-   {
-       _is_instrument = true;
-   }
 
     if ( ! _idata->lv2.rdf_data )
     {
@@ -1067,30 +1052,14 @@ LV2_Plugin::load_plugin ( const char* uri )
 
     if ( control_input.size() > 50  )
         _use_custom_data = true;
-    else if (audio_input.empty())
-        _use_custom_data = true;
-    else if ( _is_instrument )
-        _use_custom_data = true;
-
-    if( !_use_custom_data )
-    {
-        for ( unsigned int i = 0; i < v_customData_special.size(); ++i)
-        {
-            if ( !strcmp( uri, v_customData_special[i].c_str() ) )
-            {
-                _use_custom_data = true;
-                break;
-            }
-        }
-    }
 
     if ( _atom_ins || _atom_outs )
     {
-        /* Not restoring state, load the plugin as a preset to get default files if any */
-        if ( ! _loading_from_file && !_use_custom_data )
-        {
-            _loading_from_file = false;
+        _use_custom_data = true;
 
+        /* Not restoring state, load the plugin as a preset to get default files if any */
+        if ( ! _loading_from_file )
+        {
             const LV2_URID_Map* const uridMap = (const LV2_URID_Map*)_idata->lv2.features[Plugin_Feature_URID_Map]->data;
             LilvState* const state = Lv2WorldClass::getInstance().getStateFromURI(uri, (LV2_URID_Map*) uridMap);
 
@@ -2046,7 +2015,7 @@ LV2_Plugin::process_atom_out_events( uint32_t nframes, unsigned int port )
             jack_midi_event_write(buf, frames, (jack_midi_data_t*) body, size);
         }
 
-        if(m_ui_instance && fIsVisible )
+        if( (m_ui_instance && fIsVisible) || (_editor && _editor->visible()) )
         {
             DMESSAGE("SEND to UI index = %d", atom_output[port].hints.plug_port_index);
             write_atom_event(plugin_to_ui, atom_output[port].hints.plug_port_index, size, type, body);

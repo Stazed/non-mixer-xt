@@ -88,13 +88,11 @@ class Module : public Fl_Group, public Loggable {
 
 protected:
 
-    Module_Parameter_Editor *_editor;
-
     float * _bypass;
 
 public:
 
-    
+    Module_Parameter_Editor *_editor;
     virtual int number ( void ) const { return _number; }
     virtual void number ( int v );
 
