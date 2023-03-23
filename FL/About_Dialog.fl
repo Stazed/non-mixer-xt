@@ -41,14 +41,14 @@ if ( logo_box->image() )
 {
 	((Fl_Shared_Image*)logo_box->image())->release();
 	logo_box->image( 0 );
-}} open
-      private xywh {879 215 560 695} type Double visible
+}} open selected
+      private xywh {1029 279 560 695} type Double visible
     } {
       Fl_Tabs {} {open
         xywh {0 352 558 296}
       } {
         Fl_Group {} {
-          label Credits open selected
+          label Credits open
           xywh {2 386 553 261}
         } {
           Fl_Box credits {
@@ -61,7 +61,7 @@ if ( logo_box->image() )
         } {
           Fl_Box copyright {
             label COPYRIGHT
-            xywh {43 389 462 22} labeltype SHADOW_LABEL labelfont 1 labelsize 18
+            xywh {43 380 462 32} labeltype SHADOW_LABEL labelfont 1 labelsize 10
           }
           Fl_Box {} {
             label {This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.

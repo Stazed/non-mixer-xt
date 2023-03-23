@@ -63,10 +63,10 @@ Fl_Double_Window* About_Dialog::make_window( const char *logo_filename ) {
       } // Fl_Group* o
       { Fl_Group* o = new Fl_Group(2, 378, 553, 268, "License");
         o->hide();
-        { copyright = new Fl_Box(43, 389, 462, 22, "COPYRIGHT");
+        { copyright = new Fl_Box(43, 380, 462, 32, "COPYRIGHT");
           copyright->labeltype(FL_SHADOW_LABEL);
           copyright->labelfont(1);
-          copyright->labelsize(18);
+          copyright->labelsize(10);
         } // Fl_Box* copyright
         { Fl_Box* o = new Fl_Box(10, 414, 535, 225, "This program is free software; you can redistribute it and/or modify it under\
  the terms of the GNU General Public License as published by the Free Software\

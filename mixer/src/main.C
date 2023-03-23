@@ -71,7 +71,8 @@
 
 const double NSM_CHECK_INTERVAL = 0.25f;
 
-const char COPYRIGHT[]  = "Copyright (c) 2008-2013 Jonathan Moore Liles";
+const char COPYRIGHT[]  = "Copyright (c) 2008-2021 Jonathan Moore Liles";
+const char COPYRIGHT2[] = "Copyright (c) 2022-2023 Stazed";
 
 char *user_config_dir;
 char *clipboard_dir;
@@ -148,7 +149,8 @@ main ( int argc, char **argv )
 
     fl_display = 0;
 
-    printf( "%s %s %s -- %s\n", APP_TITLE, VERSION, "", COPYRIGHT );
+    printf( "%s %s\n", APP_TITLE, VERSION );
+    printf( "%s\n%s\n", COPYRIGHT, COPYRIGHT2 );
 
     Thread::init();
 
