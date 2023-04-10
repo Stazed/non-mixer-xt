@@ -109,6 +109,8 @@ public:
     void remove_group ( Group *g );
     
     void update_menu ( void );
+    void update_window_title( void );
+
 
     static Spatialization_Console *spatialization_console;
 

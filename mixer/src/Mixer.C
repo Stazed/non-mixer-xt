@@ -226,6 +226,8 @@ void Mixer::command_new ( void )
     
     load_project_settings();
 
+    update_window_title();
+
     update_menu();
     
     if ( result_path != default_path )
@@ -288,6 +290,8 @@ void Mixer::cb_menu(Fl_Widget* o) {
         }
 
         update_menu();
+
+        update_window_title();
 
         mixer->show();
     }
@@ -1155,6 +1159,13 @@ Mixer::update_menu ( void )
 }
 
 void
+Mixer::update_window_title()
+{
+    std::string title = std::string(APP_NAME) + " - " + Project::name();
+    window()->label(strdup(title.c_str()));
+}
+
+void
 Mixer::send_feedback_cb ( void *v )
 {
     Mixer *m = (Mixer*)v;
@@ -1397,6 +1408,8 @@ Mixer::command_load ( const char *path, const char *display_name )
     load_translations();
 
     update_menu();
+
+    update_window_title();
 
     auto_connect();
 
