@@ -594,13 +594,6 @@ Mixer::Mixer ( int X, int Y, int W, int H, const char *L ) :
             o->add( "&Help/&About" );
             o->callback( cb_menu, this );
         }
-        { Fl_Box *o = project_name = new Fl_Box( X + 150, Y, W, 24 );
-            o->labelfont( FL_HELVETICA_ITALIC );
-            o->label( 0 );
-            o->align( FL_ALIGN_INSIDE | FL_ALIGN_CENTER );
-            o->labeltype( FL_SHADOW_LABEL );
-            Fl_Group::current()->resizable( o );
-        }
         { sm_blinker = new Fl_Button( ( X + W) - 37, Y + 4, 35, 15, "SM");
             sm_blinker->box(FL_ROUNDED_BOX);
             sm_blinker->down_box(FL_ROUNDED_BOX);
@@ -1152,8 +1145,6 @@ Mixer::save_options ( void )
 void
 Mixer::update_menu ( void )
 {
-    project_name->label( Project::name() );
-
     const_cast<Fl_Menu_Item*>(menubar->find_item( "&Mixer/&Spatialization Console" ))
         ->flags = FL_MENU_TOGGLE | ( ( spatialization_console && spatialization_console->shown() ) ? FL_MENU_VALUE : 0 );
 }
