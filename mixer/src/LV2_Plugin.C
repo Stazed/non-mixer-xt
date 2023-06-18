@@ -3207,9 +3207,6 @@ LV2_Plugin::set ( Log_Entry &e )
 
     if (!restore.empty())
     {
-        /* some of these plugins need time to initialize before restoring */
-        usleep(50000);  // 1/2 second
-
         restore_LV2_plugin_state(restore);
     }
 }
