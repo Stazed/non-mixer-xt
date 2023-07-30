@@ -1228,6 +1228,24 @@ Mixer::handle ( int m )
                 return 0;
             }
 
+            /* In the case of a paste without previous copy, there may be garbage in the event_text
+               buffer. In this case, the file would sometimes cause the unescape_url() function to crash.
+               So if sscanf above succeeds, we check if the file string contains the substring
+               "clipboard" which is the folder where copied strips are stored. No "clipboard",
+                means not a valid paste path.
+             */
+            std::string svalid = file;
+            
+            if (svalid.find("clipboard") != std::string::npos)
+            {
+                MESSAGE( "Found clipboard!");
+            }
+            else
+            {
+                MESSAGE( "Invalid paste path, 'clipboard' not found: %s", file);
+                return 0;
+            }
+
             unescape_url( file );
 
             if(file)
