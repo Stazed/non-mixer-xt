@@ -67,6 +67,7 @@ private:
 
     void cb_menu(Fl_Widget*);
     static void cb_menu(Fl_Widget*, void*);
+    bool is_valid_open_new();
 
     Fl_Menu_Bar *menubar;
     Fl_Scroll *scroll;

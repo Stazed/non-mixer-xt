@@ -254,24 +254,16 @@ void Mixer::cb_menu(Fl_Widget* o) {
 
     if (! strcmp( picked, "&Project/&New") )
     {
-        if(mixer_strips->children() || !project_directory.empty())
-        {
-            fl_alert("Error: You cannot open/create a new project\n"
-                    "if any existing project is open or\n"
-                    "if any mixer strips are present.");
+        if(!is_valid_open_new())
             return;
-        }
+
         command_new();
     }
     else if (! strcmp( picked, "&Project/&Open" ) )
     {
-        if(mixer_strips->children() || !project_directory.empty())
-        {
-            fl_alert("Error: You cannot open/create a new project\n"
-                    "if any existing project is open or\n"
-                    "if any mixer strips are present.");
+        if(!is_valid_open_new())
             return;
-        }
+
         char *path = read_line( user_config_dir, "default_path");
 
         const char *name = fl_dir_chooser( "Open Project", path );
@@ -420,8 +412,8 @@ void Mixer::cb_menu(Fl_Widget* o) {
             "event support from the Jalv project.\n"
             "Rui Nuno Capela for LV2 showInterface, external\n"
             "UI, and presets from the Qtractor project.\n"
+            "Jean-Emmanuel Doucet - Extended OSC support.\n"
             "Non Mixer XT modifications by Stazed.\n"
-            "(see the manual).\n"
         );
 
         ab.website_url->label( WEBSITE );
@@ -441,6 +433,19 @@ void Mixer::cb_menu(Fl_Widget* o) {
 
 void Mixer::cb_menu(Fl_Widget* o, void* v) {
     ((Mixer*)(v))->cb_menu(o);
+}
+
+bool Mixer::is_valid_open_new()
+{
+    if(mixer_strips->children() || !project_directory.empty())
+    {
+        fl_alert("Error: You cannot open/create a new project\n"
+                "if any existing project is open or\n"
+                "if any mixer strips are present.");
+        return false;
+    }
+
+    return true;
 }
 
 void Mixer::update_frequency ( float v )
