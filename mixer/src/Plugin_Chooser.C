@@ -39,7 +39,7 @@ static int plugin_type = 0;
 Module::Picked
 Plugin_Chooser::plugin_chooser ( int ninputs )
 {
-    Module::Picked picked = { false, 0 };
+    Module::Picked picked = { LADSPA, 0 };
 
     Plugin_Chooser *o = new Plugin_Chooser( 0,0,735,500,"Plugin Chooser");
 
@@ -55,15 +55,15 @@ Plugin_Chooser::plugin_chooser ( int ninputs )
     while ( o->shown() )
         Fl::wait();
 
+    picked.plugin_type = o->plug_type();
+
     if (const char* const uri = o->uri())
     {
-        picked.is_lv2 = true;
-        picked.uri = uri;
+        picked.uri = uri;   // LV2
     }
     else
     {
-        picked.is_lv2 = false;
-        picked.unique_id = o->value();
+        picked.unique_id = o->value();  // LADSPA & possibly others... TODO
     }
 
     previous_favorites = o->ui->favorites_button->value();
@@ -130,6 +130,8 @@ Plugin_Chooser::search ( const char *name, const char *author, const char *categ
                     continue;   // Not LADSPA so skip it
                 }
             }
+
+            // TODO other types
 
             _plugin_rows.push_back( p );
         }
@@ -296,9 +298,18 @@ Plugin_Chooser::cb_table ( Fl_Widget *w )
         else
         {
             if (::strcmp(_plugin_rows[R]->type, "LV2") == 0)
+            {
                 _uri   = _plugin_rows[R]->path;
-            else
+                _plugin_type = LV2;
+            }
+            else if(::strcmp(_plugin_rows[R]->type, "LADSPA") == 0)
+            {
                 _value = _plugin_rows[R]->id;
+                _plugin_type = LADSPA;
+            }
+
+            // TODO other types
+            
             hide();
         }
     }
@@ -351,11 +362,13 @@ Plugin_Chooser::load_favorites ( void )
                         favorites++;
                     }
                 }
-                else
+                else if( !strcmp(type, "LADSPA") )
                 {
                     (*i).favorite = 1;
                     favorites++;
                 }
+
+                // TODO other types
             }
         }
 

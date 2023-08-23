@@ -1395,7 +1395,7 @@ LV2_Plugin::bypass ( bool v )
 void
 LV2_Plugin::init ( void )
 {
-    _is_lv2 = true;
+    _plug_type = LV2;
     Plugin_Module::init();
 
     _idata = new ImplementationData();

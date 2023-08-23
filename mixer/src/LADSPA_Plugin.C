@@ -51,7 +51,7 @@ LADSPA_Plugin::load_plugin(unsigned long id)
 {
     ladspainfo = _ladspainfo;
 
-    _is_lv2 = false;
+    _plug_type = LADSPA;
     _idata->descriptor = ladspainfo->GetDescriptorByID( id );
 
     _plugin_ins = _plugin_outs = 0;
@@ -305,7 +305,7 @@ LADSPA_Plugin::load_plugin(unsigned long id)
 void
 LADSPA_Plugin::init ( void )
 {
-    _is_lv2 = false;
+    _plug_type = LADSPA;
     Plugin_Module::init();
     _idata = new ImplementationData();
 }

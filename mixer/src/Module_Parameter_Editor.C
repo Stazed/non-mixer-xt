@@ -56,7 +56,7 @@
 bool
 Module_Parameter_Editor::is_probably_eq ( void )
 {
-    if(_module->_is_lv2)
+    if(_module->_plug_type != LADSPA)
         return false;
 
     const char *name = _module->label();
@@ -93,7 +93,9 @@ Module_Parameter_Editor::Module_Parameter_Editor ( Module *module ) : Fl_Double_
     
     { Fl_Group *o = new Fl_Group( 0, 0, w(), 25 );
 
-        if (_module->_is_lv2)
+        // TODO other types
+
+        if (_module->_plug_type == LV2)
         {
 #ifdef PRESET_SUPPORT
             LV2_Plugin *pm = static_cast<LV2_Plugin *> (_module);
@@ -571,7 +573,9 @@ Module_Parameter_Editor::update_control_visibility ( void )
     control_pack->dolayout();
 
     int width = control_pack->w() + 100; // LADSPA
-    if (_module->_is_lv2)
+
+    // TODO other types ???
+    if (_module->_plug_type == LV2)
     {
         /* When the scroller is not used, we need to expand width to account for 
            the preset, state save and restore button */

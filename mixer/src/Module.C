@@ -204,7 +204,8 @@ Module::init ( void )
     _bypass = new float(0);
     _base_label = NULL;
     _number = -2;	/* magic number indicates old instance, before numbering */
-    _is_lv2 = false;
+    
+    _plug_type = LADSPA;
     _is_from_custom_ui = false;
     _is_removed = false;
     _use_custom_data = false;
@@ -238,7 +239,9 @@ Module::get ( Log_Entry &e ) const
 //    e.add( ":name",            label()           );
 //    e.add( ":color",           (unsigned long)color());
 
-    if (_is_lv2)
+    // TODO other types
+
+    if (_plug_type == LV2)
     {
         if ( _use_custom_data  )
         {
@@ -568,10 +571,10 @@ Module::handle_control_changed ( Port *p )
     if (bypassable() && p == &control_input[control_input.size() - 1])
         redraw();
 
-
+    // TODO other types...
 #ifdef USE_SUIL
     Module *m = p->module();
-    if (m->_is_lv2)
+    if (m->_plug_type == LV2)
     {
         if(m->_is_from_custom_ui)
         {
@@ -1246,7 +1249,7 @@ Module::insert_menu_cb ( const Fl_Menu_ *m )
         if ( picked.unique_id == 0 )
             return;
 
-        if(picked.is_lv2)
+        if(picked.plugin_type == LV2)
         {
             LV2_Plugin *m = new LV2_Plugin();
             if(!m->load_plugin( picked.uri ))
@@ -1258,7 +1261,7 @@ Module::insert_menu_cb ( const Fl_Menu_ *m )
 
             mod = m;
         }
-        else
+        else if(picked.plugin_type == LADSPA)
         {
             LADSPA_Plugin *m = new LADSPA_Plugin();
             if(!m->load_plugin( picked.unique_id ))
@@ -1270,6 +1273,7 @@ Module::insert_menu_cb ( const Fl_Menu_ *m )
 
             mod = m;
         }
+        // TODO other types here
     }
 
     if ( mod )
@@ -1492,7 +1496,7 @@ Module::handle ( int m )
                the generic UI. */
             if ( !( Fl::event_key(FL_Control_L) ) &&  !( Fl::event_key(FL_Control_R) ) && (Fl::event_key(32)) ) // 32 == space bar
             {
-                if(_is_lv2)
+                if(_plug_type == LV2)
                 {
 #ifdef USE_SUIL
                     LV2_Plugin *pm = static_cast<LV2_Plugin *> (this);
@@ -1506,10 +1510,12 @@ Module::handle ( int m )
                     }
 #endif
                 }
-                else
+                // TODO other types here
+                else    // LADSPA and internal
                 {
                     command_open_parameter_editor();
                 }
+
                 return 1;
             }
 
@@ -1544,7 +1550,7 @@ Module::handle ( int m )
             }
             else if ( e & FL_BUTTON1 )
             {
-                if(_is_lv2)
+                if(_plug_type == LV2)
                 {
 #ifdef USE_SUIL
                     LV2_Plugin *pm = static_cast<LV2_Plugin *> (this);
@@ -1558,10 +1564,12 @@ Module::handle ( int m )
                     }
 #endif
                 }
-                else
+                // TODO other types here
+                else    // LADSPA and internal
                 {
                     command_open_parameter_editor();
                 }
+
                 return 1;
             }
             else if ( e & FL_BUTTON3 && e & FL_CTRL )

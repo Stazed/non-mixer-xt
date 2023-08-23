@@ -53,6 +53,15 @@ class Fl_Menu_Button;
 class Fl_Button;
 class Mixer_Strip;
 
+enum Plugin_Index
+{
+    LADSPA = 0,
+    LV2
+    // CLAP
+    // VST3
+    // VST2
+};
+
 class Module : public Fl_Group, public Loggable {
 
     int _ins;
@@ -123,7 +132,7 @@ public:
     virtual void update_tooltip ( void );
 
     struct Picked {
-        bool is_lv2;
+        unsigned int plugin_type;   // LADSPA, LV2, etc
         union {
             const char* uri;
             unsigned long unique_id;
@@ -140,7 +149,7 @@ public:
         EnumeratorScalePoints() : Value(0.0) {}
     };
 
-    bool _is_lv2;
+    unsigned int _plug_type;    // LADSPA, LV2, etc
     bool _is_from_custom_ui;
     bool _is_removed;
     bool _use_custom_data;

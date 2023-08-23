@@ -47,14 +47,14 @@ public:
         const char *type;
         bool favorite;
 
-        Plugin_Info ( bool is_lv2 )
+        Plugin_Info ( const char* s_type )  // LADSPA, LV2 -- TODO other types
             {
                 path = 0;
                 id = 0;
-               
+
                 audio_inputs = 0;
                 audio_outputs = 0;
-                type = is_lv2 ? "LV2" : "LADSPA";
+                type = s_type;
                 favorite = 0;
             }
 

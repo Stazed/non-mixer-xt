@@ -60,7 +60,8 @@ Plugin_Module::~Plugin_Module ( )
 void
 Plugin_Module::init ( void )
 {
-    if(!_is_lv2)
+    // TODO other types???
+    if(_plug_type == LADSPA)
     {
         _ladspainfo = ladspainfo;
     }
@@ -245,7 +246,7 @@ Plugin_Module::get_all_plugins ( void )
     for (std::vector<LADSPAInfo::PluginInfo>::iterator i=plugins.begin();
          i!=plugins.end(); ++i, j++)
     {
-        Plugin_Info pi(false);
+        Plugin_Info pi("LADSPA");
 
         //   pi[j].path = i->Name.c_str();
         pi.path = NULL;
@@ -345,7 +346,7 @@ Plugin_Module::get_all_plugins ( void )
         if ( ! supported )
             continue;
 
-        Plugin_Info pi(true);
+        Plugin_Info pi("LV2");
         
         // get audio port count and check for supported ports
         pi.audio_inputs = 0;
@@ -434,6 +435,8 @@ Plugin_Module::get_all_plugins ( void )
 
         pr.push_back( pi );
     }
+
+    // TODO Additional plugin types here
 
     pr.sort();
 

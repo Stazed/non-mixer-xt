@@ -40,6 +40,7 @@ class Plugin_Chooser : public Fl_Double_Window
     void search ( const char *name, const char *author, const char *category,
                     int ninputs, int noutputs, bool favorites, const char *plug_type );
 
+    unsigned int _plugin_type;  // LADSPA, LV2, etc
     const char* _uri;
     unsigned long _value;
     
@@ -50,6 +51,7 @@ class Plugin_Chooser : public Fl_Double_Window
     void load_categories ( void );
 public:
 
+    unsigned int plug_type ( void ) const { return _plugin_type; }
     const char* uri ( void ) const { return _uri; }
     unsigned long value ( void ) const { return _value; }
    

@@ -110,7 +110,7 @@ Mixer_Strip::~Mixer_Strip ( )
         
         for ( int i = 0; i < _chain->modules(); ++i )
         {
-            if(_chain->module(i)->_is_lv2)
+            if(_chain->module(i)->_plug_type == LV2)
                 _chain->module(i)->_is_removed = true;
         }
     }
