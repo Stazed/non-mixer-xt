@@ -97,6 +97,8 @@ public:
     virtual void update ( void );
 
     static std::list<Plugin_Info> get_all_plugins ( void );
+    void scan_LADSPA_plugins( std::list<Plugin_Info> & pr );
+    void scan_LV2_plugins( std::list<Plugin_Info> & pr );
 
     static void spawn_discover_thread ( void );
     static void join_discover_thread ( void );

@@ -238,9 +238,25 @@ Plugin_Module::get_all_plugins ( void )
             plugin_discover_thread->join();
     }
 
-    std::vector<LADSPAInfo::PluginInfo> plugins = ladspainfo->GetPluginInfo();
-
     std::list<Plugin_Module::Plugin_Info> pr;
+
+    Plugin_Module pm;
+
+    pm.scan_LADSPA_plugins( pr );   // Scan LADSPA
+
+    pm.scan_LV2_plugins( pr );      // Scan LV2
+
+    // TODO Additional plugin types here
+
+    pr.sort();
+
+    return pr;
+}
+
+void
+Plugin_Module::scan_LADSPA_plugins( std::list<Plugin_Info> & pr )
+{
+    std::vector<LADSPAInfo::PluginInfo> plugins = ladspainfo->GetPluginInfo();
 
     int j = 0;
     for (std::vector<LADSPAInfo::PluginInfo>::iterator i=plugins.begin();
@@ -258,7 +274,26 @@ Plugin_Module::get_all_plugins ( void )
         pi.category = "Unclassified";
         pr.push_back( pi );
     }
-    
+
+    /* Set the plugin category since the above scan does not set it */
+    const std::vector<LADSPAInfo::PluginEntry> pe = ladspainfo->GetMenuList();
+  
+    for (std::vector<LADSPAInfo::PluginEntry>::const_iterator i= pe.begin();
+         i !=pe.end(); ++i )
+    {
+        for ( std::list<Plugin_Info>::iterator j = pr.begin(); j != pr.end(); ++j )
+        {
+            if ( j->id == i->UniqueID )
+            {
+                j->category = i->Category;
+            }
+        }
+    }
+}
+
+void
+Plugin_Module::scan_LV2_plugins( std::list<Plugin_Info> & pr )
+{
     struct catagory_match
     {
         std::string cat_type;
@@ -435,26 +470,6 @@ Plugin_Module::get_all_plugins ( void )
 
         pr.push_back( pi );
     }
-
-    // TODO Additional plugin types here
-
-    pr.sort();
-
-    const std::vector<LADSPAInfo::PluginEntry> pe = ladspainfo->GetMenuList();
-  
-    for (std::vector<LADSPAInfo::PluginEntry>::const_iterator i= pe.begin();
-         i !=pe.end(); ++i )
-    {
-        for ( std::list<Plugin_Info>::iterator j = pr.begin(); j != pr.end(); ++j )
-        {
-            if ( j->id == i->UniqueID )
-            {
-                j->category = i->Category;
-            }
-        }
-    }
-
-    return pr;
 }
 
 void
@@ -468,7 +483,7 @@ Plugin_Module::set ( Log_Entry & )
 {
     if(!warn_legacy_once)
     {
-        fl_alert( "Non-mixer ERROR - This snapshot contains legacy unsupported modules.\n"
+        fl_alert( "Non-mixer-xt ERROR - This snapshot contains legacy unsupported modules.\n"
                 "See Help/Projects to convert to the new format!" );
 
         warn_legacy_once = true;
