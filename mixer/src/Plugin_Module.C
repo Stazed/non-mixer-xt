@@ -131,66 +131,6 @@ Plugin_Module::configure_inputs( int /*n*/ )
     return false;
 }
 
-#ifdef LV2_MIDI_SUPPORT
-void
-Plugin_Module::configure_midi_inputs ()
-{
-    const char *trackname = chain()->strip()->group()->single() ? NULL : chain()->name();
-
-    for( unsigned int i = 0; i < atom_input.size(); ++i )
-    {
-        if(!(atom_input[i].type() == Port::MIDI))
-            continue;
-
-        std::string port_name = label();
-
-        port_name += " ";
-        port_name += atom_input[i].name();
-
-        DMESSAGE("CONFIGURE MIDI INPUTS = %s", port_name.c_str());
-        JACK::Port *jack_port = new JACK::Port( chain()->client(), trackname, port_name.c_str(), JACK::Port::Input, JACK::Port::MIDI );
-        atom_input[i].jack_port(jack_port);
-
-        if( !atom_input[i].jack_port()->activate() )
-        {
-            delete atom_input[i].jack_port();
-            atom_input[i].jack_port(NULL);
-            WARNING( "Failed to activate JACK MIDI IN port" );
-            return;
-        }
-    }
-}
-
-void
-Plugin_Module::configure_midi_outputs ()
-{
-    const char *trackname = chain()->strip()->group()->single() ? NULL : chain()->name();
-
-    for( unsigned int i = 0; i < atom_output.size(); ++i )
-    {
-        if(!(atom_output[i].type() == Port::MIDI))
-            continue;
-
-        std::string port_name = label();
-
-        port_name += " ";
-        port_name += atom_output[i].name();
-
-        DMESSAGE("CONFIGURE MIDI OUTPUTS = %s", port_name.c_str());
-        JACK::Port *jack_port = new JACK::Port( chain()->client(), trackname, port_name.c_str(), JACK::Port::Output, JACK::Port::MIDI );
-        atom_output[i].jack_port(jack_port);
-
-        if( !atom_output[i].jack_port()->activate() )
-        {
-            delete atom_output[i].jack_port();
-            atom_output[i].jack_port(NULL);
-            WARNING( "Failed to activate JACK MIDI OUT port" );
-            return;
-        }
-    }
-}
-#endif  // LV2_MIDI_SUPPORT
-
 void *
 Plugin_Module::discover_thread ( void * )
 {

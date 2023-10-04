@@ -24,6 +24,7 @@
 
 #pragma once
 
+#include "Mixer_Strip.H"
 #include "Module.H"
 #include "Plugin_Module.H"
 #include "XTUtils.H"
@@ -157,6 +158,9 @@ public:
     bool _loading_from_file;
 #endif
 #ifdef LV2_MIDI_SUPPORT
+    void configure_midi_inputs ();
+    void configure_midi_outputs ();
+
     int _midi_ins;
     int _midi_outs;
     uint32_t  _position;        ///< Transport position in frames

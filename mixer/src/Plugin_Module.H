@@ -115,8 +115,8 @@ public:
     bool configure_inputs ( int );
 
 #ifdef LV2_MIDI_SUPPORT
-    void configure_midi_inputs ();
-    void configure_midi_outputs ();
+    virtual void configure_midi_inputs () {};
+    virtual void configure_midi_outputs () {};
 #endif
 
     virtual bool bypass ( void ) const { return *_bypass == 1.0f; }
