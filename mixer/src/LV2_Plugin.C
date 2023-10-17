@@ -3424,23 +3424,20 @@ LV2_Plugin::get ( Log_Entry &e ) const
     /* If using state restore then all the file paths are stored in the custom data file */
     if(!_use_custom_data)
     {
-        if(_plug_type == LV2)
+        Module *m = (Module *) this;
+        LV2_Plugin *pm = static_cast<LV2_Plugin *> (m);
+        for ( unsigned int i = 0; i < pm->atom_input.size(); ++i )
         {
-            Module *m = (Module *) this;
-            LV2_Plugin *pm = static_cast<LV2_Plugin *> (m);
-            for ( unsigned int i = 0; i < pm->atom_input.size(); ++i )
+            if ( pm->atom_input[i]._file.empty() )
+                continue;
+
+            char *s = pm->get_file(i);
+
+            DMESSAGE("File to save = %s", s);
+
+            if ( strlen ( s ) )
             {
-                if ( pm->atom_input[i]._file.empty() )
-                    continue;
-
-                char *s = pm->get_file(i);
-
-                DMESSAGE("File to save = %s", s);
-
-                if ( strlen ( s ) )
-                {
-                    e.add(":filename", s );
-                }
+                e.add(":filename", s );
             }
         }
     }
