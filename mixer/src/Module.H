@@ -725,8 +725,8 @@ public:
     void auto_connect_outputs();
     void auto_disconnect_outputs();
 
-    void freeze_ports ( void );
-    void thaw_ports ( void );
+    virtual void freeze_ports ( void );
+    virtual void thaw_ports ( void );
 
     bool add_aux_audio_output ( const char *prefix, int n );
     bool add_aux_audio_input ( const char *prefix, int n );

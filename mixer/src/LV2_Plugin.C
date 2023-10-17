@@ -1281,6 +1281,113 @@ LV2_Plugin::handle_port_connection_change ( void )
 }
 
 void
+LV2_Plugin::handle_chain_name_changed ( )
+{
+    Module::handle_chain_name_changed();
+
+    if ( ! chain()->strip()->group()->single() )
+    {
+#ifdef LV2_MIDI_SUPPORT
+        for ( unsigned int i = 0; i < atom_input.size(); i++ )
+        {
+            if(!(atom_input[i].type() == Port::MIDI))
+                continue;
+
+            if(atom_input[i].jack_port())
+            {
+                atom_input[i].jack_port()->trackname( chain()->name() );
+                atom_input[i].jack_port()->rename();
+            }
+        }
+        for ( unsigned int i = 0; i < atom_output.size(); i++ )
+        {
+            if(!(atom_output[i].type() == Port::MIDI))
+                continue;
+
+            if(atom_output[i].jack_port())
+            {
+                atom_output[i].jack_port()->trackname( chain()->name() );
+                atom_output[i].jack_port()->rename();
+            }
+        }
+    }
+#endif
+}
+
+/* freeze/disconnect all jack ports--used when changing groups */
+void
+LV2_Plugin::freeze_ports ( void )
+{
+    Module::freeze_ports();
+#ifdef LV2_MIDI_SUPPORT
+    for ( unsigned int i = 0; i < atom_input.size(); ++i )
+    {
+        if(!(atom_input[i].type() == Port::MIDI))
+            continue;
+
+        if(atom_input[i].jack_port())
+        {
+            atom_input[i].jack_port()->freeze();
+            atom_input[i].jack_port()->shutdown();
+        }
+    }
+
+    for ( unsigned int i = 0; i < atom_output.size(); ++i )
+    {
+        if(!(atom_output[i].type() == Port::MIDI))
+            continue;
+
+        if(atom_output[i].jack_port())
+        {
+            atom_output[i].jack_port()->freeze();
+            atom_output[i].jack_port()->shutdown();
+        }
+    }
+#endif
+}
+
+/* rename and thaw all jack ports--used when changing groups */
+void
+LV2_Plugin::thaw_ports ( void )
+{
+    Module::thaw_ports();
+
+#ifdef LV2_MIDI_SUPPORT
+    const char *trackname = chain()->strip()->group()->single() ? NULL : chain()->name();
+
+    for ( unsigned int i = 0; i < atom_input.size(); ++i )
+    {   
+        /* if we're entering a group we need to add the chain name
+         * prefix and if we're leaving one, we need to remove it */
+        if(!(atom_input[i].type() == Port::MIDI))
+            continue;
+
+        if(atom_input[i].jack_port())
+        {
+            atom_input[i].jack_port()->client( chain()->client() );
+            atom_input[i].jack_port()->trackname( trackname );
+            atom_input[i].jack_port()->thaw();
+        }
+    }
+
+    for ( unsigned int i = 0; i < atom_output.size(); ++i )
+    {
+        /* if we're entering a group we won't actually be using our
+         * JACK output ports anymore, just mixing into the group outputs */
+        if(!(atom_output[i].type() == Port::MIDI))
+            continue;
+
+        if(atom_output[i].jack_port())
+        {
+            atom_output[i].jack_port()->client( chain()->client() );
+            atom_output[i].jack_port()->trackname( trackname );
+            atom_output[i].jack_port()->thaw();
+        }
+    }
+#endif
+}
+
+void
 LV2_Plugin::handle_sample_rate_change ( nframes_t sample_rate )
 {
     if ( ! _idata->lv2.rdf_data )

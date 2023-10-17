@@ -1391,35 +1391,6 @@ Module::handle_chain_name_changed ( )
             aux_audio_output[i].jack_port()->trackname( chain()->name() );
             aux_audio_output[i].jack_port()->rename();
         }
-#ifdef LV2_MIDI_SUPPORT
-        if(_plug_type == LV2)
-        {
-            LV2_Plugin *pm = static_cast<LV2_Plugin *> (this);
-
-            for ( unsigned int i = 0; i < pm->atom_input.size(); i++ )
-            {
-                if(!(pm->atom_input[i].type() == Port::MIDI))
-                    continue;
-
-                if(pm->atom_input[i].jack_port())
-                {
-                    pm->atom_input[i].jack_port()->trackname( chain()->name() );
-                    pm->atom_input[i].jack_port()->rename();
-                }
-            }
-            for ( unsigned int i = 0; i < pm->atom_output.size(); i++ )
-            {
-                if(!(pm->atom_output[i].type() == Port::MIDI))
-                    continue;
-
-                if(pm->atom_output[i].jack_port())
-                {
-                    pm->atom_output[i].jack_port()->trackname( chain()->name() );
-                    pm->atom_output[i].jack_port()->rename();
-                }
-            }
-        }
-#endif
     }
 }
 
@@ -1623,35 +1594,6 @@ Module::freeze_ports ( void )
         aux_audio_output[i].jack_port()->freeze();
         aux_audio_output[i].jack_port()->shutdown();
     }
-#ifdef LV2_MIDI_SUPPORT
-    if(_plug_type == LV2)
-    {
-        LV2_Plugin *pm = static_cast<LV2_Plugin *> (this);
-        for ( unsigned int i = 0; i < pm->atom_input.size(); ++i )
-        {
-            if(!(pm->atom_input[i].type() == Port::MIDI))
-                continue;
-
-            if(pm->atom_input[i].jack_port())
-            {
-                pm->atom_input[i].jack_port()->freeze();
-                pm->atom_input[i].jack_port()->shutdown();
-            }
-        }
-
-        for ( unsigned int i = 0; i < pm->atom_output.size(); ++i )
-        {
-            if(!(pm->atom_output[i].type() == Port::MIDI))
-                continue;
-
-            if(pm->atom_output[i].jack_port())
-            {
-                pm->atom_output[i].jack_port()->freeze();
-                pm->atom_output[i].jack_port()->shutdown();
-            }
-        }
-    }
-#endif
 }
 
 /* rename and thaw all jack ports--used when changing groups */
@@ -1687,42 +1629,6 @@ Module::thaw_ports ( void )
 
         mixer->maybe_auto_connect_output( &aux_audio_output[i] );
     }
-#ifdef LV2_MIDI_SUPPORT
-    if(_plug_type == LV2)
-    {
-        LV2_Plugin *pm = static_cast <LV2_Plugin *> (this);
-
-        for ( unsigned int i = 0; i < pm->atom_input.size(); ++i )
-        {   
-            /* if we're entering a group we need to add the chain name
-             * prefix and if we're leaving one, we need to remove it */
-            if(!(pm->atom_input[i].type() == Port::MIDI))
-                continue;
-
-            if(pm->atom_input[i].jack_port())
-            {
-                pm->atom_input[i].jack_port()->client( chain()->client() );
-                pm->atom_input[i].jack_port()->trackname( trackname );
-                pm->atom_input[i].jack_port()->thaw();
-            }
-        }
-
-        for ( unsigned int i = 0; i < pm->atom_output.size(); ++i )
-        {
-            /* if we're entering a group we won't actually be using our
-             * JACK output ports anymore, just mixing into the group outputs */
-            if(!(pm->atom_output[i].type() == Port::MIDI))
-                continue;
-
-            if(pm->atom_output[i].jack_port())
-            {
-                pm->atom_output[i].jack_port()->client( chain()->client() );
-                pm->atom_output[i].jack_port()->trackname( trackname );
-                pm->atom_output[i].jack_port()->thaw();
-            }
-        }
-    }
-#endif
 }
 
 void

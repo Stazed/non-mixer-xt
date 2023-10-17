@@ -71,11 +71,15 @@ public:
 
     bool configure_inputs ( int );
     void handle_port_connection_change ( void );
+    void handle_chain_name_changed ( void );
     void handle_sample_rate_change ( nframes_t sample_rate );
     void resize_buffers ( nframes_t buffer_size );
 
     virtual bool bypass ( void ) const { return *_bypass == 1.0f; }
     virtual void bypass ( bool v );
+
+    void freeze_ports ( void );
+    void thaw_ports ( void );
 
 #ifdef PRESET_SUPPORT
     /* Preset loading stuff */
