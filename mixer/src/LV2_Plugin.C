@@ -3377,6 +3377,75 @@ LV2_Plugin::get ( Log_Entry &e ) const
     e.add( ":plugin_ins", _plugin_ins );
     e.add( ":plugin_outs", _plugin_outs );
 
+    if ( _use_custom_data  )
+    {
+        Module *m = (Module *) this;
+        LV2_Plugin *pm = static_cast<LV2_Plugin *> (m);
+
+        /* Export directory location */
+        if(!export_import_strip.empty())
+        {
+            std::string path = export_import_strip;
+
+            std::size_t found = path.find_last_of("/\\");
+            path = (path.substr(0, found));
+
+            std::string location = pm->get_plugin_save_directory(path);
+
+            pm->save_LV2_plugin_state(location);
+            DMESSAGE("Export location = %s", location.c_str());
+
+            std::string base_dir = location.substr(location.find_last_of("/\\") + 1);
+            e.add( ":custom_data", base_dir.c_str() );
+        }
+        else
+        {
+            /* If we already have pm->m_project_directory, it means that we have an existing project
+               already loaded. So use that directory instead of making a new one */
+            std::string s = pm->m_project_directory;
+            if(s.empty())
+            {
+                /* This is a new project */
+                s = pm->get_plugin_save_directory(project_directory);
+            }
+            if ( !s.empty() )
+            {
+                /* This is an existing project */
+                pm->m_project_directory = s;
+                pm->save_LV2_plugin_state(s);
+
+                std::string base_dir = s.substr(s.find_last_of("/\\") + 1);
+                e.add( ":custom_data", base_dir.c_str() );
+            }
+        }
+    }
+
+#ifdef LV2_WORKER_SUPPORT
+    /* If using state restore then all the file paths are stored in the custom data file */
+    if(!_use_custom_data)
+    {
+        if(_plug_type == LV2)
+        {
+            Module *m = (Module *) this;
+            LV2_Plugin *pm = static_cast<LV2_Plugin *> (m);
+            for ( unsigned int i = 0; i < pm->atom_input.size(); ++i )
+            {
+                if ( pm->atom_input[i]._file.empty() )
+                    continue;
+
+                char *s = pm->get_file(i);
+
+                DMESSAGE("File to save = %s", s);
+
+                if ( strlen ( s ) )
+                {
+                    e.add(":filename", s );
+                }
+            }
+        }
+    }
+#endif
+
     Module::get( e );
 }
 
