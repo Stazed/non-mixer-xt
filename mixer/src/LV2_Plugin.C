@@ -1201,6 +1201,9 @@ LV2_Plugin::configure_inputs( int n )
 void
 LV2_Plugin::configure_midi_inputs ()
 {
+    if(!atom_input.size())
+        return;
+
     const char *trackname = chain()->strip()->group()->single() ? NULL : chain()->name();
 
     for( unsigned int i = 0; i < atom_input.size(); ++i )
@@ -1230,6 +1233,9 @@ LV2_Plugin::configure_midi_inputs ()
 void
 LV2_Plugin::configure_midi_outputs ()
 {
+    if(!atom_output.size())
+        return;
+
     const char *trackname = chain()->strip()->group()->single() ? NULL : chain()->name();
 
     for( unsigned int i = 0; i < atom_output.size(); ++i )
