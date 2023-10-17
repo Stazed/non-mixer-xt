@@ -82,7 +82,6 @@ public:
     void thaw_ports ( void );
 
 #ifdef PRESET_SUPPORT
-    /* Preset loading stuff */
     std::vector<LV2_RDF_Preset> PresetList;
     const LilvPlugin*     m_plugin;     /**< Plugin "class" (actually just a few strings) */
     LilvWorld* 	m_lilvWorld{};
@@ -94,20 +93,23 @@ public:
     const LilvPlugins* get_lilv_plugins() const {return m_lilvPlugins; }
 
     void set_control_value(unsigned long port_index, float value);
-
     void update_control_parameters(int choice);
-    /* End Preset loading */
-#endif
+#endif  // PRESET_SUPPORT
     
 #ifdef LV2_STATE_SAVE
     LV2_URID_Unmap* _uridUnmapFt;
+    std::string m_project_directory;
+
     void save_LV2_plugin_state(const std::string directory);
     void restore_LV2_plugin_state(const std::string directory);
     std::string get_plugin_save_directory(const std::string directory);
-    std::string m_project_directory;
-#endif
+#endif  // LV2_STATE_SAVE
 
 #ifdef LV2_WORKER_SUPPORT
+    int _atom_ins;
+    int _atom_outs;
+    bool _loading_from_file;
+
     ZixRing* requests;      ///< Requests to the worker
     ZixRing* responses;     ///< Responses from the worker
     ZixRing* plugin_to_ui;  ///< Port events from plugin
@@ -122,57 +124,7 @@ public:
     bool    m_exit;         ///< True iff execution is finished
     bool    m_safe_restore;   ///< Plugin restore() is thread-safe
     size_t  m_atom_buf_size;
-#endif
-    
-#ifdef USE_SUIL
-    SuilHost*     m_ui_host;     ///< Plugin UI host support
-    SuilInstance* m_ui_instance; ///< Plugin UI instance (shared library)
-    bool          m_use_showInterface;
-    bool          m_use_X11_interface;
-#ifdef LV2_EXTERNAL_UI
-    bool          m_use_externalUI;
-    LV2UI_Widget  m_lv2_ui_widget;
-    LV2_External_UI_Host m_lv2_ui_external_host;
-    LV2_Feature          m_lv2_ui_external_feature;
-    LV2UI_Handle   m_lv2_ui_handle;
-#endif
-    LilvUIs*      m_uis;         ///< All plugin UIs (RDF data)
-    const LilvUI*    m_ui;       ///< Plugin UI (RDF data)
-    const LilvNode*  m_ui_type;  ///< Plugin UI type (unwrapped)
 
-  /* X window for custom plugin ui */
-#ifdef USE_CARLA
-    Display* fDisplay;
-    Window   fHostWindow;
-    Window   fChildWindow;
-    bool     fChildWindowConfigured;
-    bool     fChildWindowMonitoring;
-    bool     fIsVisible;
-    bool     fFirstShow;
-    bool     fSetSizeCalledAtLeastOnce;
-    bool     fIsIdling;
-    bool     fIsResizable;
-    EventProcPtr fEventProc;
-#endif  // USE CARLA
-#endif  // USE_SUIL
-
-#ifdef LV2_WORKER_SUPPORT
-    int _atom_ins;
-    int _atom_outs;
-    bool _loading_from_file;
-#endif
-#ifdef LV2_MIDI_SUPPORT
-    void configure_midi_inputs ();
-    void configure_midi_outputs ();
-
-    int _midi_ins;
-    int _midi_outs;
-    uint32_t  _position;        ///< Transport position in frames
-    float     _bpm;             ///< Transport tempo in beats per minute
-    bool      _rolling;         ///< Transport speed (0=stop, 1=play)
-#endif
-
-#ifdef LV2_WORKER_SUPPORT
     std::vector<Port> atom_input;
     std::vector<Port> atom_output;
 
@@ -181,23 +133,8 @@ public:
     void ui_port_event( uint32_t port_index, uint32_t buffer_size, uint32_t protocol, const void* buffer );
     void send_atom_to_plugin( uint32_t port_index, uint32_t buffer_size, const void* buffer);
     void send_file_to_plugin( int port, const std::string &filename );
-#endif
-#ifdef USE_SUIL
-    bool try_custom_ui();
-    bool send_to_custom_ui( uint32_t port_index, uint32_t size, uint32_t type, const void* buf );
-#endif
 
 private:
-    
-    void add_port ( const Port &p );
-    void init ( void );
-    void set_input_buffer ( int n, void *buf );
-    void set_output_buffer ( int n, void *buf );
-    void activate ( void );
-    void deactivate ( void );
-    bool loaded ( void ) const;
-
-#ifdef LV2_WORKER_SUPPORT
     void non_worker_init(LV2_Plugin* plug,
                  const LV2_Worker_Interface* iface,
                  bool threaded);
@@ -213,16 +150,57 @@ private:
                  const void* const body);
     size_t get_atom_buffer_size(int port_index);
 #endif  // LV2_WORKER_SUPPORT
-#ifdef LV2_MIDI_SUPPORT
-    void process_atom_in_events( uint32_t nframes, unsigned int port );
-    void process_atom_out_events( uint32_t nframes, unsigned int port );
-#endif
+
+public:
+
 #ifdef USE_SUIL
+    SuilHost*     m_ui_host;     ///< Plugin UI host support
+    SuilInstance* m_ui_instance; ///< Plugin UI instance (shared library)
+    bool          m_use_showInterface;
+    bool          m_use_X11_interface;
+    LilvUIs*      m_uis;         ///< All plugin UIs (RDF data)
+    const LilvUI*    m_ui;       ///< Plugin UI (RDF data)
+    const LilvNode*  m_ui_type;  ///< Plugin UI type (unwrapped)
+
+#ifdef LV2_EXTERNAL_UI
+    bool          m_use_externalUI;
+    LV2UI_Widget  m_lv2_ui_widget;
+    LV2_External_UI_Host m_lv2_ui_external_host;
+    LV2_Feature          m_lv2_ui_external_feature;
+    LV2UI_Handle   m_lv2_ui_handle;
+private:
+    const LilvUI* try_external_ui (const char* native_ui_type);
+#endif  // LV2_EXTERNAL_UI
+
+public:
+
+  /* X window for custom plugin ui */
+#ifdef USE_CARLA
+    Display* fDisplay;
+    Window   fHostWindow;
+    Window   fChildWindow;
+    bool     fChildWindowConfigured;
+    bool     fChildWindowMonitoring;
+    bool     fIsVisible;
+    bool     fFirstShow;
+    bool     fSetSizeCalledAtLeastOnce;
+    bool     fIsIdling;
+    bool     fIsResizable;
+    EventProcPtr fEventProc;
+private:
+    void show_custom_ui();
+    void hide_custom_ui();
+    void setSize(const uint width, const uint height, const bool forceUpdate, const bool resizeChild);
+    bool isUiResizable() const;  
+#endif  // USE CARLA
+
+public:
+    bool try_custom_ui();
+    bool send_to_custom_ui( uint32_t port_index, uint32_t size, uint32_t type, const void* buf );
+
+private:
     bool custom_ui_instantiate();
     const LilvUI* try_X11_ui (const char* native_ui_type);
-#ifdef LV2_EXTERNAL_UI
-    const LilvUI* try_external_ui (const char* native_ui_type);
-#endif
     const LilvUI* try_showInterface_ui(const char* native_ui_type);
     void update_custom_ui();
     void update_ui_settings();
@@ -231,13 +209,34 @@ private:
     void init_x();
     void close_custom_ui();
     Window getChildWindow() const;
-#ifdef USE_CARLA
-    void show_custom_ui();
-    void hide_custom_ui();
-    void setSize(const uint width, const uint height, const bool forceUpdate, const bool resizeChild);
-    bool isUiResizable() const;   
-#endif  // USE_CARLA
 #endif  // USE_SUIL
+
+#ifdef LV2_MIDI_SUPPORT
+public:
+    void configure_midi_inputs ();
+    void configure_midi_outputs ();
+
+    int _midi_ins;
+    int _midi_outs;
+    uint32_t  _position;        ///< Transport position in frames
+    float     _bpm;             ///< Transport tempo in beats per minute
+    bool      _rolling;         ///< Transport speed (0=stop, 1=play)
+
+private:
+    void process_atom_in_events( uint32_t nframes, unsigned int port );
+    void process_atom_out_events( uint32_t nframes, unsigned int port );
+#endif  // LV2_MIDI_SUPPORT
+
+private:
+
+    void set_input_buffer ( int n, void *buf );
+    void set_output_buffer ( int n, void *buf );
+    bool loaded ( void ) const;
+
+    void activate ( void );
+    void deactivate ( void );
+    void add_port ( const Port &p );
+    void init ( void );
 
 public:
 
