@@ -237,7 +237,6 @@ public:
                 _jack_port = 0;
 #ifdef LV2_WORKER_SUPPORT
                 _evbuf = NULL;
-                _tmpevbuf = NULL;
                 _property = NULL;
                 _lilv_symbol = NULL;
                 _lilv_label = NULL;
@@ -269,7 +268,6 @@ public:
                 _feedback_milliseconds = 0;
 #ifdef LV2_WORKER_SUPPORT
                 _evbuf = p._evbuf;
-                _tmpevbuf = p._tmpevbuf;
                 _property = p._property;
                 _lilv_symbol = p._lilv_symbol;
                 _lilv_label = p._lilv_label;
@@ -292,9 +290,6 @@ public:
                 if ( _evbuf )
                     lv2_evbuf_free( _evbuf );
                 _evbuf = NULL;
-                if ( _tmpevbuf )
-                    lv2_evbuf_free( _tmpevbuf );
-                _tmpevbuf = NULL;
 #endif
             }
 
@@ -313,8 +308,6 @@ public:
 #ifdef LV2_WORKER_SUPPORT
         void event_buffer ( LV2_Evbuf * evbuf ) { _evbuf = evbuf; }
         LV2_Evbuf* event_buffer ( void ) const { return _evbuf; }
-        void tmp_event_buffer ( LV2_Evbuf * tmpevbuf ) { _tmpevbuf = tmpevbuf; }
-        LV2_Evbuf* tmp_event_buffer ( void ) const { return _tmpevbuf; }
         
 #endif
         OSC::Signal *scaled_signal ( void ) { return _scaled_signal; }
@@ -493,7 +486,7 @@ public:
         JACK::Port *_jack_port;
 #ifdef LV2_WORKER_SUPPORT
         LV2_Evbuf* _evbuf;
-        LV2_Evbuf* _tmpevbuf;
+
     public:
         // FIXME encapsulate
         const LilvNode* _property;
