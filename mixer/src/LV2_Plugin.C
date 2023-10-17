@@ -643,6 +643,36 @@ LV2_Plugin::~LV2_Plugin ( )
 #ifdef PRESET_SUPPORT
     lilv_world_free(m_lilvWorld);
 #endif
+
+#ifdef LV2_MIDI_SUPPORT
+    for ( unsigned int i = 0; i < atom_input.size(); ++i )
+    {
+        if(!(atom_input[i].type() == Port::MIDI))
+            continue;
+
+        if(atom_input[i].jack_port())
+        {
+            atom_input[i].disconnect();
+            atom_input[i].jack_port()->shutdown();
+            delete atom_input[i].jack_port();
+        }
+    } 
+    for ( unsigned int i = 0; i < atom_output.size(); ++i )
+    {
+        if(!(atom_output[i].type() == Port::MIDI))
+            continue;
+
+        if(atom_output[i].jack_port())
+        {
+            atom_output[i].disconnect();
+            atom_output[i].jack_port()->shutdown();
+            delete atom_output[i].jack_port();
+        }
+    }
+
+    atom_output.clear();
+    atom_input.clear();
+#endif
 }
 
 bool
@@ -1450,6 +1480,24 @@ LV2_Plugin::bypass ( bool v )
         else
             activate();
     }
+}
+
+void
+LV2_Plugin::add_port ( const Port &p )
+{
+    Module::add_port(p);
+#ifdef LV2_WORKER_SUPPORT
+    if ( p.type() == Port::ATOM && p.direction() == Port::INPUT )
+        atom_input.push_back( p );
+    else if ( p.type() == Port::ATOM && p.direction() == Port::OUTPUT )
+        atom_output.push_back( p );
+#endif
+#ifdef LV2_MIDI_SUPPORT
+    else if ( p.type() == Port::MIDI && p.direction() == Port::INPUT )
+        atom_input.push_back( p );
+    else if ( p.type() == Port::MIDI && p.direction() == Port::OUTPUT )
+        atom_output.push_back( p );
+#endif
 }
 
 void
@@ -3177,6 +3225,35 @@ LV2_Plugin::process ( nframes_t nframes )
         _latency = get_module_latency();
     }
 }
+
+#ifdef LV2_WORKER_SUPPORT
+/**
+ * Gets the plugin file name and path if applicable.
+ * The caller should ensure a valid atom_input[] index and file exists.
+ * 
+ * @param port_index
+ *      The atom_input[] index. NOT the plugin .ttl port index.
+ * 
+ * @return 
+ *      The file if there is one. The returned value should not be freed.
+ */
+char *
+LV2_Plugin::get_file ( int port_index ) const
+{
+    return (char *) atom_input[port_index]._file.c_str();
+}
+
+void
+LV2_Plugin::set_file (const std::string &file, int port_index, bool need_update )
+{
+    atom_input[port_index]._file = file;
+    atom_input[port_index]._need_file_update = need_update;
+
+    /* To refresh the button label in the parameter editor */
+    if ( _editor )
+        _editor->refresh_file_button_label(port_index);
+}
+#endif
 
 void
 LV2_Plugin::get ( Log_Entry &e ) const

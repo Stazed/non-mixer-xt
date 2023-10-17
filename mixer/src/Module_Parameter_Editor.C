@@ -449,61 +449,65 @@ Module_Parameter_Editor::make_controls ( void )
     }
 
 #ifdef LV2_WORKER_SUPPORT
-    atom_port_controller.clear();
-    atom_port_controller.resize( module->atom_input.size() );
-
-    for ( unsigned int ii = 0; ii < module->atom_input.size(); ++ii )
+    if(module->_plug_type == LV2)
     {
-        Module::Port *p = &module->atom_input[ii];
+        LV2_Plugin *pm = static_cast<LV2_Plugin *> (module);
+        atom_port_controller.clear();
+        atom_port_controller.resize( pm->atom_input.size() );
 
-        if ( p->hints.type != Module::Port::Hints::PATCH_MESSAGE )
-            continue;
-
-        Fl_Widget *w;
-
-        Fl_Button *o = new Fl_Button( 75, (y_location*24) + 24, 200, 24, lilv_node_as_string(p->_lilv_symbol) );
-
-        w = o;
-        o->selection_color( fc );
-        o->type( FL_NORMAL_BUTTON );
-        o->align(FL_ALIGN_INSIDE | FL_ALIGN_BOTTOM);
-
-        /* Put the filename on the button */
-        if ( !p->_file.empty() )
+        for ( unsigned int ii = 0; ii < pm->atom_input.size(); ++ii )
         {
-            std::string base_filename  = p->_file.substr(p->_file.find_last_of("/\\") + 1);
-            o->copy_label( base_filename.c_str() );
+            Module::Port *p = &pm->atom_input[ii];
+
+            if ( p->hints.type != Module::Port::Hints::PATCH_MESSAGE )
+                continue;
+
+            Fl_Widget *w;
+
+            Fl_Button *o = new Fl_Button( 75, (y_location*24) + 24, 200, 24, lilv_node_as_string(p->_lilv_symbol) );
+
+            w = o;
+            o->selection_color( fc );
+            o->type( FL_NORMAL_BUTTON );
+            o->align(FL_ALIGN_INSIDE | FL_ALIGN_BOTTOM);
+
+            /* Put the filename on the button */
+            if ( !p->_file.empty() )
+            {
+                std::string base_filename  = p->_file.substr(p->_file.find_last_of("/\\") + 1);
+                o->copy_label( base_filename.c_str() );
+            }
+
+            _callback_data.push_back( callback_data( this, ii ) );
+            w->callback( cb_filechooser_handle, &_callback_data.back() );
+
+            atom_port_controller[ii] = w;    // so we can update the button label
+
+            /* For ports that are not visible we create the widget and then hide them. This is because
+               the atom_port_controller and atom_input vectors are set the same size. It would get
+               really tedious to skip the creation of a widget and then try to keep the atom_input
+               and atom_port_controller aligned. Also we don't increment the y_location counter */
+            if ( !p->hints.visible )
+            {
+                w->hide();
+                continue;
+            }
+
+            if (_use_scroller)
+            {
+                control_scroll->add( w );
+            }
+            else
+            {
+                Fl_Labelpad_Group *flg = new Fl_Labelpad_Group( w );
+
+                flg->set_visible_focus();
+
+                control_pack->add( flg );
+            }
+
+            ++y_location;   // increment the scroll widget counter to set for next item if any
         }
-
-        _callback_data.push_back( callback_data( this, ii ) );
-        w->callback( cb_filechooser_handle, &_callback_data.back() );
-
-        atom_port_controller[ii] = w;    // so we can update the button label
-
-        /* For ports that are not visible we create the widget and then hide them. This is because
-           the atom_port_controller and atom_input vectors are set the same size. It would get
-           really tedious to skip the creation of a widget and then try to keep the atom_input
-           and atom_port_controller aligned. Also we don't increment the y_location counter */
-        if ( !p->hints.visible )
-        {
-            w->hide();
-            continue;
-        }
-
-        if (_use_scroller)
-        {
-            control_scroll->add( w );
-        }
-        else
-        {
-            Fl_Labelpad_Group *flg = new Fl_Labelpad_Group( w );
-
-            flg->set_visible_focus();
-
-            control_pack->add( flg );
-        }
-
-        ++y_location;   // increment the scroll widget counter to set for next item if any
     }
 #endif
 
@@ -607,12 +611,14 @@ Module_Parameter_Editor::cb_filechooser_handle ( Fl_Widget *w, void *v )
     callback_data *cd = (callback_data*)v;
 
     /* Set file chooser location based on previous selected file path */
-    std::string previous_file = cd->base_widget->_module->atom_input[cd->port_number[0]]._file;
+    LV2_Plugin * pm = static_cast<LV2_Plugin *> (cd->base_widget->_module);
+    
+    std::string previous_file = pm->atom_input[cd->port_number[0]]._file;
     size_t found = previous_file.find_last_of("/\\");
     std::string file_chooser_location = previous_file.substr(0, found);
 
     /* File chooser window title */
-    std::string title = lilv_node_as_string(cd->base_widget->_module->atom_input[cd->port_number[0]]._lilv_label);
+    std::string title = lilv_node_as_string(pm->atom_input[cd->port_number[0]]._lilv_label);
 
     char *filename;
 
@@ -824,8 +830,9 @@ Module_Parameter_Editor::handle_control_changed ( Module::Port *p )
 void
 Module_Parameter_Editor::refresh_file_button_label(int index)
 {
+    LV2_Plugin *pm = static_cast<LV2_Plugin *> (_module);
 
-    Module::Port *p =  &_module->atom_input[index];
+    Module::Port *p =  &pm->atom_input[index];
     if ( p->hints.type == Module::Port::Hints::PATCH_MESSAGE && p->hints.visible )
     {
         std::string base_filename  = p->_file.substr(p->_file.find_last_of("/\\") + 1);

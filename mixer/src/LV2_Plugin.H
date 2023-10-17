@@ -169,6 +169,11 @@ public:
 #endif
 
 #ifdef LV2_WORKER_SUPPORT
+    std::vector<Port> atom_input;
+    std::vector<Port> atom_output;
+
+    char *get_file ( int port_index ) const;
+    void set_file (const std::string &file, int port_index, bool need_update = false );
     void ui_port_event( uint32_t port_index, uint32_t buffer_size, uint32_t protocol, const void* buffer );
     void send_atom_to_plugin( uint32_t port_index, uint32_t buffer_size, const void* buffer);
     void send_file_to_plugin( int port, const std::string &filename );
@@ -177,9 +182,10 @@ public:
     bool try_custom_ui();
     bool send_to_custom_ui( uint32_t port_index, uint32_t size, uint32_t type, const void* buf );
 #endif
-    
-private:
 
+private:
+    
+    void add_port ( const Port &p );
     void init ( void );
     void set_input_buffer ( int n, void *buf );
     void set_output_buffer ( int n, void *buf );

@@ -59,6 +59,7 @@
 #include "Gain_Module.H"
 #include "Plugin_Module.H"
 #include "Controller_Module.H"
+#include "LV2_Plugin.H"
 
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Menu.H>
@@ -621,14 +622,18 @@ Chain::insert ( Module *m, Module *n )
             n->configure_inputs( 0 );
             modules_pack->add( n );
 #ifdef LV2_MIDI_SUPPORT
-            if (n->atom_input.size())
+            if(n->_plug_type == LV2)
             {
-                n->configure_midi_inputs();
-            }
+                LV2_Plugin *plug = static_cast<LV2_Plugin*> (n);
+                if (plug->atom_input.size())
+                {
+                    plug->configure_midi_inputs();
+                }
 
-            if (n->atom_output.size())
-            {
-                n->configure_midi_outputs();
+                if (plug->atom_output.size())
+                {
+                    plug->configure_midi_outputs();
+                }
             }
 #endif
         }
@@ -639,24 +644,28 @@ Chain::insert ( Module *m, Module *n )
             n->configure_inputs( module( modules() - 1 )->noutputs() );
             modules_pack->add( n );
 #ifdef LV2_MIDI_SUPPORT
-            if (n->atom_input.size())
+            if(n->_plug_type == LV2)
             {
-                n->configure_midi_inputs();
-            }
-
-            if (n->atom_output.size())
-            {
-                n->configure_midi_outputs();
-            }
-
-            /* Eliminate the JACK input when we have a zero synth s*/
-            if (n->is_zero_input_synth())
-            {
-                if(module( 0 )->is_jack_module() )
+                LV2_Plugin *plug = static_cast<LV2_Plugin *> (n);
+                if (plug->atom_input.size())
                 {
-                    Module *m = module( 0 );
-                    JACK_Module *j = static_cast<JACK_Module *> (m);
-                    j->configure_outputs( 0 );
+                    plug->configure_midi_inputs();
+                }
+
+                if (plug->atom_output.size())
+                {
+                    plug->configure_midi_outputs();
+                }
+
+                /* Eliminate the JACK input when we have a zero synth s*/
+                if (n->is_zero_input_synth())
+                {
+                    if(module( 0 )->is_jack_module() )
+                    {
+                        Module *m = module( 0 );
+                        JACK_Module *j = static_cast<JACK_Module *> (m);
+                        j->configure_outputs( 0 );
+                    }
                 }
             }
 #endif
@@ -725,14 +734,18 @@ Chain::insert ( Module *m, Module *n )
                 goto err;
             }
 #ifdef LV2_MIDI_SUPPORT
-            if (n->atom_input.size())
+            if(n->_plug_type == LV2)
             {
-                n->configure_midi_inputs();
-            }
+                LV2_Plugin *plug = static_cast<LV2_Plugin *> (n);
+                if (plug->atom_input.size())
+                {
+                    plug->configure_midi_inputs();
+                }
 
-            if (n->atom_output.size())
-            {
-                n->configure_midi_outputs();
+                if (plug->atom_output.size())
+                {
+                    plug->configure_midi_outputs();
+                }
             }
 
             /* For zero input synths, set the JACK out port to zero since JACK input is invalid */
@@ -776,8 +789,12 @@ err:
     ins and outs above since they do not have JACK ports. Since the failure
     above meant we don't have JACK ports created for MIDI, we clear any MIDI
     vectors here so the JACK port deletion does not get called on NULL ports and crash */
-    n->atom_input.clear();
-    n->atom_output.clear();
+    if(n->_plug_type == LV2)
+    {
+        LV2_Plugin *plug = static_cast<LV2_Plugin *> (n);
+        plug->atom_input.clear();
+        plug->atom_output.clear();
+    }
 #endif
 
     client()->unlock();

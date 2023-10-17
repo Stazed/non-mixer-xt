@@ -572,10 +572,6 @@ public:
     std::vector<Port> control_output;
     std::vector<Port> aux_audio_input;
     std::vector<Port> aux_audio_output;
-#ifdef LV2_WORKER_SUPPORT
-    std::vector<Port> atom_input;
-    std::vector<Port> atom_output;
-#endif
 
     void add_port ( const Port &p )
         {
@@ -587,19 +583,6 @@ public:
                 control_input.push_back( p );
             else if ( p.type() == Port::CONTROL && p.direction() == Port::OUTPUT )
                 control_output.push_back( p );
-            
-#ifdef LV2_WORKER_SUPPORT
-            else if ( p.type() == Port::ATOM && p.direction() == Port::INPUT )
-                atom_input.push_back( p );
-            else if ( p.type() == Port::ATOM && p.direction() == Port::OUTPUT )
-                atom_output.push_back( p );
-#endif
-#ifdef LV2_MIDI_SUPPORT
-            else if ( p.type() == Port::MIDI && p.direction() == Port::INPUT )
-                atom_input.push_back( p );
-            else if ( p.type() == Port::MIDI && p.direction() == Port::OUTPUT )
-                atom_output.push_back( p );
-#endif
         }
 
     int noutputs ( void ) const
@@ -666,10 +649,7 @@ public:
 
     char *get_parameters ( void ) const;
     void set_parameters ( const char * );
-#ifdef LV2_WORKER_SUPPORT
-    char *get_file ( int port_index ) const;
-    void set_file (const std::string &file, int port_index, bool need_update = false );
-#endif
+
     bool show_analysis_window ( void );
 
     void send_feedback ( bool force );
