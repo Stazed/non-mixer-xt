@@ -154,20 +154,20 @@ private:
 public:
 
 #ifdef USE_SUIL
-    SuilHost*     m_ui_host;     ///< Plugin UI host support
-    SuilInstance* m_ui_instance; ///< Plugin UI instance (shared library)
-    bool          m_use_showInterface;
-    bool          m_use_X11_interface;
-    LilvUIs*      m_uis;         ///< All plugin UIs (RDF data)
-    const LilvUI*    m_ui;       ///< Plugin UI (RDF data)
-    const LilvNode*  m_ui_type;  ///< Plugin UI type (unwrapped)
+    SuilHost*     _ui_host;             ///< Plugin UI host support
+    SuilInstance* _ui_instance;         ///< Plugin UI instance (shared library)
+    bool          _use_showInterface;
+    bool          _use_X11_interface;
+    LilvUIs*      _all_uis;             ///< All plugin UIs (RDF data)
+    const LilvUI*    _lilv_user_interface;       ///< Plugin UI (RDF data)
+    const LilvNode*  _lilv_ui_type;     ///< Plugin UI type (unwrapped)
 
 #ifdef LV2_EXTERNAL_UI
-    bool          m_use_externalUI;
-    LV2UI_Widget  m_lv2_ui_widget;
-    LV2_External_UI_Host m_lv2_ui_external_host;
-    LV2_Feature          m_lv2_ui_external_feature;
-    LV2UI_Handle   m_lv2_ui_handle;
+    bool          _use_external_ui;
+    LV2UI_Widget  _lv2_ui_widget;
+    LV2_External_UI_Host _lv2_ui_external_host;
+    LV2_Feature          _lv2_ui_external_feature;
+    LV2UI_Handle   _lv2_ui_handle;
 private:
     const LilvUI* try_external_ui (const char* native_ui_type);
 #endif  // LV2_EXTERNAL_UI
