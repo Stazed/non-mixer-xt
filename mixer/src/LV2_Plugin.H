@@ -98,7 +98,7 @@ public:
     
 #ifdef LV2_STATE_SAVE
     LV2_URID_Unmap* _uridUnmapFt;
-    std::string m_project_directory;
+    std::string _project_directory;
 
     void save_LV2_plugin_state(const std::string directory);
     void restore_LV2_plugin_state(const std::string directory);
@@ -110,20 +110,20 @@ public:
     int _atom_outs;
     bool _loading_from_file;
 
-    ZixRing* requests;      ///< Requests to the worker
-    ZixRing* responses;     ///< Responses from the worker
-    ZixRing* plugin_to_ui;  ///< Port events from plugin
-    ZixRing* ui_to_plugin;  ///< Port events from UI
-    void*    ui_event_buf;  ///< Buffer for reading UI port events
-    void*    response;      ///< Worker response buffer
-    ZixSem   sem;           ///< Worker semaphore
-    ZixThread thread;       ///< Worker thread
-    LV2_Atom_Forge m_forge; ///< Atom forge
-    bool     threaded;      ///< Run work in another thread
-    ZixSem  work_lock;      ///< Lock for plugin work() method
-    bool    m_exit;         ///< True iff execution is finished
-    bool    m_safe_restore;   ///< Plugin restore() is thread-safe
-    size_t  m_atom_buf_size;
+    ZixRing* _zix_requests;      ///< Requests to the worker
+    ZixRing* _zix_responses;     ///< Responses from the worker
+    ZixRing* _plugin_to_ui;  ///< Port events from plugin
+    ZixRing* _ui_to_plugin;  ///< Port events from UI
+    void*    _ui_event_buf;  ///< Buffer for reading UI port events
+    void*    _worker_response;      ///< Worker response buffer
+    ZixSem   _zix_sem;           ///< Worker semaphore
+    ZixThread _zix_thread;       ///< Worker thread
+    LV2_Atom_Forge _atom_forge; ///< Atom forge
+    bool     _b_threaded;      ///< Run work in another thread
+    ZixSem  _work_lock;      ///< Lock for plugin work() method
+    bool    _exit_process;         ///< True iff execution is finished
+    bool    _safe_restore;   ///< Plugin restore() is thread-safe
+    size_t  _atom_buffer_size;
 
     std::vector<Port> atom_input;
     std::vector<Port> atom_output;
