@@ -110,19 +110,19 @@ public:
     int _atom_outs;
     bool _loading_from_file;
 
-    ZixRing* _zix_requests;      ///< Requests to the worker
-    ZixRing* _zix_responses;     ///< Responses from the worker
-    ZixRing* _plugin_to_ui;  ///< Port events from plugin
-    ZixRing* _ui_to_plugin;  ///< Port events from UI
-    void*    _ui_event_buf;  ///< Buffer for reading UI port events
+    ZixRing* _zix_requests;         ///< Requests to the worker
+    ZixRing* _zix_responses;        ///< Responses from the worker
+    ZixRing* _plugin_to_ui;         ///< Port events from plugin
+    ZixRing* _ui_to_plugin;         ///< Port events from UI
+    void*    _ui_event_buf;         ///< Buffer for reading UI port events
     void*    _worker_response;      ///< Worker response buffer
-    ZixSem   _zix_sem;           ///< Worker semaphore
-    ZixThread _zix_thread;       ///< Worker thread
-    LV2_Atom_Forge _atom_forge; ///< Atom forge
-    bool     _b_threaded;      ///< Run work in another thread
-    ZixSem  _work_lock;      ///< Lock for plugin work() method
-    bool    _exit_process;         ///< True iff execution is finished
-    bool    _safe_restore;   ///< Plugin restore() is thread-safe
+    ZixSem   _zix_sem;              ///< Worker semaphore
+    ZixThread _zix_thread;          ///< Worker thread
+    LV2_Atom_Forge _atom_forge;     ///< Atom forge
+    bool     _b_threaded;           ///< Run work in another thread
+    ZixSem  _work_lock;             ///< Lock for plugin work() method
+    bool    _exit_process;          ///< True iff execution is finished
+    bool    _safe_restore;          ///< Plugin restore() is thread-safe
     size_t  _atom_buffer_size;
 
     std::vector<Port> atom_input;
@@ -154,13 +154,13 @@ private:
 public:
 
 #ifdef USE_SUIL
-    SuilHost*     _ui_host;             ///< Plugin UI host support
-    SuilInstance* _ui_instance;         ///< Plugin UI instance (shared library)
+    SuilHost*     _ui_host;                 ///< Plugin UI host support
+    SuilInstance* _ui_instance;             ///< Plugin UI instance (shared library)
     bool          _use_showInterface;
     bool          _use_X11_interface;
-    LilvUIs*      _all_uis;             ///< All plugin UIs (RDF data)
-    const LilvUI*    _lilv_user_interface;       ///< Plugin UI (RDF data)
-    const LilvNode*  _lilv_ui_type;     ///< Plugin UI type (unwrapped)
+    LilvUIs*      _all_uis;                 ///< All plugin UIs (RDF data)
+    const LilvUI*    _lilv_user_interface;  ///< Plugin UI (RDF data)
+    const LilvNode*  _lilv_ui_type;         ///< Plugin UI type (unwrapped)
 
 #ifdef LV2_EXTERNAL_UI
     bool          _use_external_ui;

@@ -139,6 +139,7 @@ public:
         };
     };
 
+    /* LV2 */
     struct EnumeratorScalePoints
     {
         std::string Label;
@@ -491,7 +492,7 @@ public:
         // FIXME encapsulate
         const LilvNode* _property;
         LilvNode*   _lilv_symbol;       ///< Symbol
-	LilvNode*   _lilv_label;             ///< Human readable label
+	LilvNode*   _lilv_label;        ///< Human readable label
         LV2_URID    _property_mapped;   ///< Iff type == PROPERTY
         bool _clear_input_buffer;
         bool _need_file_update;
