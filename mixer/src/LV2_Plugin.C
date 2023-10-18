@@ -153,10 +153,10 @@ LV2_Plugin::update_control_parameters(int choice)
 {
     const Lv2WorldClass& lv2World = Lv2WorldClass::getInstance();
 
-    DMESSAGE("PresetList[%d].URI = %s", choice, PresetList[choice].URI);
+    DMESSAGE("PresetList[%d].URI = %s", choice, _PresetList[choice].URI);
 
-    LilvState *state = lv2World.getStateFromURI(PresetList[choice].URI, _uridMapFt);
-    lilv_state_restore(state, m_instance,  mixer_lv2_set_port_value, this, 0, NULL);
+    LilvState *state = lv2World.getStateFromURI(_PresetList[choice].URI, _uridMapFt);
+    lilv_state_restore(state, _lilv_instance,  mixer_lv2_set_port_value, this, 0, NULL);
 
     lilv_state_free(state);
 }
@@ -212,8 +212,8 @@ LV2_Plugin::save_LV2_plugin_state(const std::string directory)
     DMESSAGE("Saving plugin state to %s", directory.c_str());
 
     LilvState* const state =
-        lilv_state_new_from_instance(m_plugin,
-                                 m_instance,
+        lilv_state_new_from_instance(_lilv_plugin,
+                                 _lilv_instance,
                                  _uridMapFt,
                                  NULL,
                                  directory.c_str(),
@@ -225,7 +225,7 @@ LV2_Plugin::save_LV2_plugin_state(const std::string directory)
                                  NULL);
 
     lilv_state_save(
-        m_lilvWorld, _uridMapFt, _uridUnmapFt, state, NULL, directory.c_str(), "state.ttl");
+        _lilvWorld, _uridMapFt, _uridUnmapFt, state, NULL, directory.c_str(), "state.ttl");
 
     lilv_state_free(state);
 }
@@ -238,7 +238,7 @@ LV2_Plugin::restore_LV2_plugin_state(const std::string directory)
 
     LilvState* state      = NULL;
 
-    state = lilv_state_new_from_file(m_lilvWorld, _uridMapFt, NULL, path.c_str());
+    state = lilv_state_new_from_file(_lilvWorld, _uridMapFt, NULL, path.c_str());
 
     if (!state)
     {
@@ -248,7 +248,7 @@ LV2_Plugin::restore_LV2_plugin_state(const std::string directory)
 
     DMESSAGE("Restoring plugin state from %s", path.c_str());
 
-    lilv_state_restore(state, m_instance,  mixer_lv2_set_port_value, this, 0, _idata->lv2.features);
+    lilv_state_restore(state, _lilv_instance,  mixer_lv2_set_port_value, this, 0, _idata->lv2.features);
 
     lilv_state_free(state);
 }
@@ -390,7 +390,7 @@ worker_func(void* data)
             zix_sem_wait(&worker->work_lock);
             
             worker->_idata->lv2.ext.worker->work(
-                worker->m_instance->lv2_handle, non_worker_respond, worker, size, buf);
+                worker->_lilv_instance->lv2_handle, non_worker_respond, worker, size, buf);
 
             zix_sem_post(&worker->work_lock);
         }
@@ -436,7 +436,7 @@ lv2_non_worker_schedule(LV2_Worker_Schedule_Handle handle,
         zix_sem_wait(&worker->work_lock);
 
         st = worker->_idata->lv2.ext.worker->work(
-        worker->m_instance->lv2_handle, non_worker_respond, worker, size, data);
+        worker->_lilv_instance->lv2_handle, non_worker_respond, worker, size, data);
 
         zix_sem_post(&worker->work_lock);
     }
@@ -641,7 +641,7 @@ LV2_Plugin::~LV2_Plugin ( )
     plugin_instances( 0 );
     
 #ifdef PRESET_SUPPORT
-    lilv_world_free(m_lilvWorld);
+    lilv_world_free(_lilvWorld);
 #endif
 
 #ifdef LV2_MIDI_SUPPORT
@@ -681,11 +681,11 @@ LV2_Plugin::load_plugin ( const char* uri )
     _idata->lv2.rdf_data = lv2_rdf_new( uri, true );
 
 #ifdef PRESET_SUPPORT
-    PresetList = _idata->lv2.rdf_data->PresetListStructs;
+    _PresetList = _idata->lv2.rdf_data->PresetListStructs;
     _uridMapFt =  (LV2_URID_Map*) _idata->lv2.features[Plugin_Feature_URID_Map]->data;
     _uridUnmapFt = (LV2_URID_Unmap*) _idata->lv2.features[Plugin_Feature_URID_Unmap]->data;
     LilvNode* plugin_uri = lilv_new_uri(get_lilv_world(), uri);
-    m_plugin = lilv_plugins_get_by_uri(get_lilv_plugins(), plugin_uri);
+    _lilv_plugin = lilv_plugins_get_by_uri(get_lilv_plugins(), plugin_uri);
     lilv_node_free(plugin_uri);
 #endif
 
@@ -1094,7 +1094,7 @@ LV2_Plugin::load_plugin ( const char* uri )
             LilvState* const state = Lv2WorldClass::getInstance().getStateFromURI(uri, (LV2_URID_Map*) uridMap);
 
             /* Set any files for the plugin - no need to update control parameters since they are already set */
-            lilv_state_restore(state, m_instance,  mixer_lv2_set_port_value, this, 0, _idata->lv2.features);
+            lilv_state_restore(state, _lilv_instance,  mixer_lv2_set_port_value, this, 0, _idata->lv2.features);
 
             lilv_state_free(state);
         }
@@ -1484,17 +1484,17 @@ LV2_Plugin::plugin_instances ( unsigned int n )
 
             void* h;
 
-            m_instance = lilv_plugin_instantiate(m_plugin,  sample_rate(), _idata->lv2.features);
+            _lilv_instance = lilv_plugin_instantiate(_lilv_plugin,  sample_rate(), _idata->lv2.features);
 
-            if ( ! m_instance )
+            if ( ! _lilv_instance )
             {
                 WARNING( "Failed to instantiate plugin" );
                 return false;
             }
             else
             {
-                h = m_instance->lv2_handle;
-                _idata->lv2.descriptor = m_instance->lv2_descriptor;    // probably not necessary
+                h = _lilv_instance->lv2_handle;
+                _idata->lv2.descriptor = _lilv_instance->lv2_descriptor;    // probably not necessary
             }
 
             DMESSAGE( "Instantiated: %p", h );
@@ -1807,9 +1807,9 @@ _Pragma("GCC diagnostic pop")
 #endif
     
 #ifdef PRESET_SUPPORT
-    m_lilvWorld = lilv_world_new();
-    lilv_world_load_all(m_lilvWorld);
-    m_lilvPlugins = lilv_world_get_all_plugins(m_lilvWorld);
+    _lilvWorld = lilv_world_new();
+    lilv_world_load_all(_lilvWorld);
+    _lilvPlugins = lilv_world_get_all_plugins(_lilvWorld);
 #endif
     
 #ifdef USE_SUIL
@@ -2016,10 +2016,10 @@ LV2_Plugin::write_atom_event(ZixRing* target, const uint32_t    port_index,
 size_t
 LV2_Plugin::get_atom_buffer_size(int port_index)
 {
-    const LilvPort* lilv_port = lilv_plugin_get_port_by_index(m_plugin, port_index);
-    const LilvNode * minimumSize = lilv_new_uri(m_lilvWorld, LV2_RESIZE_PORT__minimumSize);
+    const LilvPort* lilv_port = lilv_plugin_get_port_by_index(_lilv_plugin, port_index);
+    const LilvNode * minimumSize = lilv_new_uri(_lilvWorld, LV2_RESIZE_PORT__minimumSize);
 
-    LilvNode* min_size = lilv_port_get(m_plugin, lilv_port, minimumSize);
+    LilvNode* min_size = lilv_port_get(_lilv_plugin, lilv_port, minimumSize);
 
     size_t buf_size = ATOM_BUFFER_SIZE;
 
@@ -2251,8 +2251,8 @@ LV2_Plugin::process_atom_out_events( uint32_t nframes, unsigned int port )
 void
 LV2_Plugin::set_lv2_port_properties (Port * port, bool writable )
 {
-    const LilvPlugin* plugin         = m_plugin;
-    LilvWorld*        world          = m_lilvWorld;
+    const LilvPlugin* plugin         = _lilv_plugin;
+    LilvWorld*        world          = _lilvWorld;
     LilvNode*         patch_writable = lilv_new_uri(world, LV2_PATCH__writable);
     LilvNode*         patch_readable = lilv_new_uri(world, LV2_PATCH__readable);
 
@@ -2399,7 +2399,7 @@ LV2_Plugin::try_custom_ui()
     }
 
     _idata->lv2.ext.ext_data.data_access =
-        lilv_instance_get_descriptor(m_instance)->extension_data;
+        lilv_instance_get_descriptor(_lilv_instance)->extension_data;
     const LV2UI_Idle_Interface* idle_iface = NULL;
     const LV2UI_Show_Interface* show_iface = NULL; 
     
@@ -2479,7 +2479,7 @@ LV2_Plugin::custom_ui_instantiate()
     m_ui_host = suil_host_new(send_to_plugin, ui_port_index, NULL, NULL);
 
     /* Get a plugin UI */
-    m_uis = lilv_plugin_get_uis(m_plugin);
+    m_uis = lilv_plugin_get_uis(_lilv_plugin);
 
     m_use_showInterface = false;
     const char* native_ui_type;
@@ -2548,7 +2548,7 @@ LV2_Plugin::custom_ui_instantiate()
     const LV2_Feature parent_feature {LV2_UI__parent, parent};
 
     const LV2_Feature instance_feature = {
-        LV2_INSTANCE_ACCESS_URI, lilv_instance_get_handle(m_instance)};
+        LV2_INSTANCE_ACCESS_URI, lilv_instance_get_handle(_lilv_instance)};
 
     const LV2_Feature data_feature = {LV2_DATA_ACCESS_URI,
                                       &_idata->lv2.ext.ext_data};
@@ -2582,7 +2582,7 @@ LV2_Plugin::custom_ui_instantiate()
       suil_instance_new(m_ui_host,
                         this,
                         native_ui_type,
-                        lilv_node_as_uri(lilv_plugin_get_uri(m_plugin)),
+                        lilv_node_as_uri(lilv_plugin_get_uri(_lilv_plugin)),
                         lilv_node_as_uri(lilv_ui_get_uri(m_ui)),
                         lilv_node_as_uri(m_ui_type),
                         bundle_path,
@@ -2612,7 +2612,7 @@ LV2_Plugin::try_X11_ui (const char* native_ui_type)
 
     if (native_ui_type)
     {
-        LilvNode* host_type = lilv_new_uri(m_lilvWorld, native_ui_type);
+        LilvNode* host_type = lilv_new_uri(_lilvWorld, native_ui_type);
 
         LILV_FOREACH (uis, u, m_uis)
         {
@@ -2644,7 +2644,7 @@ LV2_Plugin::try_external_ui (const char* native_ui_type)
 
     if (native_ui_type)
     {
-        LilvNode* host_type = lilv_new_uri(m_lilvWorld, native_ui_type);
+        LilvNode* host_type = lilv_new_uri(_lilvWorld, native_ui_type);
 
         LILV_FOREACH (uis, u, m_uis)
         {
@@ -2672,8 +2672,8 @@ LV2_Plugin::try_external_ui (const char* native_ui_type)
 const LilvUI*
 LV2_Plugin::try_showInterface_ui(const char* native_ui_type)
 {
-    LilvNode*   lv2_extensionData = lilv_new_uri(m_lilvWorld, LV2_CORE__extensionData);
-    LilvNode*   ui_showInterface = lilv_new_uri(m_lilvWorld, LV2_UI__showInterface);
+    LilvNode*   lv2_extensionData = lilv_new_uri(_lilvWorld, LV2_CORE__extensionData);
+    LilvNode*   ui_showInterface = lilv_new_uri(_lilvWorld, LV2_UI__showInterface);
     const LilvUI* native_ui = NULL;
 
     /* Try to find a UI with ui:showInterface */
@@ -2684,14 +2684,14 @@ LV2_Plugin::try_showInterface_ui(const char* native_ui_type)
             const LilvUI*   ui      = lilv_uis_get(m_uis, u);
             const LilvNode* ui_node = lilv_ui_get_uri(ui);
 
-            lilv_world_load_resource(m_lilvWorld, ui_node);
+            lilv_world_load_resource(_lilvWorld, ui_node);
 
-            const bool supported = lilv_world_ask(m_lilvWorld,
+            const bool supported = lilv_world_ask(_lilvWorld,
                                                   ui_node,
                                                   lv2_extensionData,
                                                   ui_showInterface);
 
-            lilv_world_unload_resource(m_lilvWorld, ui_node);
+            lilv_world_unload_resource(_lilvWorld, ui_node);
 
             if (supported)
             {
@@ -2712,7 +2712,7 @@ LV2_Plugin::try_showInterface_ui(const char* native_ui_type)
         return NULL;
     }
 
-    LilvNode* host_type = lilv_new_uri(m_lilvWorld, native_ui_type);
+    LilvNode* host_type = lilv_new_uri(_lilvWorld, native_ui_type);
 
     if (!lilv_ui_is_supported(
               native_ui, suil_ui_supported, host_type, &m_ui_type))
@@ -3327,10 +3327,10 @@ LV2_Plugin::process ( nframes_t nframes )
             // FIXME
             // jalv_worker_emit_responses(&jalv->state_worker, jalv->instance);
             // non_worker_emit_responses(&jalv->state_worker, jalv->instance);
-            non_worker_emit_responses(m_instance);
+            non_worker_emit_responses(_lilv_instance);
             if ( _idata->lv2.ext.worker && _idata->lv2.ext.worker->end_run)
             {
-                _idata->lv2.ext.worker->end_run(m_instance->lv2_handle);
+                _idata->lv2.ext.worker->end_run(_lilv_instance->lv2_handle);
             }
         }
 #endif

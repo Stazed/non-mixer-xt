@@ -82,15 +82,15 @@ public:
     void thaw_ports ( void );
 
 #ifdef PRESET_SUPPORT
-    std::vector<LV2_RDF_Preset> PresetList;
-    const LilvPlugin*     m_plugin;     /**< Plugin "class" (actually just a few strings) */
-    LilvWorld* 	m_lilvWorld{};
-    const LilvPlugins*	m_lilvPlugins{};
-    LilvInstance*   m_instance{};       /**< Plugin "instance" (loaded shared lib) */
+    std::vector<LV2_RDF_Preset> _PresetList;
+    const LilvPlugin*     _lilv_plugin;     /**< Plugin "class" (actually just a few strings) */
+    LilvWorld* 	_lilvWorld{};
+    const LilvPlugins*	_lilvPlugins{};
+    LilvInstance*   _lilv_instance{};       /**< Plugin "instance" (loaded shared lib) */
     LV2_URID_Map* _uridMapFt;
-    LilvWorld* get_lilv_world() {return m_lilvWorld;}
-    const LilvPlugin* get_slv2_plugin() const {return m_plugin; }
-    const LilvPlugins* get_lilv_plugins() const {return m_lilvPlugins; }
+    LilvWorld* get_lilv_world() {return _lilvWorld;}
+    const LilvPlugin* get_slv2_plugin() const {return _lilv_plugin; }
+    const LilvPlugins* get_lilv_plugins() const {return _lilvPlugins; }
 
     void set_control_value(unsigned long port_index, float value);
     void update_control_parameters(int choice);

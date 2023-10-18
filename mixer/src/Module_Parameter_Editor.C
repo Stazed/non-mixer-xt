@@ -100,12 +100,12 @@ Module_Parameter_Editor::Module_Parameter_Editor ( Module *module ) : Fl_Double_
 #ifdef PRESET_SUPPORT
             LV2_Plugin *pm = static_cast<LV2_Plugin *> (_module);
             
-            if( !pm->PresetList.empty() )
+            if( !pm->_PresetList.empty() )
             {
                 { Fl_Choice *o = LV2_presets_choice = new Fl_Choice( 5, 0, 200, 24 );
-                    for(unsigned i = 0; i < pm->PresetList.size(); ++i)
+                    for(unsigned i = 0; i < pm->_PresetList.size(); ++i)
                     {
-                        std::string temp = pm->PresetList[i].Label;
+                        std::string temp = pm->_PresetList[i].Label;
 
                         /* FLTK assumes '/' to be sub-menu, so we have to search the Label and escape it */
                         for (unsigned ii = 0; ii < temp.size(); ++ii)
