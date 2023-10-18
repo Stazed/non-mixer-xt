@@ -176,17 +176,17 @@ public:
 
   /* X window for custom plugin ui */
 #ifdef USE_CARLA
-    Display* fDisplay;
-    Window   fHostWindow;
-    Window   fChildWindow;
-    bool     fChildWindowConfigured;
-    bool     fChildWindowMonitoring;
-    bool     fIsVisible;
-    bool     fFirstShow;
-    bool     fSetSizeCalledAtLeastOnce;
-    bool     fIsIdling;
-    bool     fIsResizable;
-    EventProcPtr fEventProc;
+    Display* _x_display;
+    Window   _x_host_window;
+    Window   _x_child_window;
+    bool     _x_child_window_configured;
+    bool     _x_child_window_monitoring;
+    bool     _x_is_visible;
+    bool     _x_first_show;
+    bool     _x_set_size_called_at_least_Once;
+    bool     _x_is_idling;
+    bool     _x_is_resizable;
+    EventProcPtr _x_event_proc;
 private:
     void show_custom_ui();
     void hide_custom_ui();

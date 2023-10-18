@@ -542,8 +542,8 @@ x_resize(LV2UI_Feature_Handle handle, int width, int height)
 
 #ifdef USE_CARLA
 
-    XResizeWindow(pLv2Plugin->fDisplay, pLv2Plugin->fHostWindow, width, height );
-    XSync(pLv2Plugin->fDisplay, False);
+    XResizeWindow(pLv2Plugin->_x_display, pLv2Plugin->_x_host_window, width, height );
+    XSync(pLv2Plugin->_x_display, False);
 
 #endif
 
@@ -563,7 +563,7 @@ static void mixer_lv2_ui_closed ( LV2UI_Controller ui_controller )
     DMESSAGE("Closing External UI");
 
     // Just flag up the closure...
-    pLv2Plugin->fIsVisible = false;
+    pLv2Plugin->_x_is_visible = false;
 }
 #endif // LV2_EXTERNAL_UI
 #endif // USE_SUIL
@@ -598,7 +598,7 @@ LV2_Plugin::~LV2_Plugin ( )
     }
 
 #ifdef USE_SUIL
-    if (fIsVisible)
+    if (_x_is_visible)
     {
         if(_use_external_ui)
         {
@@ -1821,17 +1821,17 @@ _Pragma("GCC diagnostic pop")
     _use_external_ui = false;
 #endif
 #ifdef USE_CARLA
-    fDisplay = nullptr;
-    fHostWindow = 0;
-    fChildWindow = 0;
-    fChildWindowConfigured = false;
-    fChildWindowMonitoring = false; // fChildWindowMonitoring(isResizable || canMonitorChildren) // FIXME
-    fIsVisible = false;
-    fFirstShow = true;
-    fSetSizeCalledAtLeastOnce = false;
-    fIsIdling = false;
-    fIsResizable = false;
-    fEventProc = nullptr;
+    _x_display = nullptr;
+    _x_host_window = 0;
+    _x_child_window = 0;
+    _x_child_window_configured = false;
+    _x_child_window_monitoring = false; // _x_child_window_monitoring(isResizable || canMonitorChildren) // FIXME
+    _x_is_visible = false;
+    _x_first_show = true;
+    _x_set_size_called_at_least_Once = false;
+    _x_is_idling = false;
+    _x_is_resizable = false;
+    _x_event_proc = nullptr;
 #endif  // USE_CARLA
 #endif  // USE_SUIL
 }
@@ -2236,7 +2236,7 @@ LV2_Plugin::process_atom_out_events( uint32_t nframes, unsigned int port )
             jack_midi_event_write(buf, frames, (jack_midi_data_t*) body, size);
         }
 
-        if( (_ui_instance && fIsVisible) || (_editor && _editor->visible()) )
+        if( (_ui_instance && _x_is_visible) || (_editor && _editor->visible()) )
         {
             DMESSAGE("SEND to UI index = %d", atom_output[port].hints.plug_port_index);
             write_atom_event(_plugin_to_ui, atom_output[port].hints.plug_port_index, size, type, body);
@@ -2386,7 +2386,7 @@ LV2_Plugin::try_custom_ui()
     /* Toggle show and hide */
     if(_ui_instance)
     {
-        if (fIsVisible)
+        if (_x_is_visible)
         {
             close_custom_ui();
             return true;
@@ -2429,7 +2429,7 @@ LV2_Plugin::try_custom_ui()
             else   // X11 embedded
             {
 #ifdef USE_CARLA
-                fChildWindow = getChildWindow();
+                _x_child_window = getChildWindow();
 #endif
             }
         }
@@ -2534,7 +2534,7 @@ LV2_Plugin::custom_ui_instantiate()
         /* We seem to have an accepted ui, so lets try to embed it in an X window*/
         init_x();
 #ifdef USE_CARLA
-        parent = (LV2UI_Widget) fHostWindow;
+        parent = (LV2UI_Widget) _x_host_window;
 #endif
     }
 
@@ -2807,18 +2807,18 @@ LV2_Plugin::custom_update_ui()
     {
 #ifdef USE_CARLA
         // prevent recursion
-        if (fIsIdling) return;
+        if (_x_is_idling) return;
 
         int nextWidth = 0;
         int nextHeight = 0;
 
-        fIsIdling = true;
+        _x_is_idling = true;
 
-        for (XEvent event; XPending(fDisplay) > 0;)
+        for (XEvent event; XPending(_x_display) > 0;)
         {
-            XNextEvent(fDisplay, &event);
+            XNextEvent(_x_display, &event);
 
-            if (! fIsVisible)
+            if (! _x_is_visible)
                 continue;
 
             char* type = nullptr;
@@ -2829,14 +2829,14 @@ LV2_Plugin::custom_update_ui()
                 NON_SAFE_ASSERT_CONTINUE(event.xconfigure.width > 0);
                 NON_SAFE_ASSERT_CONTINUE(event.xconfigure.height > 0);
 
-                if (event.xconfigure.window == fHostWindow)
+                if (event.xconfigure.window == _x_host_window)
                 {
                     const uint width  = static_cast<uint>(event.xconfigure.width);
                     const uint height = static_cast<uint>(event.xconfigure.height);
 
-                    if (fChildWindow != 0)
+                    if (_x_child_window != 0)
                     {
-                        if (! fChildWindowConfigured)
+                        if (! _x_child_window_configured)
                         {
                             pthread_mutex_lock(&gErrorMutex);
                             const XErrorHandler oldErrorHandler = XSetErrorHandler(temporaryErrorHandler);
@@ -2845,26 +2845,26 @@ LV2_Plugin::custom_update_ui()
                             XSizeHints sizeHints;
                             non_zeroStruct(sizeHints);
 
-                            if (XGetNormalHints(fDisplay, fChildWindow, &sizeHints) && !gErrorTriggered)
+                            if (XGetNormalHints(_x_display, _x_child_window, &sizeHints) && !gErrorTriggered)
                             {
-                                XSetNormalHints(fDisplay, fHostWindow, &sizeHints);
+                                XSetNormalHints(_x_display, _x_host_window, &sizeHints);
                             }
                             else
                             {
                                 WARNING("Caught errors while accessing child window");
-                                fChildWindow = 0;
+                                _x_child_window = 0;
                             }
 
-                            fChildWindowConfigured = true;
+                            _x_child_window_configured = true;
                             XSetErrorHandler(oldErrorHandler);
                             pthread_mutex_unlock(&gErrorMutex);
                         }
 
-                        if (fChildWindow != 0)
-                            XResizeWindow(fDisplay, fChildWindow, width, height);
+                        if (_x_child_window != 0)
+                            XResizeWindow(_x_display, _x_child_window, width, height);
                     }
                 }
-                else if (fChildWindowMonitoring && event.xconfigure.window == fChildWindow && fChildWindow != 0)
+                else if (_x_child_window_monitoring && event.xconfigure.window == _x_child_window && _x_child_window != 0)
                 {
                     nextWidth = event.xconfigure.width;
                     nextHeight = event.xconfigure.height;
@@ -2872,12 +2872,12 @@ LV2_Plugin::custom_update_ui()
                 break;
 
             case ClientMessage:
-                type = XGetAtomName(fDisplay, event.xclient.message_type);
+                type = XGetAtomName(_x_display, event.xclient.message_type);
                 NON_SAFE_ASSERT_CONTINUE(type != nullptr);
 
                 if (std::strcmp(type, "WM_PROTOCOLS") == 0)
                 {
-                    fIsVisible = false;
+                    _x_is_visible = false;
                 }
                 break;
 
@@ -2885,52 +2885,52 @@ LV2_Plugin::custom_update_ui()
                 /* Escape key to close */
                 if (event.xkey.keycode == X11Key_Escape )
                 {
-                    fIsVisible = false;
+                    _x_is_visible = false;
                 }
                 /* CTRL W to close */
                 else if(event.xkey.keycode == X11Key_W)
                 {
                     if ((event.xkey.state & (ShiftMask | ControlMask | Mod1Mask | Mod4Mask)) == (ControlMask))
                     {
-                        fIsVisible = false;
+                        _x_is_visible = false;
                     }
                 }
                     
                 break;
 
             case FocusIn:
-                if (fChildWindow == 0)
-                    fChildWindow = getChildWindow();
-                if (fChildWindow != 0)
+                if (_x_child_window == 0)
+                    _x_child_window = getChildWindow();
+                if (_x_child_window != 0)
                 {
                     XWindowAttributes wa;
                     non_zeroStruct(wa);
 
-                    if (XGetWindowAttributes(fDisplay, fChildWindow, &wa) && wa.map_state == IsViewable)
-                        XSetInputFocus(fDisplay, fChildWindow, RevertToPointerRoot, CurrentTime);
+                    if (XGetWindowAttributes(_x_display, _x_child_window, &wa) && wa.map_state == IsViewable)
+                        XSetInputFocus(_x_display, _x_child_window, RevertToPointerRoot, CurrentTime);
                 }
                 break;
             }
 
             if (type != nullptr)
                 XFree(type);
-            else if (fEventProc != nullptr && event.type != FocusIn && event.type != FocusOut)
-                fEventProc(&event);
+            else if (_x_event_proc != nullptr && event.type != FocusIn && event.type != FocusOut)
+                _x_event_proc(&event);
         }
 
-        if (nextWidth != 0 && nextHeight != 0 && fChildWindow != 0)
+        if (nextWidth != 0 && nextHeight != 0 && _x_child_window != 0)
         {
             XSizeHints sizeHints;
             non_zeroStruct(sizeHints);
 
-            if (XGetNormalHints(fDisplay, fChildWindow, &sizeHints))
-                XSetNormalHints(fDisplay, fHostWindow, &sizeHints);
+            if (XGetNormalHints(_x_display, _x_child_window, &sizeHints))
+                XSetNormalHints(_x_display, _x_host_window, &sizeHints);
 
-            XResizeWindow(fDisplay, fHostWindow, static_cast<uint>(nextWidth), static_cast<uint>(nextHeight));
-            XFlush(fDisplay);
+            XResizeWindow(_x_display, _x_host_window, static_cast<uint>(nextWidth), static_cast<uint>(nextHeight));
+            XFlush(_x_display);
         }
 
-        fIsIdling = false;
+        _x_is_idling = false;
 #endif  //  USE_CARLA
     }
 
@@ -2939,11 +2939,11 @@ LV2_Plugin::custom_update_ui()
         if (_idata->lv2.ext.idle_iface->idle(suil_instance_get_handle(_ui_instance)))
         {
             DMESSAGE("INTERFACE CLOSED");
-            fIsVisible = false;
+            _x_is_visible = false;
         }
     }
 
-    if(fIsVisible)
+    if(_x_is_visible)
     {
         update_custom_ui();
         Fl::repeat_timeout( 0.03f, &LV2_Plugin::custom_update_ui, this );
@@ -2958,54 +2958,54 @@ void
 LV2_Plugin::init_x()
 {
 #ifdef USE_CARLA
-    fChildWindowMonitoring = fIsResizable = isUiResizable();
+    _x_child_window_monitoring = _x_is_resizable = isUiResizable();
     
-    fDisplay = XOpenDisplay(nullptr);
-    NON_SAFE_ASSERT_RETURN(fDisplay != nullptr,);
+    _x_display = XOpenDisplay(nullptr);
+    NON_SAFE_ASSERT_RETURN(_x_display != nullptr,);
 
-    const int screen = DefaultScreen(fDisplay);
+    const int screen = DefaultScreen(_x_display);
 
     XSetWindowAttributes attr;
     non_zeroStruct(attr);
 
     attr.event_mask = KeyPressMask|KeyReleaseMask|FocusChangeMask;
 
-    if (fChildWindowMonitoring)
+    if (_x_child_window_monitoring)
         attr.event_mask |= StructureNotifyMask|SubstructureNotifyMask;
 
-    fHostWindow = XCreateWindow(fDisplay, RootWindow(fDisplay, screen),
+    _x_host_window = XCreateWindow(_x_display, RootWindow(_x_display, screen),
                                 0, 0, 300, 300, 0,
-                                DefaultDepth(fDisplay, screen),
+                                DefaultDepth(_x_display, screen),
                                 InputOutput,
-                                DefaultVisual(fDisplay, screen),
+                                DefaultVisual(_x_display, screen),
                                 CWBorderPixel|CWEventMask, &attr);
 
-    NON_SAFE_ASSERT_RETURN(fHostWindow != 0,);
+    NON_SAFE_ASSERT_RETURN(_x_host_window != 0,);
 
-    XSetStandardProperties(fDisplay, fHostWindow, label(), label(), None, NULL, 0, NULL);
+    XSetStandardProperties(_x_display, _x_host_window, label(), label(), None, NULL, 0, NULL);
 
-    XGrabKey(fDisplay, X11Key_Escape, AnyModifier, fHostWindow, 1, GrabModeAsync, GrabModeAsync);
-    XGrabKey(fDisplay, X11Key_W, AnyModifier, fHostWindow, 1, GrabModeAsync, GrabModeAsync);
+    XGrabKey(_x_display, X11Key_Escape, AnyModifier, _x_host_window, 1, GrabModeAsync, GrabModeAsync);
+    XGrabKey(_x_display, X11Key_W, AnyModifier, _x_host_window, 1, GrabModeAsync, GrabModeAsync);
 
-    Atom wmDelete = XInternAtom(fDisplay, "WM_DELETE_WINDOW", True);
-    XSetWMProtocols(fDisplay, fHostWindow, &wmDelete, 1);
+    Atom wmDelete = XInternAtom(_x_display, "WM_DELETE_WINDOW", True);
+    XSetWMProtocols(_x_display, _x_host_window, &wmDelete, 1);
 
     const pid_t pid = getpid();
-    const Atom _nwp = XInternAtom(fDisplay, "_NET_WM_PID", False);
-    XChangeProperty(fDisplay, fHostWindow, _nwp, XA_CARDINAL, 32, PropModeReplace, (const uchar*)&pid, 1);
+    const Atom _nwp = XInternAtom(_x_display, "_NET_WM_PID", False);
+    XChangeProperty(_x_display, _x_host_window, _nwp, XA_CARDINAL, 32, PropModeReplace, (const uchar*)&pid, 1);
 
-    const Atom _nwi = XInternAtom(fDisplay, "_NET_WM_ICON", False);
-    XChangeProperty(fDisplay, fHostWindow, _nwi, XA_CARDINAL, 32, PropModeReplace, (const uchar*)sNonMixerX11Icon, sNonMixerX11IconSize);
+    const Atom _nwi = XInternAtom(_x_display, "_NET_WM_ICON", False);
+    XChangeProperty(_x_display, _x_host_window, _nwi, XA_CARDINAL, 32, PropModeReplace, (const uchar*)sNonMixerX11Icon, sNonMixerX11IconSize);
 
-    const Atom _wt = XInternAtom(fDisplay, "_NET_WM_WINDOW_TYPE", False);
+    const Atom _wt = XInternAtom(_x_display, "_NET_WM_WINDOW_TYPE", False);
 
     // Setting the window to both dialog and normal will produce a decorated floating dialog
     // Order is important: DIALOG needs to come before NORMAL
     const Atom _wts[2] = {
-        XInternAtom(fDisplay, "_NET_WM_WINDOW_TYPE_DIALOG", False),
-        XInternAtom(fDisplay, "_NET_WM_WINDOW_TYPE_NORMAL", False)
+        XInternAtom(_x_display, "_NET_WM_WINDOW_TYPE_DIALOG", False),
+        XInternAtom(_x_display, "_NET_WM_WINDOW_TYPE_NORMAL", False)
     };
-    XChangeProperty(fDisplay, fHostWindow, _wt, XA_ATOM, 32, PropModeReplace, (const uchar*)&_wts, 2);
+    XChangeProperty(_x_display, _x_host_window, _wt, XA_ATOM, 32, PropModeReplace, (const uchar*)&_wts, 2);
 #endif
 }
 
@@ -3018,7 +3018,7 @@ LV2_Plugin::close_custom_ui()
     if( _use_showInterface )
     {
         _idata->lv2.ext.ui_showInterface->hide(suil_instance_get_handle(_ui_instance));
-        fIsVisible = false;
+        _x_is_visible = false;
 
         /* For some unknown reason the Calf plugins idle interface does not get reset
            after the above ->hide is called. Any subsequent call to ->show then fails.
@@ -3034,7 +3034,7 @@ LV2_Plugin::close_custom_ui()
         if (_lv2_ui_widget)
             LV2_EXTERNAL_UI_HIDE((LV2_External_UI_Widget *) _lv2_ui_widget);
 
-        fIsVisible = false;
+        _x_is_visible = false;
 
         if(_ui_instance)
             suil_instance_free(_ui_instance);
@@ -3057,14 +3057,14 @@ Window
 LV2_Plugin::getChildWindow() const
 {
 #ifdef USE_CARLA
-    NON_SAFE_ASSERT_RETURN(fDisplay != nullptr, 0);
-    NON_SAFE_ASSERT_RETURN(fHostWindow != 0, 0);
+    NON_SAFE_ASSERT_RETURN(_x_display != nullptr, 0);
+    NON_SAFE_ASSERT_RETURN(_x_host_window != 0, 0);
 
     Window rootWindow, parentWindow, ret = 0;
     Window* childWindows = nullptr;
     uint numChildren = 0;
 
-    XQueryTree(fDisplay, fHostWindow, &rootWindow, &parentWindow, &childWindows, &numChildren);
+    XQueryTree(_x_display, _x_host_window, &rootWindow, &parentWindow, &childWindows, &numChildren);
 
     if (numChildren > 0 && childWindows != nullptr)
     {
@@ -3083,7 +3083,7 @@ LV2_Plugin::show_custom_ui()
     if( _use_showInterface )
     {
         _idata->lv2.ext.ui_showInterface->show(suil_instance_get_handle(_ui_instance));
-        fIsVisible = true;
+        _x_is_visible = true;
 
         Fl::add_timeout( 0.03f, &LV2_Plugin::custom_update_ui, this );
         return;
@@ -3094,19 +3094,19 @@ LV2_Plugin::show_custom_ui()
         if (_lv2_ui_widget)
             LV2_EXTERNAL_UI_SHOW((LV2_External_UI_Widget *) _lv2_ui_widget);
 
-        fIsVisible = true;
+        _x_is_visible = true;
         Fl::add_timeout( 0.03f, &LV2_Plugin::custom_update_ui, this );
         return;
     }
 #endif
-    NON_SAFE_ASSERT_RETURN(fDisplay != nullptr,);
-    NON_SAFE_ASSERT_RETURN(fHostWindow != 0,);
+    NON_SAFE_ASSERT_RETURN(_x_display != nullptr,);
+    NON_SAFE_ASSERT_RETURN(_x_host_window != 0,);
 
-    if (fFirstShow)
+    if (_x_first_show)
     {
         if (const Window childWindow = getChildWindow())
         {
-            if (! fSetSizeCalledAtLeastOnce)
+            if (! _x_set_size_called_at_least_Once)
             {
                 int width = 0;
                 int height = 0;
@@ -3118,7 +3118,7 @@ LV2_Plugin::show_custom_ui()
                 const XErrorHandler oldErrorHandler = XSetErrorHandler(temporaryErrorHandler);
                 gErrorTriggered = false;
 
-                if (XGetWindowAttributes(fDisplay, childWindow, &attrs))
+                if (XGetWindowAttributes(_x_display, childWindow, &attrs))
                 {
                     width = attrs.width;
                     height = attrs.height;
@@ -3132,7 +3132,7 @@ LV2_Plugin::show_custom_ui()
                     XSizeHints sizeHints;
                     non_zeroStruct(sizeHints);
 
-                    if (XGetNormalHints(fDisplay, childWindow, &sizeHints))
+                    if (XGetNormalHints(_x_display, childWindow, &sizeHints))
                     {
                         if (sizeHints.flags & PSize)
                         {
@@ -3148,10 +3148,10 @@ LV2_Plugin::show_custom_ui()
                 }
 
                 if (width > 1 && height > 1)
-                    setSize(static_cast<uint>(width), static_cast<uint>(height), false, fIsResizable);
+                    setSize(static_cast<uint>(width), static_cast<uint>(height), false, _x_is_resizable);
             }
 
-            const Atom _xevp = XInternAtom(fDisplay, "_XEventProc", False);
+            const Atom _xevp = XInternAtom(_x_display, "_XEventProc", False);
 
             pthread_mutex_lock(&gErrorMutex);
             const XErrorHandler oldErrorHandler(XSetErrorHandler(temporaryErrorHandler));
@@ -3162,7 +3162,7 @@ LV2_Plugin::show_custom_ui()
             ulong nitems, bytesAfter;
             uchar* data = nullptr;
 
-            XGetWindowProperty(fDisplay, childWindow, _xevp, 0, 1, False, AnyPropertyType,
+            XGetWindowProperty(_x_display, childWindow, _xevp, 0, 1, False, AnyPropertyType,
                                &actualType, &actualFormat, &nitems, &bytesAfter, &data);
 
             XSetErrorHandler(oldErrorHandler);
@@ -3170,17 +3170,17 @@ LV2_Plugin::show_custom_ui()
 
             if (nitems == 1 && ! gErrorTriggered)
             {
-                fEventProc = *reinterpret_cast<EventProcPtr*>(data);
-                XMapRaised(fDisplay, childWindow);
+                _x_event_proc = *reinterpret_cast<EventProcPtr*>(data);
+                XMapRaised(_x_display, childWindow);
             }
         }
     }
 
-    fIsVisible = true;
-    fFirstShow = false;
+    _x_is_visible = true;
+    _x_first_show = false;
 
-    XMapRaised(fDisplay, fHostWindow);
-    XSync(fDisplay, False);
+    XMapRaised(_x_display, _x_host_window);
+    XSync(_x_display, False);
 
     Fl::add_timeout( 0.03f, &LV2_Plugin::custom_update_ui, this );
 }
@@ -3188,27 +3188,27 @@ LV2_Plugin::show_custom_ui()
 void
 LV2_Plugin::hide_custom_ui()
 {
-    NON_SAFE_ASSERT_RETURN(fDisplay != nullptr,);
-    NON_SAFE_ASSERT_RETURN(fHostWindow != 0,);
+    NON_SAFE_ASSERT_RETURN(_x_display != nullptr,);
+    NON_SAFE_ASSERT_RETURN(_x_host_window != 0,);
 
-    fIsVisible = false;
-    XUnmapWindow(fDisplay, fHostWindow);
-    XFlush(fDisplay);
+    _x_is_visible = false;
+    XUnmapWindow(_x_display, _x_host_window);
+    XFlush(_x_display);
 }
 
 void
 LV2_Plugin::setSize(const uint width, const uint height, const bool forceUpdate, const bool resizeChild)
 {
-    NON_SAFE_ASSERT_RETURN(fDisplay != nullptr,);
-    NON_SAFE_ASSERT_RETURN(fHostWindow != 0,);
+    NON_SAFE_ASSERT_RETURN(_x_display != nullptr,);
+    NON_SAFE_ASSERT_RETURN(_x_host_window != 0,);
 
-    fSetSizeCalledAtLeastOnce = true;
-    XResizeWindow(fDisplay, fHostWindow, width, height);
+    _x_set_size_called_at_least_Once = true;
+    XResizeWindow(_x_display, _x_host_window, width, height);
 
-    if (fChildWindow != 0 && resizeChild)
-        XResizeWindow(fDisplay, fChildWindow, width, height);
+    if (_x_child_window != 0 && resizeChild)
+        XResizeWindow(_x_display, _x_child_window, width, height);
 
-    if (! fIsResizable)
+    if (! _x_is_resizable)
     {
         XSizeHints sizeHints;
         non_zeroStruct(sizeHints);
@@ -3221,11 +3221,11 @@ LV2_Plugin::setSize(const uint width, const uint height, const bool forceUpdate,
         sizeHints.max_width  = static_cast<int>(width);
         sizeHints.max_height = static_cast<int>(height);
 
-        XSetNormalHints(fDisplay, fHostWindow, &sizeHints);
+        XSetNormalHints(_x_display, _x_host_window, &sizeHints);
     }
 
     if (forceUpdate)
-        XSync(fDisplay, False);
+        XSync(_x_display, False);
 }
 
 bool
