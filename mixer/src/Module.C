@@ -50,7 +50,7 @@
 #include "Plugin_Chooser.H"
 
 #include "time.h"
-
+
 
 extern char *clipboard_dir;
 nframes_t Module::_buffer_size = 0;
@@ -58,7 +58,6 @@ nframes_t Module::_sample_rate = 0;
 Module *Module::_copied_module_empty = 0;
 char *Module::_copied_module_settings = 0;
 
-
 
 Module::Module ( int W, int H, const char *L ) : Fl_Group( 0, 0, W, H, L )
 {
@@ -149,8 +148,6 @@ Module::~Module ( )
     if ( parent() )
         parent()->remove( this );
 }
-
-
 
 
 void
@@ -346,14 +343,13 @@ Module::base_label ( const char *s )
 	_base_label = strdup(s);
 }
 
-
 
 void
 Module::Port::disconnect_from_strip ( Mixer_Strip *o )
 {
-    for ( std::list<Port*>::iterator i = _connected.begin(); i != _connected.end();  )
+    for ( std::list<Module::Port*>::iterator i = _connected.begin(); i != _connected.end();  )
     {
-        Port *p = *i;
+        Module::Port *p = *i;
 
 	++i;			/* iterator trick */
 	
@@ -467,7 +463,7 @@ Module::send_feedback ( bool force )
 }
 
 void
-Module::handle_control_changed ( Port *p )
+Module::handle_control_changed ( Module::Port *p )
 {
     if ( _editor )
         _editor->handle_control_changed ( p );
@@ -516,7 +512,7 @@ Module::handle_control_changed ( Port *p )
 char *
 Module::Port::generate_osc_path ()
 {
-    const Port *p = this;
+    const Module::Port *p = this;
 
     char *path = NULL;
 
@@ -802,8 +798,6 @@ Module::set ( Log_Entry &e )
     }
 }
 
-
-
 
 void
 Module::chain ( Chain *v )
@@ -1589,7 +1583,7 @@ Module::get_latency ( JACK::Port::direction_e dir, nframes_t *min, nframes_t *ma
     nframes_t tmin = JACK_MAX_FRAMES >> 1;
     nframes_t tmax = 0;
 
-    const std::vector<Port> *ports;
+    const std::vector<Module::Port> *ports;
 
     if ( dir == JACK::Port::Input )
         ports = &aux_audio_input;
