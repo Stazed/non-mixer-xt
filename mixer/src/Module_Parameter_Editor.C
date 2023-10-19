@@ -177,7 +177,6 @@ Module_Parameter_Editor::~Module_Parameter_Editor ( )
 {
 }
 
-
 
 void
 Module_Parameter_Editor::update_spectrum ( void )

@@ -164,7 +164,6 @@ Mixer::say_hello ( void )
 }
 
 
-
 
 static 
 Fl_Menu_Item *
@@ -1195,7 +1194,6 @@ Mixer::schedule_feedback ( void )
         ((Mixer_Strip*)mixer_strips->child(i))->schedule_feedback();
 }
 
-
 
 int
 Mixer::handle ( int m )

@@ -75,7 +75,6 @@ Group::~Group ( )
     deactivate();
 }
 
-
 void 
 Group::get ( Log_Entry &e ) const
 {
@@ -105,7 +104,6 @@ Group::set ( Log_Entry &e )
     }
 }
 
-
 
 /*************/
 /* Callbacks */

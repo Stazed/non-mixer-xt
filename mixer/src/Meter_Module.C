@@ -192,7 +192,6 @@ Meter_Module::configure_inputs ( int n )
     return true;
 }
 
-
 
 int
 Meter_Module::handle ( int m )
@@ -214,7 +213,6 @@ Meter_Module::handle ( int m )
     return Module::handle( m );
 }
 
-
 
 /**********/
 /* Engine */

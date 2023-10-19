@@ -202,7 +202,6 @@ Chain::client ( void )
     return strip()->group();
 }
 
-
 
 void
 Chain::get ( Log_Entry &e ) const
@@ -238,7 +237,6 @@ Chain::set ( Log_Entry &e )
     }
 }
 
-
 
 void
 Chain::log_children ( void ) const
@@ -921,7 +919,6 @@ Chain::strip ( Mixer_Strip * ms )
     _strip = ms;
 }
 
-
 
 void
 Chain::draw ( void )
@@ -996,7 +993,6 @@ Chain::auto_disconnect_outputs ( void )
 }
 
 
-
 
 /*****************/
 /* Import/Export */
@@ -1023,7 +1019,6 @@ Chain::do_export ( const char *filename )
     return true;
 }
 
-
 
 /**********/
 /* Client */

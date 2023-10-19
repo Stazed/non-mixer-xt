@@ -45,7 +45,6 @@
 
 const int PROJECT_VERSION = 1;
 
-
 
 const char *Project::_errstr[] =
 {
@@ -62,7 +61,6 @@ bool Project::_is_open = false;
 bool Project::_is_opening_closing = false;
 int Project::_lockfd = 0;
 
-
 
 /***********/
 /* Private */

@@ -55,7 +55,6 @@ AUX_Module::~AUX_Module ( )
     delete (float*)control_input[0].buffer();
 }
 
-
 
 void
 AUX_Module::number ( int n )

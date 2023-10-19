@@ -85,7 +85,6 @@ Spatialization_Console::~Spatialization_Console ( )
     mixer->spatialization_console = NULL;
     
 }
-
 
 void 
 Spatialization_Console::get ( Log_Entry &e ) const
@@ -123,7 +122,6 @@ Spatialization_Console::set ( Log_Entry &e )
     }
 }
 
-
 
 void
 Spatialization_Console::cb_window ( Fl_Widget *w, void *v )
@@ -138,7 +136,6 @@ Spatialization_Console::cb_window ( Fl_Widget *w )
     mixer->update_menu();
 }
 
-
 
 void
 Spatialization_Console::make_controls ( void )

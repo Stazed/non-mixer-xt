@@ -40,7 +40,6 @@
 #include "Chain.H"
 #include "DPM.H"
 
-
 const int DX = 1;
 
 Meter_Indicator_Module::Meter_Indicator_Module ( bool is_default )
@@ -92,7 +91,6 @@ Meter_Indicator_Module::~Meter_Indicator_Module ( )
     log_destroy();
 }
 
-
 
 void Meter_Indicator_Module::resize ( int X, int Y, int W, int H )
 {
@@ -167,7 +165,6 @@ Meter_Indicator_Module::set ( Log_Entry &e )
         control_input[0].connect_to( &module->control_output[port] );
 }
 
-
 
 void
 Meter_Indicator_Module::update ( void )
@@ -219,7 +216,6 @@ Meter_Indicator_Module::connect_to ( Port *p )
     redraw();
 }
 
-
 
 int
 Meter_Indicator_Module::handle ( int m )
@@ -242,7 +238,6 @@ Meter_Indicator_Module::handle ( int m )
     return Module::handle( m );
 }
 
-
 
 void
 Meter_Indicator_Module::handle_control_changed ( Port *p )

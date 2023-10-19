@@ -62,7 +62,6 @@
 extern Mixer *mixer;
 extern char *clipboard_dir;
 
-
 
 /* add a new mixer strip (with default configuration) */
 Mixer_Strip::Mixer_Strip( const char *strip_name ) : Fl_Group( 0, 0, 120, 600 )
@@ -144,7 +143,6 @@ Mixer_Strip::~Mixer_Strip ( )
     }
 }
 
-
 
 void
 Mixer_Strip::get ( Log_Entry &e ) const
@@ -846,9 +844,6 @@ Mixer_Strip::import_strip ( const char *filename )
     return r;
 }
 
-
-
-
 
 void
 Mixer_Strip::menu_cb ( const Fl_Menu_ *m )

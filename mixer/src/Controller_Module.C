@@ -46,14 +46,12 @@
 #include "Mixer.H"
 #include "Spatialization_Console.H"
 
-
 
 bool Controller_Module::learn_by_number = false;
 bool Controller_Module::_learn_mode = false;
 
 Controller_Module* Controller_Module::_learning_control = NULL;
 
-
 
 void
 Controller_Module::take_focus ( void )
@@ -130,7 +128,6 @@ Controller_Module::disconnect ( void )
         control_output[i].disconnect();
 }
 
-
 
 void
 Controller_Module::get ( Log_Entry &e ) const
@@ -205,7 +202,6 @@ Controller_Module::set ( Log_Entry &e )
 
 }
 
-
 
 void
 Controller_Module::mode ( Mode m )

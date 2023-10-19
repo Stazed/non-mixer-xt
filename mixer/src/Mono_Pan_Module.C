@@ -23,7 +23,6 @@
 
 #include "Mono_Pan_Module.H"
 
-
 
 Mono_Pan_Module::Mono_Pan_Module ( )
     : Module ( 50, 24, name() )
@@ -56,7 +55,6 @@ Mono_Pan_Module::~Mono_Pan_Module ( )
     log_destroy();
 }
 
-
 
 void
 Mono_Pan_Module::handle_sample_rate_change ( nframes_t n )
@@ -84,7 +82,6 @@ Mono_Pan_Module::configure_inputs ( int n )
     return true;
 }
 
-
 
 /**********/
 /* Engine */

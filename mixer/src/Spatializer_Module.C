@@ -548,8 +548,6 @@ Spatializer_Module::~Spatializer_Module ( )
         delete (float*)control_input[i].buffer();
 }
 
-
-
 
 void
 Spatializer_Module::handle_sample_rate_change ( nframes_t n )

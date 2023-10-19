@@ -83,7 +83,6 @@ Gain_Module::~Gain_Module ( )
     log_destroy();
 }
 
-
 
 bool
 Gain_Module::configure_inputs ( int n )
@@ -107,7 +106,6 @@ Gain_Module::handle_sample_rate_change ( nframes_t n )
     smoothing.sample_rate( n );
 }
 
-
 
 /**********/
 /* Engine */

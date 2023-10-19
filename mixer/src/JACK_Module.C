@@ -52,7 +52,6 @@ extern char *instance_name;
 
 #include "Project.H"
 
-
 static JACK_Module *receptive_to_drop = NULL;
 
 
@@ -191,7 +190,6 @@ JACK_Module::~JACK_Module ( )
         free( _prefix );
 }
 
-
 
 void
 JACK_Module::draw ( void )
@@ -724,7 +722,6 @@ JACK_Module::handle ( int m )
     
     return Module::handle(m);
 }
-
 
 /**********/
 /* Engine */
