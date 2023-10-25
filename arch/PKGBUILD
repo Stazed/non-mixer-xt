@@ -1,7 +1,7 @@
 # Maintainer: Your name here <your@email.here>
 
 pkgname=non-mixer-xt
-pkgver=1.0.1
+pkgver=1.0.5
 pkgrel=1
 pkgdesc="Jack audio mixer (non-mixer) with eXTended LV2 support"
 arch=('x86_64' 'i686')
@@ -17,6 +17,11 @@ md5sums=('SKIP')
 pkgver() {
   cd "$srcdir/${pkgname}"
   git describe --long --tags | sed 's/Release-//;s/-/./g'
+}
+
+prepare() {
+    cd "$srcdir/${pkgname}"
+    git submodule update --init nonlib
 }
 
 build() {
