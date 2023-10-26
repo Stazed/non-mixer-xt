@@ -1,6 +1,3 @@
-[submodule "lib/ntk"]
-	path = lib/ntk
-	url = https://github.com/linuxaudio/ntk
 [submodule "nonlib"]
 	path = nonlib
 	url = https://github.com/Stazed/nonlib-xt.git
