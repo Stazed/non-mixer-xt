@@ -25,45 +25,20 @@ Dependencies :
 * liblrdf
 * jack2
 
-Getting nonlib:
+Getting submodules (nonlib and FL):
 ---------------
 
-The nonlib library has been moved to a submodule repository. You must get nonlib by executing the following.
-
 ```bash
-    git submodule update --init nonlib
+    git submodule update --init
 ```
 
 Getting NTK:
 ------------
 
-Your distribution may have the NTK library. If not, then do the following to build and install the NTK submodule.
-
-If you just cloned the non-mixer-xt repository or just executed git pull, then you should also run :
+Your distribution will likely have NTK available. If not then you can get NTK at:
 
 ```bash
-    git submodule update --init lib/ntk
-```
-
-to pull down the latest NTK code required by Non. Git does *not* do this automatically.
-
-Building NTK:
--------------
-
-If you don't have NTK installed system-wide (which isn't very likely yet) you *MUST* begin the build process by typing:
-
-```bash
-    cd lib/ntk
-    ./waf configure
-    ./waf
-```
-
-Once NTK has been built you must install it system-wide before attempting to build non-mixer-xt.
-
-To install NTK type:
-
-```bash
-    sudo ./waf install
+    git clone https://github.com/linuxaudio/ntk
 ```
 
 Build Non-Mixer-XT:
