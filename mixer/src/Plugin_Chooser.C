@@ -22,7 +22,7 @@
 #include <FL/Fl_Input.H>
 
 #include "../../FL/Fl_Scalepack.H"
-#include "../../FL/Plugin_Chooser_UI.H"
+#include "Plugin_Chooser_UI.H"
 
 #include "Plugin_Module.H"
 #include "Plugin_Chooser.H"

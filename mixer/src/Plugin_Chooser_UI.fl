@@ -2,7 +2,7 @@
 version 1.0300 
 header_name {.H} 
 code_name {.C}
-decl {\#include "Fl_Scalepack.H"} {selected public global
+decl {\#include "../../FL/Fl_Scalepack.H"} {selected public global
 } 
 
 decl {\#include <FL/Fl_Table_Row.H>} {public global

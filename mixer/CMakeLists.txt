@@ -26,12 +26,12 @@ set (ProgSources
     ../FL/Fl_Value_SliderX.C
     ../FL/Fl_SliderX.C
     ../FL/New_Project_Dialog.C
-    ../FL/Plugin_Chooser_UI.C
     ../FL/event_name.C
     ../FL/menu_popup.C
     ../FL/test_press.C
     ../FL/focus_frame.C
 
+    src/Plugin_Chooser_UI.C
     src/Chain.C
     src/Controller_Module.C
     src/DPM.C

@@ -415,6 +415,7 @@ void Mixer::cb_menu(Fl_Widget* o) {
             "Non Mixer XT modifications by Stazed.\n"
         );
 
+        /* The FL submodule label is set to timeline, so reset it here to the mixer */
         ab.website_url->label( WEBSITE );
         ab.run();
     }
