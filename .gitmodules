@@ -4,3 +4,6 @@
 [submodule "nonlib"]
 	path = nonlib
 	url = https://github.com/Stazed/nonlib-xt.git
+[submodule "FL"]
+	path = FL
+	url = https://github.com/Stazed/non-FL.git
