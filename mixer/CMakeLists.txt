@@ -57,7 +57,6 @@ set (ProgSources
     src/Group.C
     src/SpectrumView.C
     src/Spatialization_Console.C
-    src/zix/ring.C
     src/lv2/lv2_evbuf.c
 )
 
@@ -73,6 +72,7 @@ set(ExternLibraries
     dl
     m
     lrdf
+    zix-0
 )
 
 add_executable (non-mixer-xt ${ProgSources} src/main.C)

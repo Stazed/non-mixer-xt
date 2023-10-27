@@ -1586,8 +1586,8 @@ LV2_Plugin::plugin_instances ( unsigned int n )
 
     /* Create Plugin <=> UI communication buffers */
     _ui_event_buf     = malloc(_atom_buffer_size);
-    _ui_to_plugin = zix_ring_new(_atom_buffer_size);
-    _plugin_to_ui = zix_ring_new(_atom_buffer_size);
+    _ui_to_plugin = zix_ring_new(NULL, _atom_buffer_size);
+    _plugin_to_ui = zix_ring_new(NULL, _atom_buffer_size);
 
     zix_ring_mlock(_ui_to_plugin);
     zix_ring_mlock(_plugin_to_ui);
@@ -1849,11 +1849,11 @@ LV2_Plugin::non_worker_init(LV2_Plugin* plug,
     if (threaded)
     {
         zix_thread_create(&plug->_zix_thread, ATOM_BUFFER_SIZE, worker_func, plug);
-        plug->_zix_requests = zix_ring_new(ATOM_BUFFER_SIZE);
+        plug->_zix_requests = zix_ring_new(NULL, ATOM_BUFFER_SIZE);
         zix_ring_mlock(plug->_zix_requests);
     }
     
-    plug->_zix_responses = zix_ring_new(ATOM_BUFFER_SIZE);
+    plug->_zix_responses = zix_ring_new(NULL, ATOM_BUFFER_SIZE);
     plug->_worker_response = malloc(ATOM_BUFFER_SIZE);
     zix_ring_mlock(plug->_zix_responses);
 }
@@ -1884,7 +1884,7 @@ LV2_Plugin::non_worker_finish( void )
     if (_b_threaded) 
     {
         zix_sem_post(&_zix_sem);
-        zix_thread_join(_zix_thread, NULL);
+        zix_thread_join(_zix_thread);
     }
 }
 

@@ -70,6 +70,7 @@ pkg_check_modules(LILV REQUIRED lilv-0>=0.20.0)
 pkg_check_modules(SUIL REQUIRED suil-0>=0.10.0)
 pkg_check_modules(NTK ntk REQUIRED)
 pkg_check_modules(NTK_IMAGES ntk_images REQUIRED)
+pkg_check_modules(ZIX zix-0 REQUIRED)
 
 #find_program(FLTK_FLUID_EXECUTABLE ntk-fluid)
 #(FLTK_FLUID_EXECUTABLE)
@@ -217,6 +218,7 @@ package_status(Threads_FOUND       "pthread support (libpthread) . . . . . . . .
 package_status(MLOCK               "mlock support. . . . . . . . . . . . . . . . . . . . . .:"  )
 package_status(LIBM                "libm support . . . . . . . . . . . . . . . . . . . . . .:"  )
 package_status(LIBDL               "libdl support. . . . . . . . . . . . . . . . . . . . . .:"  )
+package_status(ZIX_FOUND           "zix-0 support. . . . . . . . . . . . . . . . . . . . . .:"  )
 package_status(JACK_FOUND          "JACK Audio Connection Kit library. . . . . . . . . . . .:"  )
 package_status(FONTCONFIG_FOUND    "Fontconfig support . . . . . . . . . . . . . . . . . . .:"  )
 

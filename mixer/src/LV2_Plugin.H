@@ -24,15 +24,16 @@
 
 #pragma once
 
+#include <zix-0/zix/ring.h>
+#include <zix-0/zix/sem.h>
+#include <zix-0/zix/thread.h>
+
 #include "Mixer_Strip.H"
 #include "Module.H"
 #include "Plugin_Module.H"
 #include "XTUtils.H"
 #include "LV2_RDF_Utils.hpp"
 #include "ImplementationData.H"
-#include "zix/ring.h"
-#include "zix/sem.h"
-#include "zix/thread.h"
 #include "lv2/atom-forge.h"
 
 #define PRESET_SUPPORT 1
@@ -123,7 +124,7 @@ public:
     ZixSem  _work_lock;             ///< Lock for plugin work() method
     bool    _exit_process;          ///< True iff execution is finished
     bool    _safe_restore;          ///< Plugin restore() is thread-safe
-    size_t  _atom_buffer_size;
+    uint32_t  _atom_buffer_size;
 
     std::vector<Port> atom_input;
     std::vector<Port> atom_output;
