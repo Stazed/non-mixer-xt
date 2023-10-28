@@ -124,7 +124,7 @@ public:
     ZixSem  _work_lock;             ///< Lock for plugin work() method
     bool    _exit_process;          ///< True iff execution is finished
     bool    _safe_restore;          ///< Plugin restore() is thread-safe
-    uint32_t  _atom_buffer_size;
+    size_t  _atom_buffer_size;
 
     std::vector<Port> atom_input;
     std::vector<Port> atom_output;
