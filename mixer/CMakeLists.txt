@@ -69,10 +69,10 @@ set(ExternLibraries
     ${LIBLO_LIBRARIES}
     ${LILV_LIBRARIES}
     ${SUIL_LIBRARIES}
+    ${ZIX_LIBRARIES}
     dl
     m
     lrdf
-    zix-0
 )
 
 add_executable (non-mixer-xt ${ProgSources} src/main.C)
@@ -86,6 +86,7 @@ target_include_directories (
     ${SUIL_INCLUDE_DIRS}
     ${X11_INCLUDE_DIRS}
     ${LIBLO_INCLUDE_DIRS}
+    ${ZIX_INCLUDE_DIRS}
 )
 
 target_link_libraries (non-mixer-xt ${ExternLibraries})
