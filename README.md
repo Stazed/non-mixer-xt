@@ -24,12 +24,22 @@ Dependencies :
 * ladspa
 * liblrdf
 * jack2
+* zix-0
 
 Getting submodules (nonlib and FL):
 ---------------
 
 ```bash
     git submodule update --init
+```
+
+Getting ZIX
+-----------
+
+If your distribution does not have ZIX available, you can get it at:
+
+```bash
+    git clone https://github.com/drobilla/zix.git
 ```
 
 Getting NTK:
