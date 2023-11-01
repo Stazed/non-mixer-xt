@@ -16,6 +16,9 @@ add_definitions(-D'DOCUMENT_PATH="${CMAKE_INSTALL_PREFIX}/share/doc"')
 include(CheckCSourceCompiles)
 include(CheckCXXCompilerFlag)
 
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 check_cxx_compiler_flag("-msse2" SUPPORT_SSE)
 
 option (BuildForDebug "Include gdb debugging support" OFF)

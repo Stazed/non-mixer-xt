@@ -33,6 +33,7 @@
 #include "Plugin_Module.H"
 #include "Mixer_Strip.H"
 #include "Chain.H"
+#include "Clap_Discovery.H"
 
 #include "../../nonlib/debug.h"
 
@@ -185,6 +186,8 @@ Plugin_Module::get_all_plugins ( void )
     pm.scan_LADSPA_plugins( pr );   // Scan LADSPA
 
     pm.scan_LV2_plugins( pr );      // Scan LV2
+
+    pm.scan_CLAP_plugins( pr );     // Scan CLAP
 
     // TODO Additional plugin types here
 
@@ -409,6 +412,132 @@ Plugin_Module::scan_LV2_plugins( std::list<Plugin_Info> & pr )
         }
 
         pr.push_back( pi );
+    }
+}
+
+void
+Plugin_Module::scan_CLAP_plugins( std::list<Plugin_Info> & pr )
+{
+    auto sp = clap_discovery::installedCLAPs();   // This to get paths
+
+    for (const auto &q : sp)
+    {
+        DMESSAGE("CLAP PLUG PATHS %s", q.u8string().c_str());
+        auto entry = clap_discovery::entryFromCLAPPath(q);
+
+        if (!entry)
+        {
+            DMESSAGE("Clap_entry returned a nullptr = %s", q.u8string().c_str());
+            continue;
+        }
+
+        if ( !entry->init(q.u8string().c_str()) )  // This could be bundle
+        {
+            DMESSAGE("Could not initialize entry = %s", q.u8string().c_str());
+            continue;
+        }
+
+        auto fac = (clap_plugin_factory_t *)entry->get_factory(CLAP_PLUGIN_FACTORY_ID);
+        
+        if ( !fac )
+        {
+            DMESSAGE("Plugin factory is null %s", q.u8string().c_str());
+            entry->deinit();
+            continue;
+        }
+        
+        auto plugin_count = fac->get_plugin_count(fac);     // how many in the bundle
+
+        if (plugin_count <= 0)
+        {
+            DMESSAGE("Plugin factory has no plugins = %s: Count = %d", q.u8string().c_str(), plugin_count);
+            entry->deinit();
+            continue;
+        }
+
+        for (uint32_t pl = 0; pl < plugin_count; ++pl)
+        {
+            auto desc = fac->get_plugin_descriptor(fac, pl);
+
+            Plugin_Info pi("CLAP");
+
+            pi.name     = desc->name;
+            pi.path     = desc->id;
+            pi.author   = desc->vendor;
+            pi.id       = pl;           // Bundle Instance - FIXME check
+
+            // desc->version;
+            // desc->description;
+
+            auto f = desc->features;
+            while (f[0])
+            {
+                // FIXME - what to do here...
+               // pluginDescriptor["features"].append(f[0]);
+                f++;
+            }
+
+            // Now lets make an instance to query ports
+            auto host = clap_discovery::createCLAPInfoHost();
+            clap_discovery::getHostConfig()->announceQueriedExtensions = true;
+            auto inst = fac->create_plugin(fac, host, desc->id);
+
+            if (!inst)
+            {
+                DMESSAGE("CLAP Plugin instance is null: %s", desc->name);
+                continue;
+            }
+
+            if( !inst->init(inst) )
+            {
+                DMESSAGE("CLAP unable to initialize plugin: %s", desc->name);
+                inst->destroy(inst);
+                continue;
+            }
+
+            const clap_plugin_audio_ports_t *audio_ports
+			= static_cast<const clap_plugin_audio_ports_t *> (
+				inst->get_extension(inst, CLAP_EXT_AUDIO_PORTS));
+
+            if (audio_ports && audio_ports->count && audio_ports->get)
+            {
+                clap_audio_port_info info;
+                const uint32_t nins = audio_ports->count(inst, true);
+                for (uint32_t i = 0; i < nins; ++i)
+                {
+                    ::memset(&info, 0, sizeof(info));
+                    if (audio_ports->get(inst, i, true, &info))
+                    {
+                        if (info.flags & CLAP_AUDIO_PORT_IS_MAIN)
+                        {
+                            pi.audio_inputs += info.channel_count;
+                        }
+                    }
+                }
+
+                const uint32_t nouts = audio_ports->count(inst, false);
+                for (uint32_t i = 0; i < nouts; ++i)
+                {
+                    ::memset(&info, 0, sizeof(info));
+                    if (audio_ports->get(inst, i, false, &info))
+                    {
+                        if (info.flags & CLAP_AUDIO_PORT_IS_MAIN)
+                        {
+                            pi.audio_outputs += info.channel_count;
+                        }
+                    }
+                }
+            }
+
+            inst->destroy(inst);
+
+            pr.push_back( pi );
+
+            DMESSAGE("Name = %s: Path = %s: ID = %d: Audio Ins = %d: Audio Outs = %d",
+                    pi.name.c_str(), pi.path, pi.id, pi.audio_inputs, pi.audio_outputs);
+        }
+        
+        entry->deinit();
     }
 }
 
