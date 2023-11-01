@@ -56,8 +56,8 @@ class Mixer_Strip;
 enum Plugin_Index
 {
     LADSPA = 0,
-    LV2
-    // CLAP
+    LV2,
+    CLAP
     // VST3
     // VST2
 };
@@ -131,12 +131,11 @@ public:
 
     virtual void update_tooltip ( void );
 
-    struct Picked {
+    struct Picked
+    {
         unsigned int plugin_type;   // LADSPA, LV2, etc
-        union {
-            const char* uri;
-            unsigned long unique_id;
-        };
+        const char* uri;
+        unsigned long unique_id;
     };
 
     /* LV2 */

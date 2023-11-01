@@ -1116,35 +1116,61 @@ Module::insert_menu_cb ( const Fl_Menu_ *m )
     else if ( !strcmp(picked, "Plugin" ))
     {
         Picked picked = Plugin_Chooser::plugin_chooser( this->ninputs() );
-        
-        if ( picked.unique_id == 0 )
-            return;
 
-        if(picked.plugin_type == LV2)
+        switch ( picked.plugin_type )
         {
-            LV2_Plugin *m = new LV2_Plugin();
-            if(!m->load_plugin( picked.uri ))
+            case LADSPA:
             {
-                fl_alert( "%s could not be loaded", m->base_label() );
-                delete m;
-                return;
+                LADSPA_Plugin *m = new LADSPA_Plugin();
+                if(!m->load_plugin( picked.unique_id ))
+                {
+                    fl_alert( "%s could not be loaded", m->base_label() );
+                    delete m;
+                    return;
+                }
+
+                mod = m;
+                break;
             }
 
-            mod = m;
-        }
-        else if(picked.plugin_type == LADSPA)
-        {
-            LADSPA_Plugin *m = new LADSPA_Plugin();
-            if(!m->load_plugin( picked.unique_id ))
+            case LV2:
             {
-                fl_alert( "%s could not be loaded", m->base_label() );
-                delete m;
-                return;
+                LV2_Plugin *m = new LV2_Plugin();
+                if(!m->load_plugin( picked.uri ))
+                {
+                    fl_alert( "%s could not be loaded", m->base_label() );
+                    delete m;
+                    return;
+                }
+
+                mod = m;
+                break;
             }
 
-            mod = m;
+            case CLAP:
+            {
+                DMESSAGE("WE Picked a CLAP = %s: Inst = %d", picked.uri, picked.unique_id);
+                return;
+#if 0
+                CLAP_Plugin *m = new CLAP_Plugin();
+                if(!m->load_plugin( picked ))
+                {
+                    fl_alert( "%s could not be loaded", m->base_label() );
+                    delete m;
+                    return;
+                }
+
+                mod = m;
+                break;
+#endif
+            }
+
+            // TODO other types here
+            default:
+            {
+                return;
+            }
         }
-        // TODO other types here
     }
 
     if ( mod )

@@ -39,7 +39,7 @@ static int plugin_type = 0;
 Module::Picked
 Plugin_Chooser::plugin_chooser ( int ninputs )
 {
-    Module::Picked picked = { LADSPA, 0 };
+    Module::Picked picked = { LADSPA, "", 0 };
 
     Plugin_Chooser *o = new Plugin_Chooser( 0,0,735,500,"Plugin Chooser");
 
@@ -56,14 +56,37 @@ Plugin_Chooser::plugin_chooser ( int ninputs )
         Fl::wait();
 
     picked.plugin_type = o->plug_type();
+    
+    switch ( picked.plugin_type )
+    {
+        case LADSPA:
+        {
+            picked.unique_id = o->value();
+            break;
+        }
+        
+        case LV2:
+        {
+            if (const char* const uri = o->uri())
+            {
+                picked.uri = uri;
+            }
+            break;
+        }
 
-    if (const char* const uri = o->uri())
-    {
-        picked.uri = uri;   // LV2
-    }
-    else
-    {
-        picked.unique_id = o->value();  // LADSPA & possibly others... TODO
+        case CLAP:
+        {
+            if (const char* const uri = o->uri())
+            {
+                picked.uri = uri;
+            }
+            picked.unique_id = o->value();
+            break;
+        }
+
+        // TODO other types here
+        default:
+            break;
     }
 
     previous_favorites = o->ui->favorites_button->value();
@@ -314,9 +337,15 @@ Plugin_Chooser::cb_table ( Fl_Widget *w )
                 _value = _plugin_rows[R]->id;
                 _plugin_type = LADSPA;
             }
+            else if(::strcmp(_plugin_rows[R]->type, "CLAP") == 0)
+            {
+                _uri   = _plugin_rows[R]->path;
+                _value = _plugin_rows[R]->id;
+                _plugin_type = CLAP;
+            }
 
             // TODO other types
-            
+
             hide();
         }
     }
