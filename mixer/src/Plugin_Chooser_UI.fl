@@ -2,7 +2,7 @@
 version 1.0300 
 header_name {.H} 
 code_name {.C}
-decl {\#include "../../FL/Fl_Scalepack.H"} {selected public global
+decl {\#include "../../FL/Fl_Scalepack.H"} {public global
 } 
 
 decl {\#include <FL/Fl_Table_Row.H>} {public global
@@ -71,6 +71,10 @@ widget_class Plugin_Chooser_UI {
     MenuItem {} {
       label LV2
       xywh {10 -58 34 18}
+    }
+    MenuItem {} {
+      label CLAP selected
+      xywh {20 -48 34 18}
     }
   }
 } 

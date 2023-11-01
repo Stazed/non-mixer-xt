@@ -130,6 +130,13 @@ Plugin_Chooser::search ( const char *name, const char *author, const char *categ
                     continue;   // Not LADSPA so skip it
                 }
             }
+            else if( !strcmp( plug_type, "CLAP" ) )   // if we want CLAP only
+            {
+                if( strcmp( p->type, "CLAP" ) )
+                {
+                    continue;   // Not CLAP so skip it
+                }
+            }
 
             // TODO other types
 
