@@ -40,6 +40,8 @@
 #define HAVE_LIBLRDF 1
 
 static LADSPAInfo *ladspainfo;
+static std::list<Plugin_Module::Plugin_Info> clap_PI_cache;
+
 Thread* Plugin_Module::plugin_discover_thread;
 
 static bool warn_legacy_once = false;
@@ -418,6 +420,12 @@ Plugin_Module::scan_LV2_plugins( std::list<Plugin_Info> & pr )
 void
 Plugin_Module::scan_CLAP_plugins( std::list<Plugin_Info> & pr )
 {
+    if ( !clap_PI_cache.empty() )
+    {
+        pr.insert(std::end(pr), std::begin(clap_PI_cache), std::end(clap_PI_cache));
+        return;
+    }
+    
     auto sp = clap_discovery::installedCLAPs();   // This to get paths
 
     for (const auto &q : sp)
@@ -531,13 +539,19 @@ Plugin_Module::scan_CLAP_plugins( std::list<Plugin_Info> & pr )
 
             inst->destroy(inst);
 
-            pr.push_back( pi );
+            clap_PI_cache.push_back( pi );
 
             DMESSAGE("Name = %s: Path = %s: ID = %d: Audio Ins = %d: Audio Outs = %d",
                     pi.name.c_str(), pi.path, pi.id, pi.audio_inputs, pi.audio_outputs);
         }
-        
+
         entry->deinit();
+    }
+
+    if ( !clap_PI_cache.empty() )
+    {
+        pr.insert(std::end(pr), std::begin(clap_PI_cache), std::end(clap_PI_cache));
+        return;
     }
 }
 
