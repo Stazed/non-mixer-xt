@@ -26,6 +26,7 @@ option (EnableOptimizations "Enable optimizations" ON)
 option (EnableSSE "Enable SSE (default=automatic check)" ON)
 option (EnableSSE2 "Enable SSE2 (default=automatic check)" ON)
 option (NativeOptimizations "Enable native CPU optimizations" ON)
+option (EnableCLAPSupport "Enable CLAP plugin support" ON)
 
 
 set(CMAKE_BUILD_TYPE "Release")
@@ -74,6 +75,13 @@ pkg_check_modules(SUIL REQUIRED suil-0>=0.10.0)
 pkg_check_modules(NTK ntk REQUIRED)
 pkg_check_modules(NTK_IMAGES ntk_images REQUIRED)
 pkg_check_modules(ZIX zix-0 REQUIRED)
+
+if (EnableCLAPSupport)
+    pkg_check_modules(CLAP clap REQUIRED)
+    if (CLAP_FOUND)
+        add_definitions(-D'CLAP_SUPPORT=1')
+    endif (CLAP_FOUND)
+endif (EnableCLAPSupport)
 
 #find_program(FLTK_FLUID_EXECUTABLE ntk-fluid)
 #(FLTK_FLUID_EXECUTABLE)
@@ -227,6 +235,11 @@ package_status(FONTCONFIG_FOUND    "Fontconfig support . . . . . . . . . . . . .
 
 package_status(HAVE_LADSPA_H       "LADSPA support . . . . . . . . . . . . . . . . . . . . .:"  )
 package_status(LV2_FOUND           "LV2 support. . . . . . . . . . . . . . . . . . . . . . .:"  )
+
+if (EnableCLAPSupport)
+    package_status(CLAP_FOUND      "CLAP support . . . . . . . . . . . . . . . . . . . . . .:"  )
+endif (EnableCLAPSupport)
+
 package_status(LILV_FOUND          "LILV support . . . . . . . . . . . . . . . . . . . . . .:"  )
 package_status(SUIL_FOUND          "SUIL support . . . . . . . . . . . . . . . . . . . . . .:"  )
 package_status(LIBLO_FOUND         "Liblo support. . . . . . . . . . . . . . . . . . . . . .:"  )
