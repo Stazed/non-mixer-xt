@@ -33,7 +33,7 @@ public:
 
     ImplementationData *_idata;
 
-    bool load_plugin ( unsigned long id );
+    virtual bool load_plugin ( Module::Picked picked );
 
     virtual bool get_impulse_response ( sample_t *buf, nframes_t nframes );
     

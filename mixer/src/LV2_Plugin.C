@@ -676,8 +676,10 @@ LV2_Plugin::~LV2_Plugin ( )
 }
 
 bool
-LV2_Plugin::load_plugin ( const char* uri )
+LV2_Plugin::load_plugin ( Module::Picked picked )
 {
+    const char* uri = picked.uri;
+
     _idata->lv2.rdf_data = lv2_rdf_new( uri, true );
 
 #ifdef PRESET_SUPPORT
@@ -3479,7 +3481,8 @@ LV2_Plugin::set ( Log_Entry &e )
 #ifdef LV2_WORKER_SUPPORT
             _loading_from_file = true;
 #endif
-            load_plugin( v );
+            Module::Picked picked = { LV2, v, 0 };
+            load_plugin( picked );
         }
         else if ( ! strcmp( s, ":plugin_ins" ) )
         {

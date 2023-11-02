@@ -1122,7 +1122,7 @@ Module::insert_menu_cb ( const Fl_Menu_ *m )
             case LADSPA:
             {
                 LADSPA_Plugin *m = new LADSPA_Plugin();
-                if(!m->load_plugin( picked.unique_id ))
+                if(!m->load_plugin( picked ))
                 {
                     fl_alert( "%s could not be loaded", m->base_label() );
                     delete m;
@@ -1136,7 +1136,7 @@ Module::insert_menu_cb ( const Fl_Menu_ *m )
             case LV2:
             {
                 LV2_Plugin *m = new LV2_Plugin();
-                if(!m->load_plugin( picked.uri ))
+                if(!m->load_plugin( picked ))
                 {
                     fl_alert( "%s could not be loaded", m->base_label() );
                     delete m;

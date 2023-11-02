@@ -90,6 +90,8 @@ private:
 
 public:
 
+    virtual bool load_plugin ( Module::Picked /* picked */ ) {return false;};
+
     virtual bool get_impulse_response ( sample_t * /*buf*/, nframes_t /*nframes*/ ){return false;};
 
     virtual nframes_t get_module_latency ( void ) const{return 0;};

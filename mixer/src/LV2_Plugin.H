@@ -68,7 +68,7 @@ public:
 
     ImplementationData *_idata;
     
-    bool load_plugin ( const char* uri );
+    virtual bool load_plugin ( Module::Picked picked );
 
     bool configure_inputs ( int );
     void handle_port_connection_change ( void );

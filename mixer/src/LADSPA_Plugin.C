@@ -47,8 +47,10 @@ LADSPA_Plugin::~LADSPA_Plugin ( )
 static LADSPAInfo *ladspainfo;
 
 bool
-LADSPA_Plugin::load_plugin(unsigned long id)
+LADSPA_Plugin::load_plugin(Module::Picked picked)
 {
+    unsigned long id = picked.unique_id;
+
     ladspainfo = _ladspainfo;
 
     _plug_type = LADSPA;
@@ -745,7 +747,8 @@ LADSPA_Plugin::set ( Log_Entry &e )
 
         if ( ! strcmp( s, ":plugin_id" ) )
         {
-            load_plugin( (unsigned long) atoll ( v ) );
+            Module::Picked picked = { LADSPA, "", (unsigned long) atol ( v ) };
+            load_plugin( picked );
         }
         else if ( ! strcmp( s, ":plugin_ins" ) )
         {
