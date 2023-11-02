@@ -36,6 +36,7 @@
 #include "Plugin_Module.H"
 #include "LV2_Plugin.H"
 #include "LADSPA_Plugin.H"
+#include "CLAP_Plugin.H"
 #include "AUX_Module.H"
 #include "Spatializer_Module.H"
 
@@ -1149,9 +1150,6 @@ Module::insert_menu_cb ( const Fl_Menu_ *m )
 
             case CLAP:
             {
-                DMESSAGE("WE Picked a CLAP = %s: Inst = %d", picked.uri, picked.unique_id);
-                return;
-#if 0
                 CLAP_Plugin *m = new CLAP_Plugin();
                 if(!m->load_plugin( picked ))
                 {
@@ -1162,7 +1160,6 @@ Module::insert_menu_cb ( const Fl_Menu_ *m )
 
                 mod = m;
                 break;
-#endif
             }
 
             // TODO other types here

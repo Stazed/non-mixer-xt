@@ -42,6 +42,7 @@ set (ProgSources
     src/LADSPAInfo.C
     src/LADSPA_Plugin.C
     src/LV2_Plugin.C
+    src/CLAP_Plugin.C
     src/Clap_Discovery.C
     src/Meter_Indicator_Module.C
     src/Meter_Module.C
