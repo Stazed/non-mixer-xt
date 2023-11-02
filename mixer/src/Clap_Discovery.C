@@ -22,6 +22,8 @@
  * Created on October 31, 2023, 3:58 PM
  */
 
+#ifdef CLAP_SUPPORT
+
 #include <iostream>     // cerr
 #include <dlfcn.h>      // dlopen, dlerror, dlsym
 
@@ -170,3 +172,5 @@ HostConfig *getHostConfig()
 }
 
 }   // namespace clap_discovery
+
+#endif   // CLAP_SUPPORT

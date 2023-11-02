@@ -24,6 +24,8 @@
 
 #pragma once
 
+#ifdef CLAP_SUPPORT
+
 #include "Plugin_Module.H"
 
 class CLAP_Plugin : public Plugin_Module {
@@ -70,4 +72,5 @@ protected:
 
 };
 
+#endif  // CLAP_SUPPORT 
 

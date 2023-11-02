@@ -23,6 +23,8 @@
 
 #pragma once
 
+#ifdef CLAP_SUPPORT
+
 #include <filesystem>
 #include <clap/clap.h>
 #include <vector>
@@ -59,3 +61,5 @@ clap_host_t *createCLAPInfoHost();
 HostConfig *getHostConfig();
 
 }   // namespace clap_discovery
+
+#endif // CLAP_SUPPORT

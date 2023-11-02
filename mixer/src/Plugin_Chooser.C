@@ -73,7 +73,7 @@ Plugin_Chooser::plugin_chooser ( int ninputs )
             }
             break;
         }
-
+#ifdef CLAP_SUPPORT
         case CLAP:
         {
             if (const char* const uri = o->uri())
@@ -83,7 +83,7 @@ Plugin_Chooser::plugin_chooser ( int ninputs )
             picked.unique_id = o->value();
             break;
         }
-
+#endif
         // TODO other types here
         default:
             break;
@@ -337,13 +337,14 @@ Plugin_Chooser::cb_table ( Fl_Widget *w )
                 _value = _plugin_rows[R]->id;
                 _plugin_type = LADSPA;
             }
+#ifdef CLAP_SUPPORT
             else if(::strcmp(_plugin_rows[R]->type, "CLAP") == 0)
             {
                 _uri   = _plugin_rows[R]->path;
                 _value = _plugin_rows[R]->id;
                 _plugin_type = CLAP;
             }
-
+#endif
             // TODO other types
 
             hide();

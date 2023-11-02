@@ -22,6 +22,8 @@
  * Created on November 1, 2023, 7:10 PM
  */
 
+#ifdef CLAP_SUPPORT
+
 #include "CLAP_Plugin.H"
 
 CLAP_Plugin::CLAP_Plugin()
@@ -147,3 +149,5 @@ CLAP_Plugin::set ( Log_Entry &e )
 {
     
 }
+
+#endif  // CLAP_SUPPORT

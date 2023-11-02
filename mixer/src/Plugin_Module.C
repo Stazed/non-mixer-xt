@@ -33,14 +33,17 @@
 #include "Plugin_Module.H"
 #include "Mixer_Strip.H"
 #include "Chain.H"
-#include "Clap_Discovery.H"
 
 #include "../../nonlib/debug.h"
 
 #define HAVE_LIBLRDF 1
 
 static LADSPAInfo *ladspainfo;
-static std::list<Plugin_Module::Plugin_Info> clap_PI_cache;
+
+#ifdef CLAP_SUPPORT
+    #include "Clap_Discovery.H"
+    static std::list<Plugin_Module::Plugin_Info> clap_PI_cache;
+#endif
 
 Thread* Plugin_Module::plugin_discover_thread;
 
@@ -188,9 +191,9 @@ Plugin_Module::get_all_plugins ( void )
     pm.scan_LADSPA_plugins( pr );   // Scan LADSPA
 
     pm.scan_LV2_plugins( pr );      // Scan LV2
-
+#ifdef CLAP_SUPPORT
     pm.scan_CLAP_plugins( pr );     // Scan CLAP
-
+#endif
     // TODO Additional plugin types here
 
     pr.sort();
@@ -417,6 +420,7 @@ Plugin_Module::scan_LV2_plugins( std::list<Plugin_Info> & pr )
     }
 }
 
+#ifdef CLAP_SUPPORT
 void
 Plugin_Module::scan_CLAP_plugins( std::list<Plugin_Info> & pr )
 {
@@ -554,6 +558,7 @@ Plugin_Module::scan_CLAP_plugins( std::list<Plugin_Info> & pr )
         return;
     }
 }
+#endif  // CLAP_SUPPORT
 
 void
 Plugin_Module::resize_buffers ( nframes_t buffer_size )

@@ -1147,7 +1147,7 @@ Module::insert_menu_cb ( const Fl_Menu_ *m )
                 mod = m;
                 break;
             }
-
+#ifdef CLAP_SUPPORT
             case CLAP:
             {
                 CLAP_Plugin *m = new CLAP_Plugin();
@@ -1161,7 +1161,7 @@ Module::insert_menu_cb ( const Fl_Menu_ *m )
                 mod = m;
                 break;
             }
-
+#endif  // CLAP_SUPPORT
             // TODO other types here
             default:
             {
