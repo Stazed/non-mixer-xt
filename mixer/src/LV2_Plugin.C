@@ -580,10 +580,11 @@ LV2_Plugin::LV2_Plugin ( ) : Plugin_Module( )
 LV2_Plugin::~LV2_Plugin ( )
 {
     /* In case the user left the custom ui up */
+#ifdef LV2_WORKER_SUPPORT
     _exit_process = true;
 
     Fl::remove_timeout( &update_ui, this );
-
+#endif
     /* This is the case when the user manually removes a Plugin. We set the
      _is_removed = true, and add any custom data directory to the remove directories
      vector. If the user saves the project then we remove any items in the vector.
@@ -645,6 +646,7 @@ LV2_Plugin::~LV2_Plugin ( )
 #endif
 
 #ifdef LV2_MIDI_SUPPORT
+#ifdef LV2_WORKER_SUPPORT
     for ( unsigned int i = 0; i < atom_input.size(); ++i )
     {
         if(!(atom_input[i].type() == Port::MIDI))
@@ -672,7 +674,8 @@ LV2_Plugin::~LV2_Plugin ( )
 
     atom_output.clear();
     atom_input.clear();
-#endif
+#endif  // LV2_WORKER_SUPPORT
+#endif  // LV2_MIDI_SUPPORT
 }
 
 bool
@@ -694,13 +697,14 @@ LV2_Plugin::load_plugin ( Module::Picked picked )
     _plugin_ins = _plugin_outs = 0;
 #ifdef LV2_WORKER_SUPPORT
     _atom_ins = _atom_outs = 0;
-#endif
+
 #ifdef LV2_MIDI_SUPPORT
     _midi_ins = _midi_outs = 0;
     _position = 0;
     _bpm = 120.0f;
     _rolling = false;
-#endif
+#endif  // LV2_MIDI_SUPPORT
+#endif  // LV2_WORKER_SUPPORT
 
     if ( ! _idata->lv2.rdf_data )
     {
@@ -883,10 +887,10 @@ LV2_Plugin::load_plugin ( Module::Picked picked )
         MESSAGE( "Plugin has %i AUDIO inputs and %i AUDIO outputs", _plugin_ins, _plugin_outs);
 #ifdef LV2_WORKER_SUPPORT
         MESSAGE( "Plugin has %i ATOM inputs and %i ATOM outputs", _atom_ins, _atom_outs);
-#endif
 #ifdef LV2_MIDI_SUPPORT
         MESSAGE( "Plugin has %i MIDI in ports and %i MIDI out ports", _midi_ins, _midi_outs);
 #endif
+#endif  // LV2_WORKER_SUPPORT
 
         if(!_plugin_ins)
             is_zero_input_synth(true);
@@ -1119,7 +1123,9 @@ LV2_Plugin::load_plugin ( Module::Picked picked )
     /* Read the zix buffer sent from the plugin and sends to the UI.
        This needs to have a separate timeout from custom ui since it
        can also apply to generic UI events.*/
+#ifdef LV2_WORKER_SUPPORT
     Fl::add_timeout( 0.03f, &update_ui, this );
+#endif
 
     return instances;
 }
@@ -1199,6 +1205,7 @@ LV2_Plugin::configure_inputs( int n )
     return true;
 }
 
+#ifdef LV2_WORKER_SUPPORT
 #ifdef LV2_MIDI_SUPPORT
 void
 LV2_Plugin::configure_midi_inputs ()
@@ -1264,6 +1271,7 @@ LV2_Plugin::configure_midi_outputs ()
     }
 }
 #endif  // LV2_MIDI_SUPPORT
+#endif  // LV2_WORKER_SUPPORT
 
 void
 LV2_Plugin::handle_port_connection_change ( void )
@@ -1295,6 +1303,7 @@ LV2_Plugin::handle_chain_name_changed ( )
 
     if ( ! chain()->strip()->group()->single() )
     {
+#ifdef LV2_WORKER_SUPPORT
 #ifdef LV2_MIDI_SUPPORT
         for ( unsigned int i = 0; i < atom_input.size(); i++ )
         {
@@ -1318,8 +1327,9 @@ LV2_Plugin::handle_chain_name_changed ( )
                 atom_output[i].jack_port()->rename();
             }
         }
+#endif  // LV2_MIDI_SUPPORT
+#endif  // LV2_WORKER_SUPPORT
     }
-#endif
 }
 
 void
@@ -1391,6 +1401,7 @@ void
 LV2_Plugin::freeze_ports ( void )
 {
     Module::freeze_ports();
+#ifdef LV2_WORKER_SUPPORT
 #ifdef LV2_MIDI_SUPPORT
     for ( unsigned int i = 0; i < atom_input.size(); ++i )
     {
@@ -1415,7 +1426,8 @@ LV2_Plugin::freeze_ports ( void )
             atom_output[i].jack_port()->shutdown();
         }
     }
-#endif
+#endif  // LV2_MIDI_SUPPORT
+#endif  // LV2_WORKER_SUPPORT
 }
 
 /* rename and thaw all jack ports--used when changing groups */
@@ -1424,6 +1436,7 @@ LV2_Plugin::thaw_ports ( void )
 {
     Module::thaw_ports();
 
+#ifdef LV2_WORKER_SUPPORT
 #ifdef LV2_MIDI_SUPPORT
     const char *trackname = chain()->strip()->group()->single() ? NULL : chain()->name();
 
@@ -1456,7 +1469,8 @@ LV2_Plugin::thaw_ports ( void )
             atom_output[i].jack_port()->thaw();
         }
     }
-#endif
+#endif  // LV2_MIDI_SUPPORT
+#endif  // LV2_WORKER_SUPPORT
 }
 
 bool
@@ -1587,13 +1601,14 @@ LV2_Plugin::plugin_instances ( unsigned int n )
     }
 
     /* Create Plugin <=> UI communication buffers */
+#ifdef LV2_WORKER_SUPPORT
     _ui_event_buf     = malloc(_atom_buffer_size);
     _ui_to_plugin = zix_ring_new(NULL, _atom_buffer_size);
     _plugin_to_ui = zix_ring_new(NULL, _atom_buffer_size);
 
     zix_ring_mlock(_ui_to_plugin);
     zix_ring_mlock(_plugin_to_ui);
-
+#endif
     return true;
 }
 
@@ -1715,13 +1730,14 @@ LV2_Plugin::add_port ( const Port &p )
         atom_input.push_back( p );
     else if ( p.type() == Port::ATOM && p.direction() == Port::OUTPUT )
         atom_output.push_back( p );
-#endif
+
 #ifdef LV2_MIDI_SUPPORT
     else if ( p.type() == Port::MIDI && p.direction() == Port::INPUT )
         atom_input.push_back( p );
     else if ( p.type() == Port::MIDI && p.direction() == Port::OUTPUT )
         atom_output.push_back( p );
-#endif
+#endif  // LV2_MIDI_SUPPORT
+#endif  // LV2_WORKER_SUPPORT
 }
 
 void
@@ -1750,12 +1766,12 @@ _Pragma("GCC diagnostic pop")
     LV2_URID_Unmap* const uridUnmapFt   = new LV2_URID_Unmap;
     uridUnmapFt->handle                 = _idata;
     uridUnmapFt->unmap                  = ImplementationData::_lv2_urid_unmap;
-    
+
+#ifdef LV2_WORKER_SUPPORT
     LV2_State_Make_Path* const nonMakePath  = new LV2_State_Make_Path;
     nonMakePath->handle                 = this;
     nonMakePath->path                   = lv2_make_path;
 
-#ifdef LV2_WORKER_SUPPORT
     LV2_Worker_Schedule* const m_lv2_schedule  = new LV2_Worker_Schedule;
     m_lv2_schedule->handle              = this;
     m_lv2_schedule->schedule_work       = lv2_non_worker_schedule;
@@ -1795,10 +1811,10 @@ _Pragma("GCC diagnostic pop")
 
     _idata->lv2.features[Plugin_Feature_URID_Unmap]->URI  = LV2_URID__unmap;
     _idata->lv2.features[Plugin_Feature_URID_Unmap]->data = uridUnmapFt;
-    
+#ifdef LV2_WORKER_SUPPORT
     _idata->lv2.features[Plugin_Feature_Make_path]->URI   = LV2_STATE__makePath;
     _idata->lv2.features[Plugin_Feature_Make_path]->data  = nonMakePath;
-#ifdef LV2_WORKER_SUPPORT
+
     _idata->lv2.features[Plugin_Feature_Worker_Schedule]->URI  = LV2_WORKER__schedule;
     _idata->lv2.features[Plugin_Feature_Worker_Schedule]->data = m_lv2_schedule;
 #endif
@@ -2352,10 +2368,11 @@ send_to_plugin(void* const handle,              // LV2_Plugin
     LV2_Plugin *pLv2Plugin = static_cast<LV2_Plugin *> (handle);
     if (pLv2Plugin == NULL)
         return;
-    
+
+#ifdef LV2_WORKER_SUPPORT
     if(pLv2Plugin->_exit_process)
         return;
-
+#endif
     if (protocol == 0U)
     {
         if (buffer_size != sizeof(float))
@@ -2370,11 +2387,13 @@ send_to_plugin(void* const handle,              // LV2_Plugin
         /* Pass the control information to the plugin and other generic ui widgets */
         pLv2Plugin->set_control_value(port_index, *(const float*)buffer);
     }
+#ifdef LV2_WORKER_SUPPORT
     else if (protocol == Plugin_Module_URI_Atom_eventTransfer) 
     {
         DMESSAGE("UI SENT LV2_ATOM__eventTransfer");
         pLv2Plugin->send_atom_to_plugin( port_index, buffer_size, buffer );
     }
+#endif
     else
     {
         DMESSAGE("UI wrote with unsupported protocol %u (%s)\n", protocol);
@@ -3314,6 +3333,7 @@ LV2_Plugin::process ( nframes_t nframes )
             _idata->lv2.descriptor->run( _idata->handle[i], nframes );
         }
 
+#ifdef LV2_WORKER_SUPPORT
 #ifdef LV2_MIDI_SUPPORT
         /* Atom out to custom UI and plugin MIDI out to JACK MIDI out */
         for( unsigned int i = 0; i < atom_output.size(); ++i )
@@ -3322,7 +3342,6 @@ LV2_Plugin::process ( nframes_t nframes )
         }
 #endif  // LV2_MIDI_SUPPORT
 
-#ifdef LV2_WORKER_SUPPORT
         /* Process any worker replies. */
         if ( _idata->lv2.ext.worker)
         {

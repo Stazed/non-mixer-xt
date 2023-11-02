@@ -691,6 +691,7 @@ Module_Parameter_Editor::cb_preset_handle ( Fl_Widget *w, void *v )
 void
 Module_Parameter_Editor::cb_save_state_handle ( Fl_Widget *, void *v )
 {
+#ifdef LV2_WORKER_SUPPORT
     /* TODO Set file chooser location based on ... */
     std::string file_chooser_location = "";
 
@@ -705,6 +706,7 @@ Module_Parameter_Editor::cb_save_state_handle ( Fl_Widget *, void *v )
 
     /* Save the state to location */
     ((Module_Parameter_Editor*)v)->save_plugin_state( filename );
+#endif  // LV2_WORKER_SUPPORT
 }
 
 void
@@ -721,6 +723,7 @@ Module_Parameter_Editor::save_plugin_state(const std::string filename)
 void
 Module_Parameter_Editor::cb_restore_state_handle ( Fl_Widget *, void *v )
 {
+#ifdef LV2_WORKER_SUPPORT
     /* TODO Set file chooser location based on ... */
     std::string file_chooser_location = "";
 
@@ -735,6 +738,7 @@ Module_Parameter_Editor::cb_restore_state_handle ( Fl_Widget *, void *v )
 
     /* Save the state to location */
     ((Module_Parameter_Editor*)v)->restore_plugin_state( directory );
+#endif  // LV2_WORKER_SUPPORT
 }
 
 void

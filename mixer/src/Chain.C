@@ -751,6 +751,7 @@ Chain::insert ( Module *m, Module *n )
 
 err:
 
+#ifdef LV2_WORKER_SUPPORT
 #ifdef LV2_MIDI_SUPPORT
     /* If the plugin has MIDI, the JACK ports will not get configured on err,
     so on module delete, we destroy all related JACK ports. This is not a problem for audio
@@ -763,6 +764,7 @@ err:
         plug->atom_input.clear();
         plug->atom_output.clear();
     }
+#endif
 #endif
 
     client()->unlock();
