@@ -25,6 +25,7 @@
 #ifdef CLAP_SUPPORT
 
 #include "CLAP_Plugin.H"
+#include "Clap_Discovery.H"
 
 CLAP_Plugin::CLAP_Plugin()
 {
@@ -33,12 +34,83 @@ CLAP_Plugin::CLAP_Plugin()
 
 CLAP_Plugin::~CLAP_Plugin()
 {
+    _plugin->deactivate(_plugin);
+    _plugin->destroy(_plugin);
 }
 
 bool
 CLAP_Plugin::load_plugin ( Module::Picked picked )
 {
-    return false;
+    //	close();
+
+    _entry = entry_from_CLAP_file(picked.uri);
+    if (!_entry)
+    {
+        WARNING("Clap_entry returned a nullptr = %s", picked.uri);
+        return false;
+    }
+
+    if( !_entry->init(picked.uri) )
+    {
+        WARNING("Clap_entry cannot initialize = %s", picked.uri);
+        return false;
+    }
+
+    _factory = static_cast<const clap_plugin_factory *> (
+            _entry->get_factory(CLAP_PLUGIN_FACTORY_ID));
+
+    if (!_factory)
+    {
+        WARNING("Plugin factory is null %s", picked.uri);
+        return false;
+    }
+
+    auto count = _factory->get_plugin_count(_factory);
+    if (picked.unique_id >= count)
+    {
+        WARNING("Bad plug-in index = %d: count = %d", picked.unique_id, count);
+        return false;
+    }
+
+    _descriptor = _factory->get_plugin_descriptor(_factory, picked.unique_id);
+    if (!_descriptor)
+    {
+        WARNING("No plug-in descriptor.", picked.unique_id);
+        return false;
+    }
+
+    base_label(_descriptor->name);
+
+    if (!clap_version_is_compatible(_descriptor->clap_version))
+    {
+        WARNING("Incompatible CLAP version: %d"
+                " plug-in is %d.%d.%d, host is %d.%d.%d.", picked.unique_id,
+                _descriptor->clap_version.major,
+                _descriptor->clap_version.minor,
+                _descriptor->clap_version.revision,
+                CLAP_VERSION.major,
+                CLAP_VERSION.minor,
+                CLAP_VERSION.revision);
+        return false;
+    }
+
+    _host = clap_discovery::createCLAPInfoHost();
+
+    _host->host_data        = this;
+    _host->get_extension    = get_extension;
+    _host->request_restart  = request_restart;
+    _host->request_process  = request_process;
+    _host->request_callback = request_callback;
+
+    _plugin = _factory->create_plugin(_factory, _host, _descriptor->id);
+
+    if( !_plugin->init(_plugin) )
+    {
+        WARNING("Cannot initialize plugin = %s", _descriptor->name);
+        return false;
+    }
+
+    return false;   // FIXME obviously
 }
 
 bool
@@ -112,6 +184,48 @@ void
 CLAP_Plugin::process ( nframes_t )
 {
     
+}
+
+const clap_plugin_entry_t*
+CLAP_Plugin::entry_from_CLAP_file(const char *f)
+{
+    void *handle;
+    int *iptr;
+
+    handle = dlopen(f, RTLD_LOCAL | RTLD_LAZY);
+    if (!handle)
+    {
+        DMESSAGE("dlopen failed on Linux: %s", dlerror());
+	return nullptr;
+    }
+
+    iptr = (int *)dlsym(handle, "clap_entry");
+
+    return (clap_plugin_entry_t *)iptr;
+}
+
+const void*
+CLAP_Plugin::get_extension(const struct clap_host*, const char* eid)
+{
+    return nullptr;
+}
+
+void
+CLAP_Plugin::request_restart(const struct clap_host * host)
+{
+
+}
+
+void
+CLAP_Plugin::request_process(const struct clap_host * host)
+{
+
+}
+
+void
+CLAP_Plugin::request_callback(const struct clap_host * host)
+{
+
 }
 
 void

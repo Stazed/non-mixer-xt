@@ -26,6 +26,7 @@
 
 #ifdef CLAP_SUPPORT
 
+#include <clap/clap.h>
 #include "Plugin_Module.H"
 
 class CLAP_Plugin : public Plugin_Module {
@@ -60,6 +61,24 @@ public:
 
 private:
 
+	const clap_plugin_entry *_entry;
+	const clap_plugin_factory *_factory;
+
+	const clap_plugin_descriptor *_descriptor;
+
+	clap_host_t *_host;
+        
+        const clap_plugin_t *_plugin;
+
+public:
+    const clap_plugin_entry_t *entry_from_CLAP_file(const char *f);
+
+    static const void *get_extension(const struct clap_host * host, const char *eid);
+    static void request_restart(const struct clap_host * host);
+    static void request_process(const struct clap_host * host);
+    static void request_callback(const struct clap_host * host);
+
+private:
     void activate ( void );
     void deactivate ( void );
     void add_port ( const Port &p );
