@@ -429,7 +429,7 @@ Plugin_Module::scan_CLAP_plugins( std::list<Plugin_Info> & pr )
         pr.insert(std::end(pr), std::begin(clap_PI_cache), std::end(clap_PI_cache));
         return;
     }
-    
+
     auto sp = clap_discovery::installedCLAPs();   // This to get paths
 
     for (const auto &q : sp)
@@ -474,7 +474,7 @@ Plugin_Module::scan_CLAP_plugins( std::list<Plugin_Info> & pr )
             Plugin_Info pi("CLAP");
 
             pi.name     = desc->name;
-            pi.path     = desc->id;
+            pi.path     = strdup(q.u8string().c_str());
             pi.author   = desc->vendor;
             pi.id       = pl;           // Bundle Instance - FIXME check
 
@@ -491,7 +491,7 @@ Plugin_Module::scan_CLAP_plugins( std::list<Plugin_Info> & pr )
 
             // Now lets make an instance to query ports
             auto host = clap_discovery::createCLAPInfoHost();
-            clap_discovery::getHostConfig()->announceQueriedExtensions = true;
+            clap_discovery::getHostConfig()->announceQueriedExtensions = false;
             auto inst = fac->create_plugin(fac, host, desc->id);
 
             if (!inst)
