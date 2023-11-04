@@ -548,8 +548,6 @@ Plugin_Module::scan_CLAP_plugins( std::list<Plugin_Info> & pr )
             DMESSAGE("Name = %s: Path = %s: ID = %d: Audio Ins = %d: Audio Outs = %d",
                     pi.name.c_str(), pi.path, pi.id, pi.audio_inputs, pi.audio_outputs);
         }
-
-        entry->deinit();
     }
 
     if ( !clap_PI_cache.empty() )
