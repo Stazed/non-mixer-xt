@@ -61,14 +61,17 @@ public:
 
 private:
 
-	const clap_plugin_entry *_entry;
-	const clap_plugin_factory *_factory;
+    const clap_plugin_entry *_entry;
+    const clap_plugin_factory *_factory;
 
-	const clap_plugin_descriptor *_descriptor;
+    const clap_plugin_descriptor *_descriptor;
 
-	clap_host_t *_host;
-        
-        const clap_plugin_t *_plugin;
+    clap_host_t *_host;
+
+    const clap_plugin_t *_plugin;
+
+    int _midi_ins;
+    int _midi_outs;
 
 public:
     const clap_plugin_entry_t *entry_from_CLAP_file(const char *f);
@@ -79,6 +82,8 @@ public:
     static void request_callback(const struct clap_host * host);
 
 private:
+
+    void create_audio_ports();
     void activate ( void );
     void deactivate ( void );
     void add_port ( const Port &p );

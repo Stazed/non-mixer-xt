@@ -110,13 +110,89 @@ CLAP_Plugin::load_plugin ( Module::Picked picked )
         return false;
     }
 
-    return false;   // FIXME obviously
+    _plugin_ins = _plugin_outs = 0;
+    _midi_ins = _midi_outs = 0;
+    
+    create_audio_ports();
+
+    return true;   // FIXME obviously
 }
 
 bool
-CLAP_Plugin::configure_inputs ( int )
+CLAP_Plugin::configure_inputs ( int n )
 {
+ //   unsigned int inst = _idata->handle.size();
     
+    /* The synth case - no inputs and JACK module has one */
+    if( ninputs() == 0 && n == 1)
+    {
+        _crosswire = false;
+    }
+    else if ( ninputs() != n )
+    {
+        _crosswire = false;
+
+        if ( n != ninputs() )
+        {
+            if ( 1 == n && plugin_ins() > 1 )
+            {
+                DMESSAGE( "Cross-wiring plugin inputs" );
+                _crosswire = true;
+
+                audio_input.clear();
+
+                for ( int i = n; i--; )
+                    audio_input.push_back( Port( this, Port::INPUT, Port::AUDIO ) );
+            }
+#if 0
+            else if ( n >= plugin_ins() &&
+                      ( plugin_ins() == 1 && plugin_outs() == 1 ) )
+            {
+                DMESSAGE( "Running multiple instances of plugin" );
+
+                audio_input.clear();
+                audio_output.clear();
+
+                for ( int i = n; i--; )
+                {
+                    add_port( Port( this, Port::INPUT, Port::AUDIO ) );
+                    add_port( Port( this, Port::OUTPUT, Port::AUDIO ) );
+                }
+
+                inst = n;
+            }
+#endif
+            else if ( n == plugin_ins() )
+            {
+                DMESSAGE( "Plugin input configuration is a perfect match" );
+            }
+            else
+            {
+                DMESSAGE( "Unsupported input configuration" );
+                return false;
+            }
+        }
+    }
+#if 0
+    if ( loaded() )
+    {
+        bool b = bypass();
+        if ( inst != _idata->handle.size() )
+        {
+            if ( !b )
+                deactivate();
+            
+            if ( plugin_instances( inst ) )
+                instances( inst );
+            else
+                return false;
+            
+            if ( !b )
+                activate();
+        }
+    }
+#endif
+    return true;
 }
 
 
@@ -177,7 +253,7 @@ CLAP_Plugin::configure_midi_outputs ()
 nframes_t
 CLAP_Plugin::get_module_latency ( void ) const
 {
-    
+    return 0;
 }
 
 void
@@ -229,6 +305,54 @@ CLAP_Plugin::request_callback(const struct clap_host * host)
 }
 
 void
+CLAP_Plugin::create_audio_ports()
+{
+    const clap_plugin_audio_ports_t *audio_ports
+        = static_cast<const clap_plugin_audio_ports_t *> (
+                _plugin->get_extension(_plugin, CLAP_EXT_AUDIO_PORTS));
+
+    if (audio_ports && audio_ports->count && audio_ports->get)
+    {
+        clap_audio_port_info info;
+        const uint32_t nins = audio_ports->count(_plugin, true);    // true == input
+        for (uint32_t i = 0; i < nins; ++i)
+        {
+            ::memset(&info, 0, sizeof(info));
+            if (audio_ports->get(_plugin, i, true, &info))
+            {
+                if (info.flags & CLAP_AUDIO_PORT_IS_MAIN)
+                {
+                    for (unsigned ii = 0; ii < info.channel_count; ++ii)
+                    {
+                        add_port( Port( this, Port::INPUT, Port::AUDIO, info.name ) );
+                        audio_input[_plugin_ins].hints.plug_port_index = ii;
+                        _plugin_ins++;
+                    }
+                }
+            }
+        }
+
+        const uint32_t nouts = audio_ports->count(_plugin, false);  // false == output
+        for (uint32_t i = 0; i < nouts; ++i)
+        {
+            ::memset(&info, 0, sizeof(info));
+            if (audio_ports->get(_plugin, i, false, &info))
+            {
+                if (info.flags & CLAP_AUDIO_PORT_IS_MAIN)
+                {
+                    for (unsigned ii = 0; ii < info.channel_count; ++ii)
+                    {
+                        add_port( Port( this, Port::OUTPUT, Port::AUDIO, info.name ) );
+                        audio_output[_plugin_outs].hints.plug_port_index = ii;
+                        _plugin_outs++;
+                    }
+                }
+            }
+        }
+    }
+}
+
+void
 CLAP_Plugin::activate ( void )
 {
     
@@ -243,7 +367,15 @@ CLAP_Plugin::deactivate ( void )
 void
 CLAP_Plugin::add_port ( const Port &p )
 {
-    
+    Module::add_port(p);
+
+#if 0
+    else if ( p.type() == Port::MIDI && p.direction() == Port::INPUT )
+        note_input.push_back( p );
+    else if ( p.type() == Port::MIDI && p.direction() == Port::OUTPUT )
+        note_output.push_back( p );
+#endif  // MIDI_SUPPORT
+
 }
 
 void
