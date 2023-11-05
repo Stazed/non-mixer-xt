@@ -27,6 +27,8 @@
 #ifdef CLAP_SUPPORT
 
 #include <clap/clap.h>
+
+#include "Mixer_Strip.H"
 #include "Plugin_Module.H"
 
 class CLAP_Plugin : public Plugin_Module {
@@ -55,6 +57,9 @@ public:
 
     LOG_CREATE_FUNC( CLAP_Plugin );
     MODULE_CLONE_FUNC( CLAP_Plugin );
+    
+    std::vector<Port> note_input;
+    std::vector<Port> note_output;
 
     CLAP_Plugin();
     virtual ~CLAP_Plugin();

@@ -27,6 +27,10 @@
 #include "CLAP_Plugin.H"
 #include "Clap_Discovery.H"
 
+#include "Chain.H"
+
+class Chain;    // forward declaration
+
 CLAP_Plugin::CLAP_Plugin()
 {
 }
@@ -112,7 +116,10 @@ CLAP_Plugin::load_plugin ( Module::Picked picked )
     
     create_audio_ports();
     create_control_ports();
-   // create_note_ports();
+    create_note_ports();
+    
+    if(!_plugin_ins)
+        is_zero_input_synth(true);
 
     return true;   // FIXME obviously
 }
@@ -240,13 +247,65 @@ CLAP_Plugin::thaw_ports ( void )
 void
 CLAP_Plugin::configure_midi_inputs ()
 {
-    
+    if(!note_input.size())
+        return;
+
+    const char *trackname = chain()->strip()->group()->single() ? NULL : chain()->name();
+
+    for( unsigned int i = 0; i < note_input.size(); ++i )
+    {
+        if(!(note_input[i].type() == Port::MIDI))
+            continue;
+
+        std::string port_name = label();
+
+        port_name += " ";
+        port_name += note_input[i].name();
+
+        DMESSAGE("CONFIGURE MIDI INPUTS = %s", port_name.c_str());
+        JACK::Port *jack_port = new JACK::Port( chain()->client(), trackname, port_name.c_str(), JACK::Port::Input, JACK::Port::MIDI );
+        note_input[i].jack_port(jack_port);
+
+        if( !note_input[i].jack_port()->activate() )
+        {
+            delete note_input[i].jack_port();
+            note_input[i].jack_port(NULL);
+            WARNING( "Failed to activate JACK MIDI IN port" );
+            return;
+        }
+    }
 }
 
 void
 CLAP_Plugin::configure_midi_outputs ()
 {
-    
+    if(!note_output.size())
+        return;
+
+    const char *trackname = chain()->strip()->group()->single() ? NULL : chain()->name();
+
+    for( unsigned int i = 0; i < note_output.size(); ++i )
+    {
+        if(!(note_output[i].type() == Port::MIDI))
+            continue;
+
+        std::string port_name = label();
+
+        port_name += " ";
+        port_name += note_output[i].name();
+
+        DMESSAGE("CONFIGURE MIDI OUTPUTS = %s", port_name.c_str());
+        JACK::Port *jack_port = new JACK::Port( chain()->client(), trackname, port_name.c_str(), JACK::Port::Output, JACK::Port::MIDI );
+        note_output[i].jack_port(jack_port);
+
+        if( !note_output[i].jack_port()->activate() )
+        {
+            delete note_output[i].jack_port();
+            note_output[i].jack_port(NULL);
+            WARNING( "Failed to activate JACK MIDI OUT port" );
+            return;
+        }
+    }
 }
 
 nframes_t
@@ -436,7 +495,7 @@ CLAP_Plugin::create_note_ports()
 {
     _midi_ins = 0;
     _midi_outs = 0;
-#if 0
+
 //    m_iMidiDialectIns = 0;
 //    m_iMidiDialectOuts = 0;
     const clap_plugin_note_ports *note_ports
@@ -454,6 +513,8 @@ CLAP_Plugin::create_note_ports()
               //  if (info.supported_dialects & CLAP_NOTE_DIALECT_MIDI)
               //          ++m_iMidiDialectIns;
 
+                add_port( Port( this, Port::INPUT, Port::MIDI, strdup(info.name) ) );
+                note_input[_midi_ins].hints.plug_port_index = i;
                 ++_midi_ins;
             }
         }
@@ -466,11 +527,12 @@ CLAP_Plugin::create_note_ports()
               //  if (info.supported_dialects & CLAP_NOTE_DIALECT_MIDI)
               //          ++m_iMidiDialectOuts;
 
+                add_port( Port( this, Port::OUTPUT, Port::MIDI, strdup(info.name) ) );
+                note_output[_midi_outs].hints.plug_port_index = i;
                 ++_midi_outs;
             }
         }
     }
-#endif
 }
 
 void
@@ -490,13 +552,10 @@ CLAP_Plugin::add_port ( const Port &p )
 {
     Module::add_port(p);
 
-#if 0
-    else if ( p.type() == Port::MIDI && p.direction() == Port::INPUT )
+    if ( p.type() == Port::MIDI && p.direction() == Port::INPUT )
         note_input.push_back( p );
     else if ( p.type() == Port::MIDI && p.direction() == Port::OUTPUT )
         note_output.push_back( p );
-#endif  // MIDI_SUPPORT
-
 }
 
 void
