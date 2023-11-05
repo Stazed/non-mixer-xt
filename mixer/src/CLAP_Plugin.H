@@ -73,6 +73,9 @@ private:
     int _midi_ins;
     int _midi_outs;
 
+    int _control_ins;
+    int _control_outs;
+
 public:
     const clap_plugin_entry_t *entry_from_CLAP_file(const char *f);
 
@@ -84,6 +87,8 @@ public:
 private:
 
     void create_audio_ports();
+    void create_note_ports();
+    void create_control_ports();
     void activate ( void );
     void deactivate ( void );
     void add_port ( const Port &p );

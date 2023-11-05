@@ -109,11 +109,10 @@ CLAP_Plugin::load_plugin ( Module::Picked picked )
         WARNING("Cannot initialize plugin = %s", _descriptor->name);
         return false;
     }
-
-    _plugin_ins = _plugin_outs = 0;
-    _midi_ins = _midi_outs = 0;
     
     create_audio_ports();
+    create_control_ports();
+   // create_note_ports();
 
     return true;   // FIXME obviously
 }
@@ -307,6 +306,9 @@ CLAP_Plugin::request_callback(const struct clap_host * host)
 void
 CLAP_Plugin::create_audio_ports()
 {
+    _plugin_ins = 0;
+    _plugin_outs = 0;
+
     const clap_plugin_audio_ports_t *audio_ports
         = static_cast<const clap_plugin_audio_ports_t *> (
                 _plugin->get_extension(_plugin, CLAP_EXT_AUDIO_PORTS));
@@ -350,6 +352,125 @@ CLAP_Plugin::create_audio_ports()
             }
         }
     }
+}
+
+void
+CLAP_Plugin::create_control_ports()
+{
+    _control_ins = 0;
+    _control_outs = 0;
+
+    const clap_plugin_params *params
+            = static_cast<const clap_plugin_params *> (
+                    _plugin->get_extension(_plugin, CLAP_EXT_PARAMS));
+
+    if (params && params->count && params->get_info)
+    {
+        const uint32_t nparams = params->count(_plugin);
+        for (uint32_t i = 0; i < nparams; ++i)
+        {
+            Port::Direction d = Port::INPUT;
+
+            clap_param_info param_info;
+            ::memset(&param_info, 0, sizeof(param_info));
+            if (params->get_info(_plugin, i, &param_info))
+            {
+                if (param_info.flags & CLAP_PARAM_IS_READONLY)
+                {
+                    d = Port::OUTPUT;
+                    ++_control_outs;
+                }
+                else
+                {
+                    if (param_info.flags & CLAP_PARAM_IS_AUTOMATABLE)
+                    {
+                        d = Port::INPUT;
+                        ++_control_ins;
+                    }
+                }
+
+                Port p( this, d, Port::CONTROL, strdup(param_info.name) );
+                
+                /* Used for OSC path creation unique symbol */
+                std::string osc_symbol = param_info.name;
+                std::remove(osc_symbol.begin(), osc_symbol.end(), ' ');
+                osc_symbol += std::to_string( param_info.id );
+                
+                p.set_symbol(osc_symbol.c_str());
+                
+                p.hints.ranged = true;
+                p.hints.minimum = (float) param_info.min_value;
+                p.hints.maximum = (float) param_info.max_value;
+                p.hints.default_value = p.hints.minimum;
+                
+                if (param_info.flags & CLAP_PARAM_IS_STEPPED)
+                {
+                    if ( p.hints.ranged &&
+                         0 == (int)p.hints.minimum &&
+                         1 == (int)p.hints.maximum )
+                        p.hints.type = Port::Hints::BOOLEAN;
+                    else
+                        p.hints.type = Port::Hints::INTEGER;
+                }
+                if (param_info.flags & CLAP_PARAM_IS_HIDDEN )
+                {
+                    p.hints.visible = false;
+                }
+                
+                float *control_value = new float;
+
+                *control_value = p.hints.default_value;
+
+                p.connect_to( control_value );
+
+                add_port( p );
+                
+                DMESSAGE( "Plugin has control port \"%s\" (default: %f)", param_info.name, p.hints.default_value );
+            }
+        }
+    }
+}
+
+void
+CLAP_Plugin::create_note_ports()
+{
+    _midi_ins = 0;
+    _midi_outs = 0;
+#if 0
+//    m_iMidiDialectIns = 0;
+//    m_iMidiDialectOuts = 0;
+    const clap_plugin_note_ports *note_ports
+            = static_cast<const clap_plugin_note_ports *> (
+                    _plugin->get_extension(_plugin, CLAP_EXT_NOTE_PORTS));
+    if (note_ports && note_ports->count && note_ports->get)
+    {
+        clap_note_port_info info;
+        const uint32_t nins = note_ports->count(_plugin, true);
+        for (uint32_t i = 0; i < nins; ++i)
+        {
+            ::memset(&info, 0, sizeof(info));
+            if (note_ports->get(_plugin, i, true, &info))
+            {
+              //  if (info.supported_dialects & CLAP_NOTE_DIALECT_MIDI)
+              //          ++m_iMidiDialectIns;
+
+                ++_midi_ins;
+            }
+        }
+        const uint32_t nouts = note_ports->count(_plugin, false);
+        for (uint32_t i = 0; i < nouts; ++i)
+        {
+            ::memset(&info, 0, sizeof(info));
+            if (note_ports->get(_plugin, i, false, &info))
+            {
+              //  if (info.supported_dialects & CLAP_NOTE_DIALECT_MIDI)
+              //          ++m_iMidiDialectOuts;
+
+                ++_midi_outs;
+            }
+        }
+    }
+#endif
 }
 
 void
