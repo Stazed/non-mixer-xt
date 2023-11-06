@@ -42,6 +42,11 @@ public:
     void handle_chain_name_changed ( void );
     void handle_sample_rate_change ( nframes_t sample_rate );
     void resize_buffers ( nframes_t buffer_size );
+    
+    void set_input_buffer ( int n, void *buf );
+    void set_output_buffer ( int n, void *buf );
+    bool loaded ( void ) const;
+    bool process_reset();
 
     virtual bool bypass ( void ) const { return *_bypass == 1.0f; }
     virtual void bypass ( bool v );
@@ -72,6 +77,19 @@ private:
     const clap_plugin_descriptor *_descriptor;
 
     clap_host_t *_host;
+    clap_process _process;
+    
+    bool _is_processing;
+    bool _activated;
+    
+    clap_audio_buffer _audio_ins;
+    clap_audio_buffer _audio_outs;
+    
+    float ** _audio_in_buffers;
+    float ** _audio_out_buffers;
+    
+  //  int _audioIN_channel_count;
+  //  int _audioOUT_channel_count;
 
     const clap_plugin_t *_plugin;
 

@@ -29,10 +29,13 @@
 
 #include "Chain.H"
 
+#include "../../nonlib/dsp.h"
+
 class Chain;    // forward declaration
 
-CLAP_Plugin::CLAP_Plugin()
+CLAP_Plugin::CLAP_Plugin() : Plugin_Module( )
 {
+    init();
 }
 
 
@@ -118,6 +121,8 @@ CLAP_Plugin::load_plugin ( Module::Picked picked )
     create_control_ports();
     create_note_ports();
     
+    process_reset();
+    
     if(!_plugin_ins)
         is_zero_input_synth(true);
 
@@ -179,25 +184,27 @@ CLAP_Plugin::configure_inputs ( int n )
             }
         }
     }
-#if 0
+
     if ( loaded() )
     {
         bool b = bypass();
-        if ( inst != _idata->handle.size() )
-        {
+
+        // FIXME instances
+    //    if ( inst != _idata->handle.size() )
+    //    {
             if ( !b )
                 deactivate();
             
-            if ( plugin_instances( inst ) )
-                instances( inst );
-            else
-                return false;
+          //  if ( plugin_instances( inst ) )
+          //      instances( inst );
+          //  else
+          //      return false;
             
             if ( !b )
                 activate();
-        }
+      //  }
     }
-#endif
+
     return true;
 }
 
@@ -205,7 +212,25 @@ CLAP_Plugin::configure_inputs ( int n )
 void
 CLAP_Plugin::handle_port_connection_change ( void )
 {
-    
+    if ( loaded() )
+    {
+        _audio_ins.channel_count = plugin_ins();
+        _audio_outs.channel_count = plugin_outs();
+
+        if ( _crosswire )
+        {
+            for ( int i = 0; i < plugin_ins(); ++i )
+                set_input_buffer( i, audio_input[0].buffer() );
+        }
+        else
+        {
+            for ( unsigned int i = 0; i < audio_input.size(); ++i )
+                set_input_buffer( i, audio_input[i].buffer() );
+        }
+
+        for ( unsigned int i = 0; i < audio_output.size(); ++i )
+            set_output_buffer( i, audio_output[i].buffer() );
+    }
 }
 
 void
@@ -227,9 +252,165 @@ CLAP_Plugin::resize_buffers ( nframes_t buffer_size )
 }
 
 void
+CLAP_Plugin::set_input_buffer ( int n, void *buf )
+{
+    _audio_in_buffers[n] = (float*) buf;
+    _audio_ins.data32 = _audio_in_buffers;
+
+#if 0   // FIXME instances
+    void* h;
+
+    if ( instances() > 1 )
+    {
+        h = _idata->handle[n];
+        n = 0;
+    }
+    else
+    {
+        h = _idata->handle[0];
+    }
+
+    for ( unsigned int i = 0; i < _idata->lv2.rdf_data->PortCount; ++i )
+    {
+        if ( LV2_IS_PORT_INPUT( _idata->lv2.rdf_data->Ports[i].Types ) &&
+             LV2_IS_PORT_AUDIO( _idata->lv2.rdf_data->Ports[i].Types ) )
+        {
+            if ( n-- == 0 )
+                _idata->lv2.descriptor->connect_port( h, i, (float*)buf );
+        }
+    }
+#endif
+}
+
+void
+CLAP_Plugin::set_output_buffer ( int n, void *buf )
+{
+    _audio_out_buffers[n] = (float*) buf;
+    _audio_outs.data32 = _audio_out_buffers;
+
+#if 0   // FIXME instances
+    void* h;
+
+    if ( instances() > 1 )
+    {
+        h = _idata->handle[n];
+        n = 0;
+    }
+    else
+        h = _idata->handle[0];
+
+    for ( unsigned int i = 0; i < _idata->lv2.rdf_data->PortCount; ++i )
+    {
+        if ( LV2_IS_PORT_OUTPUT( _idata->lv2.rdf_data->Ports[i].Types ) &&
+            LV2_IS_PORT_AUDIO( _idata->lv2.rdf_data->Ports[i].Types ) )
+        {
+            if ( n-- == 0 )
+                _idata->lv2.descriptor->connect_port( h, i, (float*)buf );
+        }
+    }
+#endif
+}
+
+bool
+CLAP_Plugin::loaded ( void ) const
+{
+    if ( _plugin )
+        return true;
+
+    return false;
+
+    //return _idata->handle.size() > 0 && ( _idata->lv2.rdf_data && _idata->lv2.descriptor);
+}
+
+bool
+CLAP_Plugin::process_reset()
+{
+    deactivate();
+
+    ::memset(&_audio_ins, 0, sizeof(_audio_ins));
+    _audio_ins.channel_count = plugin_ins();
+    _audio_ins.data32 = _audio_in_buffers;
+    _audio_ins.data64 = nullptr;
+    _audio_ins.constant_mask = 0;
+    _audio_ins.latency = 0;
+
+    ::memset(&_audio_outs, 0, sizeof(_audio_outs));
+    _audio_outs.channel_count = plugin_outs();
+    _audio_outs.data32 = _audio_out_buffers;
+    _audio_outs.data64 = nullptr;
+    _audio_outs.constant_mask = 0;
+    _audio_outs.latency = 0;
+        
+    ::memset(&_process, 0, sizeof(_process));
+    
+    _process.audio_inputs  = &_audio_ins;
+    _process.audio_inputs_count = 1;
+    _process.audio_outputs = &_audio_outs;
+    _process.in_events = nullptr;   // FIXME
+    _process.out_events = nullptr;  // FIXME
+ //   _process.in_events  = m_events_in.ins();
+ //   _process.out_events = m_events_out.outs();
+    
+    _process.audio_outputs_count = 1;
+    _process.transport = nullptr;   // FIXME
+    _process.frames_count = 0;      // FIXME
+    _process.steady_time = 0;
+    
+    activate();
+    
+    return true;
+#if 0
+    	qtractorClapPluginType *pType
+		= static_cast<qtractorClapPluginType *> (m_pPlugin->type());
+	if (pType == nullptr)
+		return false;
+
+	deactivate();
+
+	m_srate = pAudioEngine->sampleRate();
+	m_nframes = pAudioEngine->bufferSize();
+	m_nframes_max = pAudioEngine->bufferSizeEx();
+
+	::memset(&m_audio_ins, 0, sizeof(m_audio_ins));
+	m_audio_ins.channel_count = pType->audioIns();
+
+	::memset(&m_audio_outs, 0, sizeof(m_audio_outs));
+	m_audio_outs.channel_count = pType->audioOuts();
+
+	m_events_in.clear();
+	m_events_out.clear();
+
+	::memset(&m_process, 0, sizeof(m_process));
+	if (pType->audioIns() > 0) {
+		m_process.audio_inputs = &m_audio_ins;
+		m_process.audio_inputs_count = 1;
+	}
+	if (pType->audioOuts() > 0) {
+		m_process.audio_outputs = &m_audio_outs;
+		m_process.audio_outputs_count = 1;
+	}
+	m_process.in_events  = m_events_in.ins();
+	m_process.out_events = m_events_out.outs();
+	m_process.frames_count = pAudioEngine->blockSize();
+	m_process.steady_time = 0;
+	m_process.transport = g_host.transport();
+
+	activate();
+
+	return true;
+#endif
+}
+
+void
 CLAP_Plugin::bypass ( bool v )
 {
-    
+    if ( v != bypass() )
+    {
+        if ( v )
+            deactivate();
+        else
+            activate();
+    }
 }
 
 void
@@ -311,13 +492,83 @@ CLAP_Plugin::configure_midi_outputs ()
 nframes_t
 CLAP_Plugin::get_module_latency ( void ) const
 {
-    return 0;
+    return 0;   // FIXME
 }
 
 void
-CLAP_Plugin::process ( nframes_t )
+CLAP_Plugin::process ( nframes_t nframes )
 {
-    
+    handle_port_connection_change();
+
+    if ( unlikely( bypass() ) )
+    {
+        /* If this is a mono to stereo plugin, then duplicate the input channel... */
+        /* There's not much we can do to automatically support other configurations. */
+        if ( ninputs() == 1 && noutputs() == 2 )
+        {
+            buffer_copy( (sample_t*)audio_output[1].buffer(), (sample_t*)audio_input[0].buffer(), nframes );
+        }
+
+        _latency = 0;
+    }
+    else
+    {
+        if (!_plugin)
+            return;
+
+        if (!_activated)
+            return;
+        
+        if (! _is_processing)
+        {
+           _is_processing = _plugin->start_processing(_plugin);
+        }
+        
+        if (_is_processing)
+        {
+            _process.frames_count  = nframes;
+           // _plugin->process(_plugin, &_process); // FIXME
+            _process.steady_time += nframes;
+        }
+    }
+#if 0
+    if (!m_plugin)
+        return;
+
+    if (!m_activated)
+        return;
+
+    if (!m_processing && !m_sleeping)
+    {
+        plugin_params_flush();
+        g_host.transportAddRef();
+        m_processing = m_plugin->start_processing(m_plugin);
+    }
+    else if (m_processing && (m_sleeping || m_restarting))
+    {
+        m_plugin->stop_processing(m_plugin);
+        m_processing = false;
+        g_host.transportReleaseRef();
+        if (m_plugin->reset && !m_restarting)
+            m_plugin->reset(m_plugin);
+    }
+
+    if (m_processing)
+    {
+        // Run main processing...
+        m_audio_ins.data32 = ins;
+        m_audio_outs.data32 = outs;
+        m_events_out.clear();
+        m_process.frames_count = nframes;
+        
+        m_plugin->process(m_plugin, &m_process);
+
+        m_process.steady_time += nframes;
+        m_events_in.clear();
+        // Transfer parameter changes...
+        process_params_out();
+    }
+#endif
 }
 
 const clap_plugin_entry_t*
@@ -341,25 +592,25 @@ CLAP_Plugin::entry_from_CLAP_file(const char *f)
 const void*
 CLAP_Plugin::get_extension(const struct clap_host*, const char* eid)
 {
-    return nullptr;
+    return nullptr; // FIXME
 }
 
 void
 CLAP_Plugin::request_restart(const struct clap_host * host)
 {
-
+    // TODO
 }
 
 void
 CLAP_Plugin::request_process(const struct clap_host * host)
 {
-
+    // TODO
 }
 
 void
 CLAP_Plugin::request_callback(const struct clap_host * host)
 {
-
+    // TODO
 }
 
 void
@@ -411,6 +662,9 @@ CLAP_Plugin::create_audio_ports()
             }
         }
     }
+
+    _audio_in_buffers = new float * [_plugin_ins];
+    _audio_out_buffers = new float * [_plugin_outs];
 }
 
 void
@@ -538,13 +792,77 @@ CLAP_Plugin::create_note_ports()
 void
 CLAP_Plugin::activate ( void )
 {
+    if ( !loaded() )
+        return;
+
+    if ( _activated )
+        return;
+
+    DMESSAGE( "Activating plugin \"%s\"", label() );
+
+    if ( !bypass() )
+        FATAL( "Attempt to activate already active plugin" );
+
+    if ( chain() )
+        chain()->client()->lock();
+
+#if 0   // FIXME instances
+    if ( _idata->lv2.descriptor->activate )
+    {
+        for ( unsigned int i = 0; i < _idata->handle.size(); ++i )
+        {
+            _idata->lv2.descriptor->activate( _idata->handle[i] );
+        }
+    }
+#endif
+
+    _activated = _plugin->activate(_plugin, (double) sample_rate(), buffer_size(), buffer_size() );
     
+    *_bypass = 0.0f;
+
+    if ( chain() )
+        chain()->client()->unlock();
 }
 
 void
 CLAP_Plugin::deactivate ( void )
 {
-    
+    if ( !loaded() )
+        return;
+
+    if ( !_activated )
+        return;
+
+#if 0
+    if (!m_sleeping && !force)
+    {
+        m_sleeping = true;
+        return;
+    }
+#endif
+    DMESSAGE( "Deactivating plugin \"%s\"", label() );
+
+    if ( chain() )
+        chain()->client()->lock();
+
+    *_bypass = 1.0f;
+
+    _activated = false;
+
+    _plugin->deactivate(_plugin);
+
+#if 0   // FIXME instances
+    if ( _idata->lv2.descriptor->deactivate )
+    {
+        for ( unsigned int i = 0; i < _idata->handle.size(); ++i )
+        {
+            _idata->lv2.descriptor->deactivate( _idata->handle[i] );
+        }
+    }
+#endif
+
+    if ( chain() )
+        chain()->client()->unlock();
 }
 
 void
@@ -561,7 +879,13 @@ CLAP_Plugin::add_port ( const Port &p )
 void
 CLAP_Plugin::init ( void )
 {
-    
+    _plug_type = CLAP;
+    _is_processing = false;
+    _activated = false;
+
+    Plugin_Module::init();
+
+    // _project_directory = "";
 }
 
 void
