@@ -36,6 +36,8 @@ class Chain;    // forward declaration
 CLAP_Plugin::CLAP_Plugin() : Plugin_Module( )
 {
     init();
+
+    log_create();
 }
 
 
@@ -236,19 +238,88 @@ CLAP_Plugin::handle_port_connection_change ( void )
 void
 CLAP_Plugin::handle_chain_name_changed ( void )
 {
-    
+   Module::handle_chain_name_changed();
+
+    if ( ! chain()->strip()->group()->single() )
+    {
+        for ( unsigned int i = 0; i < note_input.size(); i++ )
+        {
+            if(!(note_input[i].type() == Port::MIDI))
+                continue;
+
+            if(note_input[i].jack_port())
+            {
+                note_input[i].jack_port()->trackname( chain()->name() );
+                note_input[i].jack_port()->rename();
+            }
+        }
+        for ( unsigned int i = 0; i < note_output.size(); i++ )
+        {
+            if(!(note_output[i].type() == Port::MIDI))
+                continue;
+
+            if(note_output[i].jack_port())
+            {
+                note_output[i].jack_port()->trackname( chain()->name() );
+                note_output[i].jack_port()->rename();
+            }
+        }
+    }
 }
 
 void
 CLAP_Plugin::handle_sample_rate_change ( nframes_t sample_rate )
 {
-    
+#if 0
+    if ( ! _idata->lv2.rdf_data )
+        return;
+
+    _idata->lv2.options.sampleRate = sample_rate;
+
+    if ( _idata->lv2.ext.options && _idata->lv2.ext.options->set )
+    {
+        for ( unsigned int i = 0; i < _idata->handle.size(); ++i )
+            _idata->lv2.ext.options->set( _idata->handle[i], &(_idata->lv2.options.opts[Plugin_Module_Options::SampleRate]) );
+    }
+
+    unsigned int nport = 0;
+
+    for ( unsigned int i = 0; i < _idata->lv2.rdf_data->PortCount; ++i )
+    {
+        if ( LV2_IS_PORT_INPUT( _idata->lv2.rdf_data->Ports[i].Types ) &&
+             LV2_IS_PORT_CONTROL( _idata->lv2.rdf_data->Ports[i].Types ) )
+        {
+            if ( LV2_IS_PORT_DESIGNATION_SAMPLE_RATE( _idata->lv2.rdf_data->Ports[i].Designation ) )
+            {
+                control_input[nport].control_value( sample_rate );
+                break;
+            }
+            ++nport;
+        }
+    }
+#endif
 }
 
 void
 CLAP_Plugin::resize_buffers ( nframes_t buffer_size )
 {
-    
+    Module::resize_buffers( buffer_size );
+#if 0
+    if ( ! _idata->lv2.rdf_data )
+        return;
+
+    _idata->lv2.options.maxBufferSize = buffer_size;
+    _idata->lv2.options.minBufferSize = buffer_size;
+
+    if ( _idata->lv2.ext.options && _idata->lv2.ext.options->set )
+    {
+        for ( unsigned int i = 0; i < _idata->handle.size(); ++i )
+        {
+            _idata->lv2.ext.options->set( _idata->handle[i], &(_idata->lv2.options.opts[Plugin_Module_Options::MaxBlockLenth]) );
+            _idata->lv2.ext.options->set( _idata->handle[i], &(_idata->lv2.options.opts[Plugin_Module_Options::MinBlockLenth]) );
+        }
+    }
+#endif
 }
 
 void
@@ -416,13 +487,69 @@ CLAP_Plugin::bypass ( bool v )
 void
 CLAP_Plugin::freeze_ports ( void )
 {
-    
+    Module::freeze_ports();
+
+    for ( unsigned int i = 0; i < note_input.size(); ++i )
+    {
+        if(!(note_input[i].type() == Port::MIDI))
+            continue;
+
+        if(note_input[i].jack_port())
+        {
+            note_input[i].jack_port()->freeze();
+            note_input[i].jack_port()->shutdown();
+        }
+    }
+
+    for ( unsigned int i = 0; i < note_output.size(); ++i )
+    {
+        if(!(note_output[i].type() == Port::MIDI))
+            continue;
+
+        if(note_output[i].jack_port())
+        {
+            note_output[i].jack_port()->freeze();
+            note_output[i].jack_port()->shutdown();
+        }
+    }
 }
 
 void 
 CLAP_Plugin::thaw_ports ( void )
 {
-    
+    Module::thaw_ports();
+
+    const char *trackname = chain()->strip()->group()->single() ? NULL : chain()->name();
+
+    for ( unsigned int i = 0; i < note_input.size(); ++i )
+    {   
+        /* if we're entering a group we need to add the chain name
+         * prefix and if we're leaving one, we need to remove it */
+        if(!(note_input[i].type() == Port::MIDI))
+            continue;
+
+        if(note_input[i].jack_port())
+        {
+            note_input[i].jack_port()->client( chain()->client() );
+            note_input[i].jack_port()->trackname( trackname );
+            note_input[i].jack_port()->thaw();
+        }
+    }
+
+    for ( unsigned int i = 0; i < note_output.size(); ++i )
+    {
+        /* if we're entering a group we won't actually be using our
+         * JACK output ports anymore, just mixing into the group outputs */
+        if(!(note_output[i].type() == Port::MIDI))
+            continue;
+
+        if(note_output[i].jack_port())
+        {
+            note_output[i].jack_port()->client( chain()->client() );
+            note_output[i].jack_port()->trackname( trackname );
+            note_output[i].jack_port()->thaw();
+        }
+    }
 }
 
 void
@@ -492,6 +619,20 @@ CLAP_Plugin::configure_midi_outputs ()
 nframes_t
 CLAP_Plugin::get_module_latency ( void ) const
 {
+#if 0
+    unsigned int nport = 0;
+
+    for ( unsigned int i = 0; i < _idata->lv2.rdf_data->PortCount; ++i )
+    {
+        if ( LV2_IS_PORT_OUTPUT( _idata->lv2.rdf_data->Ports[i].Types ) &&
+             LV2_IS_PORT_CONTROL( _idata->lv2.rdf_data->Ports[i].Types ) )
+        {
+            if ( LV2_IS_PORT_DESIGNATION_LATENCY( _idata->lv2.rdf_data->Ports[i].Designation ) )
+                return control_output[nport].control_value();
+            ++nport;
+        }
+    }
+#endif
     return 0;   // FIXME
 }
 
