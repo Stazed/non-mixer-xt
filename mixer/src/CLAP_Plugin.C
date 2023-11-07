@@ -238,7 +238,7 @@ CLAP_Plugin::handle_port_connection_change ( void )
 void
 CLAP_Plugin::handle_chain_name_changed ( void )
 {
-   Module::handle_chain_name_changed();
+    Module::handle_chain_name_changed();
 
     if ( ! chain()->strip()->group()->single() )
     {
@@ -427,6 +427,8 @@ CLAP_Plugin::process_reset()
     _process.frames_count = 0;      // FIXME
     _process.steady_time = 0;
     
+    _latency = get_module_latency();
+
     activate();
     
     return true;
@@ -619,21 +621,20 @@ CLAP_Plugin::configure_midi_outputs ()
 nframes_t
 CLAP_Plugin::get_module_latency ( void ) const
 {
-#if 0
-    unsigned int nport = 0;
+    if ( _activated )
+        return 0;
 
-    for ( unsigned int i = 0; i < _idata->lv2.rdf_data->PortCount; ++i )
+    if (_plugin )
     {
-        if ( LV2_IS_PORT_OUTPUT( _idata->lv2.rdf_data->Ports[i].Types ) &&
-             LV2_IS_PORT_CONTROL( _idata->lv2.rdf_data->Ports[i].Types ) )
-        {
-            if ( LV2_IS_PORT_DESIGNATION_LATENCY( _idata->lv2.rdf_data->Ports[i].Designation ) )
-                return control_output[nport].control_value();
-            ++nport;
-        }
+        const clap_plugin_latency *latency
+            = static_cast<const clap_plugin_latency *> (
+                _plugin->get_extension(_plugin, CLAP_EXT_LATENCY));
+
+        if (latency && latency->get)
+            return latency->get(_plugin);
     }
-#endif
-    return 0;   // FIXME
+
+    return 0;
 }
 
 void
@@ -855,7 +856,7 @@ CLAP_Plugin::create_control_ports()
                 p.hints.ranged = true;
                 p.hints.minimum = (float) param_info.min_value;
                 p.hints.maximum = (float) param_info.max_value;
-                p.hints.default_value = p.hints.minimum;
+                p.hints.default_value = (float) param_info.default_value;
                 
                 if (param_info.flags & CLAP_PARAM_IS_STEPPED)
                 {
