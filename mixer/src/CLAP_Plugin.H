@@ -119,6 +119,7 @@ private:
 
 protected:
 
+    bool plugin_instances ( unsigned int );
     void get ( Log_Entry &e ) const;
     void set ( Log_Entry &e );
 

@@ -131,6 +131,84 @@ CLAP_Plugin::load_plugin ( Module::Picked picked )
     return true;   // FIXME obviously
 }
 
+
+bool
+CLAP_Plugin::plugin_instances ( unsigned int n )
+{
+#if 0
+    if ( _idata->handle.size() > n )
+    {
+        for ( int i = _idata->handle.size() - n; i--; )
+        {
+            DMESSAGE( "Destroying plugin instance" );
+
+            LV2_Handle h = _idata->handle.back();
+
+            if ( _idata->lv2.descriptor->deactivate )
+                _idata->lv2.descriptor->deactivate( h );
+            if ( _idata->lv2.descriptor->cleanup )
+                _idata->lv2.descriptor->cleanup( h );
+
+            _idata->handle.pop_back();
+        }
+    }
+    else if ( _idata->handle.size() < n )
+    {
+        for ( int i = n - _idata->handle.size(); i--; )
+        {
+            DMESSAGE( "Instantiating plugin... with sample rate %lu", (unsigned long)sample_rate());
+
+            void* h;
+
+            _lilv_instance = lilv_plugin_instantiate(_lilv_plugin,  sample_rate(), _idata->lv2.features);
+
+            if ( ! _lilv_instance )
+            {
+                WARNING( "Failed to instantiate plugin" );
+                return false;
+            }
+            else
+            {
+                h = _lilv_instance->lv2_handle;
+                _idata->lv2.descriptor = _lilv_instance->lv2_descriptor;    // probably not necessary
+            }
+
+            DMESSAGE( "Instantiated: %p", h );
+
+            _idata->handle.push_back( h );
+
+            DMESSAGE( "Connecting control ports..." );
+
+            int ij = 0;
+            int oj = 0;
+
+            for ( unsigned int k = 0; k < _idata->lv2.rdf_data->PortCount; ++k )
+            {
+                if ( LV2_IS_PORT_CONTROL( _idata->lv2.rdf_data->Ports[k].Types ) )
+                {
+                    if ( LV2_IS_PORT_INPUT( _idata->lv2.rdf_data->Ports[k].Types ) )
+                        _idata->lv2.descriptor->connect_port( h, k, (float*)control_input[ij++].buffer() );
+                    else if ( LV2_IS_PORT_OUTPUT( _idata->lv2.rdf_data->Ports[k].Types ) )
+                        _idata->lv2.descriptor->connect_port( h, k, (float*)control_output[oj++].buffer() );
+                }
+                // we need to connect non audio/control ports to NULL
+                else if ( ! LV2_IS_PORT_AUDIO( _idata->lv2.rdf_data->Ports[k].Types ) &&
+                         !LV2_IS_PORT_ATOM_SEQUENCE ( _idata->lv2.rdf_data->Ports[k].Types ))
+                    _idata->lv2.descriptor->connect_port( h, k, NULL );
+            }
+
+            // connect ports to magic bogus value to aid debugging.
+            for ( unsigned int k = 0; k < _idata->lv2.rdf_data->PortCount; ++k )
+                if ( LV2_IS_PORT_AUDIO( _idata->lv2.rdf_data->Ports[k].Types ) )
+                    _idata->lv2.descriptor->connect_port( h, k, (float*)0x42 );
+        }
+    }
+
+    return true;
+#endif
+}
+
+
 bool
 CLAP_Plugin::configure_inputs ( int n )
 {
@@ -270,56 +348,17 @@ CLAP_Plugin::handle_chain_name_changed ( void )
 void
 CLAP_Plugin::handle_sample_rate_change ( nframes_t sample_rate )
 {
-#if 0
-    if ( ! _idata->lv2.rdf_data )
-        return;
-
-    _idata->lv2.options.sampleRate = sample_rate;
-
-    if ( _idata->lv2.ext.options && _idata->lv2.ext.options->set )
-    {
-        for ( unsigned int i = 0; i < _idata->handle.size(); ++i )
-            _idata->lv2.ext.options->set( _idata->handle[i], &(_idata->lv2.options.opts[Plugin_Module_Options::SampleRate]) );
-    }
-
-    unsigned int nport = 0;
-
-    for ( unsigned int i = 0; i < _idata->lv2.rdf_data->PortCount; ++i )
-    {
-        if ( LV2_IS_PORT_INPUT( _idata->lv2.rdf_data->Ports[i].Types ) &&
-             LV2_IS_PORT_CONTROL( _idata->lv2.rdf_data->Ports[i].Types ) )
-        {
-            if ( LV2_IS_PORT_DESIGNATION_SAMPLE_RATE( _idata->lv2.rdf_data->Ports[i].Designation ) )
-            {
-                control_input[nport].control_value( sample_rate );
-                break;
-            }
-            ++nport;
-        }
-    }
-#endif
+    deactivate();
+    activate();
 }
 
 void
 CLAP_Plugin::resize_buffers ( nframes_t buffer_size )
 {
     Module::resize_buffers( buffer_size );
-#if 0
-    if ( ! _idata->lv2.rdf_data )
-        return;
 
-    _idata->lv2.options.maxBufferSize = buffer_size;
-    _idata->lv2.options.minBufferSize = buffer_size;
-
-    if ( _idata->lv2.ext.options && _idata->lv2.ext.options->set )
-    {
-        for ( unsigned int i = 0; i < _idata->handle.size(); ++i )
-        {
-            _idata->lv2.ext.options->set( _idata->handle[i], &(_idata->lv2.options.opts[Plugin_Module_Options::MaxBlockLenth]) );
-            _idata->lv2.ext.options->set( _idata->handle[i], &(_idata->lv2.options.opts[Plugin_Module_Options::MinBlockLenth]) );
-        }
-    }
-#endif
+    deactivate();
+    activate();
 }
 
 void
