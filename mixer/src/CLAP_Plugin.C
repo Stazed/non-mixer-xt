@@ -45,6 +45,8 @@ CLAP_Plugin::~CLAP_Plugin()
 {
     _plugin->deactivate(_plugin);
     _plugin->destroy(_plugin);
+    
+    m_params = nullptr;
 }
 
 bool
@@ -118,6 +120,9 @@ CLAP_Plugin::load_plugin ( Module::Picked picked )
         WARNING("Cannot initialize plugin = %s", _descriptor->name);
         return false;
     }
+    
+    m_params = static_cast<const clap_plugin_params *> (
+        _plugin->get_extension(_plugin, CLAP_EXT_PARAMS));
     
     create_audio_ports();
     create_control_ports();
@@ -437,6 +442,9 @@ CLAP_Plugin::process_reset()
 {
     deactivate();
 
+    m_events_in.clear();
+    m_events_out.clear();
+
     ::memset(&_audio_ins, 0, sizeof(_audio_ins));
     _audio_ins.channel_count = plugin_ins();
     _audio_ins.data32 = _audio_in_buffers;
@@ -453,17 +461,22 @@ CLAP_Plugin::process_reset()
         
     ::memset(&_process, 0, sizeof(_process));
     
-    _process.audio_inputs  = &_audio_ins;
-    _process.audio_inputs_count = 1;
-    _process.audio_outputs = &_audio_outs;
-    _process.in_events = nullptr;   // FIXME
-    _process.out_events = nullptr;  // FIXME
- //   _process.in_events  = m_events_in.ins();
- //   _process.out_events = m_events_out.outs();
-    
-    _process.audio_outputs_count = 1;
-    _process.transport = nullptr;   // FIXME
-    _process.frames_count = 0;      // FIXME
+    if ( audio_input.size() )
+    {
+        _process.audio_inputs  = &_audio_ins;
+        _process.audio_inputs_count = 1;
+    }
+
+    if ( audio_output.size() )
+    {
+        _process.audio_outputs = &_audio_outs;
+        _process.audio_outputs_count = 1;
+    }
+
+    _process.in_events  = m_events_in.ins();
+    _process.out_events = m_events_out.outs();
+    _process.transport = nullptr;   // FIXME  TODO
+    _process.frames_count = buffer_size();      // FIXME Check
     _process.steady_time = 0;
     
     _latency = get_module_latency();
@@ -702,14 +715,22 @@ CLAP_Plugin::process ( nframes_t nframes )
         
         if (! _is_processing)
         {
+            plugin_params_flush();
            _is_processing = _plugin->start_processing(_plugin);
         }
         
         if (_is_processing)
         {
+            m_events_out.clear();
             _process.frames_count  = nframes;
-           // _plugin->process(_plugin, &_process); // FIXME
+
+            _plugin->process(_plugin, &_process);
+
             _process.steady_time += nframes;
+            m_events_in.clear();
+
+            // Transfer parameter changes...
+            process_params_out();
         }
     }
 #if 0
@@ -1063,11 +1084,55 @@ CLAP_Plugin::init ( void )
     _plug_type = CLAP;
     _is_processing = false;
     _activated = false;
+    m_params_flush = false;
+    m_params = nullptr;
 
     Plugin_Module::init();
 
     // _project_directory = "";
 }
+
+// Plugin parameters flush.
+void
+CLAP_Plugin::plugin_params_flush (void)
+{
+    if (!_plugin)
+            return;
+
+    if (!m_params_flush || _is_processing)
+            return;
+
+    m_params_flush = false;
+
+    m_events_in.clear();
+    m_events_out.clear();
+
+    if (m_params && m_params->flush) {
+            m_params->flush(_plugin, m_events_in.ins(), m_events_out.outs());
+            process_params_out();
+            m_events_out.clear();
+    }
+}
+
+// Transfer parameter changes...
+void
+CLAP_Plugin::process_params_out (void)
+{
+    const uint32_t nevents = m_events_out.size();
+    for (uint32_t i = 0; i < nevents; ++i)
+    {
+        const clap_event_header *eh = m_events_out.get(i);
+
+        if (eh && (
+                eh->type == CLAP_EVENT_PARAM_VALUE ||
+                eh->type == CLAP_EVENT_PARAM_GESTURE_BEGIN ||
+                eh->type == CLAP_EVENT_PARAM_GESTURE_END))
+        {
+            m_params_out.push(eh);
+        }
+    }
+}
+
 
 void
 CLAP_Plugin::get ( Log_Entry &e ) const
