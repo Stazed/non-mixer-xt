@@ -384,7 +384,7 @@ CLAP_Plugin::resize_buffers ( nframes_t buffer_size )
 void
 CLAP_Plugin::set_input_buffer ( int n, void *buf )
 {
-    _audio_ins.data32[n] = (float*) buf;
+    _audio_in_buffers[n] = (float*) buf;
 
 #if 0   // FIXME instances
     void* h;
@@ -414,7 +414,7 @@ CLAP_Plugin::set_input_buffer ( int n, void *buf )
 void
 CLAP_Plugin::set_output_buffer ( int n, void *buf )
 {
-    _audio_outs.data32[n] = (float*) buf;
+    _audio_out_buffers[n] = (float*) buf;
 
 #if 0   // FIXME instances
     void* h;
