@@ -45,9 +45,19 @@ CLAP_Plugin::~CLAP_Plugin()
 {
     clearParamInfos();
     _plugin->deactivate(_plugin);
-    _plugin->destroy(_plugin);
+
+    if (_plugin) 
+    {
+        _plugin->destroy(_plugin);
+        _plugin = nullptr;
+    }
 
     m_params = nullptr;
+    m_timer_support = nullptr;
+    m_posix_fd_support = nullptr;
+    m_gui = nullptr;
+    m_state = nullptr;
+    m_note_names = nullptr;
 
     if ( _audio_in_buffers )
     {
@@ -1231,7 +1241,13 @@ CLAP_Plugin::init ( void )
     _is_processing = false;
     _activated = false;
     m_params_flush = false;
+
     m_params = nullptr;
+    m_timer_support = nullptr;
+    m_posix_fd_support = nullptr;
+    m_gui = nullptr;
+    m_state = nullptr;
+    m_note_names = nullptr;
 
     Plugin_Module::init();
 
