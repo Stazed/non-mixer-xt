@@ -27,6 +27,7 @@
 #ifdef CLAP_SUPPORT
 
 #include <clap/clap.h>
+#include <unordered_map>
 
 #include "Mixer_Strip.H"
 #include "Plugin_Module.H"
@@ -95,6 +96,9 @@ private:
 
     const clap_plugin_params *m_params;
 
+    std::unordered_map<unsigned long, clap_id> m_param_ids; // FIXME we not using this
+    std::unordered_map<clap_id, const clap_param_info *> m_param_infos;
+
     int _midi_ins;
     int _midi_outs;
 
@@ -108,6 +112,16 @@ public:
     static void request_restart(const struct clap_host * host);
     static void request_process(const struct clap_host * host);
     static void request_callback(const struct clap_host * host);
+
+    // Parameters info/ids (de)initializer.
+    void addParamInfos();
+    void clearParamInfos();
+
+    // Set/add a parameter value/point.
+    void setParameter (clap_id id, double alue);
+
+    // Get current parameter value.
+    double getParameter (clap_id id) const;
 
     class EventList
     {

@@ -191,6 +191,9 @@ public:
             bool visible;
             bool invisible_with_signals;
             uint32_t plug_port_index;     ///< plugin Index of port control
+#ifdef CLAP_SUPPORT
+            uint32_t parameter_id;
+#endif
             std::vector<EnumeratorScalePoints>ScalePoints;
 
             Hints ( )
@@ -207,6 +210,9 @@ public:
                     visible = true;
                     invisible_with_signals = false;
                     plug_port_index = 0;
+#ifdef CLAP_SUPPORT
+                    parameter_id = 0;
+#endif
                 }
         };
 

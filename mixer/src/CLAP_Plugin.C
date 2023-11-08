@@ -43,6 +43,7 @@ CLAP_Plugin::CLAP_Plugin() : Plugin_Module( )
 
 CLAP_Plugin::~CLAP_Plugin()
 {
+    clearParamInfos();
     _plugin->deactivate(_plugin);
     _plugin->destroy(_plugin);
     
@@ -120,16 +121,18 @@ CLAP_Plugin::load_plugin ( Module::Picked picked )
         WARNING("Cannot initialize plugin = %s", _descriptor->name);
         return false;
     }
-    
+
     m_params = static_cast<const clap_plugin_params *> (
         _plugin->get_extension(_plugin, CLAP_EXT_PARAMS));
     
+    addParamInfos();
+
     create_audio_ports();
     create_control_ports();
     create_note_ports();
-    
+
     process_reset();
-    
+
     if(!_plugin_ins)
         is_zero_input_synth(true);
 
@@ -815,6 +818,120 @@ CLAP_Plugin::request_callback(const struct clap_host * host)
     // TODO
 }
 
+/**
+ Adds pair to unordered maps, m_param_infos >> (id, *clap_param_info)
+ The map is used to look up any parameter by id number which is saved
+ by the parameter port when created.
+ 
+ Currently not use is also m_param_ids >> (count, id)
+ */
+void
+CLAP_Plugin::addParamInfos (void)
+{
+    if (m_params && m_params->count && m_params->get_info)
+    {
+        const uint32_t nparams = m_params->count(_plugin);
+        for (uint32_t i = 0; i < nparams; ++i)
+        {
+            clap_param_info *param_info = new clap_param_info;
+            ::memset(param_info, 0, sizeof(clap_param_info));
+            if (m_params->get_info(_plugin, i, param_info))
+            {
+                std::pair<clap_id, const clap_param_info *> infos ( param_info->id, param_info );
+                m_param_infos.insert(infos);
+
+                std::pair<unsigned long, clap_id> ids ( i, param_info->id );
+                m_param_ids.insert(ids);    // FIXME we don't use this
+            }
+        }
+    }
+}
+
+void
+CLAP_Plugin::clearParamInfos (void)
+{
+    for (auto i : m_param_infos)
+    {
+        delete i.second;
+    }
+
+    m_param_infos.clear();
+    m_param_ids.clear();
+}
+
+/**
+ Adds a parameter value to m_events_in which is then processed by the plugin when
+ process is running on each cycle. Essentially sends a parameter value change
+ to plugin from Module_Parameter_Editor, OSC, or other automation.
+ */
+void
+CLAP_Plugin::setParameter (
+	clap_id id, double value )
+{
+    if (_plugin)
+    {
+        std::unordered_map<clap_id, const clap_param_info *>::const_iterator got
+            = m_param_infos.find (id);
+
+        if ( got == m_param_infos.end() )
+        {
+            DMESSAGE("Parameter Id not found = %d", id);
+            return;
+        }
+
+        const clap_param_info *param_info = got->second;
+
+        if (param_info)
+        {
+            clap_event_param_value ev;
+            ::memset(&ev, 0, sizeof(ev));
+            ev.header.time = 0;
+            ev.header.type = CLAP_EVENT_PARAM_VALUE;
+            ev.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
+            ev.header.flags = 0;
+            ev.header.size = sizeof(ev);
+            ev.param_id = param_info->id;
+            ev.cookie = param_info->cookie;
+            ev.port_index = 0;
+            ev.key = -1;
+            ev.channel = -1;
+            ev.value = value;
+            m_events_in.push(&ev.header);
+        }
+    }
+}
+
+/**
+ Gets the current parameter value from the plugin by parameter ID.
+ */
+double
+CLAP_Plugin::getParameter ( clap_id id ) const
+{
+    double value = 0.0;
+
+    if (_plugin && m_params && m_params->get_value)
+    {
+#if 1
+        m_params->get_value(_plugin, id, &value);
+#else
+        std::unordered_map<clap_id, const clap_param_info *>::const_iterator got
+            = m_param_infos.find (id);
+
+        if ( got == m_param_infos.end() )
+        {
+            DMESSAGE("Parameter Id not found = %d", id);
+            return 0.0;
+        }
+
+        const clap_param_info *param_info = got->second;
+
+        if (param_info)
+            m_params->get_value(_plugin, param_info->id, &value);
+#endif
+    }
+    return value;
+}
+
 void
 CLAP_Plugin::create_audio_ports()
 {
@@ -917,6 +1034,7 @@ CLAP_Plugin::create_control_ports()
                 p.hints.minimum = (float) param_info.min_value;
                 p.hints.maximum = (float) param_info.max_value;
                 p.hints.default_value = (float) param_info.default_value;
+                p.hints.parameter_id = param_info.id;
                 
                 if (param_info.flags & CLAP_PARAM_IS_STEPPED)
                 {
@@ -1107,10 +1225,11 @@ CLAP_Plugin::plugin_params_flush (void)
     m_events_in.clear();
     m_events_out.clear();
 
-    if (m_params && m_params->flush) {
-            m_params->flush(_plugin, m_events_in.ins(), m_events_out.outs());
-            process_params_out();
-            m_events_out.clear();
+    if (m_params && m_params->flush)
+    {
+        m_params->flush(_plugin, m_events_in.ins(), m_events_out.outs());
+        process_params_out();
+        m_events_out.clear();
     }
 }
 
