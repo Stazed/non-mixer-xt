@@ -134,10 +134,7 @@ CLAP_Plugin::load_plugin ( Module::Picked picked )
         return false;
     }
 
-    m_params = static_cast<const clap_plugin_params *> (
-        _plugin->get_extension(_plugin, CLAP_EXT_PARAMS));
-    
-    addParamInfos();
+    initialize_plugin();
 
     create_audio_ports();
     create_control_ports();
@@ -940,6 +937,27 @@ CLAP_Plugin::getParameter ( clap_id id ) const
 #endif
     }
     return value;
+}
+
+void
+CLAP_Plugin::initialize_plugin()
+{
+    m_params = static_cast<const clap_plugin_params *> (
+        _plugin->get_extension(_plugin, CLAP_EXT_PARAMS));
+
+    m_timer_support = static_cast<const clap_plugin_timer_support *> (
+        _plugin->get_extension(_plugin, CLAP_EXT_TIMER_SUPPORT));
+    m_posix_fd_support = static_cast<const clap_plugin_posix_fd_support *> (
+        _plugin->get_extension(_plugin, CLAP_EXT_POSIX_FD_SUPPORT));
+
+    m_gui = static_cast<const clap_plugin_gui *> (
+        _plugin->get_extension(_plugin, CLAP_EXT_GUI));
+    m_state	= static_cast<const clap_plugin_state *> (
+        _plugin->get_extension(_plugin, CLAP_EXT_STATE));
+    m_note_names = static_cast<const clap_plugin_note_name *> (
+        _plugin->get_extension(_plugin, CLAP_EXT_NOTE_NAME));
+
+    addParamInfos();
 }
 
 void

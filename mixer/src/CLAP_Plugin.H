@@ -95,6 +95,13 @@ private:
     const clap_plugin_t *_plugin;
 
     const clap_plugin_params *m_params;
+    const clap_plugin_timer_support *m_timer_support;
+    const clap_plugin_posix_fd_support *m_posix_fd_support;
+
+    const clap_plugin_gui *m_gui;
+    const clap_plugin_state *m_state;
+
+    const clap_plugin_note_name *m_note_names;
 
     std::unordered_map<unsigned long, clap_id> m_param_ids; // FIXME we not using this
     std::unordered_map<clap_id, const clap_param_info *> m_param_infos;
@@ -288,6 +295,7 @@ public:
 
 private:
 
+    void initialize_plugin();
     void create_audio_ports();
     void create_note_ports();
     void create_control_ports();
