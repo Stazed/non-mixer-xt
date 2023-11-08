@@ -82,13 +82,13 @@ private:
 
     bool _is_processing;
     bool _activated;
-    
+
     clap_audio_buffer _audio_ins;
     clap_audio_buffer _audio_outs;
-    
+
     float ** _audio_in_buffers;
     float ** _audio_out_buffers;
-    
+
   //  int _audioIN_channel_count;
   //  int _audioOUT_channel_count;
 

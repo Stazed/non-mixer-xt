@@ -46,8 +46,20 @@ CLAP_Plugin::~CLAP_Plugin()
     clearParamInfos();
     _plugin->deactivate(_plugin);
     _plugin->destroy(_plugin);
-    
+
     m_params = nullptr;
+
+    if ( _audio_in_buffers )
+    {
+        delete []_audio_in_buffers;
+        _audio_in_buffers = nullptr;
+    }
+
+    if ( _audio_out_buffers )
+    {
+        delete []_audio_out_buffers;
+        _audio_out_buffers = nullptr;
+    }
 }
 
 bool
@@ -372,8 +384,7 @@ CLAP_Plugin::resize_buffers ( nframes_t buffer_size )
 void
 CLAP_Plugin::set_input_buffer ( int n, void *buf )
 {
-    _audio_in_buffers[n] = (float*) buf;
-    _audio_ins.data32 = _audio_in_buffers;
+    _audio_ins.data32[n] = (float*) buf;
 
 #if 0   // FIXME instances
     void* h;
@@ -403,8 +414,7 @@ CLAP_Plugin::set_input_buffer ( int n, void *buf )
 void
 CLAP_Plugin::set_output_buffer ( int n, void *buf )
 {
-    _audio_out_buffers[n] = (float*) buf;
-    _audio_outs.data32 = _audio_out_buffers;
+    _audio_outs.data32[n] = (float*) buf;
 
 #if 0   // FIXME instances
     void* h;
