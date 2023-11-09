@@ -1390,6 +1390,20 @@ Module::handle ( int m )
                     }
 #endif
                 }
+#ifdef CLAP_SUPPORT
+                else if(_plug_type == CLAP)
+                {
+                    CLAP_Plugin *pm = static_cast<CLAP_Plugin *> (this);
+                    if(!pm->try_custom_ui())
+                    {
+                        command_open_parameter_editor();
+                    }
+                    else    // set the dirty flag if we opened the custom UI
+                    {
+                        set_dirty();
+                    }
+                }  
+#endif
                 // TODO other types here
                 else    // LADSPA and internal
                 {
@@ -1444,6 +1458,20 @@ Module::handle ( int m )
                     }
 #endif
                 }
+#ifdef CLAP_SUPPORT
+                else if(_plug_type == CLAP)
+                {
+                    CLAP_Plugin *pm = static_cast<CLAP_Plugin *> (this);
+                    if(!pm->try_custom_ui())
+                    {
+                        command_open_parameter_editor();
+                    }
+                    else    // set the dirty flag if we opened the custom UI
+                    {
+                        set_dirty();
+                    }
+                }  
+#endif
                 // TODO other types here
                 else    // LADSPA and internal
                 {

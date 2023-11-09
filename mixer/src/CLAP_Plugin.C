@@ -46,16 +46,21 @@ CLAP_Plugin::~CLAP_Plugin()
     clearParamInfos();
     _plugin->deactivate(_plugin);
 
+    if ( m_gui )
+    {
+        m_gui->destroy(_plugin);
+        m_gui = nullptr;
+    }
+
     if (_plugin) 
     {
         _plugin->destroy(_plugin);
         _plugin = nullptr;
     }
-
+    
     m_params = nullptr;
     m_timer_support = nullptr;
     m_posix_fd_support = nullptr;
-    m_gui = nullptr;
     m_state = nullptr;
     m_note_names = nullptr;
 
@@ -1296,6 +1301,11 @@ CLAP_Plugin::process_params_out (void)
     }
 }
 
+bool
+CLAP_Plugin::try_custom_ui()
+{
+    return false;
+}
 
 void
 CLAP_Plugin::get ( Log_Entry &e ) const

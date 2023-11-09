@@ -293,6 +293,9 @@ public:
     // Plugin parameters flush.
     void plugin_params_flush ();
 
+    // Open/close editor widget.
+    bool try_custom_ui();
+
 private:
 
     void initialize_plugin();
