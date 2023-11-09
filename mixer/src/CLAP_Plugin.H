@@ -83,6 +83,10 @@ private:
     bool _is_processing;
     bool _activated;
 
+    // GUI Editor stuff...
+    bool m_bEditorCreated;
+    bool m_bEditorVisible;
+    
     clap_audio_buffer _audio_ins;
     clap_audio_buffer _audio_outs;
 
@@ -311,6 +315,35 @@ protected:
 
     // Transfer parameter changes...
     void process_params_out ();
+
+    static void host_gui_resize_hints_changed (
+            const clap_host *host);
+    static bool host_gui_request_resize (
+            const clap_host *host, uint32_t width, uint32_t height);
+    static bool host_gui_request_show (
+            const clap_host *host);
+    static bool host_gui_request_hide (
+            const clap_host *host);
+    static void host_gui_closed (
+            const clap_host *host, bool was_destroyed);
+    
+    static const constexpr clap_host_gui g_host_gui = {
+            host_gui_resize_hints_changed,
+            host_gui_request_resize,
+            host_gui_request_show,
+            host_gui_request_hide,
+            host_gui_closed,
+    };
+
+    static bool host_register_timer (
+            const clap_host *host, uint32_t period_ms, clap_id *timer_id);
+    static bool host_unregister_timer (
+            const clap_host *host, clap_id timer_id);
+
+    static const constexpr clap_host_timer_support g_host_timer_support = {
+            host_register_timer,
+            host_unregister_timer,
+    };
 
     bool plugin_instances ( unsigned int );
     void get ( Log_Entry &e ) const;

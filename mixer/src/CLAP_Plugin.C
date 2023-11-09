@@ -817,9 +817,52 @@ CLAP_Plugin::entry_from_CLAP_file(const char *f)
 }
 
 const void*
-CLAP_Plugin::get_extension(const struct clap_host*, const char* eid)
+CLAP_Plugin::get_extension(const clap_host* host, const char* ext_id)
 {
-    return nullptr; // FIXME
+    const CLAP_Plugin *host_data = static_cast<const CLAP_Plugin *> (host->host_data);
+    if (host_data)
+    {
+        DMESSAGE("Host get_extension(%p, \"%s\")", host_data, ext_id);
+
+     //   if (::strcmp(ext_id, CLAP_EXT_LOG) == 0)
+     //           return &host_data->g_host_log;
+     //   else
+        if (::strcmp(ext_id, CLAP_EXT_GUI) == 0)
+                return &host_data->g_host_gui;
+        else
+        if (::strcmp(ext_id, CLAP_EXT_TIMER_SUPPORT) == 0)
+                return &host_data->g_host_timer_support;
+#if 0
+        else
+        if (::strcmp(ext_id, CLAP_EXT_PARAMS) == 0)
+                return &host_data->g_host_params;
+        else
+        if (::strcmp(ext_id, CLAP_EXT_AUDIO_PORTS) == 0)
+                return &host_data->g_host_audio_ports;
+        else
+        if (::strcmp(ext_id, CLAP_EXT_NOTE_PORTS) == 0)
+                return &host_data->g_host_note_ports;
+        else
+        if (::strcmp(ext_id, CLAP_EXT_LATENCY) == 0)
+                return &host_data->g_host_latency;
+        else
+        if (::strcmp(ext_id, CLAP_EXT_POSIX_FD_SUPPORT) == 0)
+                return &host_data->g_host_posix_fd_support;
+        else
+        if (::strcmp(ext_id, CLAP_EXT_THREAD_CHECK) == 0)
+                return &host_data->g_host_thread_check;
+        else
+        if (::strcmp(ext_id, CLAP_EXT_THREAD_POOL) == 0)
+                return &host_data->g_host_thread_pool;
+        else
+        if (::strcmp(ext_id, CLAP_EXT_STATE) == 0)
+                return &host_data->g_host_state;
+        else
+        if (::strcmp(ext_id, CLAP_EXT_NOTE_NAME) == 0)
+                return &host_data->g_host_note_name;
+#endif
+    }
+    return nullptr;
 }
 
 void
@@ -1245,6 +1288,9 @@ CLAP_Plugin::init ( void )
     _plug_type = CLAP;
     _is_processing = false;
     _activated = false;
+
+    m_bEditorCreated = false;
+    m_bEditorVisible = false;
     m_params_flush = false;
 
     m_params = nullptr;
@@ -1304,7 +1350,144 @@ CLAP_Plugin::process_params_out (void)
 bool
 CLAP_Plugin::try_custom_ui()
 {
+    if ( m_bEditorCreated )
+    {
+        return false;   // FIXME
+    }
+#if 0
+    if (m_bEditorCreated && m_pEditorWidget)
+    {
+        if (!m_pEditorWidget->isVisible())
+        {
+                moveWidgetPos(m_pEditorWidget, editorPos());
+                m_pEditorWidget->show();
+        }
+        m_pEditorWidget->raise();
+        m_pEditorWidget->activateWindow();
+        return;
+    }
+
+    const WId parent_wid
+            = (pParent ? pParent->winId() : WId(nullptr));
+#endif
+    clap_window w;
+    w.api = CLAP_WINDOW_API_X11;
+    //w.x11 = parent_wid;
+
+    bool is_floating = false;
+    if (!m_gui->is_api_supported(_plugin, w.api, false))
+    {
+        is_floating = m_gui->is_api_supported(_plugin, w.api, true);
+    }
+
+    if (!m_gui->create(_plugin, w.api, is_floating))
+    {
+        DMESSAGE("Could not create the plugin GUI.");
+        return false;
+    }
+
+    DMESSAGE("GOT A CREATE");
+
+    m_bEditorCreated = true;
+
     return false;
+}
+
+// Plugin GUI callbacks...
+//
+void CLAP_Plugin::host_gui_resize_hints_changed (const clap_host *host )
+{
+	// TODO: ?...
+	//
+}
+
+
+bool CLAP_Plugin::host_gui_request_resize (
+	const clap_host *host, uint32_t width, uint32_t height )
+{
+#if 0
+    if (m_pPlugin == nullptr)
+            return false;
+
+    QWidget *pWidget = m_pPlugin->editorWidget();
+    if (pWidget == nullptr)
+            return false;
+
+    const QSize& max_size = pWidget->maximumSize();
+    const QSize& min_size = pWidget->minimumSize();
+
+    if (min_size.width() == max_size.width() && width != max_size.width())
+            pWidget->setFixedWidth(width);
+    if (min_size.height() == max_size.height() && height != max_size.height())
+            pWidget->setFixedHeight(height);
+
+    pWidget->resize(width, height);
+    return true;
+#endif
+    
+    return true;
+}
+
+
+bool CLAP_Plugin::host_gui_request_show (const clap_host *host)
+{
+#if 0
+    if (m_pPlugin == nullptr)
+            return false;
+
+    QWidget *pWidget = m_pPlugin->editorWidget();
+    if (pWidget == nullptr)
+            return false;
+
+    pWidget->show();
+    return true;
+#endif
+}
+
+
+bool
+CLAP_Plugin::host_gui_request_hide (const clap_host *host)
+{
+#if 0
+    if (m_pPlugin == nullptr)
+            return false;
+
+    QWidget *pWidget = m_pPlugin->editorWidget();
+    if (pWidget == nullptr)
+            return false;
+
+    pWidget->hide();
+    return true;
+#endif
+    
+    return true;
+}
+
+
+void CLAP_Plugin::host_gui_closed ( const clap_host *host, bool was_destroyed )
+{
+#if 0
+    if (m_pPlugin)
+        m_pPlugin->closeEditor();
+#endif
+}
+
+
+// Host Timer support callbacks...
+//
+bool CLAP_Plugin::host_register_timer (
+	const clap_host *host, uint32_t period_ms, clap_id *timer_id )
+{
+    return false;
+	//return g_host.register_timer(host, period_ms, timer_id);
+}
+
+
+bool CLAP_Plugin::host_unregister_timer (
+	const clap_host *host, clap_id timer_id )
+{
+    return false;
+	//return g_host.unregister_timer(host, timer_id);
 }
 
 void
