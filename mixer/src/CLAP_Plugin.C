@@ -28,8 +28,37 @@
 #include "Clap_Discovery.H"
 
 #include "Chain.H"
+#include "XTUtils.H"
+#include "Time.h"
 
 #include "../../nonlib/dsp.h"
+
+#include <unistd.h>    // getpid()
+#include <pthread.h>
+#include "NonMixerPluginUI_X11Icon.h"
+
+static const uint X11Key_Escape = 9;
+static const uint X11Key_W      = 25;
+
+static bool gErrorTriggered = false;
+# if defined(__GNUC__) && (__GNUC__ >= 5) && ! defined(__clang__)
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wzero-as-null-pointer-constant"
+# endif
+static pthread_mutex_t gErrorMutex = PTHREAD_MUTEX_INITIALIZER;
+# if defined(__GNUC__) && (__GNUC__ >= 5) && ! defined(__clang__)
+#  pragma GCC diagnostic pop
+# endif
+
+static int temporaryErrorHandler(Display*, XErrorEvent*)
+{
+    gErrorTriggered = true;
+    return 0;
+}
+
+static constexpr const HostTimerDetails kTimerFallback   = { CLAP_INVALID_ID, 0, 0 };
+static /*           */ HostTimerDetails kTimerFallbackNC = { CLAP_INVALID_ID, 0, 0 };
+
 
 class Chain;    // forward declaration
 
@@ -43,6 +72,11 @@ CLAP_Plugin::CLAP_Plugin() : Plugin_Module( )
 
 CLAP_Plugin::~CLAP_Plugin()
 {
+    if (_x_is_visible)
+    {
+        hide_custom_ui();
+    }
+
     clearParamInfos();
     _plugin->deactivate(_plugin);
 
@@ -1300,6 +1334,19 @@ CLAP_Plugin::init ( void )
     m_state = nullptr;
     m_note_names = nullptr;
 
+    // X window stuff
+    _x_display = nullptr;
+    _x_host_window = 0;
+    _x_child_window = 0;
+    _x_child_window_configured = false;
+    _x_child_window_monitoring = false; // _x_child_window_monitoring(isResizable || canMonitorChildren) // FIXME
+    _x_is_visible = false;
+    _x_first_show = true;
+    _x_set_size_called_at_least_Once = false;
+    _x_is_idling = false;
+    _x_is_resizable = false;
+    _x_event_proc = nullptr;
+
     Plugin_Module::init();
 
     // _project_directory = "";
@@ -1350,29 +1397,23 @@ CLAP_Plugin::process_params_out (void)
 bool
 CLAP_Plugin::try_custom_ui()
 {
-    if ( m_bEditorCreated )
+    /* Toggle show and hide */
+    if(m_bEditorCreated)
     {
-        return false;   // FIXME
-    }
-#if 0
-    if (m_bEditorCreated && m_pEditorWidget)
-    {
-        if (!m_pEditorWidget->isVisible())
+        if (_x_is_visible)
         {
-                moveWidgetPos(m_pEditorWidget, editorPos());
-                m_pEditorWidget->show();
+            hide_custom_ui();
+            return true;
         }
-        m_pEditorWidget->raise();
-        m_pEditorWidget->activateWindow();
-        return;
+        else
+        {
+            show_custom_ui();
+            return true;
+        }
     }
 
-    const WId parent_wid
-            = (pParent ? pParent->winId() : WId(nullptr));
-#endif
     clap_window w;
     w.api = CLAP_WINDOW_API_X11;
-    //w.x11 = parent_wid;
 
     bool is_floating = false;
     if (!m_gui->is_api_supported(_plugin, w.api, false))
@@ -1386,11 +1427,54 @@ CLAP_Plugin::try_custom_ui()
         return false;
     }
 
+    /* We seem to have an accepted ui, so lets try to embed it in an X window */
+     init_x();
+
+     _x_child_window = getChildWindow();
+     w.x11 = _x_host_window;
+
+    if (is_floating)
+    {
+        m_gui->set_transient(_plugin, &w);
+        m_gui->suggest_title(_plugin, base_label());
+    } else
+    {
+        if (!m_gui->set_parent(_plugin, &w))
+        {
+            DMESSAGE("Could not embed the plugin GUI.");
+            m_gui->destroy(_plugin);
+            return false;
+        }
+#if 0
+        bool can_resize = false;
+        uint32_t width  = 0;
+        uint32_t height = 0;
+        clap_gui_resize_hints hints;
+        ::memset(&hints, 0, sizeof(hints));
+        if (gui->can_resize)
+                can_resize = gui->can_resize(plugin);
+        if (gui->get_resize_hints && !gui->get_resize_hints(plugin, &hints))
+                qWarning("qtractorClapPlugin[%p]::openEditor: could not get the resize hints of the plugin GUI.", this);
+        if (gui->get_size && !gui->get_size(plugin, &width, &height))
+                qWarning("qtractorClapPlugin[%p]::openEditor: could not get the size of the plugin GUI.", this);
+        if (width > 0 && (!hints.can_resize_horizontally || !can_resize))
+                m_pEditorWidget->setFixedWidth(width);
+        if (height > 0 && (!hints.can_resize_vertically || !can_resize))
+                m_pEditorWidget->setFixedHeight(height);
+        if (width > 0 && height > 0)
+                m_pEditorWidget->resize(width, height);
+#endif
+    }
+
     DMESSAGE("GOT A CREATE");
 
     m_bEditorCreated = true;
 
-    return false;
+    m_gui->show(_plugin);
+
+    show_custom_ui();
+
+    return true;
 }
 
 // Plugin GUI callbacks...
@@ -1405,6 +1489,7 @@ void CLAP_Plugin::host_gui_resize_hints_changed (const clap_host *host )
 bool CLAP_Plugin::host_gui_request_resize (
 	const clap_host *host, uint32_t width, uint32_t height )
 {
+ //   DMESSAGE("Request Resize W = %d: H = %s", width, height);
 #if 0
     if (m_pPlugin == nullptr)
             return false;
@@ -1431,6 +1516,7 @@ bool CLAP_Plugin::host_gui_request_resize (
 
 bool CLAP_Plugin::host_gui_request_show (const clap_host *host)
 {
+    DMESSAGE("Request Show");
 #if 0
     if (m_pPlugin == nullptr)
             return false;
@@ -1448,6 +1534,7 @@ bool CLAP_Plugin::host_gui_request_show (const clap_host *host)
 bool
 CLAP_Plugin::host_gui_request_hide (const clap_host *host)
 {
+    DMESSAGE("Request Hide");
 #if 0
     if (m_pPlugin == nullptr)
             return false;
@@ -1466,28 +1553,472 @@ CLAP_Plugin::host_gui_request_hide (const clap_host *host)
 
 void CLAP_Plugin::host_gui_closed ( const clap_host *host, bool was_destroyed )
 {
+    DMESSAGE("Gui closed");
 #if 0
     if (m_pPlugin)
         m_pPlugin->closeEditor();
 #endif
 }
 
+void
+CLAP_Plugin::init_x()
+{
+    _x_child_window_monitoring = _x_is_resizable = isUiResizable();
+
+    _x_display = XOpenDisplay(nullptr);
+    NON_SAFE_ASSERT_RETURN(_x_display != nullptr,);
+
+    const int screen = DefaultScreen(_x_display);
+
+    XSetWindowAttributes attr;
+    non_zeroStruct(attr);
+
+    attr.event_mask = KeyPressMask|KeyReleaseMask|FocusChangeMask;
+
+    if (_x_child_window_monitoring)
+        attr.event_mask |= StructureNotifyMask|SubstructureNotifyMask;
+
+    _x_host_window = XCreateWindow(_x_display, RootWindow(_x_display, screen),
+                                0, 0, 300, 300, 0,
+                                DefaultDepth(_x_display, screen),
+                                InputOutput,
+                                DefaultVisual(_x_display, screen),
+                                CWBorderPixel|CWEventMask, &attr);
+
+    NON_SAFE_ASSERT_RETURN(_x_host_window != 0,);
+
+    XSetStandardProperties(_x_display, _x_host_window, label(), label(), None, NULL, 0, NULL);
+
+    XGrabKey(_x_display, X11Key_Escape, AnyModifier, _x_host_window, 1, GrabModeAsync, GrabModeAsync);
+    XGrabKey(_x_display, X11Key_W, AnyModifier, _x_host_window, 1, GrabModeAsync, GrabModeAsync);
+
+    Atom wmDelete = XInternAtom(_x_display, "WM_DELETE_WINDOW", True);
+    XSetWMProtocols(_x_display, _x_host_window, &wmDelete, 1);
+
+    const pid_t pid = getpid();
+    const Atom _nwp = XInternAtom(_x_display, "_NET_WM_PID", False);
+    XChangeProperty(_x_display, _x_host_window, _nwp, XA_CARDINAL, 32, PropModeReplace, (const uchar*)&pid, 1);
+
+    const Atom _nwi = XInternAtom(_x_display, "_NET_WM_ICON", False);
+    XChangeProperty(_x_display, _x_host_window, _nwi, XA_CARDINAL, 32, PropModeReplace, (const uchar*)sNonMixerX11Icon, sNonMixerX11IconSize);
+
+    const Atom _wt = XInternAtom(_x_display, "_NET_WM_WINDOW_TYPE", False);
+
+    // Setting the window to both dialog and normal will produce a decorated floating dialog
+    // Order is important: DIALOG needs to come before NORMAL
+    const Atom _wts[2] = {
+        XInternAtom(_x_display, "_NET_WM_WINDOW_TYPE_DIALOG", False),
+        XInternAtom(_x_display, "_NET_WM_WINDOW_TYPE_NORMAL", False)
+    };
+    XChangeProperty(_x_display, _x_host_window, _wt, XA_ATOM, 32, PropModeReplace, (const uchar*)&_wts, 2);
+}
+
+bool
+CLAP_Plugin::isUiResizable() const
+{
+#if 0
+    NON_SAFE_ASSERT_RETURN(_idata->lv2.rdf_data != nullptr, false);
+
+    for (uint32_t i=0; i < _idata->lv2.rdf_data->FeatureCount; ++i)
+    {
+        if (std::strcmp(_idata->lv2.rdf_data->Features[i].URI, LV2_UI__fixedSize) == 0)
+            return false;
+
+        if (std::strcmp(_idata->lv2.rdf_data->Features[i].URI, LV2_UI__noUserResize) == 0)
+            return false;
+    }
+#endif
+    return true;
+}
+
+void
+CLAP_Plugin::show_custom_ui()
+{
+    NON_SAFE_ASSERT_RETURN(_x_display != nullptr,);
+    NON_SAFE_ASSERT_RETURN(_x_host_window != 0,);
+
+    if (_x_first_show)
+    {
+        if (const Window childWindow = getChildWindow())
+        {
+            if (! _x_set_size_called_at_least_Once)
+            {
+                int width = 0;
+                int height = 0;
+
+                XWindowAttributes attrs;
+                non_zeroStruct(attrs);
+
+                pthread_mutex_lock(&gErrorMutex);
+                const XErrorHandler oldErrorHandler = XSetErrorHandler(temporaryErrorHandler);
+                gErrorTriggered = false;
+
+                if (XGetWindowAttributes(_x_display, childWindow, &attrs))
+                {
+                    width = attrs.width;
+                    height = attrs.height;
+                }
+
+                XSetErrorHandler(oldErrorHandler);
+                pthread_mutex_unlock(&gErrorMutex);
+
+                if (width == 0 && height == 0)
+                {
+                    XSizeHints sizeHints;
+                    non_zeroStruct(sizeHints);
+
+                    if (XGetNormalHints(_x_display, childWindow, &sizeHints))
+                    {
+                        if (sizeHints.flags & PSize)
+                        {
+                            width = sizeHints.width;
+                            height = sizeHints.height;
+                        }
+                        else if (sizeHints.flags & PBaseSize)
+                        {
+                            width = sizeHints.base_width;
+                            height = sizeHints.base_height;
+                        }
+                    }
+                }
+
+                if (width > 1 && height > 1)
+                    setSize(static_cast<uint>(width), static_cast<uint>(height), false, _x_is_resizable);
+            }
+
+            const Atom _xevp = XInternAtom(_x_display, "_XEventProc", False);
+
+            pthread_mutex_lock(&gErrorMutex);
+            const XErrorHandler oldErrorHandler(XSetErrorHandler(temporaryErrorHandler));
+            gErrorTriggered = false;
+
+            Atom actualType;
+            int actualFormat;
+            ulong nitems, bytesAfter;
+            uchar* data = nullptr;
+
+            XGetWindowProperty(_x_display, childWindow, _xevp, 0, 1, False, AnyPropertyType,
+                               &actualType, &actualFormat, &nitems, &bytesAfter, &data);
+
+            XSetErrorHandler(oldErrorHandler);
+            pthread_mutex_unlock(&gErrorMutex);
+
+            if (nitems == 1 && ! gErrorTriggered)
+            {
+                _x_event_proc = *reinterpret_cast<EventProcPtr*>(data);
+                XMapRaised(_x_display, childWindow);
+            }
+        }
+    }
+
+    _x_is_visible = true;
+    _x_first_show = false;
+
+    XMapRaised(_x_display, _x_host_window);
+    XSync(_x_display, False);
+
+    Fl::add_timeout( 0.03f, &CLAP_Plugin::custom_update_ui, this );
+}
+
+Window
+CLAP_Plugin::getChildWindow() const
+{
+    NON_SAFE_ASSERT_RETURN(_x_display != nullptr, 0);
+    NON_SAFE_ASSERT_RETURN(_x_host_window != 0, 0);
+
+    Window rootWindow, parentWindow, ret = 0;
+    Window* childWindows = nullptr;
+    uint numChildren = 0;
+
+    XQueryTree(_x_display, _x_host_window, &rootWindow, &parentWindow, &childWindows, &numChildren);
+
+    if (numChildren > 0 && childWindows != nullptr)
+    {
+        ret = childWindows[0];
+        XFree(childWindows);
+    }
+
+    return ret;
+}
+
+void
+CLAP_Plugin::setSize(const uint width, const uint height, const bool forceUpdate, const bool resizeChild)
+{
+    NON_SAFE_ASSERT_RETURN(_x_display != nullptr,);
+    NON_SAFE_ASSERT_RETURN(_x_host_window != 0,);
+
+    _x_set_size_called_at_least_Once = true;
+    XResizeWindow(_x_display, _x_host_window, width, height);
+
+    if (_x_child_window != 0 && resizeChild)
+        XResizeWindow(_x_display, _x_child_window, width, height);
+
+    if (! _x_is_resizable)
+    {
+        XSizeHints sizeHints;
+        non_zeroStruct(sizeHints);
+
+        sizeHints.flags      = PSize|PMinSize|PMaxSize;
+        sizeHints.width      = static_cast<int>(width);
+        sizeHints.height     = static_cast<int>(height);
+        sizeHints.min_width  = static_cast<int>(width);
+        sizeHints.min_height = static_cast<int>(height);
+        sizeHints.max_width  = static_cast<int>(width);
+        sizeHints.max_height = static_cast<int>(height);
+
+        XSetNormalHints(_x_display, _x_host_window, &sizeHints);
+    }
+
+    if (forceUpdate)
+        XSync(_x_display, False);
+}
+
+/**
+ Callback for custom ui idle interface
+ */
+void 
+CLAP_Plugin::custom_update_ui ( void *v )
+{
+    ((CLAP_Plugin*)v)->custom_update_ui();
+}
+
+/**
+ The idle callback to update_custom_ui()
+ */
+void
+CLAP_Plugin::custom_update_ui()
+{
+    for (LinkedList<HostTimerDetails>::Itenerator it = fTimers.begin2(); it.valid(); it.next())
+    {
+        const uint32_t currentTimeInMs = water::Time::getMillisecondCounter();
+        HostTimerDetails& timer(it.getValue(kTimerFallbackNC));
+
+        if (currentTimeInMs > timer.lastCallTimeInMs + timer.periodInMs)
+        {
+            timer.lastCallTimeInMs = currentTimeInMs;
+            m_timer_support->on_timer(_plugin, timer.clapId);
+        }
+    }
+
+    // prevent recursion
+    if (_x_is_idling) return;
+
+    int nextWidth = 0;
+    int nextHeight = 0;
+
+    _x_is_idling = true;
+
+    for (XEvent event; XPending(_x_display) > 0;)
+    {
+        XNextEvent(_x_display, &event);
+
+        if (! _x_is_visible)
+            continue;
+
+        char* type = nullptr;
+
+        switch (event.type)
+        {
+        case ConfigureNotify:
+            NON_SAFE_ASSERT_CONTINUE(event.xconfigure.width > 0);
+            NON_SAFE_ASSERT_CONTINUE(event.xconfigure.height > 0);
+
+            if (event.xconfigure.window == _x_host_window)
+            {
+                const uint width  = static_cast<uint>(event.xconfigure.width);
+                const uint height = static_cast<uint>(event.xconfigure.height);
+
+                if (_x_child_window != 0)
+                {
+                    if (! _x_child_window_configured)
+                    {
+                        pthread_mutex_lock(&gErrorMutex);
+                        const XErrorHandler oldErrorHandler = XSetErrorHandler(temporaryErrorHandler);
+                        gErrorTriggered = false;
+
+                        XSizeHints sizeHints;
+                        non_zeroStruct(sizeHints);
+
+                        if (XGetNormalHints(_x_display, _x_child_window, &sizeHints) && !gErrorTriggered)
+                        {
+                            XSetNormalHints(_x_display, _x_host_window, &sizeHints);
+                        }
+                        else
+                        {
+                            WARNING("Caught errors while accessing child window");
+                            _x_child_window = 0;
+                        }
+
+                        _x_child_window_configured = true;
+                        XSetErrorHandler(oldErrorHandler);
+                        pthread_mutex_unlock(&gErrorMutex);
+                    }
+
+                    if (_x_child_window != 0)
+                        XResizeWindow(_x_display, _x_child_window, width, height);
+                }
+            }
+            else if (_x_child_window_monitoring && event.xconfigure.window == _x_child_window && _x_child_window != 0)
+            {
+                nextWidth = event.xconfigure.width;
+                nextHeight = event.xconfigure.height;
+            }
+            break;
+
+        case ClientMessage:
+            type = XGetAtomName(_x_display, event.xclient.message_type);
+            NON_SAFE_ASSERT_CONTINUE(type != nullptr);
+
+            if (std::strcmp(type, "WM_PROTOCOLS") == 0)
+            {
+                _x_is_visible = false;
+            }
+            break;
+
+        case KeyRelease:
+            /* Escape key to close */
+            if (event.xkey.keycode == X11Key_Escape )
+            {
+                _x_is_visible = false;
+            }
+            /* CTRL W to close */
+            else if(event.xkey.keycode == X11Key_W)
+            {
+                if ((event.xkey.state & (ShiftMask | ControlMask | Mod1Mask | Mod4Mask)) == (ControlMask))
+                {
+                    _x_is_visible = false;
+                }
+            }
+
+            break;
+
+        case FocusIn:
+            if (_x_child_window == 0)
+                _x_child_window = getChildWindow();
+            if (_x_child_window != 0)
+            {
+                XWindowAttributes wa;
+                non_zeroStruct(wa);
+
+                if (XGetWindowAttributes(_x_display, _x_child_window, &wa) && wa.map_state == IsViewable)
+                    XSetInputFocus(_x_display, _x_child_window, RevertToPointerRoot, CurrentTime);
+            }
+            break;
+        }
+
+        if (type != nullptr)
+            XFree(type);
+        else if (_x_event_proc != nullptr && event.type != FocusIn && event.type != FocusOut)
+            _x_event_proc(&event);
+    }
+
+    if (nextWidth != 0 && nextHeight != 0 && _x_child_window != 0)
+    {
+        XSizeHints sizeHints;
+        non_zeroStruct(sizeHints);
+
+        if (XGetNormalHints(_x_display, _x_child_window, &sizeHints))
+            XSetNormalHints(_x_display, _x_host_window, &sizeHints);
+
+        XResizeWindow(_x_display, _x_host_window, static_cast<uint>(nextWidth), static_cast<uint>(nextHeight));
+        XFlush(_x_display);
+    }
+
+    _x_is_idling = false;
+
+    if(_x_is_visible)
+    {
+       // update_custom_ui();
+        Fl::repeat_timeout( 0.03f, &CLAP_Plugin::custom_update_ui, this );
+    }
+    else
+    {
+        hide_custom_ui();
+    }
+}
+
+void
+CLAP_Plugin::hide_custom_ui()
+{
+    DMESSAGE("Closing Custom Interface");
+
+    Fl::remove_timeout(&CLAP_Plugin::custom_update_ui, this);
+
+    NON_SAFE_ASSERT_RETURN(_x_display != nullptr,);
+    NON_SAFE_ASSERT_RETURN(_x_host_window != 0,);
+
+    _x_is_visible = false;
+    XUnmapWindow(_x_display, _x_host_window);
+    XFlush(_x_display);
+}
 
 // Host Timer support callbacks...
 //
-bool CLAP_Plugin::host_register_timer (
+bool
+CLAP_Plugin::host_register_timer (
 	const clap_host *host, uint32_t period_ms, clap_id *timer_id )
 {
-    return false;
-	//return g_host.register_timer(host, period_ms, timer_id);
+    return static_cast<CLAP_Plugin*>(host->host_data)->clapRegisterTimer(period_ms, timer_id);
 }
 
 
-bool CLAP_Plugin::host_unregister_timer (
+bool
+CLAP_Plugin::host_unregister_timer (
 	const clap_host *host, clap_id timer_id )
 {
+    return static_cast<CLAP_Plugin*>(host->host_data)->clapUnregisterTimer(timer_id);
+}
+
+bool
+CLAP_Plugin::clapRegisterTimer(const uint32_t periodInMs, clap_id* const timerId)
+{
+    DMESSAGE("CarlaPluginCLAP::clapTimerRegister(%u, %p)", periodInMs, timerId);
+
+    // NOTE some plugins wont have their timer extension ready when first loaded, so try again here
+    if (m_timer_support == nullptr)
+    {
+        const clap_plugin_timer_support_t* const timerExt = static_cast<const clap_plugin_timer_support_t*>(
+            _plugin->get_extension(_plugin, CLAP_EXT_TIMER_SUPPORT));
+
+        if (timerExt != nullptr && timerExt->on_timer != nullptr)
+            m_timer_support = timerExt;
+    }
+
+    NON_SAFE_ASSERT_RETURN(m_timer_support != nullptr, false);
+
+    // FIXME events only driven as long as UI is open
+    // CARLA_SAFE_ASSERT_RETURN(fUI.isCreated, false);
+
+    const HostTimerDetails timer = 
+    {
+        fTimers.isNotEmpty() ? fTimers.getLast(kTimerFallback).clapId + 1 : 1,
+        periodInMs,
+        0
+    };
+
+    fTimers.append(timer);
+
+    *timerId = timer.clapId;
+    return true;
+}
+
+bool
+CLAP_Plugin::clapUnregisterTimer(const clap_id timerId)
+{
+    DMESSAGE("clapTimerUnregister(%u)", timerId);
+
+    for (LinkedList<HostTimerDetails>::Itenerator it = fTimers.begin2(); it.valid(); it.next())
+    {
+        const HostTimerDetails& timer(it.getValue(kTimerFallback));
+
+        if (timer.clapId == timerId)
+        {
+            fTimers.remove(it);
+            return true;
+        }
+    }
+
     return false;
-	//return g_host.unregister_timer(host, timer_id);
 }
 
 void

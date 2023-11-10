@@ -44,6 +44,7 @@ set (ProgSources
     src/LV2_Plugin.C
     src/CLAP_Plugin.C
     src/Clap_Discovery.C
+    src/Time.cpp
     src/Meter_Indicator_Module.C
     src/Meter_Module.C
     src/Mixer.C

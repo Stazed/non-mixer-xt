@@ -31,6 +31,15 @@
 
 #include "Mixer_Strip.H"
 #include "Plugin_Module.H"
+#include "LinkedList.hpp"
+
+typedef void (*EventProcPtr)(XEvent* ev);
+
+struct HostTimerDetails {
+    clap_id clapId;
+    uint32_t periodInMs;
+    uint32_t lastCallTimeInMs;
+};
 
 class CLAP_Plugin : public Plugin_Module {
 
@@ -86,6 +95,19 @@ private:
     // GUI Editor stuff...
     bool m_bEditorCreated;
     bool m_bEditorVisible;
+
+  /* X window for custom plugin ui */
+    Display* _x_display;
+    Window   _x_host_window;
+    Window   _x_child_window;
+    bool     _x_child_window_configured;
+    bool     _x_child_window_monitoring;
+    bool     _x_is_visible;
+    bool     _x_first_show;
+    bool     _x_set_size_called_at_least_Once;
+    bool     _x_is_idling;
+    bool     _x_is_resizable;
+    EventProcPtr _x_event_proc;
     
     clap_audio_buffer _audio_ins;
     clap_audio_buffer _audio_outs;
@@ -109,6 +131,17 @@ private:
 
     std::unordered_map<unsigned long, clap_id> m_param_ids; // FIXME we not using this
     std::unordered_map<clap_id, const clap_param_info *> m_param_infos;
+
+    void init_x();
+    bool isUiResizable() const;
+    void show_custom_ui();
+    void hide_custom_ui();
+
+    Window getChildWindow() const;
+    void setSize(const uint width, const uint height, const bool forceUpdate, const bool resizeChild);
+
+    void custom_update_ui();
+    static void custom_update_ui ( void * );
 
     int _midi_ins;
     int _midi_outs;
@@ -285,6 +318,7 @@ public:
 
     // Parameters processor queue.
     EventList m_params_out;
+    LinkedList<HostTimerDetails> fTimers;
 
     volatile bool m_params_flush;
 
@@ -344,6 +378,9 @@ protected:
             host_register_timer,
             host_unregister_timer,
     };
+
+    bool clapRegisterTimer(const uint32_t periodInMs, clap_id* const timerId);
+    bool clapUnregisterTimer(const clap_id timerId);
 
     bool plugin_instances ( unsigned int );
     void get ( Log_Entry &e ) const;

@@ -20,9 +20,22 @@
 #include "../../nonlib/debug.h"
 #include <cstring>
 
+/* Define unlikely */
+#ifdef __GNUC__
+# define unlikely(x) __builtin_expect(x,0)
+#else
+# define unlikely(x) x
+#endif
+
 
 #define NON_SAFE_ASSERT_CONTINUE(cond)      if (__builtin_expect(!(cond),0)) { non_safe_assert(#cond, __FILE__, __LINE__); continue; }
 #define NON_SAFE_ASSERT_RETURN(cond, ret)   if (__builtin_expect(!(cond),0)) { non_safe_assert(#cond, __FILE__, __LINE__); return ret; }
+
+
+#define CARLA_SAFE_ASSERT_CONTINUE(cond)      if (__builtin_expect(!(cond),0)) { non_safe_assert(#cond, __FILE__, __LINE__); continue; }
+#define CARLA_SAFE_ASSERT_RETURN(cond, ret)   if (__builtin_expect(!(cond),0)) { non_safe_assert(#cond, __FILE__, __LINE__); return ret; }
+
+#define CARLA_SAFE_ASSERT(cond)               if (unlikely(!(cond))) non_safe_assert      (#cond, __FILE__, __LINE__);
 
 /*
  * Print a safe assertion error message.
