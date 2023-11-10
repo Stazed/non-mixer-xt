@@ -86,7 +86,7 @@ private:
 
     const clap_plugin_descriptor *_descriptor;
 
-    clap_host_t *_host;
+    clap_host _host;
     clap_process _process;
 
     bool _is_processing;
@@ -140,7 +140,7 @@ private:
     Window getChildWindow() const;
     void setSize(const uint width, const uint height, const bool forceUpdate, const bool resizeChild);
 
-    void custom_update_ui();
+    void custom_update_ui_x();
     static void custom_update_ui ( void * );
 
     int _midi_ins;
@@ -151,7 +151,8 @@ private:
 
 public:
     const clap_plugin_entry_t *entry_from_CLAP_file(const char *f);
-
+    
+    static void setup_host( clap_host *host, void *host_data );
     static const void *get_extension(const struct clap_host * host, const char *eid);
     static void request_restart(const struct clap_host * host);
     static void request_process(const struct clap_host * host);

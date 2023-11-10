@@ -82,7 +82,9 @@ CLAP_Plugin::~CLAP_Plugin()
 
     if ( m_gui )
     {
-        m_gui->destroy(_plugin);
+        if ( m_bEditorCreated )
+            m_gui->destroy(_plugin);
+
         m_gui = nullptr;
     }
 
@@ -167,15 +169,9 @@ CLAP_Plugin::load_plugin ( Module::Picked picked )
         return false;
     }
 
-    _host = clap_discovery::createCLAPInfoHost();
+    setup_host(&_host, this);
 
-    _host->host_data        = this;
-    _host->get_extension    = get_extension;
-    _host->request_restart  = request_restart;
-    _host->request_process  = request_process;
-    _host->request_callback = request_callback;
-
-    _plugin = _factory->create_plugin(_factory, _host, _descriptor->id);
+    _plugin = _factory->create_plugin(_factory, &_host, _descriptor->id);
 
     if( !_plugin->init(_plugin) )
     {
@@ -197,6 +193,22 @@ CLAP_Plugin::load_plugin ( Module::Picked picked )
     return true;   // FIXME obviously
 }
 
+void
+CLAP_Plugin::setup_host ( clap_host *host, void *host_data )
+{
+    ::memset(host, 0, sizeof(clap_host));
+
+    host->host_data = host_data;
+    host->clap_version = CLAP_VERSION;
+    host->name = PACKAGE;
+    host->version = VERSION;
+    host->vendor = "Non-Mixer-XT team";
+    host->url = WEBSITE;
+    host->get_extension = get_extension;
+    host->request_restart = request_restart;
+    host->request_process = request_process;
+    host->request_callback = request_callback;
+}
 
 bool
 CLAP_Plugin::plugin_instances ( unsigned int n )
@@ -1178,7 +1190,7 @@ CLAP_Plugin::create_control_ports()
 
                 add_port( p );
                 
-                DMESSAGE( "Plugin has control port \"%s\" (default: %f)", param_info.name, p.hints.default_value );
+               // DMESSAGE( "Plugin has control port \"%s\" (default: %f)", param_info.name, p.hints.default_value );
             }
         }
     }
@@ -1779,27 +1791,15 @@ CLAP_Plugin::setSize(const uint width, const uint height, const bool forceUpdate
 void 
 CLAP_Plugin::custom_update_ui ( void *v )
 {
-    ((CLAP_Plugin*)v)->custom_update_ui();
+    ((CLAP_Plugin*)v)->custom_update_ui_x();
 }
 
 /**
  The idle callback to update_custom_ui()
  */
 void
-CLAP_Plugin::custom_update_ui()
+CLAP_Plugin::custom_update_ui_x()
 {
-    for (LinkedList<HostTimerDetails>::Itenerator it = fTimers.begin2(); it.valid(); it.next())
-    {
-        const uint32_t currentTimeInMs = water::Time::getMillisecondCounter();
-        HostTimerDetails& timer(it.getValue(kTimerFallbackNC));
-
-        if (currentTimeInMs > timer.lastCallTimeInMs + timer.periodInMs)
-        {
-            timer.lastCallTimeInMs = currentTimeInMs;
-            m_timer_support->on_timer(_plugin, timer.clapId);
-        }
-    }
-
     // prevent recursion
     if (_x_is_idling) return;
 
@@ -1925,6 +1925,18 @@ CLAP_Plugin::custom_update_ui()
     }
 
     _x_is_idling = false;
+
+    for (LinkedList<HostTimerDetails>::Itenerator it = fTimers.begin2(); it.valid(); it.next())
+    {
+        const uint32_t currentTimeInMs = water::Time::getMillisecondCounter();
+        HostTimerDetails& timer(it.getValue(kTimerFallbackNC));
+
+        if (currentTimeInMs > timer.lastCallTimeInMs + timer.periodInMs)
+        {
+            timer.lastCallTimeInMs = currentTimeInMs;
+            m_timer_support->on_timer(_plugin, timer.clapId);
+        }
+    }
 
     if(_x_is_visible)
     {
