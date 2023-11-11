@@ -1188,8 +1188,13 @@ CLAP_Plugin::create_control_ports()
 
                 p.connect_to( control_value );
 
+                p.hints.plug_port_index = i;
+
                 add_port( p );
-                
+
+                std::pair<int, unsigned long> prm ( int(p.hints.parameter_id), i );
+                m_paramIds.insert(prm);
+
                // DMESSAGE( "Plugin has control port \"%s\" (default: %f)", param_info.name, p.hints.default_value );
             }
         }
@@ -1402,6 +1407,109 @@ CLAP_Plugin::process_params_out (void)
                 eh->type == CLAP_EVENT_PARAM_GESTURE_END))
         {
             m_params_out.push(eh);
+        }
+    }
+}
+
+
+// Update the Module_Parameter_Editor from custom UI changes.
+void
+CLAP_Plugin::update_parameters()
+{
+    EventList& params_out = m_params_out;
+    const clap_event_header *eh = params_out.pop();
+    for ( ; eh; eh = params_out.pop())
+    {
+        int param_id = CLAP_INVALID_ID;
+        double value = 0.0;
+        // Check if we're not middle of a gesture...
+        if (eh->type == CLAP_EVENT_PARAM_GESTURE_BEGIN)
+        {
+            const clap_event_param_gesture *ev
+                    = reinterpret_cast<const clap_event_param_gesture *> (eh);
+            if (ev && ev->param_id != CLAP_INVALID_ID)
+            {
+                std::pair<int, double> prm ( int(ev->param_id), 0.0 );
+                m_paramValues.insert(prm);
+            }
+        }
+        else
+        if (eh->type == CLAP_EVENT_PARAM_GESTURE_END)
+        {
+            const clap_event_param_gesture *ev
+                    = reinterpret_cast<const clap_event_param_gesture *> (eh);
+            if (ev && ev->param_id != CLAP_INVALID_ID)
+            {
+                param_id = int(ev->param_id);
+
+                std::unordered_map<int, double>::const_iterator got
+                    = m_paramValues.find (param_id);
+
+                if ( got == m_paramValues.end() )
+                {
+                    WARNING("GESTURE_END Id not found = %d", param_id);
+                }
+
+                value = got->second;
+                m_paramValues.erase(param_id);
+
+              //  DMESSAGE("Gesture End Value = %f", (float) value);
+            }
+        }
+        else
+        if (eh->type == CLAP_EVENT_PARAM_VALUE)
+        {
+            const clap_event_param_value *ev
+                    = reinterpret_cast<const clap_event_param_value *> (eh);
+            if (ev && ev->param_id != CLAP_INVALID_ID)
+            {
+                param_id = ev->param_id;
+                value = ev->value;
+
+                std::unordered_map<int, double>::const_iterator got
+                    = m_paramValues.find (param_id);
+
+                // If we found the item, then replace it with new pair
+                if ( !(got == m_paramValues.end()) )
+                {
+                    std::pair<int, double> prm ( int(ev->param_id), value );
+
+                    m_paramValues.erase(param_id);
+                    m_paramValues.insert(prm);
+
+                    param_id = CLAP_INVALID_ID;
+                }
+            }
+        }
+        // Actually make the change...
+        if (param_id != CLAP_INVALID_ID)
+        {
+            std::unordered_map<int, unsigned long>::const_iterator got
+                    = m_paramIds.find (param_id);
+
+            unsigned long index = got->second;
+
+            /* Set flag to tell set_control_value() that custom ui does not need update */
+            _is_from_custom_ui = true;
+
+            set_control_value( index, value );
+           // DMESSAGE("Send to Parameter Editor Index = %d: value = %f", index, (float) value);
+        }
+    }
+
+    params_out.clear();
+}
+
+void
+CLAP_Plugin::set_control_value(unsigned long port_index, float value)
+{
+    for ( unsigned int i = 0; i < control_input.size(); ++i )
+    {
+        if ( port_index == control_input[i].hints.plug_port_index )
+        {
+            control_input[i].control_value(value);
+          //  DMESSAGE("Port Index = %d: Value = %f", port_index, value);
+            break;
         }
     }
 }
@@ -1938,9 +2046,11 @@ CLAP_Plugin::custom_update_ui_x()
         }
     }
 
+    // Update the Module_Parameter_Editor values from the Custom UI
+    update_parameters();
+
     if(_x_is_visible)
     {
-       // update_custom_ui();
         Fl::repeat_timeout( 0.03f, &CLAP_Plugin::custom_update_ui, this );
     }
     else
@@ -2031,6 +2141,101 @@ CLAP_Plugin::clapUnregisterTimer(const clap_id timerId)
     }
 
     return false;
+}
+
+// Host Parameters callbacks...
+//
+void
+CLAP_Plugin::host_params_rescan (
+	const clap_host *host, clap_param_rescan_flags flags )
+{
+    DMESSAGE("host_params_rescan(%p, 0x%04x)", host, flags);
+
+    CLAP_Plugin *pImpl = static_cast<CLAP_Plugin *> (host->host_data);
+    if (pImpl) pImpl->plugin_params_rescan(flags);
+}
+
+
+void
+CLAP_Plugin::host_params_clear (
+	const clap_host *host, clap_id param_id, clap_param_clear_flags flags )
+{
+    DMESSAGE("host_params_clear(%p, %u, 0x%04x)", host, param_id, flags);
+
+    CLAP_Plugin *pImpl = static_cast<CLAP_Plugin *> (host->host_data);
+    if (pImpl) pImpl->plugin_params_clear(param_id, flags);
+}
+
+
+void
+CLAP_Plugin::host_params_request_flush (
+	const clap_host *host )
+{
+    DMESSAGE("host_params_request_flush(%p)", host);
+
+    CLAP_Plugin *pImpl = static_cast<CLAP_Plugin *> (host->host_data);
+    if (pImpl) pImpl->plugin_params_request_flush();
+}
+
+// Plugin Parameters callbacks...
+//
+void
+CLAP_Plugin::plugin_params_rescan (
+	clap_param_rescan_flags flags )
+{
+#if 0
+    if (m_pPlugin == nullptr)
+            return;
+
+    if (flags & CLAP_PARAM_RESCAN_VALUES)
+            m_pPlugin->updateParamValues(false);
+    else
+    if (flags & (CLAP_PARAM_RESCAN_INFO | CLAP_PARAM_RESCAN_TEXT)) {
+        m_pPlugin->closeForm(true);
+        m_pPlugin->clearParams();
+        clearParamInfos();
+        addParamInfos();
+        m_pPlugin->addParams();
+    }
+    else
+    if (flags & CLAP_PARAM_RESCAN_ALL)
+        m_pPlugin->request_restart();
+#endif
+}
+
+
+void
+CLAP_Plugin::plugin_params_clear (
+	clap_id param_id, clap_param_clear_flags flags )
+{
+#if 0
+    if (m_pPlugin == nullptr)
+            return;
+
+    if (!flags || param_id == CLAP_INVALID_ID)
+            return;
+
+    // Clear all automation curves, if any...
+    qtractorSubject::resetQueue();
+
+    // Clear any automation curves and direct access
+    // references to the plugin parameter (param_id)...
+    qtractorPlugin::Param *pParam = m_pPlugin->findParamId(int(param_id));
+    if (pParam)
+            m_pPlugin->clearParam(pParam);
+
+    // And mark it dirty, of course...
+    m_pPlugin->updateDirtyCount();
+#endif
+}
+
+
+void
+CLAP_Plugin::plugin_params_request_flush (void)
+{
+    m_params_flush = true;
+
+//	plugin_params_flush();
 }
 
 void

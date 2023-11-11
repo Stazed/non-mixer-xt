@@ -131,6 +131,8 @@ private:
 
     std::unordered_map<unsigned long, clap_id> m_param_ids; // FIXME we not using this
     std::unordered_map<clap_id, const clap_param_info *> m_param_infos;
+    std::unordered_map<int, double> m_paramValues;
+    std::unordered_map<int, unsigned long> m_paramIds;
 
     void init_x();
     bool isUiResizable() const;
@@ -350,6 +352,8 @@ protected:
 
     // Transfer parameter changes...
     void process_params_out ();
+    void update_parameters();
+    void set_control_value(unsigned long port_index, float value);
 
     static void host_gui_resize_hints_changed (
             const clap_host *host);
@@ -379,6 +383,26 @@ protected:
             host_register_timer,
             host_unregister_timer,
     };
+
+    // Host Parameters callbacks...
+    //
+    static void host_params_rescan (
+            const clap_host *host, clap_param_rescan_flags flags);
+    static void host_params_clear (
+            const clap_host *host, clap_id param_id, clap_param_clear_flags flags);
+    static void host_params_request_flush (
+            const clap_host *host);
+
+    static const constexpr clap_host_params g_host_params = {
+            host_params_rescan,
+            host_params_clear,
+            host_params_request_flush,
+    };
+
+    void plugin_params_rescan (clap_param_rescan_flags flags);
+    void plugin_params_clear (clap_id param_id, clap_param_clear_flags flags);
+    void plugin_params_request_flush ();
+
 
     bool clapRegisterTimer(const uint32_t periodInMs, clap_id* const timerId);
     bool clapUnregisterTimer(const clap_id timerId);

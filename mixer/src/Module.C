@@ -497,12 +497,20 @@ Module::handle_control_changed ( Module::Port *p )
 #ifdef CLAP_SUPPORT
     else if (m->_plug_type == CLAP)
     {
-        CLAP_Plugin *pm = static_cast<CLAP_Plugin *> (m);
+        if(m->_is_from_custom_ui)
+        {
+          //  DMESSAGE("Received control from custom UI");
+            m->_is_from_custom_ui = false;
+        }
+        else
+        {
+            CLAP_Plugin *pm = static_cast<CLAP_Plugin *> (m);
 
-        uint32_t param_id = p->hints.parameter_id;
-        float value = p->control_value();
-        DMESSAGE("CLAP Param ID = %d: Value = %f", param_id, value);
-        pm->setParameter(param_id, value);
+            uint32_t param_id = p->hints.parameter_id;
+            float value = p->control_value();
+            DMESSAGE("CLAP Param ID = %d: Value = %f", param_id, value);
+            pm->setParameter(param_id, value);
+        }
     }
 #endif
     p->schedule_feedback();
