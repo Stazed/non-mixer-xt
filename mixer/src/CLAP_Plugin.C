@@ -595,6 +595,24 @@ CLAP_Plugin::process_reset()
 }
 
 void
+CLAP_Plugin::process_jack_midi_in ( uint32_t nframes, unsigned int port )
+{
+    /* Process any MIDI events from jack */
+    if ( note_input[port].jack_port() )
+    {
+        void *buf = note_input[port].jack_port()->buffer( nframes );
+
+        for (uint32_t i = 0; i < jack_midi_get_event_count(buf); ++i)
+        {
+            jack_midi_event_t ev;
+            jack_midi_event_get(&ev, buf, i);
+
+            process_midi_in(ev.buffer, ev.size, ev.time, 0);
+        }
+    }
+}
+
+void
 CLAP_Plugin::process_midi_in (
 	unsigned char *data, unsigned int size,
 	unsigned long offset, unsigned short port )
@@ -895,6 +913,12 @@ CLAP_Plugin::process ( nframes_t nframes )
         
         if (_is_processing)
         {
+            for( unsigned int i = 0; i < note_input.size(); ++i )
+            {
+                /* JACK MIDI in to plugin MIDI in */
+                process_jack_midi_in( nframes, i );
+            }
+
             m_events_out.clear();
             _process.frames_count  = nframes;
 
@@ -1420,6 +1444,7 @@ CLAP_Plugin::deactivate ( void )
 
    if ( _activated )
    {
+       _activated = false;
         _plugin->deactivate(_plugin);
    }
 

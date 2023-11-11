@@ -57,6 +57,8 @@ public:
     void set_output_buffer ( int n, void *buf );
     bool loaded ( void ) const;
     bool process_reset();
+
+    void process_jack_midi_in ( uint32_t nframes, unsigned int port );
     void process_midi_in (unsigned char *data, unsigned int size,
 		unsigned long offset, unsigned short port);
 
