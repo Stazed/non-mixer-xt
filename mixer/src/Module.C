@@ -471,7 +471,14 @@ Module::handle_control_changed ( Module::Port *p )
 
     // redraw if bypass state changed
     if (bypassable() && p == &control_input[control_input.size() - 1])
-        redraw();
+    {
+        if ( !strcmp( "dsp/bypass", p->name()) )
+        {
+            redraw();
+            p->schedule_feedback();
+            return;
+        }
+    }
 
     // TODO other types...
 #ifdef USE_SUIL

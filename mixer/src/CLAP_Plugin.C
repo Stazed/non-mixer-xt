@@ -25,7 +25,6 @@
 #ifdef CLAP_SUPPORT
 
 #include "CLAP_Plugin.H"
-#include "Clap_Discovery.H"
 
 #include "Chain.H"
 #include "XTUtils.H"
@@ -116,8 +115,6 @@ CLAP_Plugin::~CLAP_Plugin()
 bool
 CLAP_Plugin::load_plugin ( Module::Picked picked )
 {
-    //	close();
-
     _entry = entry_from_CLAP_file(picked.uri);
     if (!_entry)
     {
@@ -190,7 +187,7 @@ CLAP_Plugin::load_plugin ( Module::Picked picked )
     if(!_plugin_ins)
         is_zero_input_synth(true);
 
-    return true;   // FIXME obviously
+    return true;
 }
 
 void
@@ -1158,7 +1155,7 @@ CLAP_Plugin::create_control_ports()
                 /* Used for OSC path creation unique symbol */
                 std::string osc_symbol = param_info.name;
                 std::remove(osc_symbol.begin(), osc_symbol.end(), ' ');
-                osc_symbol += std::to_string( param_info.id );
+                osc_symbol += std::to_string( i );
                 
                 p.set_symbol(osc_symbol.c_str());
                 
@@ -1192,11 +1189,25 @@ CLAP_Plugin::create_control_ports()
 
                 add_port( p );
 
+                // Cache the port ID and index for easy lookup
                 std::pair<int, unsigned long> prm ( int(p.hints.parameter_id), i );
                 m_paramIds.insert(prm);
 
                // DMESSAGE( "Plugin has control port \"%s\" (default: %f)", param_info.name, p.hints.default_value );
             }
+        }
+
+        if (bypassable()) {
+            Port pb( this, Port::INPUT, Port::CONTROL, "dsp/bypass" );
+            pb.hints.type = Port::Hints::BOOLEAN;
+            pb.hints.ranged = true;
+            pb.hints.maximum = 1.0f;
+            pb.hints.minimum = 0.0f;
+            pb.hints.dimensions = 1;
+            pb.hints.visible = false;
+            pb.hints.invisible_with_signals = true;
+            pb.connect_to( _bypass );
+            add_port( pb );
         }
     }
 }
@@ -1252,9 +1263,6 @@ CLAP_Plugin::activate ( void )
     if ( !loaded() )
         return;
 
-    if ( _activated )
-        return;
-
     DMESSAGE( "Activating plugin \"%s\"", label() );
 
     if ( !bypass() )
@@ -1273,9 +1281,12 @@ CLAP_Plugin::activate ( void )
     }
 #endif
 
-    _activated = _plugin->activate(_plugin, (double) sample_rate(), buffer_size(), buffer_size() );
-    
     *_bypass = 0.0f;
+
+    if ( ! _activated )
+    {
+        _activated = _plugin->activate(_plugin, (double) sample_rate(), buffer_size(), buffer_size() );
+    }
 
     if ( chain() )
         chain()->client()->unlock();
@@ -1285,9 +1296,6 @@ void
 CLAP_Plugin::deactivate ( void )
 {
     if ( !loaded() )
-        return;
-
-    if ( !_activated )
         return;
 
 #if 0
@@ -1304,9 +1312,10 @@ CLAP_Plugin::deactivate ( void )
 
     *_bypass = 1.0f;
 
-    _activated = false;
-
-    _plugin->deactivate(_plugin);
+   if ( _activated )
+   {
+        _plugin->deactivate(_plugin);
+   }
 
 #if 0   // FIXME instances
     if ( _idata->lv2.descriptor->deactivate )
