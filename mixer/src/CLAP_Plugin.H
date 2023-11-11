@@ -57,6 +57,8 @@ public:
     void set_output_buffer ( int n, void *buf );
     bool loaded ( void ) const;
     bool process_reset();
+    void process_midi_in (unsigned char *data, unsigned int size,
+		unsigned long offset, unsigned short port);
 
     virtual bool bypass ( void ) const { return *_bypass == 1.0f; }
     virtual void bypass ( bool v );
@@ -147,6 +149,9 @@ private:
 
     int _midi_ins;
     int _midi_outs;
+    
+    int m_iMidiDialectIns;
+    int m_iMidiDialectOuts;
 
     int _control_ins;
     int _control_outs;

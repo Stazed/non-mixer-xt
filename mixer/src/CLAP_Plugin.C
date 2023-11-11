@@ -595,6 +595,112 @@ CLAP_Plugin::process_reset()
 }
 
 void
+CLAP_Plugin::process_midi_in (
+	unsigned char *data, unsigned int size,
+	unsigned long offset, unsigned short port )
+{
+    const int midi_dialect_ins = m_iMidiDialectIns;
+
+    for (unsigned int i = 0; i < size; ++i)
+    {
+        // channel status
+        const int channel = (data[i] & 0x0f);// + 1;
+        const int status  = (data[i] & 0xf0);
+
+        // all system common/real-time ignored
+        if (status == 0xf0)
+                continue;
+
+        // check data size (#1)
+        if (++i >= size)
+                break;
+
+        // channel key
+        const int key = (data[i] & 0x7f);
+
+        // program change
+        // after-touch
+        if ((midi_dialect_ins > 0) &&
+                (status == 0xc0 || status == 0xd0))
+        {
+            clap_event_midi ev;
+            ev.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
+            ev.header.type = CLAP_EVENT_MIDI;
+            ev.header.time = offset;
+            ev.header.flags = 0;
+            ev.header.size = sizeof(ev);
+            ev.port_index = port;
+            ev.data[0] = status | channel;
+            ev.data[1] = key;
+            ev.data[2] = 0;
+            m_events_in.push(&ev.header);
+            continue;
+        }
+
+        // check data size (#2)
+        if (++i >= size)
+                break;
+
+        // channel value (normalized)
+        const int value = (data[i] & 0x7f);
+
+        // note on
+        if (status == 0x90)
+        {
+            clap_event_note ev;
+            ev.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
+            ev.header.type = CLAP_EVENT_NOTE_ON;
+            ev.header.time = offset;
+            ev.header.flags = 0;
+            ev.header.size = sizeof(ev);
+            ev.note_id = -1;
+            ev.port_index = port;
+            ev.key = key;
+            ev.channel = channel;
+            ev.velocity = value / 127.0;
+            m_events_in.push(&ev.header);
+        }
+        else
+        // note off
+        if (status == 0x80)
+        {
+            clap_event_note ev;
+            ev.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
+            ev.header.type = CLAP_EVENT_NOTE_OFF;
+            ev.header.time = offset;
+            ev.header.flags = 0;
+            ev.header.size = sizeof(ev);
+            ev.note_id = -1;
+            ev.port_index = port;
+            ev.key = key;
+            ev.channel = channel;
+            ev.velocity = value / 127.0;
+            m_events_in.push(&ev.header);
+        }
+        else
+        // key pressure/poly.aftertouch
+        // control-change
+        // pitch-bend
+        if ((midi_dialect_ins > 0) &&
+                (status == 0xa0 || status == 0xb0 || status == 0xe0))
+        {
+            clap_event_midi ev;
+            ev.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
+            ev.header.type = CLAP_EVENT_MIDI;
+            ev.header.time = offset;
+            ev.header.flags = 0;
+            ev.header.size = sizeof(ev);
+            ev.port_index = port;
+            ev.data[0] = status | channel;
+            ev.data[1] = key;
+            ev.data[2] = value;
+            m_events_in.push(&ev.header);
+        }
+    }
+}
+
+
+void
 CLAP_Plugin::bypass ( bool v )
 {
     if ( v != bypass() )
@@ -1218,8 +1324,8 @@ CLAP_Plugin::create_note_ports()
     _midi_ins = 0;
     _midi_outs = 0;
 
-//    m_iMidiDialectIns = 0;
-//    m_iMidiDialectOuts = 0;
+    m_iMidiDialectIns = 0;
+    m_iMidiDialectOuts = 0;
     const clap_plugin_note_ports *note_ports
             = static_cast<const clap_plugin_note_ports *> (
                     _plugin->get_extension(_plugin, CLAP_EXT_NOTE_PORTS));
@@ -1232,8 +1338,8 @@ CLAP_Plugin::create_note_ports()
             ::memset(&info, 0, sizeof(info));
             if (note_ports->get(_plugin, i, true, &info))
             {
-              //  if (info.supported_dialects & CLAP_NOTE_DIALECT_MIDI)
-              //          ++m_iMidiDialectIns;
+                if (info.supported_dialects & CLAP_NOTE_DIALECT_MIDI)
+                        ++m_iMidiDialectIns;
 
                 add_port( Port( this, Port::INPUT, Port::MIDI, strdup(info.name) ) );
                 note_input[_midi_ins].hints.plug_port_index = i;
@@ -1246,8 +1352,8 @@ CLAP_Plugin::create_note_ports()
             ::memset(&info, 0, sizeof(info));
             if (note_ports->get(_plugin, i, false, &info))
             {
-              //  if (info.supported_dialects & CLAP_NOTE_DIALECT_MIDI)
-              //          ++m_iMidiDialectOuts;
+                if (info.supported_dialects & CLAP_NOTE_DIALECT_MIDI)
+                        ++m_iMidiDialectOuts;
 
                 add_port( Port( this, Port::OUTPUT, Port::MIDI, strdup(info.name) ) );
                 note_output[_midi_outs].hints.plug_port_index = i;
