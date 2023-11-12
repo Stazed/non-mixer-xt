@@ -544,6 +544,10 @@ CLAP_Plugin::process_reset()
     m_events_in.clear();
     m_events_out.clear();
 
+    _position = 0;
+    _bpm = 120.0f;
+    _rolling = false;
+
     ::memset(&_audio_ins, 0, sizeof(_audio_ins));
     _audio_ins.channel_count = plugin_ins();
     _audio_ins.data32 = _audio_in_buffers;
@@ -559,6 +563,7 @@ CLAP_Plugin::process_reset()
     _audio_outs.latency = 0;
         
     ::memset(&_process, 0, sizeof(_process));
+    ::memset(&m_transport, 0, sizeof(m_transport));
     
     if ( audio_input.size() )
     {
@@ -574,7 +579,7 @@ CLAP_Plugin::process_reset()
 
     _process.in_events  = m_events_in.ins();
     _process.out_events = m_events_out.outs();
-    _process.transport = nullptr;   // FIXME  TODO
+    _process.transport = &m_transport;
     _process.frames_count = buffer_size();      // FIXME Check
     _process.steady_time = 0;
     
@@ -623,6 +628,61 @@ CLAP_Plugin::process_reset()
 
 	return true;
 #endif
+}
+
+void
+CLAP_Plugin::process_jack_transport ( uint32_t nframes )
+{
+    // Get Jack transport position
+    jack_position_t pos;
+    const bool rolling =
+        (chain()->client()->transport_query(&pos) == JackTransportRolling);
+
+    // If transport state is not as expected, then something has changed
+    const bool has_bbt = (pos.valid & JackPositionBBT);
+    const bool xport_changed =
+      (rolling != _rolling || pos.frame != _position ||
+       (has_bbt && pos.beats_per_minute != _bpm));
+
+    if ( xport_changed )
+    {
+        if ( has_bbt )
+        {
+            const double positionBeats = static_cast<double>(pos.frame)
+                            / (sample_rate() * 60 / pos.beats_per_minute);
+
+            // Bar/ Beats
+            m_transport.bar_start = std::round(CLAP_BEATTIME_FACTOR * pos.bar_start_tick);
+            m_transport.bar_number = pos.bar - 1;
+            m_transport.song_pos_beats = std::round(CLAP_BEATTIME_FACTOR * positionBeats);
+            m_transport.flags |= CLAP_TRANSPORT_HAS_BEATS_TIMELINE;
+
+            // Tempo
+            m_transport.tempo = pos.beats_per_minute;
+            m_transport.flags |= CLAP_TRANSPORT_HAS_TEMPO;
+
+            // Time Signature
+            m_transport.tsig_num = static_cast<uint16_t>(pos.beats_per_bar + 0.5f);
+            m_transport.tsig_denom = static_cast<uint16_t>(pos.beat_type + 0.5f);
+            m_transport.flags |= CLAP_TRANSPORT_HAS_TIME_SIGNATURE;
+        }
+        else
+        {
+            // Tempo
+            m_transport.tempo = 120.0;
+            m_transport.flags |= CLAP_TRANSPORT_HAS_TEMPO;
+
+            // Time Signature
+            m_transport.tsig_num = 4;
+            m_transport.tsig_denom = 4;
+            m_transport.flags |= CLAP_TRANSPORT_HAS_TIME_SIGNATURE;
+        }
+    }
+
+    // Update transport state to expected values for next cycle
+    _position = rolling ? pos.frame + nframes : pos.frame;
+    _bpm      = has_bbt ? pos.beats_per_minute : _bpm;
+    _rolling  = rolling;
 }
 
 void
@@ -1027,6 +1087,8 @@ CLAP_Plugin::process ( nframes_t nframes )
         
         if (_is_processing)
         {
+            process_jack_transport( nframes );
+
             for( unsigned int i = 0; i < note_input.size(); ++i )
             {
                 /* JACK MIDI in to plugin MIDI in */

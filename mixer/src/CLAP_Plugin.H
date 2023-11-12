@@ -58,6 +58,7 @@ public:
     bool loaded ( void ) const;
     bool process_reset();
 
+    void process_jack_transport ( uint32_t nframes );
     void process_jack_midi_in ( uint32_t nframes, unsigned int port );
     void process_midi_in (unsigned char *data, unsigned int size,
 		unsigned long offset, unsigned short port);
@@ -94,6 +95,11 @@ private:
 
     clap_host _host;
     clap_process _process;
+    
+    clap_event_transport m_transport;
+    uint32_t  _position;        ///< Transport position in frames
+    float     _bpm;             ///< Transport tempo in beats per minute
+    bool      _rolling;         ///< Transport speed (0=stop, 1=play)
 
     bool _is_processing;
     bool _activated;
