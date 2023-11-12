@@ -39,6 +39,9 @@
 static const uint X11Key_Escape = 9;
 static const uint X11Key_W      = 25;
 
+const unsigned char  EVENT_NOTE_OFF         = 0x80;
+const unsigned char  EVENT_NOTE_ON          = 0x90;
+
 static bool gErrorTriggered = false;
 # if defined(__GNUC__) && (__GNUC__ >= 5) && ! defined(__clang__)
 #  pragma GCC diagnostic push
@@ -110,6 +113,34 @@ CLAP_Plugin::~CLAP_Plugin()
         delete []_audio_out_buffers;
         _audio_out_buffers = nullptr;
     }
+
+    for ( unsigned int i = 0; i < note_input.size(); ++i )
+    {
+        if(!(note_input[i].type() == Port::MIDI))
+            continue;
+
+        if(note_input[i].jack_port())
+        {
+            note_input[i].disconnect();
+            note_input[i].jack_port()->shutdown();
+            delete note_input[i].jack_port();
+        }
+    } 
+    for ( unsigned int i = 0; i < note_output.size(); ++i )
+    {
+        if(!(note_output[i].type() == Port::MIDI))
+            continue;
+
+        if(note_output[i].jack_port())
+        {
+            note_output[i].disconnect();
+            note_output[i].jack_port()->shutdown();
+            delete note_output[i].jack_port();
+        }
+    }
+
+    note_output.clear();
+    note_input.clear();
 }
 
 bool
@@ -717,6 +748,89 @@ CLAP_Plugin::process_midi_in (
     }
 }
 
+void
+CLAP_Plugin::process_jack_midi_out ( uint32_t nframes, unsigned int port )
+{
+    void* buf = NULL;
+
+    if ( note_output[port].jack_port() )
+    {
+        buf = note_output[port].jack_port()->buffer( nframes );
+        jack_midi_clear_buffer(buf);
+
+        EventList& events_out = m_events_out;
+
+        const uint32_t nevents = events_out.size();
+        for (uint32_t i = 0; i < nevents; ++i)
+        {
+            const clap_event_header *eh
+              = events_out.get(i);
+            if (eh)
+            {
+                switch (eh->type)
+                {
+                case CLAP_EVENT_NOTE_ON:
+                {
+                    const clap_event_note *en
+                            = reinterpret_cast<const clap_event_note *> (eh);
+                    if (en)
+                    {
+                        unsigned char  midi_note[3];
+                        midi_note[0] = EVENT_NOTE_ON + en->channel;
+                        midi_note[1] = en->key;
+                        midi_note[2] = en->velocity;
+
+                        size_t size = 3;
+                        int nBytes = static_cast<int> (size);
+    
+                        int ret =  jack_midi_event_write(buf, en->header.time,
+                                (jack_midi_data_t*) &midi_note[0], nBytes);
+
+                        if ( ret )
+                            WARNING("Jack MIDI note off error = %d", ret);
+                    }
+                    break;
+                }
+                case CLAP_EVENT_NOTE_OFF:
+                {
+                    const clap_event_note *en
+                            = reinterpret_cast<const clap_event_note *> (eh);
+                    if (en)
+                    {
+                        unsigned char  midi_note[3];
+                        midi_note[0] = EVENT_NOTE_OFF + en->channel;
+                        midi_note[1] = en->key;
+                        midi_note[2] = en->velocity;
+
+                        size_t size = 3;
+                        int nBytes = static_cast<int> (size);
+                        int ret =  jack_midi_event_write(buf, en->header.time,
+                                (jack_midi_data_t*) &midi_note[0], nBytes);
+
+                        if ( ret )
+                            WARNING("Jack MIDI note off error = %d", ret);
+                    }
+                    break;
+                }
+                case CLAP_EVENT_MIDI:
+                {
+                    const clap_event_midi *em
+                            = reinterpret_cast<const clap_event_midi *> (eh);
+                    if (em)
+                    {
+                        int ret =  jack_midi_event_write(buf, em->header.time,
+                                (jack_midi_data_t*) &em->data[0], sizeof(em->data));
+
+                        if ( ret )
+                            WARNING("Jack MIDI write error = %d", ret);
+                    }
+                    break;
+                }
+                }
+            }
+        }
+    }
+}
 
 void
 CLAP_Plugin::bypass ( bool v )
@@ -917,6 +1031,12 @@ CLAP_Plugin::process ( nframes_t nframes )
             {
                 /* JACK MIDI in to plugin MIDI in */
                 process_jack_midi_in( nframes, i );
+            }
+            
+            for ( unsigned int i = 0; i < note_output.size(); ++i)
+            {
+                /* Plugin to JACK MIDI out */
+                process_jack_midi_out( nframes, i);
             }
 
             m_events_out.clear();

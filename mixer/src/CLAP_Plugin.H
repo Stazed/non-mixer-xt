@@ -52,7 +52,7 @@ public:
     void handle_chain_name_changed ( void );
     void handle_sample_rate_change ( nframes_t sample_rate );
     void resize_buffers ( nframes_t buffer_size );
-    
+
     void set_input_buffer ( int n, void *buf );
     void set_output_buffer ( int n, void *buf );
     bool loaded ( void ) const;
@@ -61,6 +61,8 @@ public:
     void process_jack_midi_in ( uint32_t nframes, unsigned int port );
     void process_midi_in (unsigned char *data, unsigned int size,
 		unsigned long offset, unsigned short port);
+
+    void process_jack_midi_out ( uint32_t nframes, unsigned int port );
 
     virtual bool bypass ( void ) const { return *_bypass == 1.0f; }
     virtual void bypass ( bool v );
@@ -151,7 +153,7 @@ private:
 
     int _midi_ins;
     int _midi_outs;
-    
+
     int m_iMidiDialectIns;
     int m_iMidiDialectOuts;
 
