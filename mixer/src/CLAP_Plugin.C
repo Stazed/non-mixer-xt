@@ -146,16 +146,19 @@ CLAP_Plugin::~CLAP_Plugin()
 bool
 CLAP_Plugin::load_plugin ( Module::Picked picked )
 {
-    _entry = entry_from_CLAP_file(picked.uri);
+    _clap_path = picked.uri;
+    _clap_unique_id = picked.unique_id;
+
+    _entry = entry_from_CLAP_file(_clap_path);
     if (!_entry)
     {
-        WARNING("Clap_entry returned a nullptr = %s", picked.uri);
+        WARNING("Clap_entry returned a nullptr = %s", _clap_path);
         return false;
     }
 
-    if( !_entry->init(picked.uri) )
+    if( !_entry->init(_clap_path) )
     {
-        WARNING("Clap_entry cannot initialize = %s", picked.uri);
+        WARNING("Clap_entry cannot initialize = %s", _clap_path);
         return false;
     }
 
@@ -164,18 +167,18 @@ CLAP_Plugin::load_plugin ( Module::Picked picked )
 
     if (!_factory)
     {
-        WARNING("Plugin factory is null %s", picked.uri);
+        WARNING("Plugin factory is null %s", _clap_path);
         return false;
     }
 
     auto count = _factory->get_plugin_count(_factory);
-    if (picked.unique_id >= count)
+    if (_clap_unique_id >= count)
     {
-        WARNING("Bad plug-in index = %d: count = %d", picked.unique_id, count);
+        WARNING("Bad plug-in index = %d: count = %d", _clap_unique_id, count);
         return false;
     }
 
-    _descriptor = _factory->get_plugin_descriptor(_factory, picked.unique_id);
+    _descriptor = _factory->get_plugin_descriptor(_factory, _clap_unique_id);
     if (!_descriptor)
     {
         WARNING("No plug-in descriptor.", picked.unique_id);
@@ -187,7 +190,7 @@ CLAP_Plugin::load_plugin ( Module::Picked picked )
     if (!clap_version_is_compatible(_descriptor->clap_version))
     {
         WARNING("Incompatible CLAP version: %d"
-                " plug-in is %d.%d.%d, host is %d.%d.%d.", picked.unique_id,
+                " plug-in is %d.%d.%d, host is %d.%d.%d.", _clap_unique_id,
                 _descriptor->clap_version.major,
                 _descriptor->clap_version.minor,
                 _descriptor->clap_version.revision,
@@ -2581,13 +2584,95 @@ CLAP_Plugin::plugin_params_request_flush (void)
 void
 CLAP_Plugin::get ( Log_Entry &e ) const
 {
+    e.add( ":clap_plugin_path", _clap_path );
+    e.add( ":clap_plugin_id", _clap_unique_id);
+ 
+    /* these help us display the module on systems which are missing this plugin */
+    e.add( ":plugin_ins", _plugin_ins );
+    e.add( ":plugin_outs", _plugin_outs );
     
+    // TODO custom data
+
+    Module::get( e );
 }
 
 void
 CLAP_Plugin::set ( Log_Entry &e )
 {
+    int n = 0;
+    std::string restore = "";
+
+    /* we need to have number() defined before we create the control inputs in load() */
+    for ( int i = 0; i < e.size(); ++i )
+    {
+        const char *s, *v;
+
+        e.get( i, &s, &v );
+
+    	if ( ! strcmp(s, ":number" ) )
+        {
+	    n = atoi(v);
+        }
+    }
+
+    /* need to call this to set label even for version 0 modules */
+    number(n);
+
+    std::string s_clap_path = "";
+    unsigned long clap_id = 0;
     
+    for ( int i = 0; i < e.size(); ++i )
+    {
+        const char *s, *v;
+
+        e.get( i, &s, &v );
+
+        if ( ! strcmp( s, ":clap_plugin_path" ) )
+        {
+            s_clap_path = v;
+        }
+        else if ( ! strcmp( s, ":clap_plugin_id" ) )
+        {
+            clap_id = atoi ( v );
+        }
+        else if ( ! strcmp( s, ":plugin_ins" ) )
+        {
+            _plugin_ins = atoi( v );
+        }
+        else if ( ! strcmp( s, ":plugin_outs" ) )
+        {
+            _plugin_outs = atoi( v );
+        }
+#if 0
+        else if ( ! strcmp( s, ":custom_data" ) )
+        {
+            if(!export_import_strip.empty())
+            {
+                std::string path = export_import_strip;
+
+                std::size_t found = path.find_last_of("/\\");
+                restore = (path.substr(0, found));
+                restore += "/";
+                restore += v;
+            }
+            else
+            {
+                restore = project_directory;
+                restore += "/";
+                restore += v;
+                _project_directory = restore;
+            }
+        }
+#endif
+    }
+
+    DMESSAGE("Path = %s: ID = %d", s_clap_path.c_str(), clap_id);
+
+    Module::Picked picked = { CLAP, s_clap_path.c_str(), clap_id };
+    load_plugin( picked );
+
+    Module::set( e );
 }
 
 #endif  // CLAP_SUPPORT
+

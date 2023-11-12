@@ -92,6 +92,9 @@ private:
     const clap_plugin_factory *_factory;
 
     const clap_plugin_descriptor *_descriptor;
+    
+    const char* _clap_path;
+    unsigned long _clap_unique_id;
 
     clap_host _host;
     clap_process _process;
