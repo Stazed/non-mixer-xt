@@ -1187,6 +1187,9 @@ CLAP_Plugin::get_extension(const clap_host* host, const char* ext_id)
         else
         if (::strcmp(ext_id, CLAP_EXT_TIMER_SUPPORT) == 0)
                 return &host_data->g_host_timer_support;
+        else
+        if (::strcmp(ext_id, CLAP_EXT_STATE) == 0)
+                return &host_data->g_host_state;
 #if 0
         else
         if (::strcmp(ext_id, CLAP_EXT_PARAMS) == 0)
@@ -1770,10 +1773,13 @@ CLAP_Plugin::update_parameters()
                 if ( got == m_paramValues.end() )
                 {
                     WARNING("GESTURE_END Id not found = %d", param_id);
+                    param_id = CLAP_INVALID_ID;
                 }
-
-                value = got->second;
-                m_paramValues.erase(param_id);
+                else
+                {
+                    value = got->second;
+                    m_paramValues.erase(param_id);
+                }
 
               //  DMESSAGE("Gesture End Value = %f", (float) value);
             }
@@ -1809,6 +1815,12 @@ CLAP_Plugin::update_parameters()
             std::unordered_map<int, unsigned long>::const_iterator got
                     = m_paramIds.find (param_id);
 
+            if ( got == m_paramIds.end() )
+            {
+                WARNING("Param Id not found = %d", param_id);
+                continue;
+            }
+
             unsigned long index = got->second;
 
             /* Set flag to tell set_control_value() that custom ui does not need update */
@@ -1825,15 +1837,12 @@ CLAP_Plugin::update_parameters()
 void
 CLAP_Plugin::set_control_value(unsigned long port_index, float value)
 {
-    for ( unsigned int i = 0; i < control_input.size(); ++i )
-    {
-        if ( port_index == control_input[i].hints.plug_port_index )
-        {
-            control_input[i].control_value(value);
-          //  DMESSAGE("Port Index = %d: Value = %f", port_index, value);
-            break;
-        }
-    }
+    //  DMESSAGE("Port Index = %d: Value = %f", port_index, value);
+
+    control_input[port_index].control_value(value);
+
+    if (!dirty())
+        set_dirty();
 }
 
 bool
@@ -2466,7 +2475,6 @@ CLAP_Plugin::clapUnregisterTimer(const clap_id timerId)
 }
 
 // Host Parameters callbacks...
-//
 void
 CLAP_Plugin::host_params_rescan (
 	const clap_host *host, clap_param_rescan_flags flags )
@@ -2496,11 +2504,21 @@ CLAP_Plugin::host_params_request_flush (
     DMESSAGE("host_params_request_flush(%p)", host);
 
     CLAP_Plugin *pImpl = static_cast<CLAP_Plugin *> (host->host_data);
-    if (pImpl) pImpl->plugin_params_request_flush();
+    if (pImpl)
+        pImpl->plugin_params_request_flush();
+}
+
+void
+CLAP_Plugin::host_state_mark_dirty (
+            const clap_host *host)
+{
+    DMESSAGE("GOT SET DIRTY");
+    CLAP_Plugin *pImpl = static_cast<CLAP_Plugin *> (host->host_data);
+    if (pImpl)
+        pImpl->set_dirty();
 }
 
 // Plugin Parameters callbacks...
-//
 void
 CLAP_Plugin::plugin_params_rescan (
 	clap_param_rescan_flags flags )

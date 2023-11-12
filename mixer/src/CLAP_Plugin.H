@@ -108,7 +108,7 @@ private:
     bool m_bEditorCreated;
     bool m_bEditorVisible;
 
-  /* X window for custom plugin ui */
+    // X window for custom plugin
     Display* _x_display;
     Window   _x_host_window;
     Window   _x_child_window;
@@ -400,7 +400,6 @@ protected:
     };
 
     // Host Parameters callbacks...
-    //
     static void host_params_rescan (
             const clap_host *host, clap_param_rescan_flags flags);
     static void host_params_clear (
@@ -418,6 +417,13 @@ protected:
     void plugin_params_clear (clap_id param_id, clap_param_clear_flags flags);
     void plugin_params_request_flush ();
 
+    // Host state callbacks...
+    static void host_state_mark_dirty (
+            const clap_host *host);
+
+    static const constexpr clap_host_state g_host_state = {
+            host_state_mark_dirty,
+    };
 
     bool clapRegisterTimer(const uint32_t periodInMs, clap_id* const timerId);
     bool clapUnregisterTimer(const clap_id timerId);

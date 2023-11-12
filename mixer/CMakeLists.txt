@@ -90,6 +90,7 @@ target_include_directories (
     ${X11_INCLUDE_DIRS}
     ${LIBLO_INCLUDE_DIRS}
     ${ZIX_INCLUDE_DIRS}
+    ${CLAP_INCLUDEDIR}
 )
 
 target_link_libraries (non-mixer-xt ${ExternLibraries})

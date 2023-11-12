@@ -1413,10 +1413,6 @@ Module::handle ( int m )
                     {
                         command_open_parameter_editor();
                     }
-                    else    // set the dirty flag if we opened the custom UI
-                    {
-                        set_dirty();
-                    }
                 }  
 #endif
                 // TODO other types here
@@ -1480,10 +1476,6 @@ Module::handle ( int m )
                     if(!pm->try_custom_ui())
                     {
                         command_open_parameter_editor();
-                    }
-                    else    // set the dirty flag if we opened the custom UI
-                    {
-                        set_dirty();
                     }
                 }  
 #endif
