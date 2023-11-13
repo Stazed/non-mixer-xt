@@ -404,7 +404,16 @@ Plugin_Chooser::load_favorites ( void )
                     (*i).favorite = 1;
                     favorites++;
                 }
-
+#ifdef CLAP_SUPPORT
+                else if ( !strcmp(type, "CLAP") )
+                {
+                    if ( !strcmp(path, (*i).path) )
+                    {
+                        (*i).favorite = 1;
+                        favorites++;
+                    }
+                }
+#endif
                 // TODO other types
             }
         }
