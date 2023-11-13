@@ -477,17 +477,9 @@ Plugin_Module::scan_CLAP_plugins( std::list<Plugin_Info> & pr )
             pi.path     = strdup(q.u8string().c_str());
             pi.author   = desc->vendor;
             pi.id       = pl;           // Bundle Instance - FIXME check
-
+            pi.category = clap_discovery::get_plugin_category(desc->features);
             // desc->version;
             // desc->description;
-
-            auto f = desc->features;
-            while (f[0])
-            {
-                // FIXME - what to do here...
-               // pluginDescriptor["features"].append(f[0]);
-                f++;
-            }
 
             // Now lets make an instance to query ports
             auto host = clap_discovery::createCLAPInfoHost();

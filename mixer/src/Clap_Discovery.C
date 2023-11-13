@@ -26,6 +26,7 @@
 
 #include <iostream>     // cerr
 #include <dlfcn.h>      // dlopen, dlerror, dlsym
+#include <cstring>      // strcmp
 
 #include "Clap_Discovery.H"
 #include "../../nonlib/debug.h"
@@ -169,6 +170,94 @@ HostConfig *getHostConfig()
         return nullptr;
     }
     return static_host_config.get();
+}
+
+
+std::string get_plugin_category(const char* const* const features)
+{
+    // 1st pass for main categories
+    for (uint32_t i=0; features[i] != nullptr; ++i)
+    {
+        if (strcmp(features[i], CLAP_PLUGIN_FEATURE_INSTRUMENT) == 0)
+            return "Instrument Plugin";
+        if (strcmp(features[i], CLAP_PLUGIN_FEATURE_NOTE_EFFECT) == 0)
+            return "Utilities";
+        if (strcmp(features[i], CLAP_PLUGIN_FEATURE_ANALYZER) == 0)
+            return "Analyser Plugin";
+    }
+
+    // 2nd pass for FX sub categories
+    /*
+    #define CLAP_PLUGIN_FEATURE_DEESSER "de-esser"
+    #define CLAP_PLUGIN_FEATURE_PHASE_VOCODER "phase-vocoder"
+    #define CLAP_PLUGIN_FEATURE_GRANULAR "granular"
+    #define CLAP_PLUGIN_FEATURE_FREQUENCY_SHIFTER "frequency-shifter"
+    #define CLAP_PLUGIN_FEATURE_PITCH_SHIFTER "pitch-shifter"
+    #define CLAP_PLUGIN_FEATURE_TREMOLO "tremolo"
+    #define CLAP_PLUGIN_FEATURE_GLITCH "glitch"
+    */
+    for (uint32_t i=0; features[i] != nullptr; ++i)
+    {
+        if (strcmp(features[i], CLAP_PLUGIN_FEATURE_DELAY) == 0 )
+        {
+            return "Time/Delays";
+        }
+        if (strcmp(features[i], CLAP_PLUGIN_FEATURE_REVERB) == 0)
+        {
+            return "Simulators/Reverbs";
+        }
+        if (strcmp(features[i], CLAP_PLUGIN_FEATURE_EQUALIZER) == 0)
+        {
+            return "Frequency/EQs";
+        }
+        if (strcmp(features[i], CLAP_PLUGIN_FEATURE_FILTER) == 0)
+        {
+            return "Frequency/Filters";
+        }
+        if (strcmp(features[i], CLAP_PLUGIN_FEATURE_DISTORTION) == 0)
+        {
+            return "Amplitude/Distortions";
+        }
+        if (strcmp(features[i], CLAP_PLUGIN_FEATURE_COMPRESSOR) == 0 )
+        {
+            return "Amplitude/Dynamics/Compressors";
+        }
+        if (strcmp(features[i], CLAP_PLUGIN_FEATURE_LIMITER) == 0 )
+        {
+            return "Amplitude/Dynamics/Limiters";
+        }
+        if (strcmp(features[i], CLAP_PLUGIN_FEATURE_MASTERING) == 0 ||
+            strcmp(features[i], CLAP_PLUGIN_FEATURE_MIXING) == 0 ||
+            strcmp(features[i], CLAP_PLUGIN_FEATURE_TRANSIENT_SHAPER) == 0)
+        {
+            return "Amplitude/Dynamics";
+        }
+        if (strcmp(features[i], CLAP_PLUGIN_FEATURE_CHORUS) == 0 )
+        {
+            return "Amplitude/Modulators";
+        }
+        if (strcmp(features[i], CLAP_PLUGIN_FEATURE_FLANGER) == 0 )
+        {
+            return "Time/Flangers" ;
+        }
+        if (strcmp(features[i], CLAP_PLUGIN_FEATURE_PHASER) == 0 )
+        {
+            return "Time/Phasers";
+        }
+        if (strcmp(features[i], CLAP_PLUGIN_FEATURE_PITCH_CORRECTION) == 0 ||
+            strcmp(features[i], CLAP_PLUGIN_FEATURE_PITCH_SHIFTER) == 0 )
+        {
+            return "Frequency/Pitch shifters";
+        }
+        if (strcmp(features[i], CLAP_PLUGIN_FEATURE_RESTORATION) == 0 ||
+            strcmp(features[i], CLAP_PLUGIN_FEATURE_UTILITY) == 0
+        )
+        {
+            return "Utilities";
+        }
+    }
+
+    return "Unclassified";
 }
 
 }   // namespace clap_discovery

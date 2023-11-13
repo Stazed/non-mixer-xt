@@ -60,6 +60,8 @@ struct HostConfig
 clap_host_t *createCLAPInfoHost();
 HostConfig *getHostConfig();
 
+std::string get_plugin_category(const char* const* const features);
+
 }   // namespace clap_discovery
 
 #endif // CLAP_SUPPORT
