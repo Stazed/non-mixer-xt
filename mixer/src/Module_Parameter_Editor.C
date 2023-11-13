@@ -43,6 +43,11 @@
 #include "Controller_Module.H"
 #include "Chain.H"
 #include "Panner.H"
+
+#ifdef CLAP_SUPPORT
+#include "CLAP_Plugin.H"
+#endif
+
 #include <FL/fl_ask.H>
 #include <FL/Fl_Menu_Button.H>
 
@@ -129,8 +134,10 @@ Module_Parameter_Editor::Module_Parameter_Editor ( Module *module ) : Fl_Double_
                 }
             }
 #endif  // PRESET_SUPPORT
-
+        }
 #ifdef LV2_STATE_SAVE
+        if ((_module->_plug_type == LV2) || (_module->_plug_type == CLAP))
+        {
             Fl_Color fc = fl_color_add_alpha( FL_CYAN, 200 );
 
             { Fl_Button *o = new Fl_Button( 275, 0, 100, 24, "Save State" );
@@ -148,8 +155,8 @@ Module_Parameter_Editor::Module_Parameter_Editor ( Module *module ) : Fl_Double_
                 o->copy_label( "Restore State" );
                 o->callback( cb_restore_state_handle, this );
             }
+        }
 #endif  // LV2_STATE_SAVE
-        }   // if (_module->_is_lv2)
 
         o->resizable(0);
         o->end();
@@ -578,7 +585,7 @@ Module_Parameter_Editor::update_control_visibility ( void )
     int width = control_pack->w() + 100; // LADSPA
 
     // TODO other types ???
-    if (_module->_plug_type == LV2)
+    if ( (_module->_plug_type == LV2) || (_module->_plug_type == CLAP))
     {
         /* When the scroller is not used, we need to expand width to account for 
            the preset, state save and restore button */
@@ -696,8 +703,8 @@ Module_Parameter_Editor::cb_save_state_handle ( Fl_Widget *, void *v )
     std::string file_chooser_location = "";
 
     /* File chooser window title */
-    std::string title = "LV2 State Save";
-
+    std::string title = "State Save";
+    
     char *filename;
 
     filename = fl_file_chooser(title.c_str(), "", file_chooser_location.c_str(), 0);
@@ -716,8 +723,19 @@ Module_Parameter_Editor::save_plugin_state(const std::string filename)
     std::string directory = filename;
     directory.append("/");
 
-    LV2_Plugin *pm = static_cast<LV2_Plugin *> (_module);
-    pm->save_LV2_plugin_state(directory);
+#ifdef CLAP_SUPPORT
+    if (_module->_plug_type == CLAP)
+    {
+        CLAP_Plugin *pm = static_cast<CLAP_Plugin *> (_module);
+        pm->save_CLAP_plugin_state(directory);
+    }
+    else
+#endif
+    if (_module->_plug_type == LV2)
+    {
+        LV2_Plugin *pm = static_cast<LV2_Plugin *> (_module);
+        pm->save_LV2_plugin_state(directory);
+    }
 }
 
 void
@@ -728,7 +746,7 @@ Module_Parameter_Editor::cb_restore_state_handle ( Fl_Widget *, void *v )
     std::string file_chooser_location = "";
 
     /* File chooser window title */
-    std::string title = "LV2 State Restore";
+    std::string title = "State Restore";
 
     char *directory;
 
@@ -744,8 +762,19 @@ Module_Parameter_Editor::cb_restore_state_handle ( Fl_Widget *, void *v )
 void
 Module_Parameter_Editor::restore_plugin_state(const std::string directory)
 {
-    LV2_Plugin *pm = static_cast<LV2_Plugin *> (_module);
-    pm->restore_LV2_plugin_state(directory);
+#ifdef CLAP_SUPPORT
+    if (_module->_plug_type == CLAP)
+    {
+        CLAP_Plugin *pm = static_cast<CLAP_Plugin *> (_module);
+        pm->restore_CLAP_plugin_state(directory);
+    }
+    else
+#endif
+    if (_module->_plug_type == LV2)
+    {
+        LV2_Plugin *pm = static_cast<LV2_Plugin *> (_module);
+        pm->restore_LV2_plugin_state(directory);
+    }
 }
 #endif
 
