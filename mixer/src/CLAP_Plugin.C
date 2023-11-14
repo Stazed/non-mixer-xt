@@ -144,6 +144,9 @@ CLAP_Plugin::~CLAP_Plugin()
 
     note_output.clear();
     note_input.clear();
+
+    if ( _last_chunk )
+        std::free(_last_chunk);
 }
 
 bool
@@ -1696,9 +1699,7 @@ CLAP_Plugin::init ( void )
     _x_is_resizable = false;
     _x_event_proc = nullptr;
     
-    fLastChunk = nullptr;
-    plugin_state = nullptr;
-    sizeof_chunk = 0;
+    _last_chunk = nullptr;
 
     Plugin_Module::init();
 
@@ -2591,35 +2592,65 @@ CLAP_Plugin::plugin_params_request_flush (void)
 }
 
 void
-CLAP_Plugin::save_CLAP_plugin_state(const std::string directory)
+CLAP_Plugin::save_CLAP_plugin_state(const std::string filename)
 {
     void* data = nullptr;
     if (const std::size_t dataSize = getState(&data))
     {
         if ( data == nullptr )
         {
-            fl_alert( "%s does not support state save", base_label() );
+            fl_alert( "%s could not complete state save of %s", base_label(), filename.c_str() );
             return;
         }
 
-        sizeof_chunk = dataSize;
-        plugin_state = data;
+        FILE *fp;
+        fp = fopen(filename.c_str(), "w");
+
+        if(fp == NULL)
+        {
+            fl_alert( "Cannot open file %s", filename.c_str() );
+            return;
+        }
+        else
+        {
+            fwrite(data, dataSize, 1, fp);
+        }
+        fclose(fp);
     }
 }
 
 void
-CLAP_Plugin::restore_CLAP_plugin_state(const std::string directory)
+CLAP_Plugin::restore_CLAP_plugin_state(const std::string filename)
 {
-    const clap_istream_impl stream(plugin_state, sizeof_chunk);
+    FILE *fp = NULL;
+    fp = fopen(filename.c_str(), "r");
+
+    if (fp == NULL)
+    {
+        fl_alert( "Cannot open file %s", filename.c_str());
+        return;
+    }
+
+    fseek(fp, 0, SEEK_END);
+    uint64_t size = ftell(fp);
+    rewind(fp);
+
+    void *data = malloc(size);
+
+    fread(data, size, 1, fp);
+    fclose(fp);
+
+    const clap_istream_impl stream(data, size);
     if (m_state->load(_plugin, &stream))
     {
-        // update parameters
+        // FIXME  - update parameters
     }
     else
     {
-        fl_alert( "%s does not support state restore", base_label() );
-        return;
+        fl_alert( "%s could not complete state restore of %s", base_label(), filename.c_str() );
     }
+
+    free(data);
 }
 
 uint64_t
@@ -2628,17 +2659,17 @@ CLAP_Plugin::getState ( void** const dataPtr )
     if (!_plugin)
         return false;
     
-    std::free(fLastChunk);
+    std::free(_last_chunk);
 
     clap_ostream_impl stream;
     if (m_state->save(_plugin, &stream))
     {
-        *dataPtr = fLastChunk = stream.buffer;
+        *dataPtr = _last_chunk = stream.buffer;
         return stream.size;
     }
     else
     {
-        *dataPtr = fLastChunk = nullptr;
+        *dataPtr = _last_chunk = nullptr;
         return 0;
     }
 

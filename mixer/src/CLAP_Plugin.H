@@ -99,11 +99,8 @@ private:
     clap_host _host;
     clap_process _process;
 
-    // FIXME
     // Working state stream buffer.
-    void *fLastChunk;
-    void *plugin_state;
-    uint64_t sizeof_chunk;
+    void* _last_chunk;
     
     clap_event_transport m_transport;
     uint32_t  _position;        ///< Transport position in frames
@@ -346,8 +343,8 @@ public:
     // Parameters processor queue.
     EventList m_params_out;
 
-    void save_CLAP_plugin_state(const std::string directory);
-    void restore_CLAP_plugin_state(const std::string directory);
+    void save_CLAP_plugin_state(const std::string filename);
+    void restore_CLAP_plugin_state(const std::string filename);
 
     uint64_t getState (void** const dataPtr);
 
