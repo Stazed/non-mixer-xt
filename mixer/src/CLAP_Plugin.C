@@ -31,10 +31,13 @@
 #include "Time.h"
 
 #include "../../nonlib/dsp.h"
+#include "NonMixerPluginUI_X11Icon.h"
+#include "CarlaClapUtils.H"
 
 #include <unistd.h>    // getpid()
 #include <pthread.h>
-#include "NonMixerPluginUI_X11Icon.h"
+#include <FL/fl_ask.H>  // fl_alert()
+
 
 static const uint X11Key_Escape = 9;
 static const uint X11Key_W      = 25;
@@ -315,6 +318,7 @@ CLAP_Plugin::plugin_instances ( unsigned int n )
 
     return true;
 #endif
+    return false;
 }
 
 
@@ -1691,6 +1695,10 @@ CLAP_Plugin::init ( void )
     _x_is_idling = false;
     _x_is_resizable = false;
     _x_event_proc = nullptr;
+    
+    fLastChunk = nullptr;
+    plugin_state = nullptr;
+    sizeof_chunk = 0;
 
     Plugin_Module::init();
 
@@ -1982,6 +1990,7 @@ bool CLAP_Plugin::host_gui_request_show (const clap_host *host)
     pWidget->show();
     return true;
 #endif
+    return true;
 }
 
 
@@ -2579,6 +2588,61 @@ CLAP_Plugin::plugin_params_request_flush (void)
     m_params_flush = true;
 
 //	plugin_params_flush();
+}
+
+void
+CLAP_Plugin::save_CLAP_plugin_state(const std::string directory)
+{
+    void* data = nullptr;
+    if (const std::size_t dataSize = getState(&data))
+    {
+        if ( data == nullptr )
+        {
+            fl_alert( "%s does not support state save", base_label() );
+            return;
+        }
+
+        sizeof_chunk = dataSize;
+        plugin_state = data;
+    }
+}
+
+void
+CLAP_Plugin::restore_CLAP_plugin_state(const std::string directory)
+{
+    const clap_istream_impl stream(plugin_state, sizeof_chunk);
+    if (m_state->load(_plugin, &stream))
+    {
+        // update parameters
+    }
+    else
+    {
+        fl_alert( "%s does not support state restore", base_label() );
+        return;
+    }
+}
+
+uint64_t
+CLAP_Plugin::getState ( void** const dataPtr )
+{
+    if (!_plugin)
+        return false;
+    
+    std::free(fLastChunk);
+
+    clap_ostream_impl stream;
+    if (m_state->save(_plugin, &stream))
+    {
+        *dataPtr = fLastChunk = stream.buffer;
+        return stream.size;
+    }
+    else
+    {
+        *dataPtr = fLastChunk = nullptr;
+        return 0;
+    }
+
+    return 0;
 }
 
 void
