@@ -33,6 +33,10 @@
 #include "Plugin_Module.H"
 #include "LinkedList.hpp"
 
+extern std::string project_directory;
+extern std::string export_import_strip;
+extern std::vector<std::string>remove_custom_data_directories;
+
 typedef void (*EventProcPtr)(XEvent* ev);
 
 struct HostTimerDetails {
@@ -144,6 +148,7 @@ private:
 
     const clap_plugin_gui *m_gui;
     const clap_plugin_state *m_state;
+    std::string _project_file;
 
     const clap_plugin_note_name *m_note_names;
 
@@ -347,6 +352,7 @@ public:
     void restore_CLAP_plugin_state(const std::string filename);
 
     uint64_t getState (void** const dataPtr);
+    std::string get_plugin_save_file(const std::string directory);
 
     LinkedList<HostTimerDetails> fTimers;
 

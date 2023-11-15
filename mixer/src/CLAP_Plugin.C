@@ -145,14 +145,29 @@ CLAP_Plugin::~CLAP_Plugin()
     note_output.clear();
     note_input.clear();
 
+    free((char*)_clap_path);
+
     if ( _last_chunk )
         std::free(_last_chunk);
+
+    /* This is the case when the user manually removes a Plugin. We set the
+     _is_removed = true, and add any custom data directory to the remove directories
+     vector. If the user saves the project then we remove any items in the vector.
+     We also clear the vector. If the user abandons any changes on exit, then any
+     items added to the vector since the last save will not be removed */
+    if(_is_removed)
+    {
+        if(!_project_file.empty())
+        {
+            remove_custom_data_directories.push_back(_project_file);
+        }
+    }
 }
 
 bool
 CLAP_Plugin::load_plugin ( Module::Picked picked )
 {
-    _clap_path = picked.uri;
+    _clap_path = strdup(picked.uri);
     _clap_unique_id = picked.unique_id;
 
     _entry = entry_from_CLAP_file(_clap_path);
@@ -226,6 +241,9 @@ CLAP_Plugin::load_plugin ( Module::Picked picked )
 
     if(!_plugin_ins)
         is_zero_input_synth(true);
+
+    if( m_state )
+        _use_custom_data = true;
 
     return true;
 }
@@ -1700,6 +1718,7 @@ CLAP_Plugin::init ( void )
     _x_event_proc = nullptr;
     
     _last_chunk = nullptr;
+    _project_file = "";
 
     Plugin_Module::init();
 
@@ -2676,6 +2695,43 @@ CLAP_Plugin::getState ( void** const dataPtr )
     return 0;
 }
 
+/**
+ This generates the CLAP plugin state save file we use for customData.
+ FIXME - code duplication with LV2
+ */
+std::string
+CLAP_Plugin::get_plugin_save_file(const std::string directory)
+{
+    std::string project_base = directory;
+
+    if(project_base.empty())
+        return "";
+
+    std::string slabel = "/";
+    slabel += label();
+
+    /* Just replacing spaces in the plugin label with '_' cause it looks better */
+    std::replace( slabel.begin(), slabel.end(), ' ', '_');
+
+    project_base += slabel;
+
+    /* This generates the random directory suffix '.nABCD' to support multiple instances */
+    char id_str[6];
+
+    id_str[0] = 'n';
+    id_str[5] = 0;
+
+    for ( int i = 1; i < 5; i++)
+        id_str[i] = 'A' + (rand() % 25);
+
+    project_base += ".";
+    project_base += id_str;
+
+    DMESSAGE("project_base = %s", project_base.c_str());
+
+    return project_base;
+}
+
 void
 CLAP_Plugin::get ( Log_Entry &e ) const
 {
@@ -2685,8 +2741,49 @@ CLAP_Plugin::get ( Log_Entry &e ) const
     /* these help us display the module on systems which are missing this plugin */
     e.add( ":plugin_ins", _plugin_ins );
     e.add( ":plugin_outs", _plugin_outs );
-    
-    // TODO custom data
+
+    if ( _use_custom_data  )
+    {
+        Module *m = (Module *) this;
+        CLAP_Plugin *pm = static_cast<CLAP_Plugin *> (m);
+
+        /* Export directory location */
+        if(!export_import_strip.empty())
+        {
+            std::string path = export_import_strip;
+
+            std::size_t found = path.find_last_of("/\\");
+            path = (path.substr(0, found));
+
+            std::string filename = pm->get_plugin_save_file(path);
+
+            pm->save_CLAP_plugin_state(filename);
+            DMESSAGE("Export location = %s", filename.c_str());
+
+            std::string base_file = filename.substr(filename.find_last_of("/\\") + 1);
+            e.add( ":custom_data", base_file.c_str() );
+        }
+        else
+        {
+            /* If we already have pm->_project_file, it means that we have an existing project
+               already loaded. So use that file instead of making a new one */
+            std::string file = pm->_project_file;
+            if(file.empty())
+            {
+                /* This is a new project */
+                file = pm->get_plugin_save_file(project_directory);
+            }
+            if ( !file.empty() )
+            {
+                /* This is an existing project */
+                pm->_project_file = file;
+                pm->save_CLAP_plugin_state(file);
+
+                std::string base_file = file.substr(file.find_last_of("/\\") + 1);
+                e.add( ":custom_data", base_file.c_str() );
+            }
+        }
+    }
 
     Module::get( e );
 }
@@ -2738,7 +2835,6 @@ CLAP_Plugin::set ( Log_Entry &e )
         {
             _plugin_outs = atoi( v );
         }
-#if 0
         else if ( ! strcmp( s, ":custom_data" ) )
         {
             if(!export_import_strip.empty())
@@ -2755,18 +2851,25 @@ CLAP_Plugin::set ( Log_Entry &e )
                 restore = project_directory;
                 restore += "/";
                 restore += v;
-                _project_directory = restore;
+                _project_file = restore;
             }
         }
-#endif
     }
 
     DMESSAGE("Path = %s: ID = %d", s_clap_path.c_str(), clap_id);
 
-    Module::Picked picked = { CLAP, s_clap_path.c_str(), clap_id };
+    Module::Picked picked = { CLAP, strdup(s_clap_path.c_str()), clap_id };
+
     load_plugin( picked );
 
+    free((char*) picked.uri);
+
     Module::set( e );
+
+    if (!restore.empty())
+    {
+        restore_CLAP_plugin_state(restore);
+    }
 }
 
 #endif  // CLAP_SUPPORT
