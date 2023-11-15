@@ -374,9 +374,9 @@ Chain::remove ( Module *m )
         }
     }
 
-    /* Flag to tell LV2 Plugin_Module that custom user data directories should be set to remove on save */
-    if( (m->_plug_type == LV2) || (m->_plug_type == CLAP) )
-        m->_is_removed = true;
+    /* Flag to tell any Plugin_Modules that custom_data should be set to remove on save.
+       This is ignored by modules that don't have custom data. */
+    m->_is_removed = true;
 
     client()->lock();
 

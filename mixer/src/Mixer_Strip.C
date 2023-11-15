@@ -109,8 +109,9 @@ Mixer_Strip::~Mixer_Strip ( )
         
         for ( int i = 0; i < _chain->modules(); ++i )
         {
-            if(_chain->module(i)->_plug_type == LV2)
-                _chain->module(i)->_is_removed = true;
+            /* Flag to tell any Plugin_Modules that custom_data should be set to remove on save.
+               This is ignored by modules that don't have custom data. */
+            _chain->module(i)->_is_removed = true;
         }
     }
 
