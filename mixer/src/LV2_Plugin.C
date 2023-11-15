@@ -137,6 +137,7 @@ static void mixer_lv2_set_port_value ( const char *port_symbol,
 void
 LV2_Plugin::set_control_value(unsigned long port_index, float value)
 {
+    // FIXME - use unordered_map like clap to look up, and set dirty flag here
     for ( unsigned int i = 0; i < control_input.size(); ++i )
     {
         if ( port_index == control_input[i].hints.plug_port_index )
@@ -681,7 +682,7 @@ LV2_Plugin::~LV2_Plugin ( )
 bool
 LV2_Plugin::load_plugin ( Module::Picked picked )
 {
-    const char* uri = picked.uri;
+    const char* uri = strdup(picked.uri);
 
     _idata->lv2.rdf_data = lv2_rdf_new( uri, true );
 
@@ -715,6 +716,8 @@ LV2_Plugin::load_plugin ( Module::Picked picked )
 	snprintf( s, 24, "! %s", uri );
 	
         base_label( s );
+
+        free((char*) uri);
         return false;
     }
 
@@ -803,13 +806,13 @@ LV2_Plugin::load_plugin ( Module::Picked picked )
                 if ( LV2_IS_PORT_INPUT( _idata->lv2.rdf_data->Ports[i].Types ) )
                 {
                     add_port( Port( this, Port::INPUT, Port::AUDIO, _idata->lv2.rdf_data->Ports[i].Name ) );
-                    control_input[_plugin_ins].hints.plug_port_index = i;
+                    audio_input[_plugin_ins].hints.plug_port_index = i;
                     _plugin_ins++;
                 }
                 else if (LV2_IS_PORT_OUTPUT(_idata->lv2.rdf_data->Ports[i].Types))
                 {
                     add_port( Port( this, Port::OUTPUT, Port::AUDIO, _idata->lv2.rdf_data->Ports[i].Name ) );
-                    control_output[_plugin_outs].hints.plug_port_index = i;
+                    audio_output[_plugin_outs].hints.plug_port_index = i;
                     _plugin_outs++;
                 }
             }
@@ -1065,6 +1068,7 @@ LV2_Plugin::load_plugin ( Module::Picked picked )
         WARNING( "Failed to load plugin" );
         /* We don't need to delete anything here because the plugin module gets deleted along with
            everything else. */
+        free((char*) uri);
         return false;
     }
 
@@ -1127,6 +1131,7 @@ LV2_Plugin::load_plugin ( Module::Picked picked )
     Fl::add_timeout( 0.03f, &update_ui, this );
 #endif
 
+    free((char*) uri);
     return instances;
 }
 
@@ -3500,8 +3505,9 @@ LV2_Plugin::set ( Log_Entry &e )
 #ifdef LV2_WORKER_SUPPORT
             _loading_from_file = true;
 #endif
-            Module::Picked picked = { LV2, v, 0 };
+            Module::Picked picked = { LV2, strdup(v), 0 };
             load_plugin( picked );
+            free((char*) picked.uri);
         }
         else if ( ! strcmp( s, ":plugin_ins" ) )
         {
