@@ -2695,43 +2695,6 @@ CLAP_Plugin::getState ( void** const dataPtr )
     return 0;
 }
 
-/**
- This generates the CLAP plugin state save file we use for customData.
- FIXME - code duplication with LV2
- */
-std::string
-CLAP_Plugin::get_plugin_save_file(const std::string directory)
-{
-    std::string project_base = directory;
-
-    if(project_base.empty())
-        return "";
-
-    std::string slabel = "/";
-    slabel += label();
-
-    /* Just replacing spaces in the plugin label with '_' cause it looks better */
-    std::replace( slabel.begin(), slabel.end(), ' ', '_');
-
-    project_base += slabel;
-
-    /* This generates the random directory suffix '.nABCD' to support multiple instances */
-    char id_str[6];
-
-    id_str[0] = 'n';
-    id_str[5] = 0;
-
-    for ( int i = 1; i < 5; i++)
-        id_str[i] = 'A' + (rand() % 25);
-
-    project_base += ".";
-    project_base += id_str;
-
-    DMESSAGE("project_base = %s", project_base.c_str());
-
-    return project_base;
-}
-
 void
 CLAP_Plugin::get ( Log_Entry &e ) const
 {
@@ -2755,7 +2718,7 @@ CLAP_Plugin::get ( Log_Entry &e ) const
             std::size_t found = path.find_last_of("/\\");
             path = (path.substr(0, found));
 
-            std::string filename = pm->get_plugin_save_file(path);
+            std::string filename = pm->get_custom_data_location(path);
 
             pm->save_CLAP_plugin_state(filename);
             DMESSAGE("Export location = %s", filename.c_str());
@@ -2771,7 +2734,7 @@ CLAP_Plugin::get ( Log_Entry &e ) const
             if(file.empty())
             {
                 /* This is a new project */
-                file = pm->get_plugin_save_file(project_directory);
+                file = pm->get_custom_data_location(project_directory);
             }
             if ( !file.empty() )
             {

@@ -254,42 +254,7 @@ LV2_Plugin::restore_LV2_plugin_state(const std::string directory)
     lilv_state_free(state);
 }
 
-/**
- This generates the LV2 plugin state save directory we use for customData.
- */
-std::string
-LV2_Plugin::get_plugin_save_directory(const std::string directory)
-{
-    std::string project_base = directory;
-
-    if(project_base.empty())
-        return "";
-
-    std::string slabel = "/";
-    slabel += label();
-
-    /* Just replacing spaces in the plugin label with '_' cause it looks better */
-    std::replace( slabel.begin(), slabel.end(), ' ', '_');
-
-    project_base += slabel;
-
-    /* This generates the random directory suffix '.nABCD' to support multiple instances */
-    char id_str[6];
-
-    id_str[0] = 'n';
-    id_str[5] = 0;
-
-    for ( int i = 1; i < 5; i++)
-        id_str[i] = 'A' + (rand() % 25);
-
-    project_base += ".";
-    project_base += id_str;
-
-    DMESSAGE("project_base = %s", project_base.c_str());
-
-    return project_base;
-}
-#endif
+#endif  // LV2_STATE_SAVE
 
 #ifdef LV2_WORKER_SUPPORT
 
@@ -3416,7 +3381,7 @@ LV2_Plugin::get ( Log_Entry &e ) const
             std::size_t found = path.find_last_of("/\\");
             path = (path.substr(0, found));
 
-            std::string location = pm->get_plugin_save_directory(path);
+            std::string location = pm->get_custom_data_location(path);
 
             pm->save_LV2_plugin_state(location);
             DMESSAGE("Export location = %s", location.c_str());
@@ -3432,7 +3397,7 @@ LV2_Plugin::get ( Log_Entry &e ) const
             if(s.empty())
             {
                 /* This is a new project */
-                s = pm->get_plugin_save_directory(project_directory);
+                s = pm->get_custom_data_location(project_directory);
             }
             if ( !s.empty() )
             {

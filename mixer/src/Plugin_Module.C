@@ -556,6 +556,43 @@ Plugin_Module::resize_buffers ( nframes_t buffer_size )
     Module::resize_buffers( buffer_size );
 }
 
+/**
+ This generates the plugin state save file/directory we use for customData.
+ It generates the random directory suffix '.nABCD' to support multiple instances.
+ */
+std::string
+Plugin_Module::get_custom_data_location(const std::string path)
+{
+    std::string project_base = path;
+
+    if(project_base.empty())
+        return "";
+
+    std::string slabel = "/";
+    slabel += label();
+
+    /* Just replacing spaces in the plugin label with '_' cause it looks better */
+    std::replace( slabel.begin(), slabel.end(), ' ', '_');
+
+    project_base += slabel;
+
+    /* This generates the random directory suffix '.nABCD' to support multiple instances */
+    char id_str[6];
+
+    id_str[0] = 'n';
+    id_str[5] = 0;
+
+    for ( int i = 1; i < 5; i++)
+        id_str[i] = 'A' + (rand() % 25);
+
+    project_base += ".";
+    project_base += id_str;
+
+    DMESSAGE("project_base = %s", project_base.c_str());
+
+    return project_base;
+}
+
 void
 Plugin_Module::set ( Log_Entry & )
 {

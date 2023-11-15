@@ -103,7 +103,6 @@ public:
 
     void save_LV2_plugin_state(const std::string directory);
     void restore_LV2_plugin_state(const std::string directory);
-    std::string get_plugin_save_directory(const std::string directory);
 #endif  // LV2_STATE_SAVE
 
 #ifdef LV2_WORKER_SUPPORT

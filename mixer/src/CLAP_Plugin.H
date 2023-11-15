@@ -352,7 +352,6 @@ public:
     void restore_CLAP_plugin_state(const std::string filename);
 
     uint64_t getState (void** const dataPtr);
-    std::string get_plugin_save_file(const std::string directory);
 
     LinkedList<HostTimerDetails> fTimers;
 
