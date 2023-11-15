@@ -780,11 +780,6 @@ Module::set ( Log_Entry &e )
         }
     }
 
-#ifdef LV2_WORKER_SUPPORT
-    // atom_input port counter
-    unsigned int ai = 0;
-#endif
-
     for ( int i = 0; i < e.size(); ++i )
     {
         const char *s, *v;
@@ -797,16 +792,6 @@ Module::set ( Log_Entry &e )
         {
             set_parameters( v );
         }
-#ifdef LV2_WORKER_SUPPORT
-        else if ( ! strcmp( s, ":filename" ) )
-        {
-            LV2_Plugin *pm = static_cast<LV2_Plugin*> (this);
-
-            pm->set_file( v , ai, true );
-
-            ai++;
-        }
-#endif
         else if ( ! ( strcmp( s, ":active" ) ) )
         {
             bypass( ! atoi( v ) );
