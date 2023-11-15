@@ -1218,10 +1218,10 @@ CLAP_Plugin::get_extension(const clap_host* host, const char* ext_id)
         else
         if (::strcmp(ext_id, CLAP_EXT_STATE) == 0)
                 return &host_data->g_host_state;
-#if 0
         else
         if (::strcmp(ext_id, CLAP_EXT_PARAMS) == 0)
                 return &host_data->g_host_params;
+#if 0
         else
         if (::strcmp(ext_id, CLAP_EXT_AUDIO_PORTS) == 0)
                 return &host_data->g_host_audio_ports;
@@ -1240,9 +1240,6 @@ CLAP_Plugin::get_extension(const clap_host* host, const char* ext_id)
         else
         if (::strcmp(ext_id, CLAP_EXT_THREAD_POOL) == 0)
                 return &host_data->g_host_thread_pool;
-        else
-        if (::strcmp(ext_id, CLAP_EXT_STATE) == 0)
-                return &host_data->g_host_state;
         else
         if (::strcmp(ext_id, CLAP_EXT_NOTE_NAME) == 0)
                 return &host_data->g_host_note_name;
@@ -1381,6 +1378,21 @@ CLAP_Plugin::getParameter ( clap_id id ) const
 #endif
     }
     return value;
+}
+
+// Parameters update methods.
+void
+CLAP_Plugin::updateParamValues(bool update_custom_ui)
+{
+    for ( unsigned int i = 0; i < control_input.size(); ++i)
+    {
+        float value = getParameter(control_input[i].hints.parameter_id);
+
+        if( control_input[i].control_value() != value)
+        {
+            set_control_value(i, value, update_custom_ui);
+        }
+    }
 }
 
 void
@@ -1854,10 +1866,7 @@ CLAP_Plugin::update_parameters()
 
             unsigned long index = got->second;
 
-            /* Set flag to tell set_control_value() that custom ui does not need update */
-            _is_from_custom_ui = true;
-
-            set_control_value( index, value );
+            set_control_value( index, value, false );   // false means don't update custom UI
            // DMESSAGE("Send to Parameter Editor Index = %d: value = %f", index, (float) value);
         }
     }
@@ -1866,9 +1875,10 @@ CLAP_Plugin::update_parameters()
 }
 
 void
-CLAP_Plugin::set_control_value(unsigned long port_index, float value)
+CLAP_Plugin::set_control_value(unsigned long port_index, float value, bool update_custom_ui)
 {
     //  DMESSAGE("Port Index = %d: Value = %f", port_index, value);
+    _is_from_custom_ui = !update_custom_ui;
 
     control_input[port_index].control_value(value);
 
@@ -1964,13 +1974,16 @@ CLAP_Plugin::try_custom_ui()
 void CLAP_Plugin::host_gui_resize_hints_changed (const clap_host *host )
 {
 	// TODO: ?...
-	//
+	// The host should call get_resize_hints() again.
 }
 
 
 bool CLAP_Plugin::host_gui_request_resize (
 	const clap_host *host, uint32_t width, uint32_t height )
 {
+    // Request the host to resize the client area to width, height.
+    // Return true if the new size is accepted, false otherwise.
+    // The host doesn't have to call set_size().
  //   DMESSAGE("Request Resize W = %d: H = %s", width, height);
 #if 0
     if (m_pPlugin == nullptr)
@@ -1999,6 +2012,8 @@ bool CLAP_Plugin::host_gui_request_resize (
 bool CLAP_Plugin::host_gui_request_show (const clap_host *host)
 {
     DMESSAGE("Request Show");
+    // Request the host to show the plugin gui.
+    // Return true on success, false otherwise.
 #if 0
     if (m_pPlugin == nullptr)
             return false;
@@ -2018,6 +2033,8 @@ bool
 CLAP_Plugin::host_gui_request_hide (const clap_host *host)
 {
     DMESSAGE("Request Hide");
+    // Request the host to hide the plugin gui.
+    // Return true on success, false otherwise.
 #if 0
     if (m_pPlugin == nullptr)
             return false;
@@ -2037,6 +2054,10 @@ CLAP_Plugin::host_gui_request_hide (const clap_host *host)
 void CLAP_Plugin::host_gui_closed ( const clap_host *host, bool was_destroyed )
 {
     DMESSAGE("Gui closed");
+    // The floating window has been closed, or the connection to the gui has been lost.
+    //
+    // If was_destroyed is true, then the host must call clap_plugin_gui->destroy() to acknowledge
+    // the gui destruction.
 #if 0
     if (m_pPlugin)
         m_pPlugin->closeEditor();
@@ -2099,19 +2120,7 @@ CLAP_Plugin::init_x()
 bool
 CLAP_Plugin::isUiResizable() const
 {
-#if 0
-    NON_SAFE_ASSERT_RETURN(_idata->lv2.rdf_data != nullptr, false);
-
-    for (uint32_t i=0; i < _idata->lv2.rdf_data->FeatureCount; ++i)
-    {
-        if (std::strcmp(_idata->lv2.rdf_data->Features[i].URI, LV2_UI__fixedSize) == 0)
-            return false;
-
-        if (std::strcmp(_idata->lv2.rdf_data->Features[i].URI, LV2_UI__noUserResize) == 0)
-            return false;
-    }
-#endif
-    return true;
+    return m_gui->can_resize(_plugin);
 }
 
 void
@@ -2457,7 +2466,7 @@ CLAP_Plugin::host_unregister_timer (
 bool
 CLAP_Plugin::clapRegisterTimer(const uint32_t periodInMs, clap_id* const timerId)
 {
-    DMESSAGE("CarlaPluginCLAP::clapTimerRegister(%u, %p)", periodInMs, timerId);
+    DMESSAGE("ClapTimerRegister(%u, %p)", periodInMs, timerId);
 
     // NOTE some plugins wont have their timer extension ready when first loaded, so try again here
     if (m_timer_support == nullptr)
@@ -2490,7 +2499,7 @@ CLAP_Plugin::clapRegisterTimer(const uint32_t periodInMs, clap_id* const timerId
 bool
 CLAP_Plugin::clapUnregisterTimer(const clap_id timerId)
 {
-    DMESSAGE("clapTimerUnregister(%u)", timerId);
+    DMESSAGE("ClapTimerUnregister(%u)", timerId);
 
     for (LinkedList<HostTimerDetails>::Itenerator it = fTimers.begin2(); it.valid(); it.next())
     {
@@ -2555,23 +2564,30 @@ void
 CLAP_Plugin::plugin_params_rescan (
 	clap_param_rescan_flags flags )
 {
+    DMESSAGE("host_params_rescan(0x%04x)", flags);
+    if (_plugin == nullptr)
+        return;
+
+    if (flags & CLAP_PARAM_RESCAN_VALUES)
+        updateParamValues(false);   // false means do not update the custom UI
 #if 0
-    if (m_pPlugin == nullptr)
+    if (_plugin == nullptr)
             return;
 
     if (flags & CLAP_PARAM_RESCAN_VALUES)
-            m_pPlugin->updateParamValues(false);
+            _plugin->updateParamValues(false);
     else
-    if (flags & (CLAP_PARAM_RESCAN_INFO | CLAP_PARAM_RESCAN_TEXT)) {
-        m_pPlugin->closeForm(true);
-        m_pPlugin->clearParams();
+    if (flags & (CLAP_PARAM_RESCAN_INFO | CLAP_PARAM_RESCAN_TEXT))
+    {
+        _plugin->closeForm(true);
+        _plugin->clearParams();
         clearParamInfos();
         addParamInfos();
-        m_pPlugin->addParams();
+        _plugin->addParams();
     }
     else
     if (flags & CLAP_PARAM_RESCAN_ALL)
-        m_pPlugin->request_restart();
+        _plugin->request_restart();
 #endif
 }
 
@@ -2581,7 +2597,7 @@ CLAP_Plugin::plugin_params_clear (
 	clap_id param_id, clap_param_clear_flags flags )
 {
 #if 0
-    if (m_pPlugin == nullptr)
+    if (_plugin == nullptr)
             return;
 
     if (!flags || param_id == CLAP_INVALID_ID)
@@ -2662,7 +2678,7 @@ CLAP_Plugin::restore_CLAP_plugin_state(const std::string filename)
     const clap_istream_impl stream(data, size);
     if (m_state->load(_plugin, &stream))
     {
-        // FIXME  - update parameters
+        updateParamValues(false);   // false means do not update the custom UI
     }
     else
     {

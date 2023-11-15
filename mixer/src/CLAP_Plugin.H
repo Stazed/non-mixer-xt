@@ -195,6 +195,9 @@ public:
 
     // Get current parameter value.
     double getParameter (clap_id id) const;
+    
+    // Parameters update methods.
+    void updateParamValues(bool update_custom_ui);
 
     class EventList
     {
@@ -385,7 +388,7 @@ protected:
     // Transfer parameter changes...
     void process_params_out ();
     void update_parameters();
-    void set_control_value(unsigned long port_index, float value);
+    void set_control_value(unsigned long port_index, float value, bool update_custom_ui);
 
     static void host_gui_resize_hints_changed (
             const clap_host *host);
