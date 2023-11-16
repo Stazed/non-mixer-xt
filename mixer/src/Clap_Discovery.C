@@ -77,6 +77,9 @@ validCLAPSearchPaths()
 
     /* These are the standard locations for linux */
     res.emplace_back("/usr/lib/clap");
+    res.emplace_back("/usr/lib64/clap");
+    res.emplace_back("/usr/local/lib/clap");
+    res.emplace_back("/usr/local/lib64/clap");
     res.emplace_back(std::filesystem::path(getenv("HOME")) / std::filesystem::path(".clap"));
 
     /* This is possibly set for individual computers */
