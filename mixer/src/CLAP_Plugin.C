@@ -82,6 +82,8 @@ CLAP_Plugin::~CLAP_Plugin()
         hide_custom_ui();
     }
 
+    Fl::remove_timeout(&CLAP_Plugin::parameter_update, this);
+
     clearParamInfos();
     _plugin->deactivate(_plugin);
 
@@ -244,6 +246,8 @@ CLAP_Plugin::load_plugin ( Module::Picked picked )
 
     if( m_state )
         _use_custom_data = true;
+
+    Fl::add_timeout( 0.06f, &CLAP_Plugin::parameter_update, this );
 
     return true;
 }
@@ -846,7 +850,7 @@ CLAP_Plugin::process_jack_midi_out ( uint32_t nframes, unsigned int port )
         buf = note_output[port].jack_port()->buffer( nframes );
         jack_midi_clear_buffer(buf);
 
-        EventList& events_out = m_events_out;
+        EventList& events_out = CLAP_Plugin::events_out ();
 
         const uint32_t nevents = events_out.size();
         for (uint32_t i = 0; i < nevents; ++i)
@@ -1251,18 +1255,21 @@ CLAP_Plugin::get_extension(const clap_host* host, const char* ext_id)
 void
 CLAP_Plugin::request_restart(const struct clap_host * host)
 {
+    DMESSAGE("Request restart");
     // TODO
 }
 
 void
 CLAP_Plugin::request_process(const struct clap_host * host)
 {
+    DMESSAGE("Request process");
     // TODO
 }
 
 void
 CLAP_Plugin::request_callback(const struct clap_host * host)
 {
+    DMESSAGE("Request callback");
     // TODO
 }
 
@@ -1779,12 +1786,21 @@ CLAP_Plugin::process_params_out (void)
     }
 }
 
+/**
+ Callback for idle interface
+ Update the Module_Parameter_Editor values from the Custom UI
+ */
+void 
+CLAP_Plugin::parameter_update ( void *v )
+{
+    ((CLAP_Plugin*)v)->update_parameters();
+}
 
 // Update the Module_Parameter_Editor from custom UI changes.
 void
 CLAP_Plugin::update_parameters()
 {
-    EventList& params_out = m_params_out;
+    EventList& params_out = CLAP_Plugin::params_out();
     const clap_event_header *eh = params_out.pop();
     for ( ; eh; eh = params_out.pop())
     {
@@ -1872,6 +1888,8 @@ CLAP_Plugin::update_parameters()
     }
 
     params_out.clear();
+
+    Fl::repeat_timeout( 0.06f, &CLAP_Plugin::parameter_update, this );
 }
 
 void
@@ -2417,9 +2435,6 @@ CLAP_Plugin::custom_update_ui_x()
             m_timer_support->on_timer(_plugin, timer.clapId);
         }
     }
-
-    // Update the Module_Parameter_Editor values from the Custom UI
-    update_parameters();
 
     if(_x_is_visible)
     {

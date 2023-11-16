@@ -383,12 +383,18 @@ private:
     void add_port ( const Port &p );
     void init ( void );
 
+    // Transfer parameter changes...
+    void process_params_out ();
+    static void parameter_update ( void * );
+    void update_parameters();
+    void set_control_value(unsigned long port_index, float value, bool update_custom_ui);
+
 protected:
 
     // Transfer parameter changes...
-    void process_params_out ();
-    void update_parameters();
-    void set_control_value(unsigned long port_index, float value, bool update_custom_ui);
+ //   void process_params_out ();
+//    void update_parameters();
+//    void set_control_value(unsigned long port_index, float value, bool update_custom_ui);
 
     static void host_gui_resize_hints_changed (
             const clap_host *host);
