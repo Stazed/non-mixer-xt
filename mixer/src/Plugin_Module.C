@@ -476,7 +476,8 @@ Plugin_Module::scan_CLAP_plugins( std::list<Plugin_Info> & pr )
             pi.name     = desc->name;
             pi.path     = strdup(q.u8string().c_str());
             pi.author   = desc->vendor;
-            pi.id       = pl;           // Bundle Instance - FIXME check
+            pi.id       = 0;
+            pi.clap_id  = desc->id;
             pi.category = clap_discovery::get_plugin_category(desc->features);
             // desc->version;
             // desc->description;

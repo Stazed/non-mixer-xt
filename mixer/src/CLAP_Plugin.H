@@ -97,8 +97,8 @@ private:
 
     const clap_plugin_descriptor *_descriptor;
     
-    const char* _clap_path;
-    unsigned long _clap_unique_id;
+    std::string _clap_path;
+    std::string _clap_id;
 
     clap_host _host;
     clap_process _process;

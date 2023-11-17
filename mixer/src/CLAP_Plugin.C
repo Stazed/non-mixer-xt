@@ -148,8 +148,6 @@ CLAP_Plugin::~CLAP_Plugin()
     note_output.clear();
     note_input.clear();
 
-    free((char*)_clap_path);
-
     if ( _last_chunk )
         std::free(_last_chunk);
 
@@ -170,19 +168,19 @@ CLAP_Plugin::~CLAP_Plugin()
 bool
 CLAP_Plugin::load_plugin ( Module::Picked picked )
 {
-    _clap_path = strdup(picked.uri);
-    _clap_unique_id = picked.unique_id;
+    _clap_path = picked.uri;
+    _clap_id = picked.clap_id;
 
-    _entry = entry_from_CLAP_file(_clap_path);
+    _entry = entry_from_CLAP_file(_clap_path.c_str());
     if (!_entry)
     {
-        WARNING("Clap_entry returned a nullptr = %s", _clap_path);
+        WARNING("Clap_entry returned a nullptr = %s", _clap_path.c_str());
         return false;
     }
 
-    if( !_entry->init(_clap_path) )
+    if( !_entry->init(_clap_path.c_str()) )
     {
-        WARNING("Clap_entry cannot initialize = %s", _clap_path);
+        WARNING("Clap_entry cannot initialize = %s", _clap_path.c_str());
         return false;
     }
 
@@ -191,21 +189,26 @@ CLAP_Plugin::load_plugin ( Module::Picked picked )
 
     if (!_factory)
     {
-        WARNING("Plugin factory is null %s", _clap_path);
+        WARNING("Plugin factory is null %s", _clap_path.c_str());
         return false;
     }
 
     auto count = _factory->get_plugin_count(_factory);
-    if (_clap_unique_id >= count)
+    
+    for (uint32_t pl = 0; pl < count; ++pl)
     {
-        WARNING("Bad plug-in index = %d: count = %d", _clap_unique_id, count);
-        return false;
+        auto desc = _factory->get_plugin_descriptor(_factory, pl);
+        
+        if (strcmp (desc->id, _clap_id.c_str() ) == 0)
+        {
+            _descriptor = _factory->get_plugin_descriptor(_factory, pl);
+            break;
+        }
     }
 
-    _descriptor = _factory->get_plugin_descriptor(_factory, _clap_unique_id);
     if (!_descriptor)
     {
-        WARNING("No plug-in descriptor.", picked.unique_id);
+        WARNING("No plug-in descriptor. %s", picked.clap_id.c_str());
         return false;
     }
     
@@ -213,8 +216,8 @@ CLAP_Plugin::load_plugin ( Module::Picked picked )
 
     if (!clap_version_is_compatible(_descriptor->clap_version))
     {
-        WARNING("Incompatible CLAP version: %d"
-                " plug-in is %d.%d.%d, host is %d.%d.%d.", _clap_unique_id,
+        WARNING("Incompatible CLAP version: %s"
+                " plug-in is %d.%d.%d, host is %d.%d.%d.", _clap_id.c_str(),
                 _descriptor->clap_version.major,
                 _descriptor->clap_version.minor,
                 _descriptor->clap_version.revision,
@@ -2776,8 +2779,8 @@ CLAP_Plugin::getState ( void** const dataPtr )
 void
 CLAP_Plugin::get ( Log_Entry &e ) const
 {
-    e.add( ":clap_plugin_path", _clap_path );
-    e.add( ":clap_plugin_id", _clap_unique_id);
+    e.add( ":clap_plugin_path", _clap_path.c_str() );
+    e.add( ":clap_plugin_id", _clap_id.c_str());
  
     /* these help us display the module on systems which are missing this plugin */
     e.add( ":plugin_ins", _plugin_ins );
@@ -2852,7 +2855,7 @@ CLAP_Plugin::set ( Log_Entry &e )
     number(n);
 
     std::string s_clap_path = "";
-    unsigned long clap_id = 0;
+    std::string s_clap_id = "";
     
     for ( int i = 0; i < e.size(); ++i )
     {
@@ -2866,7 +2869,7 @@ CLAP_Plugin::set ( Log_Entry &e )
         }
         else if ( ! strcmp( s, ":clap_plugin_id" ) )
         {
-            clap_id = atoi ( v );
+            s_clap_id =  v;
         }
         else if ( ! strcmp( s, ":plugin_ins" ) )
         {
@@ -2897,9 +2900,9 @@ CLAP_Plugin::set ( Log_Entry &e )
         }
     }
 
-    DMESSAGE("Path = %s: ID = %d", s_clap_path.c_str(), clap_id);
+    DMESSAGE("Path = %s: ID = %s", s_clap_path.c_str(), s_clap_id.c_str());
 
-    Module::Picked picked = { CLAP, strdup(s_clap_path.c_str()), clap_id };
+    Module::Picked picked = { CLAP, strdup(s_clap_path.c_str()), 0, s_clap_id };
 
     if ( !load_plugin( picked ) )
     {

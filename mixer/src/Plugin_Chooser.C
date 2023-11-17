@@ -39,7 +39,7 @@ static int plugin_type = 0;
 Module::Picked
 Plugin_Chooser::plugin_chooser ( int ninputs )
 {
-    Module::Picked picked = { LADSPA, "", 0 };
+    Module::Picked picked = { LADSPA, "", 0 , "" };
 
     Plugin_Chooser *o = new Plugin_Chooser( 0,0,735,500,"Plugin Chooser");
 
@@ -80,6 +80,7 @@ Plugin_Chooser::plugin_chooser ( int ninputs )
             {
                 picked.uri = uri;
             }
+            picked.clap_id = o->clap_id();
             picked.unique_id = o->value();
             break;
         }
@@ -342,6 +343,7 @@ Plugin_Chooser::cb_table ( Fl_Widget *w )
             {
                 _uri   = _plugin_rows[R]->path;
                 _value = _plugin_rows[R]->id;
+                _clap_id = _plugin_rows[R]->clap_id;
                 _plugin_type = CLAP;
             }
 #endif
@@ -380,9 +382,10 @@ Plugin_Chooser::load_favorites ( void )
     unsigned long id;
     char *type;
     char *path;
+    char *clap_id;
     int favorites = 0;
 
-    while ( 3 == fscanf( fp, "%m[^:]:%lu:%m[^]\n]\n", &type, &id, &path ) )
+    while ( 4 == fscanf( fp, "%m[^:]:%lu:%m[^:]:%m[^]\n]\n", &type, &id, &path, &clap_id ) )
     {
         for ( std::list<Plugin_Module::Plugin_Info>::iterator i = _plugins.begin();
               i != _plugins.end();
@@ -409,8 +412,11 @@ Plugin_Chooser::load_favorites ( void )
                 {
                     if ( !strcmp(path, (*i).path) )
                     {
-                        (*i).favorite = 1;
-                        favorites++;
+                        if ( !strcmp(clap_id , (*i).clap_id.c_str()))
+                        {
+                            (*i).favorite = 1;
+                            favorites++;
+                        }
                     }
                 }
 #endif
@@ -441,7 +447,7 @@ Plugin_Chooser::save_favorites ( void )
     {
         if ( (*i).favorite )
         {
-            fprintf( fp, "%s:%lu:%s\n", i->type, i->id, i->path );
+            fprintf( fp, "%s:%lu:%s:%s\n", i->type, i->id, i->path, i->clap_id.c_str() );
         }
     }
     
