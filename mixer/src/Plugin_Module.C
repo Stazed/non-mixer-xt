@@ -434,7 +434,7 @@ Plugin_Module::scan_CLAP_plugins( std::list<Plugin_Info> & pr )
 
     for (const auto &q : sp)
     {
-        DMESSAGE("CLAP PLUG PATHS %s", q.u8string().c_str());
+       // DMESSAGE("CLAP PLUG PATHS %s", q.u8string().c_str());
         auto entry = clap_discovery::entryFromCLAPPath(q);
 
         if (!entry)
@@ -474,10 +474,10 @@ Plugin_Module::scan_CLAP_plugins( std::list<Plugin_Info> & pr )
             Plugin_Info pi("CLAP");
 
             pi.name     = desc->name;
-            pi.path     = strdup(q.u8string().c_str());
+            pi.path     = strdup(desc->id);
             pi.author   = desc->vendor;
             pi.id       = 0;
-            pi.clap_id  = desc->id;
+            pi.clap_path  = q.u8string().c_str();
             pi.category = clap_discovery::get_plugin_category(desc->features);
             // desc->version;
             // desc->description;

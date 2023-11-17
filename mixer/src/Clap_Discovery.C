@@ -77,9 +77,33 @@ validCLAPSearchPaths()
 
     /* These are the standard locations for linux */
     res.emplace_back("/usr/lib/clap");
-    res.emplace_back("/usr/lib64/clap");
+
+    // some distros make /usr/lib64 a symlink to /usr/lib so don't include it
+    // or we get duplicates.
+    if(std::filesystem::is_symlink("/usr/lib64"))
+    {
+        if(!strcmp(std::filesystem::read_symlink("/usr/lib64").c_str(), "/usr/lib"))
+            res.emplace_back("/usr/lib64/clap");
+    }
+    else
+    {
+        res.emplace_back("/usr/lib64/clap");
+    }
+    
     res.emplace_back("/usr/local/lib/clap");
-    res.emplace_back("/usr/local/lib64/clap");
+
+    // some distros make /usr/local/lib64 a symlink to /usr/local/lib so don't include it
+    // or we get duplicates.
+    if(std::filesystem::is_symlink("/us/local/lib64"))
+    {
+        if(!strcmp(std::filesystem::read_symlink("/usr/local/lib64").c_str(), "/usr/local/lib"))
+            res.emplace_back("/usr/local/lib64/clap");
+    }
+    else
+    {
+        res.emplace_back("/usr/local/lib64/clap");
+    }
+
     res.emplace_back(std::filesystem::path(getenv("HOME")) / std::filesystem::path(".clap"));
 
     /* This is possibly set for individual computers */

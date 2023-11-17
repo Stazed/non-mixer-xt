@@ -39,7 +39,7 @@ public:
     public:
         const char *path;
         unsigned long id;
-        std::string clap_id;
+        std::string clap_path;
         std::string name;
         std::string author;
         std::string category;

@@ -168,8 +168,8 @@ CLAP_Plugin::~CLAP_Plugin()
 bool
 CLAP_Plugin::load_plugin ( Module::Picked picked )
 {
-    _clap_path = picked.uri;
-    _clap_id = picked.clap_id;
+    _clap_path = picked.clap_path;
+    _clap_id = picked.uri;
 
     _entry = entry_from_CLAP_file(_clap_path.c_str());
     if (!_entry)
@@ -208,7 +208,7 @@ CLAP_Plugin::load_plugin ( Module::Picked picked )
 
     if (!_descriptor)
     {
-        WARNING("No plug-in descriptor. %s", picked.clap_id.c_str());
+        WARNING("No plug-in descriptor. %s", _clap_id.c_str());
         return false;
     }
     
@@ -2902,7 +2902,7 @@ CLAP_Plugin::set ( Log_Entry &e )
 
     DMESSAGE("Path = %s: ID = %s", s_clap_path.c_str(), s_clap_id.c_str());
 
-    Module::Picked picked = { CLAP, strdup(s_clap_path.c_str()), 0, s_clap_id };
+    Module::Picked picked = { CLAP, strdup(s_clap_id.c_str()), 0, s_clap_path };
 
     if ( !load_plugin( picked ) )
     {

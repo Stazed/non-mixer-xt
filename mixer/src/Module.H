@@ -136,7 +136,7 @@ public:
         unsigned int plugin_type;   // LADSPA, LV2, etc
         const char* uri;
         unsigned long unique_id;
-        std::string clap_id;
+        std::string clap_path;
     };
 
     /* LV2 */
