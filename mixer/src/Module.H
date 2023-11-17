@@ -134,7 +134,7 @@ public:
     struct Picked
     {
         unsigned int plugin_type;   // LADSPA, LV2, etc
-        const char* uri;
+        std::string s_unique_id;
         unsigned long unique_id;
         std::string clap_path;
     };

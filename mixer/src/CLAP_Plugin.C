@@ -169,7 +169,7 @@ bool
 CLAP_Plugin::load_plugin ( Module::Picked picked )
 {
     _clap_path = picked.clap_path;
-    _clap_id = picked.uri;
+    _clap_id = picked.s_unique_id;
 
     _entry = entry_from_CLAP_file(_clap_path.c_str());
     if (!_entry)
@@ -2907,11 +2907,8 @@ CLAP_Plugin::set ( Log_Entry &e )
     if ( !load_plugin( picked ) )
     {
         // What to do - inform the user and ask if they want to delete?
-        free((char*) picked.uri);
         return;
     }
-
-    free((char*) picked.uri);
 
     Module::set( e );
 

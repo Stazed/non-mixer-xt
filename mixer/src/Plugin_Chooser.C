@@ -67,18 +67,18 @@ Plugin_Chooser::plugin_chooser ( int ninputs )
         
         case LV2:
         {
-            if (const char* const uri = o->uri())
+            if (!o->s_unique_id().empty())
             {
-                picked.uri = uri;
+                picked.s_unique_id = o->s_unique_id();
             }
             break;
         }
 #ifdef CLAP_SUPPORT
         case CLAP:
         {
-            if (const char* const uri = o->uri())
+            if (!o->s_unique_id().empty())
             {
-                picked.uri = uri;
+                picked.s_unique_id = o->s_unique_id();
             }
             picked.clap_path = o->clap_path();
             picked.unique_id = o->value();
@@ -330,7 +330,7 @@ Plugin_Chooser::cb_table ( Fl_Widget *w )
         {
             if (::strcmp(_plugin_rows[R]->type, "LV2") == 0)
             {
-                _uri   = _plugin_rows[R]->path;
+                _s_unique_id   = _plugin_rows[R]->s_unique_id;
                 _plugin_type = LV2;
             }
             else if(::strcmp(_plugin_rows[R]->type, "LADSPA") == 0)
@@ -341,7 +341,7 @@ Plugin_Chooser::cb_table ( Fl_Widget *w )
 #ifdef CLAP_SUPPORT
             else if(::strcmp(_plugin_rows[R]->type, "CLAP") == 0)
             {
-                _uri   = _plugin_rows[R]->path;
+                _s_unique_id   = _plugin_rows[R]->s_unique_id;
                 _value = _plugin_rows[R]->id;
                 _clap_path = _plugin_rows[R]->clap_path;
                 _plugin_type = CLAP;
@@ -381,10 +381,10 @@ Plugin_Chooser::load_favorites ( void )
 
     unsigned long id;
     char *type;
-    char *path;
+    char *s_unique_id;
     int favorites = 0;
 
-    while ( 3 == fscanf( fp, "%m[^:]:%lu:%m[^]\n]\n", &type, &id, &path ) )
+    while ( 3 == fscanf( fp, "%m[^:]:%lu:%m[^]\n]\n", &type, &id, &s_unique_id ) )
     {
         for ( std::list<Plugin_Module::Plugin_Info>::iterator i = _plugins.begin();
               i != _plugins.end();
@@ -395,7 +395,7 @@ Plugin_Chooser::load_favorites ( void )
             {
                 if( !strcmp(type, "LV2") )
                 {
-                    if( !strcmp(path, (*i).path) )
+                    if( !strcmp(s_unique_id, (*i).s_unique_id.c_str()) )
                     {
                         (*i).favorite = 1;
                         favorites++;
@@ -409,7 +409,7 @@ Plugin_Chooser::load_favorites ( void )
 #ifdef CLAP_SUPPORT
                 else if ( !strcmp(type, "CLAP") )
                 {
-                    if ( !strcmp(path, (*i).path) )
+                    if ( !strcmp(s_unique_id, (*i).s_unique_id.c_str()) )
                     {
                         (*i).favorite = 1;
                         favorites++;
@@ -420,7 +420,7 @@ Plugin_Chooser::load_favorites ( void )
             }
         }
 
-        free(path);
+        free(s_unique_id);
         free(type);
     }
 
@@ -443,7 +443,7 @@ Plugin_Chooser::save_favorites ( void )
     {
         if ( (*i).favorite )
         {
-            fprintf( fp, "%s:%lu:%s\n", i->type, i->id, i->path );
+            fprintf( fp, "%s:%lu:%s\n", i->type, i->id, i->s_unique_id.c_str() );
         }
     }
     
@@ -484,7 +484,7 @@ Plugin_Chooser::Plugin_Chooser ( int X,int Y,int W,int H, const char *L )
     : Fl_Double_Window ( X,Y,W,H,L )
 {
     set_modal();
-    _uri = NULL;
+    _s_unique_id = "";
     _value = 0;
    
     _plugins = Plugin_Module::get_all_plugins();

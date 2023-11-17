@@ -213,7 +213,7 @@ Plugin_Module::scan_LADSPA_plugins( std::list<Plugin_Info> & pr )
         Plugin_Info pi("LADSPA");
 
         //   pi[j].path = i->Name.c_str();
-        pi.path = NULL;
+        pi.s_unique_id = "";
         pi.id = i->UniqueID;
         pi.author = i->Maker;
         pi.name = i->Name;
@@ -401,7 +401,7 @@ Plugin_Module::scan_LV2_plugins( std::list<Plugin_Info> & pr )
         lilv_node_free(author_node);
 
         // base info done
-        pi.path = strdup(lilvPlugin.get_uri().as_uri());
+        pi.s_unique_id = lilvPlugin.get_uri().as_uri();
         pi.id = 0;
         pi.category = "Unclassified";   // Default
 
@@ -473,12 +473,12 @@ Plugin_Module::scan_CLAP_plugins( std::list<Plugin_Info> & pr )
 
             Plugin_Info pi("CLAP");
 
-            pi.name     = desc->name;
-            pi.path     = strdup(desc->id);
-            pi.author   = desc->vendor;
-            pi.id       = 0;
-            pi.clap_path  = q.u8string().c_str();
-            pi.category = clap_discovery::get_plugin_category(desc->features);
+            pi.name         = desc->name;
+            pi.s_unique_id  = desc->id;
+            pi.author       = desc->vendor;
+            pi.id           = 0;
+            pi.clap_path    = q.u8string().c_str();
+            pi.category     = clap_discovery::get_plugin_category(desc->features);
             // desc->version;
             // desc->description;
 

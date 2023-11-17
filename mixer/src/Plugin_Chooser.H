@@ -41,7 +41,7 @@ class Plugin_Chooser : public Fl_Double_Window
                     int ninputs, int noutputs, bool favorites, const char *plug_type );
 
     unsigned int _plugin_type;  // LADSPA, LV2, etc
-    const char* _uri;
+    std::string _s_unique_id;
     unsigned long _value;
     std::string _clap_path;
     
@@ -53,7 +53,7 @@ class Plugin_Chooser : public Fl_Double_Window
 public:
 
     unsigned int plug_type ( void ) const { return _plugin_type; }
-    const char* uri ( void ) const { return _uri; }
+    std::string s_unique_id ( void ) const { return _s_unique_id; }
     unsigned long value ( void ) const { return _value; }
     std::string clap_path ( void ) const { return _clap_path; }
    

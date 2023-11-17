@@ -37,7 +37,7 @@ public:
     class Plugin_Info
     {
     public:
-        const char *path;
+        std::string s_unique_id;
         unsigned long id;
         std::string clap_path;
         std::string name;
@@ -50,7 +50,6 @@ public:
 
         Plugin_Info ( const char* s_type )  // LADSPA, LV2 -- TODO other types
             {
-                path = 0;
                 id = 0;
 
                 audio_inputs = 0;
