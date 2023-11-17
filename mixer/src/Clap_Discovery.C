@@ -58,7 +58,7 @@ installedCLAPs()
 
         catch (const std::filesystem::filesystem_error &)
         {
-            DMESSAGE("filesystem_error!");
+            MESSAGE("Clap path directory not found - %s", p.u8string().c_str());
         }
     }
     return claps;

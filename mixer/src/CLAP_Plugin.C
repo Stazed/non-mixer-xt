@@ -25,6 +25,7 @@
 #ifdef CLAP_SUPPORT
 
 #include "CLAP_Plugin.H"
+#include "Clap_Discovery.H"
 
 #include "Chain.H"
 #include "XTUtils.H"
@@ -207,7 +208,7 @@ CLAP_Plugin::load_plugin ( Module::Picked picked )
         WARNING("No plug-in descriptor.", picked.unique_id);
         return false;
     }
-
+    
     base_label(_descriptor->name);
 
     if (!clap_version_is_compatible(_descriptor->clap_version))
@@ -1194,10 +1195,56 @@ CLAP_Plugin::entry_from_CLAP_file(const char *f)
     handle = dlopen(f, RTLD_LOCAL | RTLD_LAZY);
     if (!handle)
     {
+        // We did not find the plugin from the snapshot path so lets try
+        // a different path. The case is if the project was copied to a
+        // different computer in which the plugins are installed in a different
+        // location - i.e. - /usr/lib vs /usr/local/lib.
+        std::string file(f);
+        std::string restore;
+        // Find the base plugin name
+        std::size_t found = file.find_last_of("/\\");
+        restore = file.substr(found);
+        DMESSAGE("Restore = %s", restore.c_str());
+
+        auto sp = clap_discovery::installedCLAPs();   // This to get paths
+        for (const auto &q : sp)
+        {
+            std::string path = q.u8string().c_str();
+            DMESSAGE("CLAP PLUG PATHS %s", path.c_str());
+
+            // Find the clap path base name
+            std::size_t found = path.find_last_of("/\\");
+            std::string base = path.substr(found);
+
+            // Compere the base names and if they match, then use the path
+            if (strcmp( restore.c_str(), base.c_str() ) == 0 )
+            {
+                handle = dlopen(path.c_str(), RTLD_LOCAL | RTLD_LAZY);
+                if(!handle)
+                {
+                    // If it still does not open then abandon
+                    return nullptr;
+                }
+                else
+                {
+                    // We got a load, so we good to go
+                    iptr = (int *)dlsym(handle, "clap_entry");
+                    return (clap_plugin_entry_t *)iptr;
+                }
+            }
+            else
+            {
+                // keep trying until all available paths are checked
+                continue;
+            }
+        }
+
+        // We never got a match
         DMESSAGE("dlopen failed on Linux: %s", dlerror());
 	return nullptr;
     }
 
+    // Found on the first try
     iptr = (int *)dlsym(handle, "clap_entry");
 
     return (clap_plugin_entry_t *)iptr;
@@ -2854,7 +2901,12 @@ CLAP_Plugin::set ( Log_Entry &e )
 
     Module::Picked picked = { CLAP, strdup(s_clap_path.c_str()), clap_id };
 
-    load_plugin( picked );
+    if ( !load_plugin( picked ) )
+    {
+        // What to do - inform the user and ask if they want to delete?
+        free((char*) picked.uri);
+        return;
+    }
 
     free((char*) picked.uri);
 
