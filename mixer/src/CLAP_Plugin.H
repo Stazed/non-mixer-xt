@@ -174,9 +174,6 @@ private:
     int m_iMidiDialectIns;
     int m_iMidiDialectOuts;
 
-    int _control_ins;
-    int _control_outs;
-
 public:
     const clap_plugin_entry_t *entry_from_CLAP_file(const char *f);
     

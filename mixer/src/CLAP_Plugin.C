@@ -1530,8 +1530,8 @@ CLAP_Plugin::create_audio_ports()
 void
 CLAP_Plugin::create_control_ports()
 {
-    _control_ins = 0;
-    _control_outs = 0;
+    unsigned long control_ins = 0;
+    unsigned long control_outs = 0;
 
     const clap_plugin_params *params
             = static_cast<const clap_plugin_params *> (
@@ -1543,6 +1543,7 @@ CLAP_Plugin::create_control_ports()
         for (uint32_t i = 0; i < nparams; ++i)
         {
             Port::Direction d = Port::INPUT;
+            bool have_control_in = false;
 
             clap_param_info param_info;
             ::memset(&param_info, 0, sizeof(param_info));
@@ -1551,15 +1552,17 @@ CLAP_Plugin::create_control_ports()
                 if (param_info.flags & CLAP_PARAM_IS_READONLY)
                 {
                     d = Port::OUTPUT;
-                    ++_control_outs;
+                    ++control_outs;
                 }
                 else
                 {
-                    if (param_info.flags & CLAP_PARAM_IS_AUTOMATABLE)
-                    {
+                   // if (param_info.flags & CLAP_PARAM_IS_AUTOMATABLE)
+                   // {
                         d = Port::INPUT;
-                        ++_control_ins;
-                    }
+                        ++control_ins;
+                        have_control_in = true;
+                    //    DMESSAGE("Control ins = %u", _control_ins);
+                   // }
                 }
 
                 Port p( this, d, Port::CONTROL, strdup(param_info.name) );
@@ -1601,9 +1604,13 @@ CLAP_Plugin::create_control_ports()
 
                 add_port( p );
 
-                // Cache the port ID and index for easy lookup
-                std::pair<int, unsigned long> prm ( int(p.hints.parameter_id), i );
-                m_paramIds.insert(prm);
+                // Cache the port ID and index for easy lookup - only _control_ins
+                if (have_control_in)
+                {
+                   // DMESSAGE( "Control input port \"%s\" ID %u", param_info.name, p.hints.parameter_id );
+                    std::pair<int, unsigned long> prm ( int(p.hints.parameter_id), control_ins - 1 );
+                    m_paramIds.insert(prm);
+                }
 
                // DMESSAGE( "Plugin has control port \"%s\" (default: %f)", param_info.name, p.hints.default_value );
             }
@@ -1926,7 +1933,8 @@ CLAP_Plugin::update_parameters()
 
             if ( got == m_paramIds.end() )
             {
-                WARNING("Param Id not found = %d", param_id);
+                // probably a control out - we don't do anything with these
+                DMESSAGE("Param Id not found = %d", param_id);
                 continue;
             }
 
@@ -1945,7 +1953,12 @@ CLAP_Plugin::update_parameters()
 void
 CLAP_Plugin::set_control_value(unsigned long port_index, float value, bool update_custom_ui)
 {
-    //  DMESSAGE("Port Index = %d: Value = %f", port_index, value);
+    if( port_index >= control_input.size())
+    {
+        WARNING("Invalid Port Index = %d: Value = %f", port_index, value);
+        return;
+    }
+
     _is_from_custom_ui = !update_custom_ui;
 
     control_input[port_index].control_value(value);
