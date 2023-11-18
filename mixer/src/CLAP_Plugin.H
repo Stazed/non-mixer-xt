@@ -453,6 +453,38 @@ protected:
             host_state_mark_dirty,
     };
 
+    // Host Audio Ports support callbacks...
+    static bool host_audio_ports_is_rescan_flag_supported (
+            const clap_host *host, uint32_t flag);
+    static void host_audio_ports_rescan (
+            const clap_host *host, uint32_t flags);
+
+    static const constexpr clap_host_audio_ports g_host_audio_ports = {
+            host_audio_ports_is_rescan_flag_supported,
+            host_audio_ports_rescan,
+    };
+
+    // Host Note Ports support callbacks...
+    static uint32_t host_note_ports_supported_dialects (
+            const clap_host *host);
+    static void host_note_ports_rescan (
+            const clap_host *host, uint32_t flags);
+
+    static const constexpr clap_host_note_ports g_host_note_ports = {
+            host_note_ports_supported_dialects,
+            host_note_ports_rescan,
+    };
+
+    // Host Latency callbacks...
+    static void host_latency_changed (
+            const clap_host *host);
+
+    static const constexpr clap_host_latency g_host_latency = {
+            host_latency_changed,
+    };
+
+    void plugin_latency_changed ();
+
     bool clapRegisterTimer(const uint32_t periodInMs, clap_id* const timerId);
     bool clapUnregisterTimer(const clap_id timerId);
 

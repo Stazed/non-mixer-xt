@@ -1275,7 +1275,6 @@ CLAP_Plugin::get_extension(const clap_host* host, const char* ext_id)
         else
         if (::strcmp(ext_id, CLAP_EXT_PARAMS) == 0)
                 return &host_data->g_host_params;
-#if 0
         else
         if (::strcmp(ext_id, CLAP_EXT_AUDIO_PORTS) == 0)
                 return &host_data->g_host_audio_ports;
@@ -1285,6 +1284,10 @@ CLAP_Plugin::get_extension(const clap_host* host, const char* ext_id)
         else
         if (::strcmp(ext_id, CLAP_EXT_LATENCY) == 0)
                 return &host_data->g_host_latency;
+#if 0
+        else
+        if (::strcmp(ext_id, CLAP_EXT_LOG) == 0)
+                return &host_data->g_host_log;
         else
         if (::strcmp(ext_id, CLAP_EXT_POSIX_FD_SUPPORT) == 0)
                 return &host_data->g_host_posix_fd_support;
@@ -2741,6 +2744,59 @@ CLAP_Plugin::plugin_params_request_flush (void)
     m_params_flush = true;
 
 //	plugin_params_flush();
+}
+
+// Host Audio Ports support callbacks...
+bool
+CLAP_Plugin::host_audio_ports_is_rescan_flag_supported (
+	const clap_host *host, uint32_t flag )
+{
+    // Not supported
+    DMESSAGE("Audio ports rescan support called");
+    return false;
+}
+
+void
+CLAP_Plugin::host_audio_ports_rescan (
+	const clap_host *host, uint32_t flags )
+{
+    DMESSAGE("Audio ports rescan requested");
+    // Not supported.
+}
+
+// Host Note Ports support callbacks...
+uint32_t
+CLAP_Plugin::host_note_ports_supported_dialects (
+	const clap_host *host )
+{
+    // Only MIDI 1.0 is scrictly supported.
+    return CLAP_NOTE_DIALECT_MIDI;
+}
+
+void
+CLAP_Plugin::host_note_ports_rescan (
+	const clap_host *host, uint32_t flags )
+{
+    // Not supported.
+    DMESSAGE("Host note ports rescan requested");
+}
+
+// Host Latency callbacks...
+void
+CLAP_Plugin::host_latency_changed (
+	const clap_host *host )
+{
+    CLAP_Plugin *pImpl = static_cast<CLAP_Plugin *> (host->host_data);
+    if (pImpl) pImpl->plugin_latency_changed();
+}
+
+// Plugin Latency callbacks...
+void
+CLAP_Plugin::plugin_latency_changed (void)
+{
+    //FIXME todo
+   // if (m_pPlugin)
+   //     m_pPlugin->request_restart();
 }
 
 void
