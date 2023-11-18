@@ -113,6 +113,8 @@ private:
 
     bool _is_processing;
     bool _activated;
+    bool _plug_needs_callback;
+    bool _plug_request_restart;
 
     // GUI Editor stuff...
     bool m_bEditorCreated;
@@ -182,6 +184,9 @@ public:
     static void request_restart(const struct clap_host * host);
     static void request_process(const struct clap_host * host);
     static void request_callback(const struct clap_host * host);
+
+    void plugin_request_restart ();
+    void plugin_request_callback ();
 
     // Parameters info/ids (de)initializer.
     void addParamInfos();

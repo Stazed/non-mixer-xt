@@ -1305,8 +1305,18 @@ CLAP_Plugin::get_extension(const clap_host* host, const char* ext_id)
 void
 CLAP_Plugin::request_restart(const struct clap_host * host)
 {
+    CLAP_Plugin *pImpl = static_cast<CLAP_Plugin *> (host->host_data);
+
+    if (pImpl)
+        pImpl->plugin_request_restart();
+
     DMESSAGE("Request restart");
-    // TODO
+}
+
+void
+CLAP_Plugin::plugin_request_restart ()
+{
+    _plug_request_restart = true;
 }
 
 void
@@ -1319,8 +1329,18 @@ CLAP_Plugin::request_process(const struct clap_host * host)
 void
 CLAP_Plugin::request_callback(const struct clap_host * host)
 {
+    CLAP_Plugin *pImpl = static_cast<CLAP_Plugin *> (host->host_data);
+
+    if (pImpl)
+        pImpl->plugin_request_callback();
+
     DMESSAGE("Request callback");
-    // TODO
+}
+
+void
+CLAP_Plugin::plugin_request_callback()
+{    
+    _plug_needs_callback = true;
 }
 
 /**
@@ -1362,6 +1382,7 @@ CLAP_Plugin::clearParamInfos (void)
 
     m_param_infos.clear();
     m_param_ids.clear();
+    m_paramIds.clear();
 }
 
 /**
@@ -1768,6 +1789,8 @@ CLAP_Plugin::init ( void )
     _plug_type = CLAP;
     _is_processing = false;
     _activated = false;
+    _plug_needs_callback = false;
+    _plug_request_restart = false;
 
     m_bEditorCreated = false;
     m_bEditorVisible = false;
@@ -1934,7 +1957,7 @@ CLAP_Plugin::update_parameters()
             if ( got == m_paramIds.end() )
             {
                 // probably a control out - we don't do anything with these
-                DMESSAGE("Param Id not found = %d", param_id);
+                // DMESSAGE("Param Id not found = %d", param_id);
                 continue;
             }
 
@@ -1946,6 +1969,22 @@ CLAP_Plugin::update_parameters()
     }
 
     params_out.clear();
+
+    if ( _plug_request_restart )
+    {
+        _plug_request_restart = false;
+        deactivate();
+        activate();
+    }
+    
+    if ( _plug_needs_callback )
+    {
+        if (Thread::is( "UI" ))
+        {
+            _plug_needs_callback = false;
+            _plugin->on_main_thread(_plugin);
+        }
+    }
 
     Fl::repeat_timeout( 0.06f, &CLAP_Plugin::parameter_update, this );
 }
