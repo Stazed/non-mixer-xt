@@ -2012,6 +2012,9 @@ CLAP_Plugin::set_control_value(unsigned long port_index, float value, bool updat
 bool
 CLAP_Plugin::try_custom_ui()
 {
+    if (!m_gui)
+        return false;
+
     /* Toggle show and hide */
     if(m_bEditorCreated)
     {
