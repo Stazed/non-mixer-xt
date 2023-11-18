@@ -1952,7 +1952,7 @@ CLAP_Plugin::update_parameters()
             }
         }
         // Actually make the change...
-        if (param_id != CLAP_INVALID_ID)
+        if (param_id != (int) CLAP_INVALID_ID)
         {
             std::unordered_map<int, unsigned long>::const_iterator got
                     = m_paramIds.find (param_id);
