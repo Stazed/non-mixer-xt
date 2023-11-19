@@ -203,6 +203,7 @@ public:
 
     void addParams();
     void clearParams();
+    void rescan_parameters();
 
     class EventList
     {

@@ -1219,7 +1219,7 @@ CLAP_Plugin::entry_from_CLAP_file(const char *f)
             std::size_t found = path.find_last_of("/\\");
             std::string base = path.substr(found);
 
-            // Compere the base names and if they match, then use the path
+            // Compare the base names and if they match, then use the path
             if (strcmp( restore.c_str(), base.c_str() ) == 0 )
             {
                 handle = dlopen(path.c_str(), RTLD_LOCAL | RTLD_LAZY);
@@ -1261,9 +1261,6 @@ CLAP_Plugin::get_extension(const clap_host* host, const char* ext_id)
     {
         DMESSAGE("Host get_extension(%p, \"%s\")", host_data, ext_id);
 
-     //   if (::strcmp(ext_id, CLAP_EXT_LOG) == 0)
-     //           return &host_data->g_host_log;
-     //   else
         if (::strcmp(ext_id, CLAP_EXT_GUI) == 0)
                 return &host_data->g_host_gui;
         else
@@ -1413,6 +1410,18 @@ CLAP_Plugin::clearParams (void)
 
     control_input.clear();
     control_output.clear();
+}
+
+void
+CLAP_Plugin::rescan_parameters()
+{
+    deactivate();
+    deleteEditor();  // parameter editor
+    clearParams();
+    clearParamInfos();
+    addParamInfos();
+    addParams();
+    activate();
 }
 
 /**
@@ -1851,8 +1860,6 @@ CLAP_Plugin::init ( void )
     _project_file = "";
 
     Plugin_Module::init();
-
-    // _project_directory = "";
 }
 
 // Plugin parameters flush.
@@ -2218,7 +2225,6 @@ CLAP_Plugin::plugin_gui_closed ( bool was_destroyed )
             m_gui->destroy(_plugin);
     }
     // The floating window has been closed, or the connection to the gui has been lost.
-    //
     // If was_destroyed is true, then the host must call clap_plugin_gui->destroy() to acknowledge
     // the gui destruction.
 }
@@ -2632,7 +2638,6 @@ CLAP_Plugin::hide_custom_ui()
 }
 
 // Host Timer support callbacks...
-//
 bool
 CLAP_Plugin::host_register_timer (
 	const clap_host *host, uint32_t period_ms, clap_id *timer_id )
@@ -2762,62 +2767,25 @@ CLAP_Plugin::plugin_params_rescan (
     if (flags & (CLAP_PARAM_RESCAN_INFO | CLAP_PARAM_RESCAN_TEXT | CLAP_PARAM_RESCAN_ALL))
     {
         DMESSAGE("RESCAN INFO & ALL");
-        deactivate();
-        deleteEditor();  // parameter editor
-        clearParams();
-        clearParamInfos();
-        addParamInfos();
-        addParams();
-        activate();
+        rescan_parameters();
+        updateParamValues(false);   // false means do not update the custom UI
     }
-
-#if 0
-    if (_plugin == nullptr)
-            return;
-
-    if (flags & CLAP_PARAM_RESCAN_VALUES)
-            _plugin->updateParamValues(false);
-    else
-    if (flags & (CLAP_PARAM_RESCAN_INFO | CLAP_PARAM_RESCAN_TEXT))
-    {
-        _plugin->closeForm(true);
-        _plugin->clearParams();
-        clearParamInfos();
-        addParamInfos();
-        _plugin->addParams();
-    }
-    else
-    if (flags & CLAP_PARAM_RESCAN_ALL)
-        _plugin->request_restart();
-#endif
 }
-
 
 void
 CLAP_Plugin::plugin_params_clear (
 	clap_id param_id, clap_param_clear_flags flags )
 {
-#if 0
     if (_plugin == nullptr)
-            return;
+        return;
 
     if (!flags || param_id == CLAP_INVALID_ID)
-            return;
+        return;
 
-    // Clear all automation curves, if any...
-    qtractorSubject::resetQueue();
-
-    // Clear any automation curves and direct access
-    // references to the plugin parameter (param_id)...
-    qtractorPlugin::Param *pParam = m_pPlugin->findParamId(int(param_id));
-    if (pParam)
-            m_pPlugin->clearParam(pParam);
-
-    // And mark it dirty, of course...
-    m_pPlugin->updateDirtyCount();
-#endif
+    // We cannot delete individual parameters so rescan all and restart
+    rescan_parameters();
+    updateParamValues(false);   // false means do not update the custom UI
 }
-
 
 void
 CLAP_Plugin::plugin_params_request_flush (void)
