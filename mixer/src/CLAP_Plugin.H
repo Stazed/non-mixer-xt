@@ -417,6 +417,12 @@ protected:
             host_gui_closed,
     };
 
+    void plugin_gui_resize_hints_changed (void);
+    bool plugin_gui_request_resize(uint32_t width, uint32_t height);
+    bool plugin_gui_request_show(void);
+    bool plugin_gui_request_hide(void);
+    void plugin_gui_closed (bool was_destroyed);
+
     static bool host_register_timer (
             const clap_host *host, uint32_t period_ms, clap_id *timer_id);
     static bool host_unregister_timer (

@@ -2063,24 +2063,32 @@ CLAP_Plugin::try_custom_ui()
             m_gui->destroy(_plugin);
             return false;
         }
-#if 0
+
         bool can_resize = false;
         uint32_t width  = 0;
         uint32_t height = 0;
         clap_gui_resize_hints hints;
         ::memset(&hints, 0, sizeof(hints));
-        if (gui->can_resize)
-                can_resize = gui->can_resize(plugin);
-        if (gui->get_resize_hints && !gui->get_resize_hints(plugin, &hints))
-                qWarning("qtractorClapPlugin[%p]::openEditor: could not get the resize hints of the plugin GUI.", this);
-        if (gui->get_size && !gui->get_size(plugin, &width, &height))
-                qWarning("qtractorClapPlugin[%p]::openEditor: could not get the size of the plugin GUI.", this);
+        if (m_gui->can_resize)
+            can_resize = m_gui->can_resize(_plugin);
+        if (m_gui->get_resize_hints && !m_gui->get_resize_hints(_plugin, &hints))
+            WARNING("Could not get the resize hints of the plugin GUI.");
+        if (m_gui->get_size && !m_gui->get_size(_plugin, &width, &height))
+            WARNING("Could not get the size of the plugin GUI.");
+#if 0
         if (width > 0 && (!hints.can_resize_horizontally || !can_resize))
-                m_pEditorWidget->setFixedWidth(width);
+        {
+            // m_pEditorWidget->setFixedWidth(width);
+        }
         if (height > 0 && (!hints.can_resize_vertically || !can_resize))
-                m_pEditorWidget->setFixedHeight(height);
-        if (width > 0 && height > 0)
-                m_pEditorWidget->resize(width, height);
+        {
+            // m_pEditorWidget->setFixedHeight(height);
+        }
+        if (width > 1 && height > 1)
+        {
+            setSize(width, height, true, can_resize);
+            // m_pEditorWidget->resize(width, height);
+        }
 #endif
     }
 
@@ -2096,21 +2104,59 @@ CLAP_Plugin::try_custom_ui()
 }
 
 // Plugin GUI callbacks...
-//
-void CLAP_Plugin::host_gui_resize_hints_changed (const clap_host *host )
+void
+CLAP_Plugin::host_gui_resize_hints_changed (const clap_host *host )
 {
-	// TODO: ?...
-	// The host should call get_resize_hints() again.
+    CLAP_Plugin *pImpl = static_cast<CLAP_Plugin *> (host->host_data);
+    if (pImpl) pImpl->plugin_gui_resize_hints_changed();
 }
 
-
-bool CLAP_Plugin::host_gui_request_resize (
+bool
+CLAP_Plugin::host_gui_request_resize (
 	const clap_host *host, uint32_t width, uint32_t height )
 {
+    CLAP_Plugin *pImpl = static_cast<CLAP_Plugin *> (host->host_data);
+    return (pImpl ? pImpl->plugin_gui_request_resize(width, height) : false);
+}
+
+bool
+CLAP_Plugin::host_gui_request_show (const clap_host *host)
+{
+    CLAP_Plugin *pImpl = static_cast<CLAP_Plugin *> (host->host_data);
+    return (pImpl ? pImpl->plugin_gui_request_show() : false);
+}
+
+bool
+CLAP_Plugin::host_gui_request_hide (const clap_host *host)
+{
+    CLAP_Plugin *pImpl = static_cast<CLAP_Plugin *> (host->host_data);
+    return (pImpl ? pImpl->plugin_gui_request_hide() : false);
+}
+
+void
+CLAP_Plugin::host_gui_closed ( const clap_host *host, bool was_destroyed )
+{
+    CLAP_Plugin *pImpl = static_cast<CLAP_Plugin *> (host->host_data);
+    if (pImpl) pImpl->plugin_gui_closed(was_destroyed);
+}
+
+// Plugin GUI callbacks...
+void
+CLAP_Plugin::plugin_gui_resize_hints_changed (void)
+{
+    DMESSAGE("host_gui_resize_hints_changed");
+    // TODO: ?...
+    // The host should call get_resize_hints() again.
+}
+
+bool
+CLAP_Plugin::plugin_gui_request_resize (
+	uint32_t width, uint32_t height )
+{
+    DMESSAGE("Request Resize W = %u: H = %u", width, height);
     // Request the host to resize the client area to width, height.
     // Return true if the new size is accepted, false otherwise.
     // The host doesn't have to call set_size().
- //   DMESSAGE("Request Resize W = %d: H = %s", width, height);
 #if 0
     if (m_pPlugin == nullptr)
             return false;
@@ -2130,12 +2176,11 @@ bool CLAP_Plugin::host_gui_request_resize (
     pWidget->resize(width, height);
     return true;
 #endif
-    
     return true;
 }
 
-
-bool CLAP_Plugin::host_gui_request_show (const clap_host *host)
+bool
+CLAP_Plugin::plugin_gui_request_show (void)
 {
     DMESSAGE("Request Show");
     // Request the host to show the plugin gui.
@@ -2154,9 +2199,8 @@ bool CLAP_Plugin::host_gui_request_show (const clap_host *host)
     return true;
 }
 
-
 bool
-CLAP_Plugin::host_gui_request_hide (const clap_host *host)
+CLAP_Plugin::plugin_gui_request_hide (void)
 {
     DMESSAGE("Request Hide");
     // Request the host to hide the plugin gui.
@@ -2172,12 +2216,11 @@ CLAP_Plugin::host_gui_request_hide (const clap_host *host)
     pWidget->hide();
     return true;
 #endif
-    
     return true;
 }
 
-
-void CLAP_Plugin::host_gui_closed ( const clap_host *host, bool was_destroyed )
+void
+CLAP_Plugin::plugin_gui_closed ( bool was_destroyed )
 {
     DMESSAGE("Gui closed");
     // The floating window has been closed, or the connection to the gui has been lost.
