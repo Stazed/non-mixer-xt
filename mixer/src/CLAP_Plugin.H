@@ -131,6 +131,7 @@ private:
     bool     _x_set_size_called_at_least_Once;
     bool     _x_is_idling;
     bool     _x_is_resizable;
+    bool     _is_floating;
     EventProcPtr _x_event_proc;
     
     clap_audio_buffer _audio_ins;
@@ -161,8 +162,8 @@ private:
 
     void init_x();
     bool isUiResizable() const;
-    void show_custom_ui();
-    void hide_custom_ui();
+    bool show_custom_ui();
+    bool hide_custom_ui();
 
     Window getChildWindow() const;
     void setSize(const uint width, const uint height, const bool forceUpdate, const bool resizeChild);

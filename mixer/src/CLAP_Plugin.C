@@ -1817,6 +1817,7 @@ CLAP_Plugin::init ( void )
     _x_set_size_called_at_least_Once = false;
     _x_is_idling = false;
     _x_is_resizable = false;
+    _is_floating = false;
     _x_event_proc = nullptr;
     
     _last_chunk = nullptr;
@@ -2033,13 +2034,12 @@ CLAP_Plugin::try_custom_ui()
     clap_window w;
     w.api = CLAP_WINDOW_API_X11;
 
-    bool is_floating = false;
     if (!m_gui->is_api_supported(_plugin, w.api, false))
     {
-        is_floating = m_gui->is_api_supported(_plugin, w.api, true);
+        _is_floating = m_gui->is_api_supported(_plugin, w.api, true);
     }
 
-    if (!m_gui->create(_plugin, w.api, is_floating))
+    if (!m_gui->create(_plugin, w.api, _is_floating))
     {
         DMESSAGE("Could not create the plugin GUI.");
         return false;
@@ -2051,8 +2051,9 @@ CLAP_Plugin::try_custom_ui()
      _x_child_window = getChildWindow();
      w.x11 = _x_host_window;
 
-    if (is_floating)
+    if (_is_floating)
     {
+        DMESSAGE("Using Floating Window");
         m_gui->set_transient(_plugin, &w);
         m_gui->suggest_title(_plugin, base_label());
     } else
@@ -2063,7 +2064,7 @@ CLAP_Plugin::try_custom_ui()
             m_gui->destroy(_plugin);
             return false;
         }
-
+#if 0
         bool can_resize = false;
         uint32_t width  = 0;
         uint32_t height = 0;
@@ -2075,7 +2076,7 @@ CLAP_Plugin::try_custom_ui()
             WARNING("Could not get the resize hints of the plugin GUI.");
         if (m_gui->get_size && !m_gui->get_size(_plugin, &width, &height))
             WARNING("Could not get the size of the plugin GUI.");
-#if 0
+
         if (width > 0 && (!hints.can_resize_horizontally || !can_resize))
         {
             // m_pEditorWidget->setFixedWidth(width);
@@ -2094,13 +2095,9 @@ CLAP_Plugin::try_custom_ui()
 
     DMESSAGE("GOT A CREATE");
 
-    m_bEditorCreated = true;
+    m_bEditorCreated = show_custom_ui();
 
-    m_gui->show(_plugin);
-
-    show_custom_ui();
-
-    return true;
+    return m_bEditorCreated;
 }
 
 // Plugin GUI callbacks...
@@ -2157,25 +2154,7 @@ CLAP_Plugin::plugin_gui_request_resize (
     // Request the host to resize the client area to width, height.
     // Return true if the new size is accepted, false otherwise.
     // The host doesn't have to call set_size().
-#if 0
-    if (m_pPlugin == nullptr)
-            return false;
-
-    QWidget *pWidget = m_pPlugin->editorWidget();
-    if (pWidget == nullptr)
-            return false;
-
-    const QSize& max_size = pWidget->maximumSize();
-    const QSize& min_size = pWidget->minimumSize();
-
-    if (min_size.width() == max_size.width() && width != max_size.width())
-            pWidget->setFixedWidth(width);
-    if (min_size.height() == max_size.height() && height != max_size.height())
-            pWidget->setFixedHeight(height);
-
-    pWidget->resize(width, height);
-    return true;
-#endif
+    setSize(width, height, true, _x_is_resizable);
     return true;
 }
 
@@ -2183,54 +2162,38 @@ bool
 CLAP_Plugin::plugin_gui_request_show (void)
 {
     DMESSAGE("Request Show");
+    
+    return show_custom_ui();
     // Request the host to show the plugin gui.
     // Return true on success, false otherwise.
-#if 0
-    if (m_pPlugin == nullptr)
-            return false;
-
-    QWidget *pWidget = m_pPlugin->editorWidget();
-    if (pWidget == nullptr)
-            return false;
-
-    pWidget->show();
-    return true;
-#endif
-    return true;
 }
 
 bool
 CLAP_Plugin::plugin_gui_request_hide (void)
 {
     DMESSAGE("Request Hide");
+    return hide_custom_ui();
     // Request the host to hide the plugin gui.
     // Return true on success, false otherwise.
-#if 0
-    if (m_pPlugin == nullptr)
-            return false;
-
-    QWidget *pWidget = m_pPlugin->editorWidget();
-    if (pWidget == nullptr)
-            return false;
-
-    pWidget->hide();
-    return true;
-#endif
-    return true;
 }
 
 void
 CLAP_Plugin::plugin_gui_closed ( bool was_destroyed )
 {
     DMESSAGE("Gui closed");
+    _x_is_visible = false;
+    
+    if (was_destroyed)
+    {
+        m_bEditorCreated = false;
+
+        if (m_gui)
+            m_gui->destroy(_plugin);
+    }
     // The floating window has been closed, or the connection to the gui has been lost.
     //
     // If was_destroyed is true, then the host must call clap_plugin_gui->destroy() to acknowledge
     // the gui destruction.
-#if 0
-    if (m_pPlugin)
-        m_pPlugin->closeEditor();
-#endif
 }
 
 void
@@ -2292,11 +2255,20 @@ CLAP_Plugin::isUiResizable() const
     return m_gui->can_resize(_plugin);
 }
 
-void
+bool
 CLAP_Plugin::show_custom_ui()
 {
-    NON_SAFE_ASSERT_RETURN(_x_display != nullptr,);
-    NON_SAFE_ASSERT_RETURN(_x_host_window != 0,);
+    if (_is_floating)
+    {
+        _x_is_visible = m_gui->show(_plugin);
+        Fl::add_timeout( 0.03f, &CLAP_Plugin::custom_update_ui, this );
+        return _x_is_visible;
+    }
+
+    if (_x_display == nullptr)
+        return false;
+    if (_x_host_window == 0)
+        return false;
 
     if (_x_first_show)
     {
@@ -2378,7 +2350,11 @@ CLAP_Plugin::show_custom_ui()
     XMapRaised(_x_display, _x_host_window);
     XSync(_x_display, False);
 
+    m_gui->show(_plugin);
+
     Fl::add_timeout( 0.03f, &CLAP_Plugin::custom_update_ui, this );
+
+    return true;
 }
 
 Window
@@ -2456,6 +2432,9 @@ CLAP_Plugin::custom_update_ui_x()
     int nextHeight = 0;
 
     _x_is_idling = true;
+    
+    if (_is_floating)
+        goto FLOATING;
 
     for (XEvent event; XPending(_x_display) > 0;)
     {
@@ -2573,6 +2552,8 @@ CLAP_Plugin::custom_update_ui_x()
         XFlush(_x_display);
     }
 
+FLOATING:
+
     _x_is_idling = false;
 
     for (LinkedList<HostTimerDetails>::Itenerator it = fTimers.begin2(); it.valid(); it.next())
@@ -2597,19 +2578,30 @@ CLAP_Plugin::custom_update_ui_x()
     }
 }
 
-void
+bool
 CLAP_Plugin::hide_custom_ui()
 {
     DMESSAGE("Closing Custom Interface");
+    
+    if (_is_floating)
+    {
+        _x_is_visible = false;
+        Fl::remove_timeout(&CLAP_Plugin::custom_update_ui, this);
+        return m_gui->hide(_plugin);
+    }
 
     Fl::remove_timeout(&CLAP_Plugin::custom_update_ui, this);
 
-    NON_SAFE_ASSERT_RETURN(_x_display != nullptr,);
-    NON_SAFE_ASSERT_RETURN(_x_host_window != 0,);
+    if(_x_display == nullptr)
+        return false;
+    if(_x_host_window == 0)
+        return false;
 
     _x_is_visible = false;
     XUnmapWindow(_x_display, _x_host_window);
     XFlush(_x_display);
+
+    return m_gui->hide(_plugin);
 }
 
 // Host Timer support callbacks...
