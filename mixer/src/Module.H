@@ -102,6 +102,8 @@ protected:
 public:
 
     Module_Parameter_Editor *_editor;
+
+    void deleteEditor();
     virtual int number ( void ) const { return _number; }
     virtual void number ( int v );
 
@@ -727,6 +729,8 @@ public:
 
     virtual void freeze_ports ( void );
     virtual void thaw_ports ( void );
+
+    void destroy_connected_controller_module();
 
     bool add_aux_audio_output ( const char *prefix, int n );
     bool add_aux_audio_input ( const char *prefix, int n );

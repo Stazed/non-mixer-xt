@@ -155,7 +155,6 @@ private:
 
     const clap_plugin_note_name *m_note_names;
 
-    std::unordered_map<unsigned long, clap_id> m_param_ids; // FIXME we not using this
     std::unordered_map<clap_id, const clap_param_info *> m_param_infos;
     std::unordered_map<int, double> m_paramValues;
     std::unordered_map<int, unsigned long> m_paramIds;
@@ -201,6 +200,9 @@ public:
     
     // Parameters update methods.
     void updateParamValues(bool update_custom_ui);
+
+    void addParams();
+    void clearParams();
 
     class EventList
     {

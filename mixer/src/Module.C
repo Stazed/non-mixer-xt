@@ -104,38 +104,7 @@ Module::~Module ( )
         delete aux_audio_output[i].jack_port();
     }
 
-    for ( unsigned int i = 0; i < control_input.size(); ++i )
-    {
-        /* destroy connected Controller_Module */
-        if ( control_input[i].connected() )
-        {
-            Module *o = (Module*)control_input[i].connected_port()->module();
-
-	    if ( !o )
-	    {
-		DWARNING( "Programming error. Connected port has null module. %s %s",
-			 
-			  label(),
-			  control_input[i].connected_port()->name());
-	    }
-	    
-	    control_input[i].disconnect();
-	    
-	    if ( o )
-	    {
-		if ( ! o->is_default() )
-		{
-		    DMESSAGE( "Deleting connected module %s", o->label() );
-		    
-		    delete o;
-		}
-	    }
-	}
-	
-        control_input[i].destroy_osc_port();
-    }
-    for ( unsigned int i = 0; i < control_output.size(); ++i )
-        control_output[i].disconnect();
+    destroy_connected_controller_module();
 
     aux_audio_output.clear();
     aux_audio_input.clear();
@@ -1603,6 +1572,57 @@ Module::thaw_ports ( void )
         aux_audio_output[i].jack_port()->thaw();
 
         mixer->maybe_auto_connect_output( &aux_audio_output[i] );
+    }
+}
+
+void
+Module::destroy_connected_controller_module()
+{
+    for ( unsigned int i = 0; i < control_input.size(); ++i )
+    {
+        /* destroy connected Controller_Module */
+        if ( control_input[i].connected() )
+        {
+            Module *o = (Module*)control_input[i].connected_port()->module();
+
+	    if ( !o )
+	    {
+		DWARNING( "Programming error. Connected port has null module. %s %s",
+			 
+			  label(),
+			  control_input[i].connected_port()->name());
+	    }
+	    
+	    control_input[i].disconnect();
+	    
+	    if ( o )
+	    {
+		if ( ! o->is_default() )
+		{
+		    DMESSAGE( "Deleting connected module %s", o->label() );
+		    
+		    delete o;
+		}
+	    }
+	}
+	
+        control_input[i].destroy_osc_port();
+    }
+
+    for ( unsigned int i = 0; i < control_output.size(); ++i )
+        control_output[i].disconnect();
+}
+
+void
+Module::deleteEditor()
+{
+    if ( _editor )
+    {
+        if (_editor->visible())
+            _editor->hide();
+
+        delete _editor;
+        _editor = NULL;
     }
 }
 

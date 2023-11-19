@@ -1367,9 +1367,6 @@ CLAP_Plugin::addParamInfos (void)
             {
                 std::pair<clap_id, const clap_param_info *> infos ( param_info->id, param_info );
                 m_param_infos.insert(infos);
-
-                std::pair<unsigned long, clap_id> ids ( i, param_info->id );
-                m_param_ids.insert(ids);    // FIXME we don't use this
             }
         }
     }
@@ -1384,8 +1381,38 @@ CLAP_Plugin::clearParamInfos (void)
     }
 
     m_param_infos.clear();
-    m_param_ids.clear();
     m_paramIds.clear();
+}
+
+// Instance parameters initializer.
+void
+CLAP_Plugin::addParams (void)
+{
+    create_control_ports();
+}
+
+void
+CLAP_Plugin::clearParams (void)
+{
+    m_paramIds.clear();
+    m_paramValues.clear();
+
+    destroy_connected_controller_module();
+
+    for (unsigned i = 0; i < control_input.size(); ++i)
+    {
+        // if it is NOT the bypass then delete the buffer
+        if ( strcmp(control_input[i].name(), "dsp/bypass") )
+            delete (float*)control_input[i].buffer();
+    }
+
+    for (unsigned i = 0; i < control_output.size(); ++i)
+    {
+        delete (float*)control_output[i].buffer();
+    }
+
+    control_input.clear();
+    control_output.clear();
 }
 
 /**
@@ -2727,7 +2754,23 @@ CLAP_Plugin::plugin_params_rescan (
         return;
 
     if (flags & CLAP_PARAM_RESCAN_VALUES)
+    {
+        DMESSAGE("RESCAN VALUES");
         updateParamValues(false);   // false means do not update the custom UI
+    }
+    else
+    if (flags & (CLAP_PARAM_RESCAN_INFO | CLAP_PARAM_RESCAN_TEXT | CLAP_PARAM_RESCAN_ALL))
+    {
+        DMESSAGE("RESCAN INFO & ALL");
+        deactivate();
+        deleteEditor();  // parameter editor
+        clearParams();
+        clearParamInfos();
+        addParamInfos();
+        addParams();
+        activate();
+    }
+
 #if 0
     if (_plugin == nullptr)
             return;
@@ -2787,7 +2830,7 @@ CLAP_Plugin::plugin_params_request_flush (void)
 // Host Audio Ports support callbacks...
 bool
 CLAP_Plugin::host_audio_ports_is_rescan_flag_supported (
-	const clap_host *host, uint32_t flag )
+	const clap_host * /* host */, uint32_t /* flag */)
 {
     // Not supported
     DMESSAGE("Audio ports rescan support called");
@@ -2796,7 +2839,7 @@ CLAP_Plugin::host_audio_ports_is_rescan_flag_supported (
 
 void
 CLAP_Plugin::host_audio_ports_rescan (
-	const clap_host *host, uint32_t flags )
+	const clap_host * /* host */, uint32_t /* flags */)
 {
     DMESSAGE("Audio ports rescan requested");
     // Not supported.
@@ -2805,7 +2848,7 @@ CLAP_Plugin::host_audio_ports_rescan (
 // Host Note Ports support callbacks...
 uint32_t
 CLAP_Plugin::host_note_ports_supported_dialects (
-	const clap_host *host )
+	const clap_host * /* host */)
 {
     // Only MIDI 1.0 is scrictly supported.
     return CLAP_NOTE_DIALECT_MIDI;
@@ -2813,7 +2856,7 @@ CLAP_Plugin::host_note_ports_supported_dialects (
 
 void
 CLAP_Plugin::host_note_ports_rescan (
-	const clap_host *host, uint32_t flags )
+	const clap_host * /* host */, uint32_t /* flags */)
 {
     // Not supported.
     DMESSAGE("Host note ports rescan requested");
