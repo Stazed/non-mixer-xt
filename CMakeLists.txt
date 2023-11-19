@@ -249,6 +249,7 @@ package_status(HAVE_BUILTIN_ALIGNED "Has builtin assume aligned . . . . . . . . 
 
 message (STATUS)
 message (STATUS                    "____________________ User Options________________________"  )
+package_status(EnableCLAPSupport   "Build CLAP support . . . . . . . . . . . . . . . . . . .:"  )
 package_status(EnableOptimizations "Use optimizations. . . . . . . . . . . . . . . . . . . .:"  )
 package_status(EnableSSE           "Use sse. . . . . . . . . . . . . . . . . . . . . . . . .:"  )
 package_status(EnableSSE2          "Use sse2 . . . . . . . . . . . . . . . . . . . . . . . .:"  )
