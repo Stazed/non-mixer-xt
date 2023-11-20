@@ -1281,6 +1281,9 @@ CLAP_Plugin::get_extension(const clap_host* host, const char* ext_id)
         else
         if (::strcmp(ext_id, CLAP_EXT_LATENCY) == 0)
                 return &host_data->g_host_latency;
+        else
+        if (::strcmp(ext_id, CLAP_EXT_THREAD_CHECK) == 0)
+                return &host_data->g_host_thread_check;
 #if 0
         else
         if (::strcmp(ext_id, CLAP_EXT_LOG) == 0)
@@ -1288,9 +1291,6 @@ CLAP_Plugin::get_extension(const clap_host* host, const char* ext_id)
         else
         if (::strcmp(ext_id, CLAP_EXT_POSIX_FD_SUPPORT) == 0)
                 return &host_data->g_host_posix_fd_support;
-        else
-        if (::strcmp(ext_id, CLAP_EXT_THREAD_CHECK) == 0)
-                return &host_data->g_host_thread_check;
         else
         if (::strcmp(ext_id, CLAP_EXT_THREAD_POOL) == 0)
                 return &host_data->g_host_thread_pool;
@@ -2846,6 +2846,47 @@ CLAP_Plugin::plugin_latency_changed (void)
     //FIXME todo
    // if (m_pPlugin)
    //     m_pPlugin->request_restart();
+}
+
+// Host thread-check callbacks...
+bool
+CLAP_Plugin::host_is_main_thread (
+	const clap_host *host )
+{
+  //  DMESSAGE("Plugin called is main thread");
+    CLAP_Plugin *pImpl = static_cast<CLAP_Plugin *> (host->host_data);
+    if (pImpl)
+    {
+        return pImpl->is_main_thread();
+    }
+
+    return false;
+}
+
+bool
+CLAP_Plugin::host_is_audio_thread (
+	const clap_host *host )
+{
+  //  DMESSAGE("Plugin called is audio thread");
+    CLAP_Plugin *pImpl = static_cast<CLAP_Plugin *> (host->host_data);
+    if (pImpl)
+    {
+        return pImpl->is_audio_thread();
+    }
+
+    return false;
+}
+
+bool
+CLAP_Plugin::is_main_thread()
+{
+    return Thread::is( "UI" );
+}
+
+bool
+CLAP_Plugin::is_audio_thread()
+{
+    return Thread::is ( "RT" );
 }
 
 void

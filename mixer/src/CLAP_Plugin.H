@@ -493,6 +493,20 @@ protected:
             host_latency_changed,
     };
 
+    // Host thread-check callbacks...
+    static bool host_is_main_thread (
+            const clap_host *host);
+    static bool host_is_audio_thread (
+            const clap_host *host);
+
+    static const constexpr clap_host_thread_check g_host_thread_check = {
+            host_is_main_thread,
+            host_is_audio_thread,
+    };
+
+    bool is_main_thread();
+    bool is_audio_thread();
+
     void plugin_latency_changed ();
 
     bool clapRegisterTimer(const uint32_t periodInMs, clap_id* const timerId);
