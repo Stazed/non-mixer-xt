@@ -127,6 +127,15 @@ Plugin_Chooser::search ( const char *name, const char *author, const char *categ
                   (p->audio_inputs == 0 && ninputs == 1) ) )    // this would be a synth with no inputs
                 continue;
 
+#ifdef CLAP_SUPPORT
+            /* We do not support multiple instance for CLAP ATM. */
+            if( strcmp( p->type, "CLAP" ) == 0 )
+            {
+                if (p->audio_inputs == 1 && ninputs > 1)
+                    continue;
+            }
+#endif
+
             if ( favorites > 0 && ! p->favorite )
                 continue;
 

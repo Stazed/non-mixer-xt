@@ -6,7 +6,7 @@ Screenshot
 
 ![screenshot](https://raw.github.com/Stazed/non-mixer-xt/main/mixer/doc/non-mixer-xt-1.0.0.png "Non-Mixer-XT Release 1.0.0")
 
-Non-Mixer-XT is a reboot of original Non-Mixer with eXTended LV2 support. LV2 support includes X11, ShowInterface and External custom UI support. In addition, MIDI support with JACK timebase support and much more. The generic parameter editor has been redesigned to accommodate larger LV2 plugins, preset support and state save and restore.
+Non-Mixer-XT is a reboot of original Non-Mixer with eXTended LV2 support. LV2 support includes X11, ShowInterface and External custom UI support. In addition, MIDI support with JACK timebase support and much more. The generic parameter editor has been redesigned to accommodate larger LV2 plugins, preset support and state save and restore. With version 1.1.0, optional CLAP support was added.
 
 
 Non-Mixer-XT build instructions:
@@ -25,6 +25,7 @@ Dependencies :
 * liblrdf
 * jack2
 * zix-0
+* clap  (Optional CLAP support)
 
 Getting submodules (nonlib and FL):
 ---------------
@@ -48,7 +49,16 @@ Getting NTK:
 Your distribution will likely have NTK available. If not then you can get NTK at:
 
 ```bash
-    git clone https://github.com/linuxaudio/ntk
+    git clone https://github.com/linuxaudio/ntk.git
+```
+
+Getting CLAP:
+-------------
+
+If your distribution does not have CLAP available, you can get it at:
+
+```bash
+    git clone https://github.com/free-audio/clap.git
 ```
 
 Build Non-Mixer-XT:
@@ -75,6 +85,12 @@ then NativeOptimizations must be disabled:
 
 ```bash
     cmake -DNativeOptimizations=OFF ..
+```
+
+To disable CLAP support:
+
+```bash
+    cmake -DEnableCLAPSupport=OFF ..
 ```
 
 Controlling Non-Mixer-XT with OSC:
