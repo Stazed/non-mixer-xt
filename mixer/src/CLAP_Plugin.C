@@ -276,77 +276,7 @@ CLAP_Plugin::setup_host ( clap_host *host, void *host_data )
 bool
 CLAP_Plugin::plugin_instances ( unsigned int n )
 {
-#if 0
-    if ( _idata->handle.size() > n )
-    {
-        for ( int i = _idata->handle.size() - n; i--; )
-        {
-            DMESSAGE( "Destroying plugin instance" );
-
-            LV2_Handle h = _idata->handle.back();
-
-            if ( _idata->lv2.descriptor->deactivate )
-                _idata->lv2.descriptor->deactivate( h );
-            if ( _idata->lv2.descriptor->cleanup )
-                _idata->lv2.descriptor->cleanup( h );
-
-            _idata->handle.pop_back();
-        }
-    }
-    else if ( _idata->handle.size() < n )
-    {
-        for ( int i = n - _idata->handle.size(); i--; )
-        {
-            DMESSAGE( "Instantiating plugin... with sample rate %lu", (unsigned long)sample_rate());
-
-            void* h;
-
-            _lilv_instance = lilv_plugin_instantiate(_lilv_plugin,  sample_rate(), _idata->lv2.features);
-
-            if ( ! _lilv_instance )
-            {
-                WARNING( "Failed to instantiate plugin" );
-                return false;
-            }
-            else
-            {
-                h = _lilv_instance->lv2_handle;
-                _idata->lv2.descriptor = _lilv_instance->lv2_descriptor;    // probably not necessary
-            }
-
-            DMESSAGE( "Instantiated: %p", h );
-
-            _idata->handle.push_back( h );
-
-            DMESSAGE( "Connecting control ports..." );
-
-            int ij = 0;
-            int oj = 0;
-
-            for ( unsigned int k = 0; k < _idata->lv2.rdf_data->PortCount; ++k )
-            {
-                if ( LV2_IS_PORT_CONTROL( _idata->lv2.rdf_data->Ports[k].Types ) )
-                {
-                    if ( LV2_IS_PORT_INPUT( _idata->lv2.rdf_data->Ports[k].Types ) )
-                        _idata->lv2.descriptor->connect_port( h, k, (float*)control_input[ij++].buffer() );
-                    else if ( LV2_IS_PORT_OUTPUT( _idata->lv2.rdf_data->Ports[k].Types ) )
-                        _idata->lv2.descriptor->connect_port( h, k, (float*)control_output[oj++].buffer() );
-                }
-                // we need to connect non audio/control ports to NULL
-                else if ( ! LV2_IS_PORT_AUDIO( _idata->lv2.rdf_data->Ports[k].Types ) &&
-                         !LV2_IS_PORT_ATOM_SEQUENCE ( _idata->lv2.rdf_data->Ports[k].Types ))
-                    _idata->lv2.descriptor->connect_port( h, k, NULL );
-            }
-
-            // connect ports to magic bogus value to aid debugging.
-            for ( unsigned int k = 0; k < _idata->lv2.rdf_data->PortCount; ++k )
-                if ( LV2_IS_PORT_AUDIO( _idata->lv2.rdf_data->Ports[k].Types ) )
-                    _idata->lv2.descriptor->connect_port( h, k, (float*)0x42 );
-        }
-    }
-
-    return true;
-#endif
+    // Currently disabled
     return false;
 }
 
@@ -568,8 +498,6 @@ CLAP_Plugin::loaded ( void ) const
         return true;
 
     return false;
-
-    //return _idata->handle.size() > 0 && ( _idata->lv2.rdf_data && _idata->lv2.descriptor);
 }
 
 bool
@@ -597,10 +525,10 @@ CLAP_Plugin::process_reset()
     _audio_outs.data64 = nullptr;
     _audio_outs.constant_mask = 0;
     _audio_outs.latency = 0;
-        
+
     ::memset(&_process, 0, sizeof(_process));
     ::memset(&m_transport, 0, sizeof(m_transport));
-    
+
     if ( audio_input.size() )
     {
         _process.audio_inputs  = &_audio_ins;
@@ -618,52 +546,12 @@ CLAP_Plugin::process_reset()
     _process.transport = &m_transport;
     _process.frames_count = buffer_size();      // FIXME Check
     _process.steady_time = 0;
-    
+
     _latency = get_module_latency();
 
     activate();
-    
+
     return true;
-#if 0
-    	qtractorClapPluginType *pType
-		= static_cast<qtractorClapPluginType *> (m_pPlugin->type());
-	if (pType == nullptr)
-		return false;
-
-	deactivate();
-
-	m_srate = pAudioEngine->sampleRate();
-	m_nframes = pAudioEngine->bufferSize();
-	m_nframes_max = pAudioEngine->bufferSizeEx();
-
-	::memset(&m_audio_ins, 0, sizeof(m_audio_ins));
-	m_audio_ins.channel_count = pType->audioIns();
-
-	::memset(&m_audio_outs, 0, sizeof(m_audio_outs));
-	m_audio_outs.channel_count = pType->audioOuts();
-
-	m_events_in.clear();
-	m_events_out.clear();
-
-	::memset(&m_process, 0, sizeof(m_process));
-	if (pType->audioIns() > 0) {
-		m_process.audio_inputs = &m_audio_ins;
-		m_process.audio_inputs_count = 1;
-	}
-	if (pType->audioOuts() > 0) {
-		m_process.audio_outputs = &m_audio_outs;
-		m_process.audio_outputs_count = 1;
-	}
-	m_process.in_events  = m_events_in.ins();
-	m_process.out_events = m_events_out.outs();
-	m_process.frames_count = pAudioEngine->blockSize();
-	m_process.steady_time = 0;
-	m_process.transport = g_host.transport();
-
-	activate();
-
-	return true;
-#endif
 }
 
 void
@@ -1198,10 +1086,11 @@ CLAP_Plugin::entry_from_CLAP_file(const char *f)
     handle = dlopen(f, RTLD_LOCAL | RTLD_LAZY);
     if (!handle)
     {
-        // We did not find the plugin from the snapshot path so lets try
-        // a different path. The case is if the project was copied to a
-        // different computer in which the plugins are installed in a different
-        // location - i.e. - /usr/lib vs /usr/local/lib.
+        /* We did not find the plugin from the snapshot path so lets try
+           a different path. The case is if the project was copied to a
+           different computer in which the plugins are installed in a different
+           location - i.e. - /usr/lib vs /usr/local/lib.
+        */
         std::string file(f);
         std::string restore;
         // Find the base plugin name
@@ -1347,8 +1236,6 @@ CLAP_Plugin::plugin_request_callback()
  Adds pair to unordered maps, m_param_infos >> (id, *clap_param_info)
  The map is used to look up any parameter by id number which is saved
  by the parameter port when created.
- 
- Currently not use is also m_param_ids >> (count, id)
  */
 void
 CLAP_Plugin::addParamInfos (void)
@@ -2098,33 +1985,6 @@ CLAP_Plugin::try_custom_ui()
             m_gui->destroy(_plugin);
             return false;
         }
-#if 0
-        bool can_resize = false;
-        uint32_t width  = 0;
-        uint32_t height = 0;
-        clap_gui_resize_hints hints;
-        ::memset(&hints, 0, sizeof(hints));
-        if (m_gui->can_resize)
-            can_resize = m_gui->can_resize(_plugin);
-        if (m_gui->get_resize_hints && !m_gui->get_resize_hints(_plugin, &hints))
-            WARNING("Could not get the resize hints of the plugin GUI.");
-        if (m_gui->get_size && !m_gui->get_size(_plugin, &width, &height))
-            WARNING("Could not get the size of the plugin GUI.");
-
-        if (width > 0 && (!hints.can_resize_horizontally || !can_resize))
-        {
-            // m_pEditorWidget->setFixedWidth(width);
-        }
-        if (height > 0 && (!hints.can_resize_vertically || !can_resize))
-        {
-            // m_pEditorWidget->setFixedHeight(height);
-        }
-        if (width > 1 && height > 1)
-        {
-            setSize(width, height, true, can_resize);
-            // m_pEditorWidget->resize(width, height);
-        }
-#endif
     }
 
     DMESSAGE("GOT A CREATE");
@@ -2791,8 +2651,6 @@ void
 CLAP_Plugin::plugin_params_request_flush (void)
 {
     m_params_flush = true;
-
-//	plugin_params_flush();
 }
 
 // Host Audio Ports support callbacks...

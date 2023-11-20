@@ -141,9 +141,6 @@ private:
     float ** _audio_in_buffers;
     float ** _audio_out_buffers;
 
-  //  int _audioIN_channel_count;
-  //  int _audioOUT_channel_count;
-
     const clap_plugin_t *_plugin;
 
     const clap_plugin_params *m_params;
@@ -252,11 +249,6 @@ private:
     void set_control_value(unsigned long port_index, float value, bool update_custom_ui);
 
 protected:
-
-    // Transfer parameter changes...
- //   void process_params_out ();
-//    void update_parameters();
-//    void set_control_value(unsigned long port_index, float value, bool update_custom_ui);
 
     static void host_gui_resize_hints_changed (
             const clap_host *host);
