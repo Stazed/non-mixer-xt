@@ -488,7 +488,7 @@ CLAP_Plugin::handle_chain_name_changed ( void )
 }
 
 void
-CLAP_Plugin::handle_sample_rate_change ( nframes_t sample_rate )
+CLAP_Plugin::handle_sample_rate_change ( nframes_t /* sample_rate */ )
 {
     deactivate();
     activate();
@@ -2843,9 +2843,7 @@ CLAP_Plugin::host_latency_changed (
 void
 CLAP_Plugin::plugin_latency_changed (void)
 {
-    //FIXME todo
-   // if (m_pPlugin)
-   //     m_pPlugin->request_restart();
+    _plug_request_restart = true;
 }
 
 // Host thread-check callbacks...
