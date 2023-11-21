@@ -43,6 +43,7 @@ static const uint X11Key_W      = 25;
 #ifdef USE_SUIL
 const std::vector<std::string> v_ui_types
 {
+    LV2_UI__UI,
     LV2_UI__X11UI,
     LV2_UI__GtkUI,
     LV2_UI__Gtk3UI,
