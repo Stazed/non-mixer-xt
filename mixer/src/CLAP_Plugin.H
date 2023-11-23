@@ -58,18 +58,6 @@ public:
     void handle_sample_rate_change ( nframes_t sample_rate );
     void resize_buffers ( nframes_t buffer_size );
 
-    void set_input_buffer ( int n, void *buf );
-    void set_output_buffer ( int n, void *buf );
-    bool loaded ( void ) const;
-    bool process_reset();
-
-    void process_jack_transport ( uint32_t nframes );
-    void process_jack_midi_in ( uint32_t nframes, unsigned int port );
-    void process_midi_in (unsigned char *data, unsigned int size,
-		unsigned long offset, unsigned short port);
-
-    void process_jack_midi_out ( uint32_t nframes, unsigned int port );
-
     virtual bool bypass ( void ) const { return *_bypass == 1.0f; }
     virtual void bypass ( bool v );
 
@@ -145,7 +133,7 @@ private:
 
     const clap_plugin_params *m_params;
     const clap_plugin_timer_support *m_timer_support;
-    const clap_plugin_posix_fd_support *m_posix_fd_support;
+    const clap_plugin_posix_fd_support *m_posix_fd_support; // FIMXE
 
     const clap_plugin_gui *m_gui;
     const clap_plugin_state *m_state;
@@ -176,7 +164,8 @@ private:
 
 public:
     const clap_plugin_entry_t *entry_from_CLAP_file(const char *f);
-    
+
+    // Host setup
     static void setup_host( clap_host *host, void *host_data );
     static const void *get_extension(const struct clap_host * host, const char *eid);
     static void request_restart(const struct clap_host * host);
@@ -210,6 +199,7 @@ public:
     // Parameters processor queue.
     EventList m_params_out;
 
+    // Save/Restore state
     void save_CLAP_plugin_state(const std::string filename);
     void restore_CLAP_plugin_state(const std::string filename);
 
@@ -233,6 +223,20 @@ public:
 
 private:
 
+    // Process functions
+    void set_input_buffer ( int n, void *buf );
+    void set_output_buffer ( int n, void *buf );
+    bool loaded ( void ) const;
+    bool process_reset();
+
+    void process_jack_transport ( uint32_t nframes );
+    void process_jack_midi_in ( uint32_t nframes, unsigned int port );
+    void process_midi_in (unsigned char *data, unsigned int size,
+		unsigned long offset, unsigned short port);
+
+    void process_jack_midi_out ( uint32_t nframes, unsigned int port );
+
+    // Initialize create
     void initialize_plugin();
     void create_audio_ports();
     void create_note_ports();
