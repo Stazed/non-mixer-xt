@@ -54,8 +54,7 @@ static int temporaryErrorHandler(Display*, XErrorEvent*)
     return 0;
 }
 
-X11PluginUI::X11PluginUI(Callback* const cb, const uintptr_t parentId,
-            const bool isStandalone, const bool isResizable, const bool canMonitorChildren):
+X11PluginUI::X11PluginUI(const bool isResizable, const bool canMonitorChildren):
       fDisplay(nullptr),
       fHostWindow(0),
       fChildWindow(0),
@@ -89,8 +88,11 @@ X11PluginUI::X11PluginUI(Callback* const cb, const uintptr_t parentId,
                                 CWBorderPixel|CWEventMask, &attr);
 
     CARLA_SAFE_ASSERT_RETURN(fHostWindow != 0,);
+    
+//    XSetStandardProperties(fDisplay, fHostWindow, label(), label(), None, NULL, 0, NULL);
 
     XGrabKey(fDisplay, X11Key_Escape, AnyModifier, fHostWindow, 1, GrabModeAsync, GrabModeAsync);
+    XGrabKey(fDisplay, X11Key_W, AnyModifier, fHostWindow, 1, GrabModeAsync, GrabModeAsync);
 
     Atom wmDelete = XInternAtom(fDisplay, "WM_DELETE_WINDOW", True);
     XSetWMProtocols(fDisplay, fHostWindow, &wmDelete, 1);
@@ -112,8 +114,8 @@ X11PluginUI::X11PluginUI(Callback* const cb, const uintptr_t parentId,
     };
     XChangeProperty(fDisplay, fHostWindow, _wt, XA_ATOM, 32, PropModeReplace, (const uchar*)&_wts, 2);
 
-    if (parentId != 0)
-        setTransientWinId(parentId);
+//    if (parentId != 0)
+//        setTransientWinId(parentId);
 }
 
 

@@ -1738,7 +1738,7 @@ CLAP_Plugin::init ( void )
     _is_floating = false;
 
 #ifdef X11_CLASS
-
+    m_X11_UI = nullptr;
 #else
     // X window stuff
     _x_display = nullptr;
@@ -1961,15 +1961,12 @@ CLAP_Plugin::try_custom_ui()
         }
     }
 
-    clap_window w;
-    w.api = CLAP_WINDOW_API_X11;
-
-    if (!m_gui->is_api_supported(_plugin, w.api, false))
+    if (!m_gui->is_api_supported(_plugin, CLAP_WINDOW_API_X11, false))
     {
-        _is_floating = m_gui->is_api_supported(_plugin, w.api, true);
+        _is_floating = m_gui->is_api_supported(_plugin, CLAP_WINDOW_API_X11, true);
     }
 
-    if (!m_gui->create(_plugin, w.api, _is_floating))
+    if (!m_gui->create(_plugin, CLAP_WINDOW_API_X11, _is_floating))
     {
         DMESSAGE("Could not create the plugin GUI.");
         return false;
@@ -1977,21 +1974,28 @@ CLAP_Plugin::try_custom_ui()
 
     /* We seem to have an accepted ui, so lets try to embed it in an X window */
 #ifdef X11_CLASS
+    _x_is_resizable = m_gui->can_resize(_plugin);
+    
+    m_X11_UI = new X11PluginUI( _x_is_resizable, false);
+    clap_window_t win = { CLAP_WINDOW_API_X11, {} };
+    win.ptr = m_X11_UI->getPtr();
 
 #else
+    clap_window win;
+    win.api = CLAP_WINDOW_API_X11;
      init_x();
 
      _x_child_window = getChildWindow();
-     w.x11 = _x_host_window;
+     win.x11 = _x_host_window;
 #endif
     if (_is_floating)
     {
         DMESSAGE("Using Floating Window");
-        m_gui->set_transient(_plugin, &w);
+        m_gui->set_transient(_plugin, &win);
         m_gui->suggest_title(_plugin, base_label());
     } else
     {
-        if (!m_gui->set_parent(_plugin, &w))
+        if (!m_gui->set_parent(_plugin, &win))
         {
             DMESSAGE("Could not embed the plugin GUI.");
             m_gui->destroy(_plugin);
@@ -2061,7 +2065,7 @@ CLAP_Plugin::plugin_gui_request_resize (
     // Return true if the new size is accepted, false otherwise.
     // The host doesn't have to call set_size().
 #ifdef X11_CLASS
-
+    m_X11_UI->setSize(width, height, true, _x_is_resizable);
 #else
     setSize(width, height, true, _x_is_resizable);
 #endif
@@ -2180,7 +2184,7 @@ CLAP_Plugin::show_custom_ui()
 
 #ifdef X11_CLASS
 
-
+    m_X11_UI->show();
 
 #else
     if (_x_display == nullptr)
@@ -2356,6 +2360,8 @@ CLAP_Plugin::custom_update_ui_x()
     if (_is_floating)
         goto FLOATING;
 #ifdef X11_CLASS
+
+    m_X11_UI->idle();
     
 #else
     // prevent recursion
@@ -2518,19 +2524,34 @@ CLAP_Plugin::hide_custom_ui()
     }
 
     Fl::remove_timeout(&CLAP_Plugin::custom_update_ui, this);
+    _x_is_visible = false;
 #ifdef X11_CLASS
+    if (m_X11_UI != nullptr)
+        m_X11_UI->hide();
+
+    if (m_bEditorCreated)
+    {
+        m_gui->destroy(_plugin);
+        m_bEditorCreated = false;
+    }
     
+    if(m_X11_UI != nullptr)
+    {
+        delete m_X11_UI;
+        m_X11_UI = nullptr;
+    }
+
+    return true;
 #else
     if(_x_display == nullptr)
         return false;
     if(_x_host_window == 0)
         return false;
 
-    _x_is_visible = false;
     XUnmapWindow(_x_display, _x_host_window);
     XFlush(_x_display);
-#endif
     return m_gui->hide(_plugin);
+#endif
 }
 
 // Host Timer support callbacks...

@@ -36,8 +36,7 @@ public:
         virtual void handlePluginUIResized(uint width, uint height) = 0;
     };
 
-    X11PluginUI(Callback* const cb, const uintptr_t parentId,
-                const bool isStandalone, const bool isResizable, const bool canMonitorChildren);
+    X11PluginUI(const bool isResizable, const bool canMonitorChildren);
 
     ~X11PluginUI();
 

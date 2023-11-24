@@ -127,7 +127,6 @@ private:
     bool     _x_first_show;
     bool     _x_set_size_called_at_least_Once;
     bool     _x_is_idling;
-    bool     _x_is_resizable;
     EventProcPtr _x_event_proc;
 
     void init_x();
@@ -138,6 +137,7 @@ private:
     
     bool     _x_is_visible;
     bool     _is_floating;
+    bool     _x_is_resizable;
 
     clap_audio_buffer _audio_ins;
     clap_audio_buffer _audio_outs;
