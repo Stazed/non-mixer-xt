@@ -34,11 +34,17 @@
 #include "Plugin_Module.H"
 #include "LinkedList.hpp"
 
+//#define X11_CLASS 1
+
+#ifdef X11_CLASS
+#include "X11PluginUI.H"
+#else
+typedef void (*EventProcPtr)(XEvent* ev);
+#endif
+
 extern std::string project_directory;
 extern std::string export_import_strip;
 extern std::vector<std::string>remove_custom_data_directories;
-
-typedef void (*EventProcPtr)(XEvent* ev);
 
 struct HostTimerDetails {
     clap_id clapId;
@@ -109,20 +115,30 @@ private:
     bool m_bEditorCreated;
     bool m_bEditorVisible;
 
+#ifdef X11_CLASS
+    X11PluginUI *m_X11_UI;
+#else
     // X window for custom plugin
     Display* _x_display;
     Window   _x_host_window;
     Window   _x_child_window;
     bool     _x_child_window_configured;
     bool     _x_child_window_monitoring;
-    bool     _x_is_visible;
     bool     _x_first_show;
     bool     _x_set_size_called_at_least_Once;
     bool     _x_is_idling;
     bool     _x_is_resizable;
-    bool     _is_floating;
     EventProcPtr _x_event_proc;
+
+    void init_x();
+    bool isUiResizable() const;
+    Window getChildWindow() const;
+    void setSize(const uint width, const uint height, const bool forceUpdate, const bool resizeChild);
+#endif
     
+    bool     _x_is_visible;
+    bool     _is_floating;
+
     clap_audio_buffer _audio_ins;
     clap_audio_buffer _audio_outs;
 
@@ -145,13 +161,8 @@ private:
     std::unordered_map<int, double> m_paramValues;
     std::unordered_map<int, unsigned long> m_paramIds;
 
-    void init_x();
-    bool isUiResizable() const;
     bool show_custom_ui();
     bool hide_custom_ui();
-
-    Window getChildWindow() const;
-    void setSize(const uint width, const uint height, const bool forceUpdate, const bool resizeChild);
 
     void custom_update_ui_x();
     static void custom_update_ui ( void * );

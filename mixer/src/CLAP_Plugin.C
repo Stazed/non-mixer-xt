@@ -32,19 +32,20 @@
 #include "Time.h"
 
 #include "../../nonlib/dsp.h"
-#include "NonMixerPluginUI_X11Icon.h"
 #include "CarlaClapUtils.H"
 
-#include <unistd.h>    // getpid()
-#include <pthread.h>
 #include <FL/fl_ask.H>  // fl_alert()
 
+#ifdef X11_CLASS
+
+
+#else
+#include <unistd.h>    // getpid()
+#include <pthread.h>
+#include "NonMixerPluginUI_X11Icon.h"
 
 static const uint X11Key_Escape = 9;
 static const uint X11Key_W      = 25;
-
-const unsigned char  EVENT_NOTE_OFF         = 0x80;
-const unsigned char  EVENT_NOTE_ON          = 0x90;
 
 static bool gErrorTriggered = false;
 # if defined(__GNUC__) && (__GNUC__ >= 5) && ! defined(__clang__)
@@ -61,6 +62,10 @@ static int temporaryErrorHandler(Display*, XErrorEvent*)
     gErrorTriggered = true;
     return 0;
 }
+#endif
+
+const unsigned char  EVENT_NOTE_OFF         = 0x80;
+const unsigned char  EVENT_NOTE_ON          = 0x90;
 
 static constexpr const HostTimerDetails kTimerFallback   = { CLAP_INVALID_ID, 0, 0 };
 static /*           */ HostTimerDetails kTimerFallbackNC = { CLAP_INVALID_ID, 0, 0 };
@@ -1729,20 +1734,24 @@ CLAP_Plugin::init ( void )
     m_state = nullptr;
     m_note_names = nullptr;
 
+    _x_is_visible = false;
+    _is_floating = false;
+
+#ifdef X11_CLASS
+
+#else
     // X window stuff
     _x_display = nullptr;
     _x_host_window = 0;
     _x_child_window = 0;
     _x_child_window_configured = false;
     _x_child_window_monitoring = false; // _x_child_window_monitoring(isResizable || canMonitorChildren) // FIXME
-    _x_is_visible = false;
     _x_first_show = true;
     _x_set_size_called_at_least_Once = false;
     _x_is_idling = false;
     _x_is_resizable = false;
-    _is_floating = false;
     _x_event_proc = nullptr;
-    
+#endif
     _last_chunk = nullptr;
     _project_file = "";
 
@@ -1967,11 +1976,14 @@ CLAP_Plugin::try_custom_ui()
     }
 
     /* We seem to have an accepted ui, so lets try to embed it in an X window */
+#ifdef X11_CLASS
+
+#else
      init_x();
 
      _x_child_window = getChildWindow();
      w.x11 = _x_host_window;
-
+#endif
     if (_is_floating)
     {
         DMESSAGE("Using Floating Window");
@@ -2048,7 +2060,11 @@ CLAP_Plugin::plugin_gui_request_resize (
     // Request the host to resize the client area to width, height.
     // Return true if the new size is accepted, false otherwise.
     // The host doesn't have to call set_size().
+#ifdef X11_CLASS
+
+#else
     setSize(width, height, true, _x_is_resizable);
+#endif
     return true;
 }
 
@@ -2089,6 +2105,9 @@ CLAP_Plugin::plugin_gui_closed ( bool was_destroyed )
     // the gui destruction.
 }
 
+#ifdef X11_CLASS
+
+#else
 void
 CLAP_Plugin::init_x()
 {
@@ -2147,6 +2166,7 @@ CLAP_Plugin::isUiResizable() const
 {
     return m_gui->can_resize(_plugin);
 }
+#endif
 
 bool
 CLAP_Plugin::show_custom_ui()
@@ -2158,6 +2178,11 @@ CLAP_Plugin::show_custom_ui()
         return _x_is_visible;
     }
 
+#ifdef X11_CLASS
+
+
+
+#else
     if (_x_display == nullptr)
         return false;
     if (_x_host_window == 0)
@@ -2237,11 +2262,13 @@ CLAP_Plugin::show_custom_ui()
         }
     }
 
-    _x_is_visible = true;
-    _x_first_show = false;
-
     XMapRaised(_x_display, _x_host_window);
     XSync(_x_display, False);
+
+    _x_first_show = false;
+#endif
+
+    _x_is_visible = true;
 
     m_gui->show(_plugin);
 
@@ -2250,6 +2277,10 @@ CLAP_Plugin::show_custom_ui()
     return true;
 }
 
+#ifdef X11_CLASS
+
+
+#else
 Window
 CLAP_Plugin::getChildWindow() const
 {
@@ -2302,6 +2333,7 @@ CLAP_Plugin::setSize(const uint width, const uint height, const bool forceUpdate
     if (forceUpdate)
         XSync(_x_display, False);
 }
+#endif
 
 /**
  Callback for custom ui idle interface
@@ -2318,17 +2350,18 @@ CLAP_Plugin::custom_update_ui ( void *v )
 void
 CLAP_Plugin::custom_update_ui_x()
 {
-    // prevent recursion
-    if (_x_is_idling) return;
-
     int nextWidth = 0;
     int nextHeight = 0;
-
-    _x_is_idling = true;
     
     if (_is_floating)
         goto FLOATING;
+#ifdef X11_CLASS
+    
+#else
+    // prevent recursion
+    if (_x_is_idling) return;
 
+    _x_is_idling = true;
     for (XEvent event; XPending(_x_display) > 0;)
     {
         XNextEvent(_x_display, &event);
@@ -2445,9 +2478,10 @@ CLAP_Plugin::custom_update_ui_x()
         XFlush(_x_display);
     }
 
-FLOATING:
-
     _x_is_idling = false;
+#endif
+
+FLOATING:
 
     for (LinkedList<HostTimerDetails>::Itenerator it = fTimers.begin2(); it.valid(); it.next())
     {
@@ -2484,7 +2518,9 @@ CLAP_Plugin::hide_custom_ui()
     }
 
     Fl::remove_timeout(&CLAP_Plugin::custom_update_ui, this);
-
+#ifdef X11_CLASS
+    
+#else
     if(_x_display == nullptr)
         return false;
     if(_x_host_window == 0)
@@ -2493,7 +2529,7 @@ CLAP_Plugin::hide_custom_ui()
     _x_is_visible = false;
     XUnmapWindow(_x_display, _x_host_window);
     XFlush(_x_display);
-
+#endif
     return m_gui->hide(_plugin);
 }
 
