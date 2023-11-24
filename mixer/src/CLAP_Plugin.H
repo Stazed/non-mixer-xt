@@ -33,14 +33,7 @@
 #include "Mixer_Strip.H"
 #include "Plugin_Module.H"
 #include "LinkedList.hpp"
-
-#define X11_CLASS 1
-
-#ifdef X11_CLASS
 #include "X11PluginUI.H"
-#else
-typedef void (*EventProcPtr)(XEvent* ev);
-#endif
 
 extern std::string project_directory;
 extern std::string export_import_strip;
@@ -116,33 +109,14 @@ private:
     // GUI Editor stuff...
     bool m_bEditorCreated;
     bool m_bEditorVisible;
-
-#ifdef X11_CLASS
     X11PluginUI *m_X11_UI;
-#else
-    // X window for custom plugin
-    Display* _x_display;
-    Window   _x_host_window;
-    Window   _x_child_window;
-    bool     _x_child_window_configured;
-    bool     _x_child_window_monitoring;
-    bool     _x_first_show;
-    bool     _x_set_size_called_at_least_Once;
-    bool     _x_is_idling;
-    EventProcPtr _x_event_proc;
-
-    void init_x();
-    bool isUiResizable() const;
-    Window getChildWindow() const;
-    void setSize(const uint width, const uint height, const bool forceUpdate, const bool resizeChild);
-#endif
-    
     bool     _x_is_visible;
     bool     _is_floating;
     bool     _x_is_resizable;
     uint     _x_width;
     uint     _x_height;
 
+    // Audio buffers
     clap_audio_buffer _audio_ins;
     clap_audio_buffer _audio_outs;
 

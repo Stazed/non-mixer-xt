@@ -288,6 +288,7 @@ X11PluginUI::idle()
             type = XGetAtomName(fDisplay, event.xclient.message_type);
             CARLA_SAFE_ASSERT_CONTINUE(type != nullptr);
 
+            /* Window X box to close */
             if (std::strcmp(type, "WM_PROTOCOLS") == 0)
             {
                 fIsVisible = false;
@@ -297,11 +298,22 @@ X11PluginUI::idle()
             break;
 
         case KeyRelease:
+            /* Escape key to close */
             if (event.xkey.keycode == X11Key_Escape)
             {
                 fIsVisible = false;
                 CARLA_SAFE_ASSERT_CONTINUE(fCallback != nullptr);
                 fCallback->handlePluginUIClosed();
+            }
+            /* CTRL W to close */
+            else if(event.xkey.keycode == X11Key_W)
+            {
+                if ((event.xkey.state & (ShiftMask | ControlMask | Mod1Mask | Mod4Mask)) == (ControlMask))
+                {
+                    fIsVisible = false;
+                    CARLA_SAFE_ASSERT_CONTINUE(fCallback != nullptr);
+                    fCallback->handlePluginUIClosed();
+                }
             }
             break;
 

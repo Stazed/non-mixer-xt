@@ -36,34 +36,6 @@
 
 #include <FL/fl_ask.H>  // fl_alert()
 
-#ifdef X11_CLASS
-
-
-#else
-#include <unistd.h>    // getpid()
-#include <pthread.h>
-#include "NonMixerPluginUI_X11Icon.h"
-
-static const uint X11Key_Escape = 9;
-static const uint X11Key_W      = 25;
-
-static bool gErrorTriggered = false;
-# if defined(__GNUC__) && (__GNUC__ >= 5) && ! defined(__clang__)
-#  pragma GCC diagnostic push
-#  pragma GCC diagnostic ignored "-Wzero-as-null-pointer-constant"
-# endif
-static pthread_mutex_t gErrorMutex = PTHREAD_MUTEX_INITIALIZER;
-# if defined(__GNUC__) && (__GNUC__ >= 5) && ! defined(__clang__)
-#  pragma GCC diagnostic pop
-# endif
-
-static int temporaryErrorHandler(Display*, XErrorEvent*)
-{
-    gErrorTriggered = true;
-    return 0;
-}
-#endif
-
 const unsigned char  EVENT_NOTE_OFF         = 0x80;
 const unsigned char  EVENT_NOTE_ON          = 0x90;
 
@@ -1739,21 +1711,8 @@ CLAP_Plugin::init ( void )
     _x_width = 0;
     _x_height = 0;
 
-#ifdef X11_CLASS
     m_X11_UI = nullptr;
-#else
-    // X window stuff
-    _x_display = nullptr;
-    _x_host_window = 0;
-    _x_child_window = 0;
-    _x_child_window_configured = false;
-    _x_child_window_monitoring = false; // _x_child_window_monitoring(isResizable || canMonitorChildren) // FIXME
-    _x_first_show = true;
-    _x_set_size_called_at_least_Once = false;
-    _x_is_idling = false;
-    _x_is_resizable = false;
-    _x_event_proc = nullptr;
-#endif
+
     _last_chunk = nullptr;
     _project_file = "";
 
@@ -1975,7 +1934,6 @@ CLAP_Plugin::try_custom_ui()
     }
 
     /* We seem to have an accepted ui, so lets try to embed it in an X window */
-#ifdef X11_CLASS
     _x_is_resizable = m_gui->can_resize(_plugin);
     
     m_X11_UI = new X11PluginUI(this, _x_is_resizable, false);
@@ -1983,14 +1941,6 @@ CLAP_Plugin::try_custom_ui()
     clap_window_t win = { CLAP_WINDOW_API_X11, {} };
     win.ptr = m_X11_UI->getPtr();
 
-#else
-    clap_window win;
-    win.api = CLAP_WINDOW_API_X11;
-     init_x();
-
-     _x_child_window = getChildWindow();
-     win.x11 = _x_host_window;
-#endif
     if (_is_floating)
     {
         DMESSAGE("Using Floating Window");
@@ -2067,11 +2017,9 @@ CLAP_Plugin::plugin_gui_request_resize (
     // Request the host to resize the client area to width, height.
     // Return true if the new size is accepted, false otherwise.
     // The host doesn't have to call set_size().
-#ifdef X11_CLASS
+
     m_X11_UI->setSize(width, height, true, _x_is_resizable);
-#else
-    setSize(width, height, true, _x_is_resizable);
-#endif
+
     return true;
 }
 
@@ -2112,69 +2060,6 @@ CLAP_Plugin::plugin_gui_closed ( bool was_destroyed )
     // the gui destruction.
 }
 
-#ifdef X11_CLASS
-
-#else
-void
-CLAP_Plugin::init_x()
-{
-    _x_child_window_monitoring = _x_is_resizable = isUiResizable();
-
-    _x_display = XOpenDisplay(nullptr);
-    NON_SAFE_ASSERT_RETURN(_x_display != nullptr,);
-
-    const int screen = DefaultScreen(_x_display);
-
-    XSetWindowAttributes attr;
-    non_zeroStruct(attr);
-
-    attr.event_mask = KeyPressMask|KeyReleaseMask|FocusChangeMask;
-
-    if (_x_child_window_monitoring)
-        attr.event_mask |= StructureNotifyMask|SubstructureNotifyMask;
-
-    _x_host_window = XCreateWindow(_x_display, RootWindow(_x_display, screen),
-                                0, 0, 300, 300, 0,
-                                DefaultDepth(_x_display, screen),
-                                InputOutput,
-                                DefaultVisual(_x_display, screen),
-                                CWBorderPixel|CWEventMask, &attr);
-
-    NON_SAFE_ASSERT_RETURN(_x_host_window != 0,);
-
-    XSetStandardProperties(_x_display, _x_host_window, label(), label(), None, NULL, 0, NULL);
-
-    XGrabKey(_x_display, X11Key_Escape, AnyModifier, _x_host_window, 1, GrabModeAsync, GrabModeAsync);
-    XGrabKey(_x_display, X11Key_W, AnyModifier, _x_host_window, 1, GrabModeAsync, GrabModeAsync);
-
-    Atom wmDelete = XInternAtom(_x_display, "WM_DELETE_WINDOW", True);
-    XSetWMProtocols(_x_display, _x_host_window, &wmDelete, 1);
-
-    const pid_t pid = getpid();
-    const Atom _nwp = XInternAtom(_x_display, "_NET_WM_PID", False);
-    XChangeProperty(_x_display, _x_host_window, _nwp, XA_CARDINAL, 32, PropModeReplace, (const uchar*)&pid, 1);
-
-    const Atom _nwi = XInternAtom(_x_display, "_NET_WM_ICON", False);
-    XChangeProperty(_x_display, _x_host_window, _nwi, XA_CARDINAL, 32, PropModeReplace, (const uchar*)sNonMixerX11Icon, sNonMixerX11IconSize);
-
-    const Atom _wt = XInternAtom(_x_display, "_NET_WM_WINDOW_TYPE", False);
-
-    // Setting the window to both dialog and normal will produce a decorated floating dialog
-    // Order is important: DIALOG needs to come before NORMAL
-    const Atom _wts[2] = {
-        XInternAtom(_x_display, "_NET_WM_WINDOW_TYPE_DIALOG", False),
-        XInternAtom(_x_display, "_NET_WM_WINDOW_TYPE_NORMAL", False)
-    };
-    XChangeProperty(_x_display, _x_host_window, _wt, XA_ATOM, 32, PropModeReplace, (const uchar*)&_wts, 2);
-}
-
-bool
-CLAP_Plugin::isUiResizable() const
-{
-    return m_gui->can_resize(_plugin);
-}
-#endif
-
 bool
 CLAP_Plugin::show_custom_ui()
 {
@@ -2185,96 +2070,8 @@ CLAP_Plugin::show_custom_ui()
         return _x_is_visible;
     }
 
-#ifdef X11_CLASS
-
     m_X11_UI->show();
     m_X11_UI->focus();
-
-#else
-    if (_x_display == nullptr)
-        return false;
-    if (_x_host_window == 0)
-        return false;
-
-    if (_x_first_show)
-    {
-        if (const Window childWindow = getChildWindow())
-        {
-            if (! _x_set_size_called_at_least_Once)
-            {
-                int width = 0;
-                int height = 0;
-
-                XWindowAttributes attrs;
-                non_zeroStruct(attrs);
-
-                pthread_mutex_lock(&gErrorMutex);
-                const XErrorHandler oldErrorHandler = XSetErrorHandler(temporaryErrorHandler);
-                gErrorTriggered = false;
-
-                if (XGetWindowAttributes(_x_display, childWindow, &attrs))
-                {
-                    width = attrs.width;
-                    height = attrs.height;
-                }
-
-                XSetErrorHandler(oldErrorHandler);
-                pthread_mutex_unlock(&gErrorMutex);
-
-                if (width == 0 && height == 0)
-                {
-                    XSizeHints sizeHints;
-                    non_zeroStruct(sizeHints);
-
-                    if (XGetNormalHints(_x_display, childWindow, &sizeHints))
-                    {
-                        if (sizeHints.flags & PSize)
-                        {
-                            width = sizeHints.width;
-                            height = sizeHints.height;
-                        }
-                        else if (sizeHints.flags & PBaseSize)
-                        {
-                            width = sizeHints.base_width;
-                            height = sizeHints.base_height;
-                        }
-                    }
-                }
-
-                if (width > 1 && height > 1)
-                    setSize(static_cast<uint>(width), static_cast<uint>(height), false, _x_is_resizable);
-            }
-
-            const Atom _xevp = XInternAtom(_x_display, "_XEventProc", False);
-
-            pthread_mutex_lock(&gErrorMutex);
-            const XErrorHandler oldErrorHandler(XSetErrorHandler(temporaryErrorHandler));
-            gErrorTriggered = false;
-
-            Atom actualType;
-            int actualFormat;
-            ulong nitems, bytesAfter;
-            uchar* data = nullptr;
-
-            XGetWindowProperty(_x_display, childWindow, _xevp, 0, 1, False, AnyPropertyType,
-                               &actualType, &actualFormat, &nitems, &bytesAfter, &data);
-
-            XSetErrorHandler(oldErrorHandler);
-            pthread_mutex_unlock(&gErrorMutex);
-
-            if (nitems == 1 && ! gErrorTriggered)
-            {
-                _x_event_proc = *reinterpret_cast<EventProcPtr*>(data);
-                XMapRaised(_x_display, childWindow);
-            }
-        }
-    }
-
-    XMapRaised(_x_display, _x_host_window);
-    XSync(_x_display, False);
-
-    _x_first_show = false;
-#endif
 
     _x_is_visible = true;
 
@@ -2284,64 +2081,6 @@ CLAP_Plugin::show_custom_ui()
 
     return true;
 }
-
-#ifdef X11_CLASS
-
-
-#else
-Window
-CLAP_Plugin::getChildWindow() const
-{
-    NON_SAFE_ASSERT_RETURN(_x_display != nullptr, 0);
-    NON_SAFE_ASSERT_RETURN(_x_host_window != 0, 0);
-
-    Window rootWindow, parentWindow, ret = 0;
-    Window* childWindows = nullptr;
-    uint numChildren = 0;
-
-    XQueryTree(_x_display, _x_host_window, &rootWindow, &parentWindow, &childWindows, &numChildren);
-
-    if (numChildren > 0 && childWindows != nullptr)
-    {
-        ret = childWindows[0];
-        XFree(childWindows);
-    }
-
-    return ret;
-}
-
-void
-CLAP_Plugin::setSize(const uint width, const uint height, const bool forceUpdate, const bool resizeChild)
-{
-    NON_SAFE_ASSERT_RETURN(_x_display != nullptr,);
-    NON_SAFE_ASSERT_RETURN(_x_host_window != 0,);
-
-    _x_set_size_called_at_least_Once = true;
-    XResizeWindow(_x_display, _x_host_window, width, height);
-
-    if (_x_child_window != 0 && resizeChild)
-        XResizeWindow(_x_display, _x_child_window, width, height);
-
-    if (! _x_is_resizable)
-    {
-        XSizeHints sizeHints;
-        non_zeroStruct(sizeHints);
-
-        sizeHints.flags      = PSize|PMinSize|PMaxSize;
-        sizeHints.width      = static_cast<int>(width);
-        sizeHints.height     = static_cast<int>(height);
-        sizeHints.min_width  = static_cast<int>(width);
-        sizeHints.min_height = static_cast<int>(height);
-        sizeHints.max_width  = static_cast<int>(width);
-        sizeHints.max_height = static_cast<int>(height);
-
-        XSetNormalHints(_x_display, _x_host_window, &sizeHints);
-    }
-
-    if (forceUpdate)
-        XSync(_x_display, False);
-}
-#endif
 
 /**
  Callback for custom ui idle interface
@@ -2360,139 +2099,12 @@ CLAP_Plugin::custom_update_ui_x()
 {
     int nextWidth = 0;
     int nextHeight = 0;
-    
-    if (_is_floating)
-        goto FLOATING;
-#ifdef X11_CLASS
 
-    if(_x_is_visible)
-        m_X11_UI->idle();
-    
-#else
-    // prevent recursion
-    if (_x_is_idling) return;
-
-    _x_is_idling = true;
-    for (XEvent event; XPending(_x_display) > 0;)
+    if (!_is_floating)
     {
-        XNextEvent(_x_display, &event);
-
-        if (! _x_is_visible)
-            continue;
-
-        char* type = nullptr;
-
-        switch (event.type)
-        {
-        case ConfigureNotify:
-            NON_SAFE_ASSERT_CONTINUE(event.xconfigure.width > 0);
-            NON_SAFE_ASSERT_CONTINUE(event.xconfigure.height > 0);
-
-            if (event.xconfigure.window == _x_host_window)
-            {
-                const uint width  = static_cast<uint>(event.xconfigure.width);
-                const uint height = static_cast<uint>(event.xconfigure.height);
-
-                if (_x_child_window != 0)
-                {
-                    if (! _x_child_window_configured)
-                    {
-                        pthread_mutex_lock(&gErrorMutex);
-                        const XErrorHandler oldErrorHandler = XSetErrorHandler(temporaryErrorHandler);
-                        gErrorTriggered = false;
-
-                        XSizeHints sizeHints;
-                        non_zeroStruct(sizeHints);
-
-                        if (XGetNormalHints(_x_display, _x_child_window, &sizeHints) && !gErrorTriggered)
-                        {
-                            XSetNormalHints(_x_display, _x_host_window, &sizeHints);
-                        }
-                        else
-                        {
-                            WARNING("Caught errors while accessing child window");
-                            _x_child_window = 0;
-                        }
-
-                        _x_child_window_configured = true;
-                        XSetErrorHandler(oldErrorHandler);
-                        pthread_mutex_unlock(&gErrorMutex);
-                    }
-
-                    if (_x_child_window != 0)
-                        XResizeWindow(_x_display, _x_child_window, width, height);
-                }
-            }
-            else if (_x_child_window_monitoring && event.xconfigure.window == _x_child_window && _x_child_window != 0)
-            {
-                nextWidth = event.xconfigure.width;
-                nextHeight = event.xconfigure.height;
-            }
-            break;
-
-        case ClientMessage:
-            type = XGetAtomName(_x_display, event.xclient.message_type);
-            NON_SAFE_ASSERT_CONTINUE(type != nullptr);
-
-            if (std::strcmp(type, "WM_PROTOCOLS") == 0)
-            {
-                _x_is_visible = false;
-            }
-            break;
-
-        case KeyRelease:
-            /* Escape key to close */
-            if (event.xkey.keycode == X11Key_Escape )
-            {
-                _x_is_visible = false;
-            }
-            /* CTRL W to close */
-            else if(event.xkey.keycode == X11Key_W)
-            {
-                if ((event.xkey.state & (ShiftMask | ControlMask | Mod1Mask | Mod4Mask)) == (ControlMask))
-                {
-                    _x_is_visible = false;
-                }
-            }
-
-            break;
-
-        case FocusIn:
-            if (_x_child_window == 0)
-                _x_child_window = getChildWindow();
-            if (_x_child_window != 0)
-            {
-                XWindowAttributes wa;
-                non_zeroStruct(wa);
-
-                if (XGetWindowAttributes(_x_display, _x_child_window, &wa) && wa.map_state == IsViewable)
-                    XSetInputFocus(_x_display, _x_child_window, RevertToPointerRoot, CurrentTime);
-            }
-            break;
-        }
-
-        if (type != nullptr)
-            XFree(type);
-        else if (_x_event_proc != nullptr && event.type != FocusIn && event.type != FocusOut)
-            _x_event_proc(&event);
+        if(_x_is_visible)
+            m_X11_UI->idle();
     }
-
-    if (nextWidth != 0 && nextHeight != 0 && _x_child_window != 0)
-    {
-        XSizeHints sizeHints;
-        non_zeroStruct(sizeHints);
-
-        if (XGetNormalHints(_x_display, _x_child_window, &sizeHints))
-            XSetNormalHints(_x_display, _x_host_window, &sizeHints);
-
-        XResizeWindow(_x_display, _x_host_window, static_cast<uint>(nextWidth), static_cast<uint>(nextHeight));
-        XFlush(_x_display);
-    }
-
-    _x_is_idling = false;
-#endif
-
-FLOATING:
 
     for (LinkedList<HostTimerDetails>::Itenerator it = fTimers.begin2(); it.valid(); it.next())
     {
@@ -2529,8 +2141,9 @@ CLAP_Plugin::hide_custom_ui()
     }
 
     Fl::remove_timeout(&CLAP_Plugin::custom_update_ui, this);
+
     _x_is_visible = false;
-#ifdef X11_CLASS
+
     if (m_X11_UI != nullptr)
         m_X11_UI->hide();
 
@@ -2539,7 +2152,7 @@ CLAP_Plugin::hide_custom_ui()
         m_gui->destroy(_plugin);
         m_bEditorCreated = false;
     }
-    
+
     if(m_X11_UI != nullptr)
     {
         delete m_X11_UI;
@@ -2547,16 +2160,6 @@ CLAP_Plugin::hide_custom_ui()
     }
 
     return true;
-#else
-    if(_x_display == nullptr)
-        return false;
-    if(_x_host_window == 0)
-        return false;
-
-    XUnmapWindow(_x_display, _x_host_window);
-    XFlush(_x_display);
-    return m_gui->hide(_plugin);
-#endif
 }
 
 void
