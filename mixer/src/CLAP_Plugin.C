@@ -2191,28 +2191,6 @@ CLAP_Plugin::handlePluginUIResized(const uint width, const uint height)
             }
         }
     }
-#if 0
-    if (fUI.width != width || fUI.height != height)
-    {
-        uint width2 = width;
-        uint height2 = height;
-
-        if (fExtensions.gui->adjust_size(fPlugin, &width2, &height2))
-        {
-            if (width2 != width || height2 != height)
-            {
-                fUI.isResizingFromHost = true;
-                fUI.width = width2;
-                fUI.height = height2;
-                fUI.window->setSize(width2, height2, false, false);
-            }
-            else
-            {
-                fExtensions.gui->set_size(fPlugin, width2, height2);
-            }
-        }
-    }
-#endif
 }
 
 // Host Timer support callbacks...
