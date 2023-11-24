@@ -35,9 +35,9 @@
 #include "LV2_RDF_Utils.hpp"
 #include "ImplementationData.H"
 #include "lv2/atom-forge.h"
+#include "X11PluginUI.H"
 
 #define PRESET_SUPPORT 1
-//#define USE_CARLA 1
 #define LV2_STATE_SAVE 1
 #define LV2_EXTERNAL_UI 1
 
@@ -56,12 +56,6 @@
 extern std::string project_directory;
 extern std::string export_import_strip;
 extern std::vector<std::string>remove_custom_data_directories;
-
-#ifdef USE_CARLA
-typedef void (*EventProcPtr)(XEvent* ev);
-#else
-#include "X11PluginUI.H"
-#endif
 
 
 class LV2_Plugin : public Plugin_Module,
@@ -177,28 +171,8 @@ private:
 #endif  // LV2_EXTERNAL_UI
 
 public:
-
-  /* X window for custom plugin ui */
-#ifdef USE_CARLA
-    Display* _x_display;
-    Window   _x_host_window;
-    Window   _x_child_window;
-    bool     _x_child_window_configured;
-    bool     _x_child_window_monitoring;
-    bool     _x_first_show;
-    bool     _x_set_size_called_at_least_Once;
-    bool     _x_is_idling;
-    EventProcPtr _x_event_proc;
-private:
-    void setSize(const uint width, const uint height, const bool forceUpdate, const bool resizeChild);
-    Window getChildWindow() const;
-    void init_x();
-#else
-public:
+    /* X window for custom plugin ui */
     X11PluginUI *_X11_UI;
-#endif  // USE CARLA
-
-public:
     bool _x_is_resizable;
     bool _x_is_visible;
     uint     _x_width;
