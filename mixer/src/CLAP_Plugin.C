@@ -1736,6 +1736,8 @@ CLAP_Plugin::init ( void )
 
     _x_is_visible = false;
     _is_floating = false;
+    _x_width = 0;
+    _x_height = 0;
 
 #ifdef X11_CLASS
     m_X11_UI = nullptr;
@@ -1977,6 +1979,7 @@ CLAP_Plugin::try_custom_ui()
     _x_is_resizable = m_gui->can_resize(_plugin);
     
     m_X11_UI = new X11PluginUI(this, _x_is_resizable, false);
+    m_X11_UI->setTitle(label());
     clap_window_t win = { CLAP_WINDOW_API_X11, {} };
     win.ptr = m_X11_UI->getPtr();
 
@@ -2185,6 +2188,7 @@ CLAP_Plugin::show_custom_ui()
 #ifdef X11_CLASS
 
     m_X11_UI->show();
+    m_X11_UI->focus();
 
 #else
     if (_x_display == nullptr)
@@ -2564,6 +2568,26 @@ CLAP_Plugin::handlePluginUIClosed()
 void
 CLAP_Plugin::handlePluginUIResized(const uint width, const uint height)
 {
+    DMESSAGE("Handle Resized W = %d: H = %d", width, height);
+    if (_x_width != width || _x_height != height)
+    {
+        uint width2 = width;
+        uint height2 = height;
+
+        if (m_gui->adjust_size(_plugin, &width2, &height2))
+        {
+            if (width2 != width || height2 != height)
+            {
+                _x_width = width2;
+                _x_height = height2;
+                m_X11_UI->setSize(width2, height2, false, false);
+            }
+            else
+            {
+                m_gui->set_size(_plugin, width2, height2);
+            }
+        }
+    }
 #if 0
     if (fUI.width != width || fUI.height != height)
     {

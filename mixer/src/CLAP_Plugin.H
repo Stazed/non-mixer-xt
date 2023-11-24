@@ -140,6 +140,8 @@ private:
     bool     _x_is_visible;
     bool     _is_floating;
     bool     _x_is_resizable;
+    uint     _x_width;
+    uint     _x_height;
 
     clap_audio_buffer _audio_ins;
     clap_audio_buffer _audio_outs;

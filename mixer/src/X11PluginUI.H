@@ -33,7 +33,7 @@ public:
     public:
         virtual ~Callback() {}
         virtual void handlePluginUIClosed() = 0;
-        virtual void handlePluginUIResized(uint width, uint height) = 0;
+        virtual void handlePluginUIResized(const uint width, const uint height) = 0;
     };
 
     X11PluginUI(Callback* const cb, const bool isResizable, const bool canMonitorChildren);
