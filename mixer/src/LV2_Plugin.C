@@ -43,12 +43,12 @@ static const uint X11Key_W      = 25;
 #ifdef USE_SUIL
 const std::vector<std::string> v_ui_types
 {
-    LV2_UI__UI,
     LV2_UI__X11UI,
     LV2_UI__GtkUI,
     LV2_UI__Gtk3UI,
     LV2_UI__Qt4UI,
-    LV2_UI__Qt5UI
+    LV2_UI__Qt5UI,
+    LV2_UI__UI      // This s/b last or all match and crash - ??? FIXME check
 };
 #endif
 
@@ -508,10 +508,10 @@ x_resize(LV2UI_Feature_Handle handle, int width, int height)
         return 1;
 
 #ifdef USE_CARLA
-
     XResizeWindow(pLv2Plugin->_x_display, pLv2Plugin->_x_host_window, width, height );
     XSync(pLv2Plugin->_x_display, False);
-
+#else
+    pLv2Plugin->_X11_UI->setSize(width, height, true, false );
 #endif
 
     DMESSAGE("X-width = %d: X-height = %d", width, height);
@@ -1584,6 +1584,25 @@ LV2_Plugin::plugin_instances ( unsigned int n )
 }
 
 void
+LV2_Plugin::handlePluginUIClosed()
+{
+    hide_custom_ui();
+}
+
+void
+LV2_Plugin::handlePluginUIResized(const uint width, const uint height)
+{
+    DMESSAGE("Handle Resized W = %d: H = %d", width, height);
+
+    if (_x_width != width || _x_height != height)
+    {
+        _x_width = width;
+        _x_height = height;
+        _X11_UI->setSize(width, height, true, false);
+    }
+}
+
+void
 LV2_Plugin::set_input_buffer ( int n, void *buf )
 {
     void* h;
@@ -1821,6 +1840,12 @@ _Pragma("GCC diagnostic pop")
     _x_is_idling = false;
     _x_is_resizable = false;
     _x_event_proc = nullptr;
+#else
+    _X11_UI = nullptr;
+    _x_is_resizable = false;
+    _x_is_visible = false;
+    _x_width = 0;
+    _x_height = 0;
 #endif  // USE_CARLA
 #endif  // USE_SUIL
 }
@@ -2438,10 +2463,8 @@ LV2_Plugin::try_custom_ui()
     {
         if(idle_iface && show_iface)
         {
-#ifdef USE_CARLA
             show_custom_ui();
             DMESSAGE("Running showInterface");
-#endif
             return true;
         }
     }
@@ -2455,10 +2478,8 @@ LV2_Plugin::try_custom_ui()
 #endif
     else if(_use_X11_interface)   /* Run the X11 embedded */
     {
-#ifdef USE_CARLA
         show_custom_ui();
         DMESSAGE("Running embedded X custom UI");
-#endif
         return true;
     }
 
@@ -2527,6 +2548,11 @@ LV2_Plugin::custom_ui_instantiate()
 #ifdef USE_CARLA
         init_x();
         parent = (LV2UI_Widget) _x_host_window;
+#else
+        _x_is_resizable = isUiResizable();
+        _X11_UI = new X11PluginUI(this, _x_is_resizable, true);
+        _X11_UI->setTitle(label());
+        parent = (LV2UI_Widget) _X11_UI->getPtr();
 #endif
     }
 
@@ -2923,6 +2949,8 @@ LV2_Plugin::custom_update_ui()
         }
 
         _x_is_idling = false;
+#else
+        _X11_UI->idle();
 #endif  //  USE_CARLA
     }
 
@@ -3039,9 +3067,7 @@ LV2_Plugin::close_custom_ui()
 #endif
     else    // X11
     {
-#ifdef USE_CARLA
         hide_custom_ui();
-#endif
     }
 }
 #ifdef USE_CARLA
@@ -3172,21 +3198,30 @@ LV2_Plugin::show_custom_ui()
 
     XMapRaised(_x_display, _x_host_window);
     XSync(_x_display, False);
+#else
+    _x_is_visible = true;
+    _X11_UI->show();
+    
 #endif  // USE_CARLA
     Fl::add_timeout( 0.03f, &LV2_Plugin::custom_update_ui, this );
 }
-#ifdef USE_CARLA
+
 void
 LV2_Plugin::hide_custom_ui()
 {
+    _x_is_visible = false;
+#ifdef USE_CARLA
     NON_SAFE_ASSERT_RETURN(_x_display != nullptr,);
     NON_SAFE_ASSERT_RETURN(_x_host_window != 0,);
 
-    _x_is_visible = false;
     XUnmapWindow(_x_display, _x_host_window);
     XFlush(_x_display);
+#else
+    if (_X11_UI != nullptr)
+        _X11_UI->hide();
+#endif
 }
-
+#ifdef USE_CARLA
 void
 LV2_Plugin::setSize(const uint width, const uint height, const bool forceUpdate, const bool resizeChild)
 {
@@ -3218,7 +3253,7 @@ LV2_Plugin::setSize(const uint width, const uint height, const bool forceUpdate,
     if (forceUpdate)
         XSync(_x_display, False);
 }
-
+#endif  // USE_CARLA
 bool
 LV2_Plugin::isUiResizable() const
 {
@@ -3235,8 +3270,6 @@ LV2_Plugin::isUiResizable() const
 
     return true;
 }
-
-#endif  // USE_CARLA
 #endif  // USE_SUIL
 
 

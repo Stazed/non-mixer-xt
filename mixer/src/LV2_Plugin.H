@@ -37,7 +37,7 @@
 #include "lv2/atom-forge.h"
 
 #define PRESET_SUPPORT 1
-#define USE_CARLA 1
+//#define USE_CARLA 1
 #define LV2_STATE_SAVE 1
 #define LV2_EXTERNAL_UI 1
 
@@ -59,10 +59,14 @@ extern std::vector<std::string>remove_custom_data_directories;
 
 #ifdef USE_CARLA
 typedef void (*EventProcPtr)(XEvent* ev);
+#else
+#include "X11PluginUI.H"
 #endif
 
 
-class LV2_Plugin : public Plugin_Module {
+class LV2_Plugin : public Plugin_Module,
+        private X11PluginUI::Callback
+{
 
 public:
 
@@ -184,19 +188,24 @@ public:
     bool     _x_first_show;
     bool     _x_set_size_called_at_least_Once;
     bool     _x_is_idling;
-    bool     _x_is_resizable;
     EventProcPtr _x_event_proc;
 private:
-    void hide_custom_ui();
     void setSize(const uint width, const uint height, const bool forceUpdate, const bool resizeChild);
-    bool isUiResizable() const;
     Window getChildWindow() const;
     void init_x();
+#else
+public:
+    X11PluginUI *_X11_UI;
 #endif  // USE CARLA
 
 public:
+    bool _x_is_resizable;
     bool _x_is_visible;
+    uint     _x_width;
+    uint     _x_height;
+    bool isUiResizable() const;
     void show_custom_ui();
+    void hide_custom_ui();
     bool try_custom_ui();
     bool send_to_custom_ui( uint32_t port_index, uint32_t size, uint32_t type, const void* buf );
 
@@ -253,6 +262,8 @@ public:
 
 protected:
 
+    void handlePluginUIClosed() override;
+    void handlePluginUIResized(const uint width, const uint height) override;
     bool plugin_instances ( unsigned int );
     void get ( Log_Entry &e ) const;
     void set ( Log_Entry &e );
