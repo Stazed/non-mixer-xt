@@ -54,18 +54,21 @@ static int temporaryErrorHandler(Display*, XErrorEvent*)
     return 0;
 }
 
-X11PluginUI::X11PluginUI(const bool isResizable, const bool canMonitorChildren):
-      fDisplay(nullptr),
-      fHostWindow(0),
-      fChildWindow(0),
-      fChildWindowConfigured(false),
-      fChildWindowMonitoring(isResizable || canMonitorChildren),
-      fIsVisible(false),
-      fFirstShow(true),
-      fSetSizeCalledAtLeastOnce(false),
-      fMinimumWidth(0),
-      fMinimumHeight(0),
-      fEventProc(nullptr)
+X11PluginUI::X11PluginUI(Callback* const cb, const bool isResizable, const bool canMonitorChildren):
+    fCallback(cb),
+    fIsIdling(false),
+    fIsResizable(isResizable),
+    fDisplay(nullptr),
+    fHostWindow(0),
+    fChildWindow(0),
+    fChildWindowConfigured(false),
+    fChildWindowMonitoring(isResizable || canMonitorChildren),
+    fIsVisible(false),
+    fFirstShow(true),
+    fSetSizeCalledAtLeastOnce(false),
+    fMinimumWidth(0),
+    fMinimumHeight(0),
+    fEventProc(nullptr)
  {
     fDisplay = XOpenDisplay(nullptr);
     NON_SAFE_ASSERT_RETURN(fDisplay != nullptr,);

@@ -1976,7 +1976,7 @@ CLAP_Plugin::try_custom_ui()
 #ifdef X11_CLASS
     _x_is_resizable = m_gui->can_resize(_plugin);
     
-    m_X11_UI = new X11PluginUI( _x_is_resizable, false);
+    m_X11_UI = new X11PluginUI(this, _x_is_resizable, false);
     clap_window_t win = { CLAP_WINDOW_API_X11, {} };
     win.ptr = m_X11_UI->getPtr();
 
@@ -2361,7 +2361,8 @@ CLAP_Plugin::custom_update_ui_x()
         goto FLOATING;
 #ifdef X11_CLASS
 
-    m_X11_UI->idle();
+    if(_x_is_visible)
+        m_X11_UI->idle();
     
 #else
     // prevent recursion
@@ -2551,6 +2552,39 @@ CLAP_Plugin::hide_custom_ui()
     XUnmapWindow(_x_display, _x_host_window);
     XFlush(_x_display);
     return m_gui->hide(_plugin);
+#endif
+}
+
+void
+CLAP_Plugin::handlePluginUIClosed()
+{
+    _x_is_visible = false;
+}
+
+void
+CLAP_Plugin::handlePluginUIResized(const uint width, const uint height)
+{
+#if 0
+    if (fUI.width != width || fUI.height != height)
+    {
+        uint width2 = width;
+        uint height2 = height;
+
+        if (fExtensions.gui->adjust_size(fPlugin, &width2, &height2))
+        {
+            if (width2 != width || height2 != height)
+            {
+                fUI.isResizingFromHost = true;
+                fUI.width = width2;
+                fUI.height = height2;
+                fUI.window->setSize(width2, height2, false, false);
+            }
+            else
+            {
+                fExtensions.gui->set_size(fPlugin, width2, height2);
+            }
+        }
+    }
 #endif
 }
 

@@ -36,7 +36,7 @@ public:
         virtual void handlePluginUIResized(uint width, uint height) = 0;
     };
 
-    X11PluginUI(const bool isResizable, const bool canMonitorChildren);
+    X11PluginUI(Callback* const cb, const bool isResizable, const bool canMonitorChildren);
 
     ~X11PluginUI();
 
@@ -53,12 +53,11 @@ public:
     void* getDisplay() const;
 
 protected:
+    Callback* fCallback;
     bool fIsIdling;
-    bool fIsStandalone;
     bool fIsResizable;
     void applyHintsFromChildWindow();
     Window getChildWindow() const;
-    Callback* fCallback;
 
 private:
     Display* fDisplay;

@@ -34,7 +34,7 @@
 #include "Plugin_Module.H"
 #include "LinkedList.hpp"
 
-//#define X11_CLASS 1
+#define X11_CLASS 1
 
 #ifdef X11_CLASS
 #include "X11PluginUI.H"
@@ -52,7 +52,9 @@ struct HostTimerDetails {
     uint32_t lastCallTimeInMs;
 };
 
-class CLAP_Plugin : public Plugin_Module {
+class CLAP_Plugin : public Plugin_Module,
+        private X11PluginUI::Callback
+{
 
 public:
 
@@ -265,6 +267,8 @@ private:
 
 protected:
 
+    void handlePluginUIClosed() override;
+    void handlePluginUIResized(const uint width, const uint height) override;
     static void host_gui_resize_hints_changed (
             const clap_host *host);
     static bool host_gui_request_resize (
