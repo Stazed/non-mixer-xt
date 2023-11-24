@@ -2524,8 +2524,8 @@ LV2_Plugin::custom_ui_instantiate()
     if(_use_X11_interface)   /* If embedded X11 */
     {
         /* We seem to have an accepted ui, so lets try to embed it in an X window*/
-        init_x();
 #ifdef USE_CARLA
+        init_x();
         parent = (LV2UI_Widget) _x_host_window;
 #endif
     }
@@ -2946,10 +2946,10 @@ LV2_Plugin::custom_update_ui()
     }
 }
 
+#ifdef USE_CARLA
 void
 LV2_Plugin::init_x()
 {
-#ifdef USE_CARLA
     _x_child_window_monitoring = _x_is_resizable = isUiResizable();
     
     _x_display = XOpenDisplay(nullptr);
@@ -2998,8 +2998,8 @@ LV2_Plugin::init_x()
         XInternAtom(_x_display, "_NET_WM_WINDOW_TYPE_NORMAL", False)
     };
     XChangeProperty(_x_display, _x_host_window, _wt, XA_ATOM, 32, PropModeReplace, (const uchar*)&_wts, 2);
-#endif
 }
+#endif  // USE_CARLA
 
 void
 LV2_Plugin::close_custom_ui()
@@ -3044,11 +3044,10 @@ LV2_Plugin::close_custom_ui()
 #endif
     }
 }
-
+#ifdef USE_CARLA
 Window
 LV2_Plugin::getChildWindow() const
 {
-#ifdef USE_CARLA
     NON_SAFE_ASSERT_RETURN(_x_display != nullptr, 0);
     NON_SAFE_ASSERT_RETURN(_x_host_window != 0, 0);
 
@@ -3065,10 +3064,9 @@ LV2_Plugin::getChildWindow() const
     }
 
     return ret;
-#endif
 }
+#endif  // USE_CARLA
 
-#ifdef USE_CARLA
 void
 LV2_Plugin::show_custom_ui()
 {
@@ -3091,6 +3089,7 @@ LV2_Plugin::show_custom_ui()
         return;
     }
 #endif
+#ifdef USE_CARLA
     NON_SAFE_ASSERT_RETURN(_x_display != nullptr,);
     NON_SAFE_ASSERT_RETURN(_x_host_window != 0,);
 
@@ -3173,10 +3172,10 @@ LV2_Plugin::show_custom_ui()
 
     XMapRaised(_x_display, _x_host_window);
     XSync(_x_display, False);
-
+#endif  // USE_CARLA
     Fl::add_timeout( 0.03f, &LV2_Plugin::custom_update_ui, this );
 }
-
+#ifdef USE_CARLA
 void
 LV2_Plugin::hide_custom_ui()
 {

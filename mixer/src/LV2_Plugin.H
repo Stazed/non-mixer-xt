@@ -181,20 +181,22 @@ public:
     Window   _x_child_window;
     bool     _x_child_window_configured;
     bool     _x_child_window_monitoring;
-    bool     _x_is_visible;
     bool     _x_first_show;
     bool     _x_set_size_called_at_least_Once;
     bool     _x_is_idling;
     bool     _x_is_resizable;
     EventProcPtr _x_event_proc;
 private:
-    void show_custom_ui();
     void hide_custom_ui();
     void setSize(const uint width, const uint height, const bool forceUpdate, const bool resizeChild);
-    bool isUiResizable() const;  
+    bool isUiResizable() const;
+    Window getChildWindow() const;
+    void init_x();
 #endif  // USE CARLA
 
 public:
+    bool _x_is_visible;
+    void show_custom_ui();
     bool try_custom_ui();
     bool send_to_custom_ui( uint32_t port_index, uint32_t size, uint32_t type, const void* buf );
 
@@ -206,9 +208,7 @@ private:
     void update_ui_settings();
     void custom_update_ui();
     static void custom_update_ui ( void * );
-    void init_x();
     void close_custom_ui();
-    Window getChildWindow() const;
 #endif  // USE_SUIL
 
 #ifdef LV2_WORKER_SUPPORT
