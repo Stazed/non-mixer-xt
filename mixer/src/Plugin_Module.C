@@ -49,7 +49,14 @@ Thread* Plugin_Module::plugin_discover_thread;
 
 static bool warn_legacy_once = false;
 
-Plugin_Module::Plugin_Module ( ) : Module( 50, 35, name() )
+Plugin_Module::Plugin_Module ( ) :
+    Module( 50, 35, name() ),
+    _last_latency(0),
+    _ladspainfo(nullptr),
+    _plugin_ins(0),
+    _plugin_outs(0),
+    _crosswire(false),
+    _latency(0)
 {
     color( fl_color_average(  fl_rgb_color( 0x99, 0x7c, 0x3a ), FL_BACKGROUND_COLOR, 1.0f ));
     
@@ -72,12 +79,8 @@ Plugin_Module::init ( void )
         _ladspainfo = ladspainfo;
     }
 
-    _latency = 0;
-    _last_latency = 0;
     /* module will be bypassed until plugin is loaded */
     *((float*)_bypass) = 1.0f;
-
-    _crosswire = false;
 
     align( (Fl_Align)FL_ALIGN_CENTER | FL_ALIGN_INSIDE );
 //     color( (Fl_Color)fl_color_average( FL_MAGENTA, FL_WHITE, 0.5f ) );
