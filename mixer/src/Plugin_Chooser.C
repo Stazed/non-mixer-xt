@@ -129,7 +129,7 @@ Plugin_Chooser::search ( const char *name, const char *author, const char *categ
 
 #ifdef CLAP_SUPPORT
             /* We do not support multiple instance for CLAP ATM. */
-            if( strcmp( p->type, "CLAP" ) == 0 )
+            if( strcmp( p->type.c_str(), "CLAP" ) == 0 )
             {
                 if (p->audio_inputs == 1 && ninputs > 1)
                     continue;
@@ -151,21 +151,21 @@ Plugin_Chooser::search ( const char *name, const char *author, const char *categ
             // if we want LV2 types only
             if( !strcmp( plug_type, "LV2" ) )
             {
-                if( strcmp(p->type, "LV2") )
+                if( strcmp(p->type.c_str(), "LV2") )
                 {
                     continue;   // Not LV2 so skip it
                 }
             }
             else if( !strcmp( plug_type, "LADSPA" ) )   // if we want LADSPA only
             {
-                if( strcmp( p->type, "LADSPA" ) )
+                if( strcmp( p->type.c_str(), "LADSPA" ) )
                 {
                     continue;   // Not LADSPA so skip it
                 }
             }
             else if( !strcmp( plug_type, "CLAP" ) )   // if we want CLAP only
             {
-                if( strcmp( p->type, "CLAP" ) )
+                if( strcmp( p->type.c_str(), "CLAP" ) )
                 {
                     continue;   // Not CLAP so skip it
                 }
@@ -272,7 +272,7 @@ void Plugin_Table::draw_cell(TableContext context,
                     s2 = _plugin_rows[R]->author.c_str();
                     break;
                 case 3:
-                    s2 = _plugin_rows[R]->type;
+                    s2 = _plugin_rows[R]->type.c_str();
                     break;
                 case 4:
                     sprintf( s, "%i", _plugin_rows[R]->audio_inputs );
@@ -337,18 +337,18 @@ Plugin_Chooser::cb_table ( Fl_Widget *w )
         }
         else
         {
-            if (::strcmp(_plugin_rows[R]->type, "LV2") == 0)
+            if (::strcmp(_plugin_rows[R]->type.c_str(), "LV2") == 0)
             {
                 _s_unique_id   = _plugin_rows[R]->s_unique_id;
                 _plugin_type = LV2;
             }
-            else if(::strcmp(_plugin_rows[R]->type, "LADSPA") == 0)
+            else if(::strcmp(_plugin_rows[R]->type.c_str(), "LADSPA") == 0)
             {
                 _value = _plugin_rows[R]->id;
                 _plugin_type = LADSPA;
             }
 #ifdef CLAP_SUPPORT
-            else if(::strcmp(_plugin_rows[R]->type, "CLAP") == 0)
+            else if(::strcmp(_plugin_rows[R]->type.c_str(), "CLAP") == 0)
             {
                 _s_unique_id   = _plugin_rows[R]->s_unique_id;
                 _value = _plugin_rows[R]->id;
@@ -399,7 +399,7 @@ Plugin_Chooser::load_favorites ( void )
               i != _plugins.end();
               ++i )
         {
-            if ( !strcmp( (*i).type, type ) &&
+            if ( !strcmp( (*i).type.c_str(), type ) &&
                  (*i).id == id )
             {
                 if( !strcmp(type, "LV2") )
@@ -452,7 +452,7 @@ Plugin_Chooser::save_favorites ( void )
     {
         if ( (*i).favorite )
         {
-            fprintf( fp, "%s:%lu:%s\n", i->type, i->id, i->s_unique_id.c_str() );
+            fprintf( fp, "%s:%lu:%s\n", i->type.c_str(), i->id, i->s_unique_id.c_str() );
         }
     }
     

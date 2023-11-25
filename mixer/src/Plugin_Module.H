@@ -45,18 +45,20 @@ public:
         std::string category;
         int audio_inputs;
         int audio_outputs;
-        const char *type;
+        const std::string type;
         bool favorite;
 
-        Plugin_Info ( const char* s_type )  // LADSPA, LV2 -- TODO other types
-            {
-                id = 0;
-
-                audio_inputs = 0;
-                audio_outputs = 0;
-                type = s_type;
-                favorite = 0;
-            }
+        Plugin_Info ( const std::string s_type ) :  // LADSPA, LV2 -- TODO other types
+            s_unique_id(),
+            id(0),
+            clap_path(),
+            name(),
+            author(),
+            category(),
+            audio_inputs(0),
+            audio_outputs(0),
+            type(s_type),
+            favorite(false) {}
 
         bool operator< ( const Plugin_Info &rhs ) {
             return strcmp( name.c_str(), rhs.name.c_str() ) < 1;
