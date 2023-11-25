@@ -125,6 +125,7 @@ private:
 
     const clap_plugin_t *_plugin;
 
+    volatile bool m_params_flush;
     const clap_plugin_params *m_params;
     const clap_plugin_timer_support *m_timer_support;
     const clap_plugin_posix_fd_support *m_posix_fd_support; // FIMXE
@@ -195,8 +196,6 @@ public:
     uint64_t getState (void** const dataPtr);
 
     LinkedList<HostTimerDetails> fTimers;
-
-    volatile bool m_params_flush;
 
     // Event buffer accessors.
     EventList& events_in  () { return m_events_in;  }

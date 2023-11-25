@@ -45,7 +45,44 @@ static /*           */ HostTimerDetails kTimerFallbackNC = { CLAP_INVALID_ID, 0,
 
 class Chain;    // forward declaration
 
-CLAP_Plugin::CLAP_Plugin() : Plugin_Module( )
+CLAP_Plugin::CLAP_Plugin() :
+    Plugin_Module(),
+    _entry(nullptr),
+    _factory(nullptr),
+    _descriptor(nullptr),
+    _clap_path(""),
+    _clap_id(""),
+    _last_chunk(nullptr),
+    _position(0),
+    _bpm(120.0f),
+    _rolling(false),
+    _is_processing(false),
+    _activated(false),
+    _plug_needs_callback(false),
+    _plug_request_restart(false),
+    m_bEditorCreated(false),
+    m_bEditorVisible(false),
+    m_X11_UI(nullptr),
+    _x_is_visible(false),
+    _is_floating(false),
+    _x_is_resizable(false),
+    _x_width(0),
+    _x_height(0),
+    _audio_in_buffers(nullptr),
+    _audio_out_buffers(nullptr),
+    _plugin(nullptr),
+    m_params_flush(false),
+    m_params(nullptr),
+    m_timer_support(nullptr),
+    m_posix_fd_support(nullptr),
+    m_gui(nullptr),
+    m_state(nullptr),
+    _project_file(""),
+    m_note_names(nullptr),
+    _midi_ins(0),
+    _midi_outs(0),
+    m_iMidiDialectIns(0),
+    m_iMidiDialectOuts(0)
 {
     init();
 
@@ -1690,32 +1727,6 @@ void
 CLAP_Plugin::init ( void )
 {
     _plug_type = CLAP;
-    _is_processing = false;
-    _activated = false;
-    _plug_needs_callback = false;
-    _plug_request_restart = false;
-
-    m_bEditorCreated = false;
-    m_bEditorVisible = false;
-    m_params_flush = false;
-
-    m_params = nullptr;
-    m_timer_support = nullptr;
-    m_posix_fd_support = nullptr;
-    m_gui = nullptr;
-    m_state = nullptr;
-    m_note_names = nullptr;
-
-    _x_is_visible = false;
-    _is_floating = false;
-    _x_width = 0;
-    _x_height = 0;
-
-    m_X11_UI = nullptr;
-
-    _last_chunk = nullptr;
-    _project_file = "";
-
     Plugin_Module::init();
 }
 
