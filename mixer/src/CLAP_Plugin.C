@@ -85,13 +85,14 @@ CLAP_Plugin::CLAP_Plugin() :
     m_iMidiDialectOuts(0)
 {
     init();
-
     log_create();
 }
 
 
 CLAP_Plugin::~CLAP_Plugin()
 {
+    log_destroy();
+
     if (_x_is_visible)
     {
         hide_custom_ui();
