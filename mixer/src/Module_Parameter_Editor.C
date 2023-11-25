@@ -705,7 +705,7 @@ Module_Parameter_Editor::cb_save_state_handle ( Fl_Widget *, void *v )
     /* File chooser window title */
     std::string title = "State Save";
     
-    char *filename;
+    char *filename = NULL;
 
 #ifdef CLAP_SUPPORT
     if ( ((Module_Parameter_Editor*)v)->_module->_plug_type == CLAP )
@@ -766,7 +766,7 @@ Module_Parameter_Editor::cb_restore_state_handle ( Fl_Widget *, void *v )
     /* File chooser window title */
     std::string title = "State Restore";
 
-    char *directory;    // or file
+    char *directory = NULL;    // or file
 
 #ifdef CLAP_SUPPORT
     if ( ((Module_Parameter_Editor*)v)->_module->_plug_type == CLAP )
