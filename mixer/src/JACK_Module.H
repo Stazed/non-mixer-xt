@@ -67,7 +67,6 @@ public:
 
     virtual const char *basename ( void ) const { return "JACK"; }
     virtual const char *name ( void ) const { return "JACK"; }
-    virtual bool initialize ( void );
 
     virtual void draw ( void );
     virtual int handle ( int m );

@@ -184,8 +184,8 @@ JACK_Module::JACK_Module ( bool log )
 JACK_Module::~JACK_Module ( )
 {
     log_destroy();
-    configure_inputs( 0 );
-    configure_outputs( 0 );
+    JACK_Module::configure_inputs( 0 );
+    JACK_Module::configure_outputs( 0 );
     if ( _prefix )
         free( _prefix );
 }
@@ -481,13 +481,6 @@ JACK_Module::configure_outputs ( int n )
         inc_button->show();
     }
 
-    return true;
-}
-
-
-bool
-JACK_Module::initialize ( void )
-{
     return true;
 }
 
