@@ -83,7 +83,7 @@ class Module : public Fl_Group, public Loggable {
     int _number;
     bool _refresh_needed;
 
-    void init ( void );
+    virtual void init ( void );
 
     void insert_menu_cb ( const Fl_Menu_ *m );
     static void insert_menu_cb ( Fl_Widget *w, void *v );
@@ -518,7 +518,7 @@ public:
         static void handle_signal_connection_state_changed ( OSC::Signal *, void *o );
     };
 
-    void bbox ( int &X, int &Y, int &W, int &H )
+    virtual void bbox ( int &X, int &Y, int &W, int &H )
         {
             X += + 5;
             Y += 5;
@@ -575,7 +575,7 @@ public:
     std::vector<Port> aux_audio_input;
     std::vector<Port> aux_audio_output;
 
-    void add_port ( const Port &p )
+    virtual void add_port ( const Port &p )
         {
             if ( p.type() == Port::AUDIO && p.direction() == Port::INPUT )
                 audio_input.push_back( p );
