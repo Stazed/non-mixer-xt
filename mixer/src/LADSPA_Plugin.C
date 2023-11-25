@@ -32,7 +32,9 @@
 #define HAVE_LIBLRDF 1
 #include "LADSPAInfo.h"
 
-LADSPA_Plugin::LADSPA_Plugin ( ) : Plugin_Module( )
+LADSPA_Plugin::LADSPA_Plugin ( ) :
+    Plugin_Module(),
+    _idata(nullptr)
 {
     init();
     log_create();
@@ -51,9 +53,6 @@ LADSPA_Plugin::load_plugin(Module::Picked picked)
 {
     unsigned long id = picked.unique_id;
 
-    ladspainfo = _ladspainfo;
-
-    _plug_type = LADSPA;
     _idata->descriptor = ladspainfo->GetDescriptorByID( id );
 
     _plugin_ins = _plugin_outs = 0;
@@ -308,7 +307,11 @@ void
 LADSPA_Plugin::init ( void )
 {
     _plug_type = LADSPA;
+
     Plugin_Module::init();
+    
+    ladspainfo = _ladspainfo;
+
     _idata = new ImplementationData();
 }
 
