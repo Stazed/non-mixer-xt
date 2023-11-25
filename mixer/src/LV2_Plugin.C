@@ -514,15 +514,55 @@ static void mixer_lv2_ui_closed ( LV2UI_Controller ui_controller )
 
 static LV2_Lib_Manager lv2_lib_manager;
 
-LV2_Plugin::LV2_Plugin ( ) : Plugin_Module( )
+LV2_Plugin::LV2_Plugin ( ) :
+    Plugin_Module( ),
+    _idata(nullptr),
+    _lilv_plugin(nullptr),
+    _uridMapFt(nullptr),
+    _uridUnmapFt(nullptr),
+    _project_directory(),
+    _atom_ins(0),
+    _atom_outs(0),
+    _loading_from_file(false),
+    _zix_requests(nullptr),
+    _zix_responses(nullptr),
+    _plugin_to_ui(nullptr),
+    _ui_to_plugin(nullptr),
+    _ui_event_buf(nullptr),
+    _worker_response(nullptr),
+    _b_threaded(false),
+    _exit_process(false),
+    _safe_restore(false),
+    _atom_buffer_size(ATOM_BUFFER_SIZE),
+    _ui_host(nullptr),
+    _ui_instance(nullptr),
+    _use_showInterface(false),
+    _use_X11_interface(false),
+    _all_uis(nullptr),
+    _lilv_user_interface(nullptr),
+    _lilv_ui_type(nullptr),
+    _use_external_ui(false),
+    _lv2_ui_handle(nullptr),
+    _X11_UI(nullptr),
+    _x_is_resizable(false),
+    _x_is_visible(false),
+    _x_width(0),
+    _x_height(0),
+    _midi_ins(0),
+    _midi_outs(0),
+    _position(0),
+    _bpm(120.0f),
+    _rolling(false)
 {
     init();
-
     log_create();
 }
 
 LV2_Plugin::~LV2_Plugin ( )
 {
+    log_destroy();
+    plugin_instances( 0 );
+
     /* In case the user left the custom ui up */
 #ifdef LV2_WORKER_SUPPORT
     _exit_process = true;
@@ -582,9 +622,6 @@ LV2_Plugin::~LV2_Plugin ( )
     free(_ui_event_buf);
 #endif
 
-    log_destroy();
-    plugin_instances( 0 );
-    
 #ifdef PRESET_SUPPORT
     lilv_world_free(_lilvWorld);
 #endif
@@ -639,16 +676,6 @@ LV2_Plugin::load_plugin ( Module::Picked picked )
 #endif
 
     _plugin_ins = _plugin_outs = 0;
-#ifdef LV2_WORKER_SUPPORT
-    _atom_ins = _atom_outs = 0;
-
-#ifdef LV2_MIDI_SUPPORT
-    _midi_ins = _midi_outs = 0;
-    _position = 0;
-    _bpm = 120.0f;
-    _rolling = false;
-#endif  // LV2_MIDI_SUPPORT
-#endif  // LV2_WORKER_SUPPORT
 
     if ( ! _idata->lv2.rdf_data )
     {
@@ -1714,7 +1741,6 @@ LV2_Plugin::init ( void )
     Plugin_Module::init();
 
     _idata = new ImplementationData();
-    _project_directory = "";
 
     _idata->lv2.options.maxBufferSize = buffer_size();
     _idata->lv2.options.minBufferSize = buffer_size();
@@ -1743,22 +1769,14 @@ _Pragma("GCC diagnostic pop")
     m_lv2_schedule->handle              = this;
     m_lv2_schedule->schedule_work       = lv2_non_worker_schedule;
 
-    _loading_from_file = false;
     zix_sem_init(&_zix_sem, 0);
-    _b_threaded = false;
     zix_sem_init(&_work_lock, 1);
-    _exit_process = false;
-    _safe_restore = false;
-    _atom_buffer_size = ATOM_BUFFER_SIZE;
 #endif
 
 #ifdef USE_SUIL
     LV2UI_Resize* const uiResizeFt = new LV2UI_Resize;
     uiResizeFt->handle             = this;
     uiResizeFt->ui_resize          = x_resize;
-    _all_uis                       = NULL;
-    _lilv_user_interface           = NULL;
-    _lilv_ui_type                  = NULL;
 #endif // USE_SUIL
 
     _idata->lv2.features[Plugin_Feature_BufSize_Bounded]->URI  = LV2_BUF_SIZE__boundedBlockLength;
@@ -1796,21 +1814,6 @@ _Pragma("GCC diagnostic pop")
     lilv_world_load_all(_lilvWorld);
     _lilvPlugins = lilv_world_get_all_plugins(_lilvWorld);
 #endif
-    
-#ifdef USE_SUIL
-    _ui_host = NULL;
-    _ui_instance = NULL;
-    _use_showInterface = false;
-    _use_X11_interface = false;
-#ifdef LV2_EXTERNAL_UI
-    _use_external_ui = false;
-#endif
-    _X11_UI = nullptr;
-    _x_is_resizable = false;
-    _x_is_visible = false;
-    _x_width = 0;
-    _x_height = 0;
-#endif  // USE_SUIL
 }
 
 #ifdef LV2_WORKER_SUPPORT
