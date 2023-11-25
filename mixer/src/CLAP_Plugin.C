@@ -1493,7 +1493,7 @@ CLAP_Plugin::create_control_ports()
                 
                 /* Used for OSC path creation unique symbol */
                 std::string osc_symbol = param_info.name;
-                std::remove(osc_symbol.begin(), osc_symbol.end(), ' ');
+                osc_symbol.erase(std::remove(osc_symbol.begin(), osc_symbol.end(), ' '), osc_symbol.end());
                 osc_symbol += std::to_string( i );
                 
                 p.set_symbol(osc_symbol.c_str());
@@ -2097,9 +2097,6 @@ CLAP_Plugin::custom_update_ui ( void *v )
 void
 CLAP_Plugin::custom_update_ui_x()
 {
-    int nextWidth = 0;
-    int nextHeight = 0;
-
     if (!_is_floating)
     {
         if(_x_is_visible)
