@@ -35,6 +35,8 @@ public:
     ImplementationData *_idata;
 
     virtual bool load_plugin ( Module::Picked picked );
+    void create_audio_ports();
+    void create_control_ports();
 
     virtual bool get_impulse_response ( sample_t *buf, nframes_t nframes );
     
