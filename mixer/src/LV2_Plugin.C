@@ -662,15 +662,15 @@ LV2_Plugin::~LV2_Plugin ( )
 bool
 LV2_Plugin::load_plugin ( Module::Picked picked )
 {
-    const char* uri = strdup(picked.s_unique_id.c_str());
+    const std::string uri = picked.s_unique_id.c_str();
 
-    _idata->lv2.rdf_data = lv2_rdf_new( uri, true );
+    _idata->lv2.rdf_data = lv2_rdf_new( uri.c_str(), true );
 
 #ifdef PRESET_SUPPORT
     _PresetList = _idata->lv2.rdf_data->PresetListStructs;
     _uridMapFt =  (LV2_URID_Map*) _idata->lv2.features[Plugin_Feature_URID_Map]->data;
     _uridUnmapFt = (LV2_URID_Unmap*) _idata->lv2.features[Plugin_Feature_URID_Unmap]->data;
-    LilvNode* plugin_uri = lilv_new_uri(get_lilv_world(), uri);
+    LilvNode* plugin_uri = lilv_new_uri(get_lilv_world(), uri.c_str());
     _lilv_plugin = lilv_plugins_get_by_uri(get_lilv_plugins(), plugin_uri);
     lilv_node_free(plugin_uri);
 #endif
@@ -680,18 +680,17 @@ LV2_Plugin::load_plugin ( Module::Picked picked )
     if ( ! _idata->lv2.rdf_data )
     {
         /* unknown plugin URI */
-        WARNING( "Unknown plugin URI: %s", uri );
+        WARNING( "Unknown plugin URI: %s", uri.c_str() );
 	char s[25];
 
-	snprintf( s, 24, "! %s", uri );
+	snprintf( s, 24, "! %s", uri.c_str() );
 	
         base_label( s );
 
-        free((char*) uri);
         return false;
     }
 
-    _idata->lv2.descriptor = lv2_lib_manager.get_descriptor_for_uri( _idata->lv2.rdf_data->Binary, uri );
+    _idata->lv2.descriptor = lv2_lib_manager.get_descriptor_for_uri( _idata->lv2.rdf_data->Binary, uri.c_str() );
 
     base_label( _idata->lv2.rdf_data->Name );
 
@@ -1038,7 +1037,6 @@ LV2_Plugin::load_plugin ( Module::Picked picked )
         WARNING( "Failed to load plugin" );
         /* We don't need to delete anything here because the plugin module gets deleted along with
            everything else. */
-        free((char*) uri);
         return false;
     }
 
@@ -1071,7 +1069,7 @@ LV2_Plugin::load_plugin ( Module::Picked picked )
         if ( ! _loading_from_file )
         {
             const LV2_URID_Map* const uridMap = (const LV2_URID_Map*)_idata->lv2.features[Plugin_Feature_URID_Map]->data;
-            LilvState* const state = Lv2WorldClass::getInstance().getStateFromURI(uri, (LV2_URID_Map*) uridMap);
+            LilvState* const state = Lv2WorldClass::getInstance().getStateFromURI(uri.c_str(), (LV2_URID_Map*) uridMap);
 
             /* Set any files for the plugin - no need to update control parameters since they are already set */
             lilv_state_restore(state, _lilv_instance,  mixer_lv2_set_port_value, this, 0, _idata->lv2.features);
@@ -1101,7 +1099,6 @@ LV2_Plugin::load_plugin ( Module::Picked picked )
     Fl::add_timeout( 0.03f, &update_ui, this );
 #endif
 
-    free((char*) uri);
     return instances;
 }
 
