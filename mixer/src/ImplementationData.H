@@ -179,7 +179,7 @@ struct ImplementationData
 #endif
     } ext;
 
-    std::vector<void*> handle;
+    std::vector<LV2_Handle> handle;
 
     ImplementationData()
     {
