@@ -315,8 +315,8 @@ LADSPA_Plugin::init ( void )
 {
     _plug_type = LADSPA;
 
-    Plugin_Module::init();
-    
+    set_ladspainfo();
+
     ladspainfo = _ladspainfo;
 
     _idata = new ImplementationData();

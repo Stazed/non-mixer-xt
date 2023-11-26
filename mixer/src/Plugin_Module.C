@@ -71,14 +71,14 @@ Plugin_Module::~Plugin_Module ( )
 }
 
 void
+Plugin_Module::set_ladspainfo( void )
+{
+    _ladspainfo = ladspainfo;
+}
+
+void
 Plugin_Module::init ( void )
 {
-    // TODO other types???
-    if(_plug_type == LADSPA)
-    {
-        _ladspainfo = ladspainfo;
-    }
-
     /* module will be bypassed until plugin is loaded */
     *((float*)_bypass) = 1.0f;
 

@@ -140,6 +140,7 @@ public:
 protected:
 
     std::string get_custom_data_location(const std::string path);
+    void set_ladspainfo( void );
 
     volatile nframes_t _latency;
     void init ( void );
