@@ -232,7 +232,6 @@ private:
     void activate ( void );
     void deactivate ( void );
     void add_port ( const Port &p );
-    void init ( void );
 
     // Transfer parameter changes...
     void process_params_out ();

@@ -84,7 +84,8 @@ CLAP_Plugin::CLAP_Plugin() :
     m_iMidiDialectIns(0),
     m_iMidiDialectOuts(0)
 {
-    init();
+    _plug_type = CLAP;
+
     log_create();
 }
 
@@ -1722,13 +1723,6 @@ CLAP_Plugin::add_port ( const Port &p )
         note_input.push_back( p );
     else if ( p.type() == Port::MIDI && p.direction() == Port::OUTPUT )
         note_output.push_back( p );
-}
-
-void
-CLAP_Plugin::init ( void )
-{
-    _plug_type = CLAP;
-    Plugin_Module::init();
 }
 
 // Plugin parameters flush.
