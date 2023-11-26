@@ -23,7 +23,6 @@
 
 #pragma once
 
-#include <ladspa.h>
 #include "LV2_RDF_Utils.hpp"
 #include <lv2/data-access/data-access.h>
 #include <dlfcn.h>
@@ -160,7 +159,6 @@ struct Plugin_Module_Options {
 
 struct ImplementationData
 {
-    const LADSPA_Descriptor      *descriptor;
     struct 
     {
         const LV2_Descriptor     *descriptor;
@@ -188,7 +186,6 @@ struct ImplementationData
 
     ImplementationData()
     {
-        descriptor     = NULL;
         lv2.descriptor = NULL;
         lv2.rdf_data   = NULL;
 

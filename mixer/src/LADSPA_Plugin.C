@@ -32,6 +32,13 @@
 #define HAVE_LIBLRDF 1
 #include "LADSPAInfo.h"
 
+/* keep this out of the header to avoid spreading ladspa.h dependency */
+struct LADSPA_Plugin::ImplementationData
+{
+    const LADSPA_Descriptor     *descriptor;
+    std::vector<LADSPA_Handle>   handle;
+};
+
 LADSPA_Plugin::LADSPA_Plugin ( ) :
     Plugin_Module(),
     _idata(nullptr)

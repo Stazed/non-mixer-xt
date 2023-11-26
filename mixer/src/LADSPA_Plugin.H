@@ -30,6 +30,7 @@
 class LADSPA_Plugin : public Plugin_Module {
 
 public:
+    struct ImplementationData;
 
     ImplementationData *_idata;
 
