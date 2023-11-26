@@ -216,8 +216,7 @@ Plugin_Module::scan_LADSPA_plugins( std::list<Plugin_Info> & pr )
     {
         Plugin_Info pi("LADSPA");
 
-        //   pi[j].path = i->Name.c_str();
-        pi.s_unique_id = "";
+        pi.s_unique_id = "(null)";  // (null) since we have to have something for favorites save and scan
         pi.id = i->UniqueID;
         pi.author = i->Maker;
         pi.name = i->Name;
