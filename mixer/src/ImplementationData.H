@@ -159,113 +159,110 @@ struct Plugin_Module_Options {
 
 struct ImplementationData
 {
-    struct 
+    const LV2_Descriptor     *descriptor;
+    const LV2_RDF_Descriptor *rdf_data;
+    LV2_Feature*              features[Plugin_Features_Count+1];
+    // extension data
+    Plugin_Module_Options     options;
+    std::vector<std::string>  mappedURIs;
+    // extensions
+    struct
     {
-        const LV2_Descriptor     *descriptor;
-        const LV2_RDF_Descriptor *rdf_data;
-        LV2_Feature*              features[Plugin_Features_Count+1];
-        // extension data
-        Plugin_Module_Options     options;
-        std::vector<std::string>  mappedURIs;
-        // extensions
-        struct
-        {
-            const LV2_Options_Interface* options;
-            const LV2_State_Interface*   state;
-            const LV2_Worker_Interface*  worker;
+        const LV2_Options_Interface* options;
+        const LV2_State_Interface*   state;
+        const LV2_Worker_Interface*  worker;
 #ifdef USE_SUIL
-            LV2_Extension_Data_Feature ext_data;
-            const LV2UI_Idle_Interface* idle_iface;
-            const LV2UI_Show_Interface* ui_showInterface;
-            const LV2UI_Resize* resize_ui;
+        LV2_Extension_Data_Feature ext_data;
+        const LV2UI_Idle_Interface* idle_iface;
+        const LV2UI_Show_Interface* ui_showInterface;
+        const LV2UI_Resize* resize_ui;
 #endif
-        } ext;
-    } lv2;
+    } ext;
 
     std::vector<void*> handle;
 
     ImplementationData()
     {
-        lv2.descriptor = NULL;
-        lv2.rdf_data   = NULL;
+        descriptor = NULL;
+        rdf_data   = NULL;
 
         for (int i=0; i<Plugin_Features_Count; ++i)
         {
-            lv2.features[i] = new LV2_Feature;
-            lv2.features[i]->URI = NULL;
-            lv2.features[i]->data = NULL;
+            features[i] = new LV2_Feature;
+            features[i]->URI = NULL;
+            features[i]->data = NULL;
         }
-        lv2.features[Plugin_Features_Count] = NULL;
+        features[Plugin_Features_Count] = NULL;
 
-        lv2.mappedURIs.push_back("");                           // Plugin_Module_URI_Null
-        lv2.mappedURIs.push_back(LV2_ATOM__Bool);               // Plugin_Module_URI_Atom_Bool
-        lv2.mappedURIs.push_back(LV2_ATOM__Double);             // Plugin_Module_URI_Atom_Double
-        lv2.mappedURIs.push_back(LV2_ATOM__Int);                // Plugin_Module_URI_Atom_Int
-        lv2.mappedURIs.push_back(LV2_ATOM__Float);              // Plugin_Module_URI_Atom_Float
-        lv2.mappedURIs.push_back(LV2_ATOM__Long);               // Plugin_Module_URI_Atom_Long
-        lv2.mappedURIs.push_back(LV2_BUF_SIZE__maxBlockLength); // Plugin_Module_URI_BufSize_MaxLength
-        lv2.mappedURIs.push_back(LV2_BUF_SIZE__minBlockLength); // Plugin_Module_URI_BufSize_MinLength
-        lv2.mappedURIs.push_back(LV2_PARAMETERS__sampleRate);   // Plugin_Module_URI_Parameter_SampleRate
+        mappedURIs.push_back("");                           // Plugin_Module_URI_Null
+        mappedURIs.push_back(LV2_ATOM__Bool);               // Plugin_Module_URI_Atom_Bool
+        mappedURIs.push_back(LV2_ATOM__Double);             // Plugin_Module_URI_Atom_Double
+        mappedURIs.push_back(LV2_ATOM__Int);                // Plugin_Module_URI_Atom_Int
+        mappedURIs.push_back(LV2_ATOM__Float);              // Plugin_Module_URI_Atom_Float
+        mappedURIs.push_back(LV2_ATOM__Long);               // Plugin_Module_URI_Atom_Long
+        mappedURIs.push_back(LV2_BUF_SIZE__maxBlockLength); // Plugin_Module_URI_BufSize_MaxLength
+        mappedURIs.push_back(LV2_BUF_SIZE__minBlockLength); // Plugin_Module_URI_BufSize_MinLength
+        mappedURIs.push_back(LV2_PARAMETERS__sampleRate);   // Plugin_Module_URI_Parameter_SampleRate
 #ifdef LV2_WORKER_SUPPORT
-        lv2.mappedURIs.push_back(LV2_ATOM__Sequence);
-        lv2.mappedURIs.push_back(LV2_ATOM__Chunk);
-        lv2.mappedURIs.push_back(LV2_ATOM__eventTransfer);
-        lv2.mappedURIs.push_back(LV2_PATCH__property);
-        lv2.mappedURIs.push_back(LV2_PATCH__value);
-        lv2.mappedURIs.push_back(LV2_PATCH__body);
-        lv2.mappedURIs.push_back(LV2_PATCH__Set);
-        lv2.mappedURIs.push_back(LV2_PATCH__Put);
+        mappedURIs.push_back(LV2_ATOM__Sequence);
+        mappedURIs.push_back(LV2_ATOM__Chunk);
+        mappedURIs.push_back(LV2_ATOM__eventTransfer);
+        mappedURIs.push_back(LV2_PATCH__property);
+        mappedURIs.push_back(LV2_PATCH__value);
+        mappedURIs.push_back(LV2_PATCH__body);
+        mappedURIs.push_back(LV2_PATCH__Set);
+        mappedURIs.push_back(LV2_PATCH__Put);
 #endif
 #ifdef USE_SUIL
-        lv2.mappedURIs.push_back(LV2_UI__resize);
-        lv2.mappedURIs.push_back(LV2_UI__scaleFactor);
+        mappedURIs.push_back(LV2_UI__resize);
+        mappedURIs.push_back(LV2_UI__scaleFactor);
 #endif
 #ifdef LV2_MIDI_SUPPORT
-        lv2.mappedURIs.push_back(LV2_MIDI__MidiEvent);
-        lv2.mappedURIs.push_back(LV2_TIME__Position);
-        lv2.mappedURIs.push_back(LV2_TIME__frame);
-        lv2.mappedURIs.push_back(LV2_TIME__speed);
-        lv2.mappedURIs.push_back(LV2_TIME__barBeat);
-        lv2.mappedURIs.push_back(LV2_TIME__bar);
-        lv2.mappedURIs.push_back(LV2_TIME__beatUnit);
-        lv2.mappedURIs.push_back(LV2_TIME__beatsPerBar);
-        lv2.mappedURIs.push_back(LV2_TIME__beatsPerMinute);
+        mappedURIs.push_back(LV2_MIDI__MidiEvent);
+        mappedURIs.push_back(LV2_TIME__Position);
+        mappedURIs.push_back(LV2_TIME__frame);
+        mappedURIs.push_back(LV2_TIME__speed);
+        mappedURIs.push_back(LV2_TIME__barBeat);
+        mappedURIs.push_back(LV2_TIME__bar);
+        mappedURIs.push_back(LV2_TIME__beatUnit);
+        mappedURIs.push_back(LV2_TIME__beatsPerBar);
+        mappedURIs.push_back(LV2_TIME__beatsPerMinute);
 #endif
-        lv2.ext.options = NULL;
-        lv2.ext.state   = NULL;
-        lv2.ext.worker  = NULL;
-        lv2.ext.idle_iface = NULL;
-        lv2.ext.ui_showInterface = NULL;
-        lv2.ext.resize_ui = NULL;
+        ext.options = NULL;
+        ext.state   = NULL;
+        ext.worker  = NULL;
+        ext.idle_iface = NULL;
+        ext.ui_showInterface = NULL;
+        ext.resize_ui = NULL;
     }
 
     ~ImplementationData()
     {
-        if ( lv2.rdf_data )
+        if ( rdf_data )
         {
-            delete lv2.rdf_data;
-            lv2.rdf_data = NULL;
+            delete rdf_data;
+            rdf_data = NULL;
         }
 _Pragma("GCC diagnostic push")
 _Pragma("GCC diagnostic ignored \"-Wdeprecated-declarations\"")
-        if ( lv2.features[Plugin_Feature_URI_Map] && lv2.features[Plugin_Feature_URI_Map]->data )
-            delete (LV2_URI_Map_Feature*)lv2.features[Plugin_Feature_URI_Map]->data;
+        if ( features[Plugin_Feature_URI_Map] && features[Plugin_Feature_URI_Map]->data )
+            delete (LV2_URI_Map_Feature*)features[Plugin_Feature_URI_Map]->data;
 _Pragma("GCC diagnostic pop")
-        if ( lv2.features[Plugin_Feature_URID_Map] && lv2.features[Plugin_Feature_URID_Map]->data )
-            delete (LV2_URID_Map*)lv2.features[Plugin_Feature_URID_Map]->data;
+        if ( features[Plugin_Feature_URID_Map] && features[Plugin_Feature_URID_Map]->data )
+            delete (LV2_URID_Map*)features[Plugin_Feature_URID_Map]->data;
 
-        if ( lv2.features[Plugin_Feature_URID_Unmap] && lv2.features[Plugin_Feature_URID_Unmap]->data )
-            delete (LV2_URID_Unmap*)lv2.features[Plugin_Feature_URID_Unmap]->data;
+        if ( features[Plugin_Feature_URID_Unmap] && features[Plugin_Feature_URID_Unmap]->data )
+            delete (LV2_URID_Unmap*)features[Plugin_Feature_URID_Unmap]->data;
 
-        if ( lv2.features[Plugin_Feature_Make_path] && lv2.features[Plugin_Feature_Make_path]->data )
-            delete (LV2_State_Make_Path*)lv2.features[Plugin_Feature_Make_path]->data;
+        if ( features[Plugin_Feature_Make_path] && features[Plugin_Feature_Make_path]->data )
+            delete (LV2_State_Make_Path*)features[Plugin_Feature_Make_path]->data;
 #ifdef LV2_WORKER_SUPPORT
-        if ( lv2.features[Plugin_Feature_Worker_Schedule] && lv2.features[Plugin_Feature_Worker_Schedule]->data )
-            delete (LV2_Worker_Schedule*)lv2.features[Plugin_Feature_Worker_Schedule]->data;
+        if ( features[Plugin_Feature_Worker_Schedule] && features[Plugin_Feature_Worker_Schedule]->data )
+            delete (LV2_Worker_Schedule*)features[Plugin_Feature_Worker_Schedule]->data;
 #endif
 #ifdef USE_SUIL
-        if ( lv2.features[Plugin_Feature_Resize] && lv2.features[Plugin_Feature_Resize]->data )
-            delete (LV2UI_Resize*)lv2.features[Plugin_Feature_Resize]->data;
+        if ( features[Plugin_Feature_Resize] && features[Plugin_Feature_Resize]->data )
+            delete (LV2UI_Resize*)features[Plugin_Feature_Resize]->data;
 #endif
     }
 
@@ -350,7 +347,7 @@ _Pragma("GCC diagnostic pop")
         ImplementationData* self = (ImplementationData*)handle;
 
         uint32_t ret = 0;
-        for (std::vector<std::string>::iterator it = self->lv2.mappedURIs.begin(), end = self->lv2.mappedURIs.end(); it != end; ++it)
+        for (std::vector<std::string>::iterator it = self->mappedURIs.begin(), end = self->mappedURIs.end(); it != end; ++it)
         {
             if (ret == 0)
             {
@@ -366,7 +363,7 @@ _Pragma("GCC diagnostic pop")
             ++ret;
         }
 
-        self->lv2.mappedURIs.push_back(uri);
+        self->mappedURIs.push_back(uri);
         return ret;
     }
 
@@ -377,8 +374,8 @@ _Pragma("GCC diagnostic pop")
 
         ImplementationData* self = (ImplementationData*)handle;
 
-        if ( urid <= self->lv2.mappedURIs.size() )
-            return self->lv2.mappedURIs[urid].c_str();
+        if ( urid <= self->mappedURIs.size() )
+            return self->mappedURIs[urid].c_str();
 
         return NULL;
     }

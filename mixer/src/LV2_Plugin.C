@@ -232,7 +232,7 @@ LV2_Plugin::restore_LV2_plugin_state(const std::string directory)
 
     DMESSAGE("Restoring plugin state from %s", path.c_str());
 
-    lilv_state_restore(state, _lilv_instance,  mixer_lv2_set_port_value, this, 0, _idata->lv2.features);
+    lilv_state_restore(state, _lilv_instance,  mixer_lv2_set_port_value, this, 0, _idata->features);
 
     lilv_state_free(state);
 }
@@ -338,7 +338,7 @@ worker_func(void* data)
             // Lock and dispatch request to plugin's work handler
             zix_sem_wait(&worker->_work_lock);
             
-            worker->_idata->lv2.ext.worker->work(
+            worker->_idata->ext.worker->work(
                 worker->_lilv_instance->lv2_handle, non_worker_respond, worker, size, buf);
 
             zix_sem_post(&worker->_work_lock);
@@ -384,7 +384,7 @@ lv2_non_worker_schedule(LV2_Worker_Schedule_Handle handle,
         DMESSAGE("NOT threaded");
         zix_sem_wait(&worker->_work_lock);
 
-        st = worker->_idata->lv2.ext.worker->work(
+        st = worker->_idata->ext.worker->work(
         worker->_lilv_instance->lv2_handle, non_worker_respond, worker, size, data);
 
         zix_sem_post(&worker->_work_lock);
@@ -611,7 +611,7 @@ LV2_Plugin::~LV2_Plugin ( )
 #endif
 
 #ifdef LV2_WORKER_SUPPORT
-    if ( _idata->lv2.ext.worker )
+    if ( _idata->ext.worker )
     {
         non_worker_finish();
         non_worker_destroy();
@@ -664,12 +664,12 @@ LV2_Plugin::load_plugin ( Module::Picked picked )
 {
     const std::string uri = picked.s_unique_id.c_str();
 
-    _idata->lv2.rdf_data = lv2_rdf_new( uri.c_str(), true );
+    _idata->rdf_data = lv2_rdf_new( uri.c_str(), true );
 
 #ifdef PRESET_SUPPORT
-    _PresetList = _idata->lv2.rdf_data->PresetListStructs;
-    _uridMapFt =  (LV2_URID_Map*) _idata->lv2.features[Plugin_Feature_URID_Map]->data;
-    _uridUnmapFt = (LV2_URID_Unmap*) _idata->lv2.features[Plugin_Feature_URID_Unmap]->data;
+    _PresetList = _idata->rdf_data->PresetListStructs;
+    _uridMapFt =  (LV2_URID_Map*) _idata->features[Plugin_Feature_URID_Map]->data;
+    _uridUnmapFt = (LV2_URID_Unmap*) _idata->features[Plugin_Feature_URID_Unmap]->data;
     LilvNode* plugin_uri = lilv_new_uri(get_lilv_world(), uri.c_str());
     _lilv_plugin = lilv_plugins_get_by_uri(get_lilv_plugins(), plugin_uri);
     lilv_node_free(plugin_uri);
@@ -677,7 +677,7 @@ LV2_Plugin::load_plugin ( Module::Picked picked )
 
     _plugin_ins = _plugin_outs = 0;
 
-    if ( ! _idata->lv2.rdf_data )
+    if ( ! _idata->rdf_data )
     {
         /* unknown plugin URI */
         WARNING( "Unknown plugin URI: %s", uri.c_str() );
@@ -690,23 +690,23 @@ LV2_Plugin::load_plugin ( Module::Picked picked )
         return false;
     }
 
-    _idata->lv2.descriptor = lv2_lib_manager.get_descriptor_for_uri( _idata->lv2.rdf_data->Binary, uri.c_str() );
+    _idata->descriptor = lv2_lib_manager.get_descriptor_for_uri( _idata->rdf_data->Binary, uri.c_str() );
 
-    base_label( _idata->lv2.rdf_data->Name );
+    base_label( _idata->rdf_data->Name );
 
-    if ( _idata->lv2.descriptor )
+    if ( _idata->descriptor )
     {
-        MESSAGE( "Name: %s", _idata->lv2.rdf_data->Name );
+        MESSAGE( "Name: %s", _idata->rdf_data->Name );
 
-        if ( _idata->lv2.descriptor->extension_data )
+        if ( _idata->descriptor->extension_data )
         {
             bool hasOptions = false;
             bool hasState   = false;
             bool hasWorker  = false;
 
-            for (uint32_t i=0, count=_idata->lv2.rdf_data->ExtensionCount; i<count; ++i)
+            for (uint32_t i=0, count=_idata->rdf_data->ExtensionCount; i<count; ++i)
             {
-                const char* const extension(_idata->lv2.rdf_data->Extensions[i]);
+                const char* const extension(_idata->rdf_data->Extensions[i]);
 
                 /**/ if ( ! extension)
                     continue;
@@ -719,21 +719,21 @@ LV2_Plugin::load_plugin ( Module::Picked picked )
             }
 
             if (hasOptions)
-                _idata->lv2.ext.options = (const LV2_Options_Interface*)_idata->lv2.descriptor->extension_data(LV2_OPTIONS__interface);
+                _idata->ext.options = (const LV2_Options_Interface*)_idata->descriptor->extension_data(LV2_OPTIONS__interface);
 
             if (hasState)
-                _idata->lv2.ext.state = (const LV2_State_Interface*)_idata->lv2.descriptor->extension_data(LV2_STATE__interface);
+                _idata->ext.state = (const LV2_State_Interface*)_idata->descriptor->extension_data(LV2_STATE__interface);
 
             if (hasWorker)
-                _idata->lv2.ext.worker = (const LV2_Worker_Interface*)_idata->lv2.descriptor->extension_data(LV2_WORKER__interface);
+                _idata->ext.worker = (const LV2_Worker_Interface*)_idata->descriptor->extension_data(LV2_WORKER__interface);
 
             // check if invalid
-            if ( _idata->lv2.ext.options != NULL && _idata->lv2.ext.options->get == NULL && _idata->lv2.ext.options->set == NULL )
-                _idata->lv2.ext.options = NULL;
+            if ( _idata->ext.options != NULL && _idata->ext.options->get == NULL && _idata->ext.options->set == NULL )
+                _idata->ext.options = NULL;
 
-            if ( _idata->lv2.ext.state != NULL && ( _idata->lv2.ext.state->save == NULL || _idata->lv2.ext.state->restore == NULL ))
+            if ( _idata->ext.state != NULL && ( _idata->ext.state->save == NULL || _idata->ext.state->restore == NULL ))
             {
-                _idata->lv2.ext.state = NULL;
+                _idata->ext.state = NULL;
             }
 #ifdef LV2_WORKER_SUPPORT
             else
@@ -741,9 +741,9 @@ LV2_Plugin::load_plugin ( Module::Picked picked )
                 _safe_restore = true;
             }
 #endif
-            if ( _idata->lv2.ext.worker != NULL && _idata->lv2.ext.worker->work == NULL )
+            if ( _idata->ext.worker != NULL && _idata->ext.worker->work == NULL )
             {
-                _idata->lv2.ext.worker = NULL;
+                _idata->ext.worker = NULL;
             }
 #ifdef LV2_WORKER_SUPPORT
             else
@@ -751,70 +751,70 @@ LV2_Plugin::load_plugin ( Module::Picked picked )
                 DMESSAGE("Setting worker initialization");
 
                 lv2_atom_forge_init(&_atom_forge, _uridMapFt);
-                non_worker_init(this,  _idata->lv2.ext.worker, true);
+                non_worker_init(this,  _idata->ext.worker, true);
 
 		if (_safe_restore)   // FIXME
                 {
                     DMESSAGE( "Plugin Has safe_restore - TODO" );
-                   // non_worker_init(this, _idata->lv2.ext.state, false);
+                   // non_worker_init(this, _idata->ext.state, false);
 		}
             }
 #endif
         }
         else    // Extension data
         {
-            _idata->lv2.ext.options = NULL;
-            _idata->lv2.ext.state   = NULL;
-            _idata->lv2.ext.worker  = NULL;
+            _idata->ext.options = NULL;
+            _idata->ext.state   = NULL;
+            _idata->ext.worker  = NULL;
         }
 
-        for ( unsigned int i = 0; i < _idata->lv2.rdf_data->PortCount; ++i )
+        for ( unsigned int i = 0; i < _idata->rdf_data->PortCount; ++i )
         {
-            if ( LV2_IS_PORT_AUDIO( _idata->lv2.rdf_data->Ports[i].Types ) )
+            if ( LV2_IS_PORT_AUDIO( _idata->rdf_data->Ports[i].Types ) )
             {
-                if ( LV2_IS_PORT_INPUT( _idata->lv2.rdf_data->Ports[i].Types ) )
+                if ( LV2_IS_PORT_INPUT( _idata->rdf_data->Ports[i].Types ) )
                 {
-                    add_port( Port( this, Port::INPUT, Port::AUDIO, _idata->lv2.rdf_data->Ports[i].Name ) );
+                    add_port( Port( this, Port::INPUT, Port::AUDIO, _idata->rdf_data->Ports[i].Name ) );
                     audio_input[_plugin_ins].hints.plug_port_index = i;
                     _plugin_ins++;
                 }
-                else if (LV2_IS_PORT_OUTPUT(_idata->lv2.rdf_data->Ports[i].Types))
+                else if (LV2_IS_PORT_OUTPUT(_idata->rdf_data->Ports[i].Types))
                 {
-                    add_port( Port( this, Port::OUTPUT, Port::AUDIO, _idata->lv2.rdf_data->Ports[i].Name ) );
+                    add_port( Port( this, Port::OUTPUT, Port::AUDIO, _idata->rdf_data->Ports[i].Name ) );
                     audio_output[_plugin_outs].hints.plug_port_index = i;
                     _plugin_outs++;
                 }
             }
 #ifdef LV2_WORKER_SUPPORT
-            else if (LV2_IS_PORT_ATOM_SEQUENCE ( _idata->lv2.rdf_data->Ports[i].Types ))
+            else if (LV2_IS_PORT_ATOM_SEQUENCE ( _idata->rdf_data->Ports[i].Types ))
             {
-                if ( LV2_IS_PORT_INPUT( _idata->lv2.rdf_data->Ports[i].Types ) )
+                if ( LV2_IS_PORT_INPUT( _idata->rdf_data->Ports[i].Types ) )
                 {
 #ifdef LV2_MIDI_SUPPORT
-                    if(LV2_PORT_SUPPORTS_MIDI_EVENT(_idata->lv2.rdf_data->Ports[i].Types))
+                    if(LV2_PORT_SUPPORTS_MIDI_EVENT(_idata->rdf_data->Ports[i].Types))
                     {
-                        add_port( Port( this, Port::INPUT, Port::MIDI, _idata->lv2.rdf_data->Ports[i].Name ) );
+                        add_port( Port( this, Port::INPUT, Port::MIDI, _idata->rdf_data->Ports[i].Name ) );
 
                         _midi_ins++;
 
-                        DMESSAGE("LV2_PORT_SUPPORTS_MIDI_EVENT = %s", _idata->lv2.rdf_data->Ports[i].Name);
+                        DMESSAGE("LV2_PORT_SUPPORTS_MIDI_EVENT = %s", _idata->rdf_data->Ports[i].Name);
                     }
                     else
                     {
 #endif
-                        add_port( Port( this, Port::INPUT, Port::ATOM, _idata->lv2.rdf_data->Ports[i].Name ) );
+                        add_port( Port( this, Port::INPUT, Port::ATOM, _idata->rdf_data->Ports[i].Name ) );
 
-                        if (LV2_PORT_SUPPORTS_PATCH_MESSAGE( _idata->lv2.rdf_data->Ports[i].Types ))
+                        if (LV2_PORT_SUPPORTS_PATCH_MESSAGE( _idata->rdf_data->Ports[i].Types ))
                         {
                             DMESSAGE(" LV2_PORT_SUPPORTS_PATCH_MESSAGE - INPUT ");
                             atom_input[_atom_ins].hints.type = Port::Hints::PATCH_MESSAGE;
                         }
 
-                        DMESSAGE("GOT ATOM SEQUENCE PORT IN = %s", _idata->lv2.rdf_data->Ports[i].Name);
+                        DMESSAGE("GOT ATOM SEQUENCE PORT IN = %s", _idata->rdf_data->Ports[i].Name);
 #ifdef LV2_MIDI_SUPPORT
                     }
 #endif
-                    if(LV2_PORT_SUPPORTS_TIME_POSITION(_idata->lv2.rdf_data->Ports[i].Types))
+                    if(LV2_PORT_SUPPORTS_TIME_POSITION(_idata->rdf_data->Ports[i].Types))
                     {
                         atom_input[_atom_ins]._supports_time_position = true;
                         DMESSAGE("LV2_PORT_SUPPORTS_TIME_POSITION: index = %d", i);
@@ -823,29 +823,29 @@ LV2_Plugin::load_plugin ( Module::Picked picked )
                     atom_input[_atom_ins].hints.plug_port_index = i;
                     _atom_ins++;
                 }
-                else if (LV2_IS_PORT_OUTPUT(_idata->lv2.rdf_data->Ports[i].Types))
+                else if (LV2_IS_PORT_OUTPUT(_idata->rdf_data->Ports[i].Types))
                 {
 #ifdef LV2_MIDI_SUPPORT
-                    if(LV2_PORT_SUPPORTS_MIDI_EVENT(_idata->lv2.rdf_data->Ports[i].Types))
+                    if(LV2_PORT_SUPPORTS_MIDI_EVENT(_idata->rdf_data->Ports[i].Types))
                     {
-                        add_port( Port( this, Port::OUTPUT, Port::MIDI, _idata->lv2.rdf_data->Ports[i].Name ) );
+                        add_port( Port( this, Port::OUTPUT, Port::MIDI, _idata->rdf_data->Ports[i].Name ) );
 
                         _midi_outs++;
 
-                        DMESSAGE("LV2_PORT_SUPPORTS_MIDI_EVENT = %s", _idata->lv2.rdf_data->Ports[i].Name);
+                        DMESSAGE("LV2_PORT_SUPPORTS_MIDI_EVENT = %s", _idata->rdf_data->Ports[i].Name);
                     }
                     else
                     {
 #endif
-                        add_port( Port( this, Port::OUTPUT, Port::ATOM, _idata->lv2.rdf_data->Ports[i].Name ) );
+                        add_port( Port( this, Port::OUTPUT, Port::ATOM, _idata->rdf_data->Ports[i].Name ) );
 
-                        if (LV2_PORT_SUPPORTS_PATCH_MESSAGE( _idata->lv2.rdf_data->Ports[i].Types ))
+                        if (LV2_PORT_SUPPORTS_PATCH_MESSAGE( _idata->rdf_data->Ports[i].Types ))
                         {
                             DMESSAGE(" LV2_PORT_SUPPORTS_PATCH_MESSAGE - OUTPUT ");
                             atom_output[_atom_outs].hints.type = Port::Hints::PATCH_MESSAGE;
                         }
 
-                        DMESSAGE("GOT ATOM SEQUENCE PORT OUT = %s", _idata->lv2.rdf_data->Ports[i].Name);
+                        DMESSAGE("GOT ATOM SEQUENCE PORT OUT = %s", _idata->rdf_data->Ports[i].Name);
 #ifdef LV2_MIDI_SUPPORT
                     }
 #endif
@@ -867,11 +867,11 @@ LV2_Plugin::load_plugin ( Module::Picked picked )
         if(!_plugin_ins)
             is_zero_input_synth(true);
 
-        for ( unsigned int i = 0; i < _idata->lv2.rdf_data->PortCount; ++i )
+        for ( unsigned int i = 0; i < _idata->rdf_data->PortCount; ++i )
         {
-            if ( LV2_IS_PORT_CONTROL( _idata->lv2.rdf_data->Ports[i].Types ) )
+            if ( LV2_IS_PORT_CONTROL( _idata->rdf_data->Ports[i].Types ) )
             {
-                const LV2_RDF_Port& rdfport ( _idata->lv2.rdf_data->Ports[i] );
+                const LV2_RDF_Port& rdfport ( _idata->rdf_data->Ports[i] );
 
                 Port::Direction d = Port::INPUT;
 
@@ -1068,11 +1068,11 @@ LV2_Plugin::load_plugin ( Module::Picked picked )
         /* Not restoring state, load the plugin as a preset to get default files if any */
         if ( ! _loading_from_file )
         {
-            const LV2_URID_Map* const uridMap = (const LV2_URID_Map*)_idata->lv2.features[Plugin_Feature_URID_Map]->data;
+            const LV2_URID_Map* const uridMap = (const LV2_URID_Map*)_idata->features[Plugin_Feature_URID_Map]->data;
             LilvState* const state = Lv2WorldClass::getInstance().getStateFromURI(uri.c_str(), (LV2_URID_Map*) uridMap);
 
             /* Set any files for the plugin - no need to update control parameters since they are already set */
-            lilv_state_restore(state, _lilv_instance,  mixer_lv2_set_port_value, this, 0, _idata->lv2.features);
+            lilv_state_restore(state, _lilv_instance,  mixer_lv2_set_port_value, this, 0, _idata->features);
 
             lilv_state_free(state);
         }
@@ -1083,12 +1083,12 @@ LV2_Plugin::load_plugin ( Module::Picked picked )
 
     /* We are setting the initial buffer size here because some plugins seem to need it upon instantiation -- Distrho
      The reset update is called too late so we get a crash upon the first call to run. */
-    if ( _idata->lv2.ext.options && _idata->lv2.ext.options->set  )
+    if ( _idata->ext.options && _idata->ext.options->set  )
     {
         for ( unsigned int i = 0; i < _idata->handle.size(); ++i )
         {
-            _idata->lv2.ext.options->set( _idata->handle[i], &(_idata->lv2.options.opts[Plugin_Module_Options::MaxBlockLenth]) );
-            _idata->lv2.ext.options->set( _idata->handle[i], &(_idata->lv2.options.opts[Plugin_Module_Options::MinBlockLenth]) );
+            _idata->ext.options->set( _idata->handle[i], &(_idata->options.opts[Plugin_Module_Options::MaxBlockLenth]) );
+            _idata->ext.options->set( _idata->handle[i], &(_idata->options.opts[Plugin_Module_Options::MinBlockLenth]) );
         }
     }
 
@@ -1307,25 +1307,25 @@ LV2_Plugin::handle_chain_name_changed ( )
 void
 LV2_Plugin::handle_sample_rate_change ( nframes_t sample_rate )
 {
-    if ( ! _idata->lv2.rdf_data )
+    if ( ! _idata->rdf_data )
         return;
 
-    _idata->lv2.options.sampleRate = sample_rate;
+    _idata->options.sampleRate = sample_rate;
 
-    if ( _idata->lv2.ext.options && _idata->lv2.ext.options->set )
+    if ( _idata->ext.options && _idata->ext.options->set )
     {
         for ( unsigned int i = 0; i < _idata->handle.size(); ++i )
-            _idata->lv2.ext.options->set( _idata->handle[i], &(_idata->lv2.options.opts[Plugin_Module_Options::SampleRate]) );
+            _idata->ext.options->set( _idata->handle[i], &(_idata->options.opts[Plugin_Module_Options::SampleRate]) );
     }
 
     unsigned int nport = 0;
 
-    for ( unsigned int i = 0; i < _idata->lv2.rdf_data->PortCount; ++i )
+    for ( unsigned int i = 0; i < _idata->rdf_data->PortCount; ++i )
     {
-        if ( LV2_IS_PORT_INPUT( _idata->lv2.rdf_data->Ports[i].Types ) &&
-             LV2_IS_PORT_CONTROL( _idata->lv2.rdf_data->Ports[i].Types ) )
+        if ( LV2_IS_PORT_INPUT( _idata->rdf_data->Ports[i].Types ) &&
+             LV2_IS_PORT_CONTROL( _idata->rdf_data->Ports[i].Types ) )
         {
-            if ( LV2_IS_PORT_DESIGNATION_SAMPLE_RATE( _idata->lv2.rdf_data->Ports[i].Designation ) )
+            if ( LV2_IS_PORT_DESIGNATION_SAMPLE_RATE( _idata->rdf_data->Ports[i].Designation ) )
             {
                 control_input[nport].control_value( sample_rate );
                 break;
@@ -1340,18 +1340,18 @@ LV2_Plugin::resize_buffers ( nframes_t buffer_size )
 {
     Module::resize_buffers( buffer_size );
 
-    if ( ! _idata->lv2.rdf_data )
+    if ( ! _idata->rdf_data )
         return;
 
-    _idata->lv2.options.maxBufferSize = buffer_size;
-    _idata->lv2.options.minBufferSize = buffer_size;
+    _idata->options.maxBufferSize = buffer_size;
+    _idata->options.minBufferSize = buffer_size;
 
-    if ( _idata->lv2.ext.options && _idata->lv2.ext.options->set )
+    if ( _idata->ext.options && _idata->ext.options->set )
     {
         for ( unsigned int i = 0; i < _idata->handle.size(); ++i )
         {
-            _idata->lv2.ext.options->set( _idata->handle[i], &(_idata->lv2.options.opts[Plugin_Module_Options::MaxBlockLenth]) );
-            _idata->lv2.ext.options->set( _idata->handle[i], &(_idata->lv2.options.opts[Plugin_Module_Options::MinBlockLenth]) );
+            _idata->ext.options->set( _idata->handle[i], &(_idata->options.opts[Plugin_Module_Options::MaxBlockLenth]) );
+            _idata->ext.options->set( _idata->handle[i], &(_idata->options.opts[Plugin_Module_Options::MinBlockLenth]) );
         }
     }
 }
@@ -1456,10 +1456,10 @@ LV2_Plugin::plugin_instances ( unsigned int n )
 
             LV2_Handle h = _idata->handle.back();
 
-            if ( _idata->lv2.descriptor->deactivate )
-                _idata->lv2.descriptor->deactivate( h );
-            if ( _idata->lv2.descriptor->cleanup )
-                _idata->lv2.descriptor->cleanup( h );
+            if ( _idata->descriptor->deactivate )
+                _idata->descriptor->deactivate( h );
+            if ( _idata->descriptor->cleanup )
+                _idata->descriptor->cleanup( h );
 
             _idata->handle.pop_back();
         }
@@ -1472,7 +1472,7 @@ LV2_Plugin::plugin_instances ( unsigned int n )
 
             void* h;
 
-            _lilv_instance = lilv_plugin_instantiate(_lilv_plugin,  sample_rate(), _idata->lv2.features);
+            _lilv_instance = lilv_plugin_instantiate(_lilv_plugin,  sample_rate(), _idata->features);
 
             if ( ! _lilv_instance )
             {
@@ -1482,7 +1482,7 @@ LV2_Plugin::plugin_instances ( unsigned int n )
             else
             {
                 h = _lilv_instance->lv2_handle;
-                _idata->lv2.descriptor = _lilv_instance->lv2_descriptor;    // probably not necessary
+                _idata->descriptor = _lilv_instance->lv2_descriptor;    // probably not necessary
             }
 
             DMESSAGE( "Instantiated: %p", h );
@@ -1497,24 +1497,24 @@ LV2_Plugin::plugin_instances ( unsigned int n )
             int aji = 0;
             int ajo = 0;
 #endif
-            for ( unsigned int k = 0; k < _idata->lv2.rdf_data->PortCount; ++k )
+            for ( unsigned int k = 0; k < _idata->rdf_data->PortCount; ++k )
             {
-                if ( LV2_IS_PORT_CONTROL( _idata->lv2.rdf_data->Ports[k].Types ) )
+                if ( LV2_IS_PORT_CONTROL( _idata->rdf_data->Ports[k].Types ) )
                 {
-                    if ( LV2_IS_PORT_INPUT( _idata->lv2.rdf_data->Ports[k].Types ) )
-                        _idata->lv2.descriptor->connect_port( h, k, (float*)control_input[ij++].buffer() );
-                    else if ( LV2_IS_PORT_OUTPUT( _idata->lv2.rdf_data->Ports[k].Types ) )
-                        _idata->lv2.descriptor->connect_port( h, k, (float*)control_output[oj++].buffer() );
+                    if ( LV2_IS_PORT_INPUT( _idata->rdf_data->Ports[k].Types ) )
+                        _idata->descriptor->connect_port( h, k, (float*)control_input[ij++].buffer() );
+                    else if ( LV2_IS_PORT_OUTPUT( _idata->rdf_data->Ports[k].Types ) )
+                        _idata->descriptor->connect_port( h, k, (float*)control_output[oj++].buffer() );
                 }
                 // we need to connect non audio/control ports to NULL
-                else if ( ! LV2_IS_PORT_AUDIO( _idata->lv2.rdf_data->Ports[k].Types ) &&
-                         !LV2_IS_PORT_ATOM_SEQUENCE ( _idata->lv2.rdf_data->Ports[k].Types ))
-                    _idata->lv2.descriptor->connect_port( h, k, NULL );
+                else if ( ! LV2_IS_PORT_AUDIO( _idata->rdf_data->Ports[k].Types ) &&
+                         !LV2_IS_PORT_ATOM_SEQUENCE ( _idata->rdf_data->Ports[k].Types ))
+                    _idata->descriptor->connect_port( h, k, NULL );
 
 #ifdef LV2_WORKER_SUPPORT
-                if (LV2_IS_PORT_ATOM_SEQUENCE ( _idata->lv2.rdf_data->Ports[k].Types ))
+                if (LV2_IS_PORT_ATOM_SEQUENCE ( _idata->rdf_data->Ports[k].Types ))
                 {
-                    if ( LV2_IS_PORT_INPUT( _idata->lv2.rdf_data->Ports[k].Types ) )
+                    if ( LV2_IS_PORT_INPUT( _idata->rdf_data->Ports[k].Types ) )
                     {
                         if ( atom_input[aji].event_buffer() )
                             lv2_evbuf_free( atom_input[aji].event_buffer() );
@@ -1528,7 +1528,7 @@ LV2_Plugin::plugin_instances ( unsigned int n )
                                 Plugin_Module_URI_Atom_Sequence)
                         );
 
-                        _idata->lv2.descriptor->connect_port( h, k, lv2_evbuf_get_buffer(atom_input[aji].event_buffer()));
+                        _idata->descriptor->connect_port( h, k, lv2_evbuf_get_buffer(atom_input[aji].event_buffer()));
 
                         DMESSAGE("ATOM IN event_buffer = %p", lv2_evbuf_get_buffer(atom_input[aji].event_buffer()));
 
@@ -1537,7 +1537,7 @@ LV2_Plugin::plugin_instances ( unsigned int n )
 
                         aji++;
                     }
-                    else if ( LV2_IS_PORT_OUTPUT( _idata->lv2.rdf_data->Ports[k].Types ) )
+                    else if ( LV2_IS_PORT_OUTPUT( _idata->rdf_data->Ports[k].Types ) )
                     {
 
                         if ( atom_output[ajo].event_buffer() )
@@ -1552,7 +1552,7 @@ LV2_Plugin::plugin_instances ( unsigned int n )
                                 Plugin_Module_URI_Atom_Sequence)
                         );
 
-                        _idata->lv2.descriptor->connect_port( h, k, lv2_evbuf_get_buffer( atom_output[ajo].event_buffer() ));
+                        _idata->descriptor->connect_port( h, k, lv2_evbuf_get_buffer( atom_output[ajo].event_buffer() ));
 
                         /* This sets the capacity */
                         lv2_evbuf_reset(atom_output[ajo].event_buffer(), false);
@@ -1566,9 +1566,9 @@ LV2_Plugin::plugin_instances ( unsigned int n )
             }
 
             // connect ports to magic bogus value to aid debugging.
-            for ( unsigned int k = 0; k < _idata->lv2.rdf_data->PortCount; ++k )
-                if ( LV2_IS_PORT_AUDIO( _idata->lv2.rdf_data->Ports[k].Types ) )
-                    _idata->lv2.descriptor->connect_port( h, k, (float*)0x42 );
+            for ( unsigned int k = 0; k < _idata->rdf_data->PortCount; ++k )
+                if ( LV2_IS_PORT_AUDIO( _idata->rdf_data->Ports[k].Types ) )
+                    _idata->descriptor->connect_port( h, k, (float*)0x42 );
         }
     }
 
@@ -1618,13 +1618,13 @@ LV2_Plugin::set_input_buffer ( int n, void *buf )
         h = _idata->handle[0];
     }
 
-    for ( unsigned int i = 0; i < _idata->lv2.rdf_data->PortCount; ++i )
+    for ( unsigned int i = 0; i < _idata->rdf_data->PortCount; ++i )
     {
-        if ( LV2_IS_PORT_INPUT( _idata->lv2.rdf_data->Ports[i].Types ) &&
-             LV2_IS_PORT_AUDIO( _idata->lv2.rdf_data->Ports[i].Types ) )
+        if ( LV2_IS_PORT_INPUT( _idata->rdf_data->Ports[i].Types ) &&
+             LV2_IS_PORT_AUDIO( _idata->rdf_data->Ports[i].Types ) )
         {
             if ( n-- == 0 )
-                _idata->lv2.descriptor->connect_port( h, i, (float*)buf );
+                _idata->descriptor->connect_port( h, i, (float*)buf );
         }
     }
 }
@@ -1642,13 +1642,13 @@ LV2_Plugin::set_output_buffer ( int n, void *buf )
     else
         h = _idata->handle[0];
 
-    for ( unsigned int i = 0; i < _idata->lv2.rdf_data->PortCount; ++i )
+    for ( unsigned int i = 0; i < _idata->rdf_data->PortCount; ++i )
     {
-        if ( LV2_IS_PORT_OUTPUT( _idata->lv2.rdf_data->Ports[i].Types ) &&
-            LV2_IS_PORT_AUDIO( _idata->lv2.rdf_data->Ports[i].Types ) )
+        if ( LV2_IS_PORT_OUTPUT( _idata->rdf_data->Ports[i].Types ) &&
+            LV2_IS_PORT_AUDIO( _idata->rdf_data->Ports[i].Types ) )
         {
             if ( n-- == 0 )
-                _idata->lv2.descriptor->connect_port( h, i, (float*)buf );
+                _idata->descriptor->connect_port( h, i, (float*)buf );
         }
     }
 }
@@ -1656,7 +1656,7 @@ LV2_Plugin::set_output_buffer ( int n, void *buf )
 bool
 LV2_Plugin::loaded ( void ) const
 {
-    return _idata->handle.size() > 0 && ( _idata->lv2.rdf_data && _idata->lv2.descriptor);
+    return _idata->handle.size() > 0 && ( _idata->rdf_data && _idata->descriptor);
 }
 
 void
@@ -1673,11 +1673,11 @@ LV2_Plugin::activate ( void )
     if ( chain() )
         chain()->client()->lock();
 
-    if ( _idata->lv2.descriptor->activate )
+    if ( _idata->descriptor->activate )
     {
         for ( unsigned int i = 0; i < _idata->handle.size(); ++i )
         {
-            _idata->lv2.descriptor->activate( _idata->handle[i] );
+            _idata->descriptor->activate( _idata->handle[i] );
         }
     }
 
@@ -1700,11 +1700,11 @@ LV2_Plugin::deactivate( void )
 
     *_bypass = 1.0f;
 
-    if ( _idata->lv2.descriptor->deactivate )
+    if ( _idata->descriptor->deactivate )
     {
         for ( unsigned int i = 0; i < _idata->handle.size(); ++i )
         {
-            _idata->lv2.descriptor->deactivate( _idata->handle[i] );
+            _idata->descriptor->deactivate( _idata->handle[i] );
         }
     }
 
@@ -1738,9 +1738,9 @@ LV2_Plugin::init ( void )
 
     _idata = new ImplementationData();
 
-    _idata->lv2.options.maxBufferSize = buffer_size();
-    _idata->lv2.options.minBufferSize = buffer_size();
-    _idata->lv2.options.sampleRate    = sample_rate();
+    _idata->options.maxBufferSize = buffer_size();
+    _idata->options.minBufferSize = buffer_size();
+    _idata->options.sampleRate    = sample_rate();
 _Pragma("GCC diagnostic push")
 _Pragma("GCC diagnostic ignored \"-Wdeprecated-declarations\"")
     LV2_URI_Map_Feature* const uriMapFt = new LV2_URI_Map_Feature;
@@ -1775,34 +1775,34 @@ _Pragma("GCC diagnostic pop")
     uiResizeFt->ui_resize          = x_resize;
 #endif // USE_SUIL
 
-    _idata->lv2.features[Plugin_Feature_BufSize_Bounded]->URI  = LV2_BUF_SIZE__boundedBlockLength;
-    _idata->lv2.features[Plugin_Feature_BufSize_Bounded]->data = NULL;
+    _idata->features[Plugin_Feature_BufSize_Bounded]->URI  = LV2_BUF_SIZE__boundedBlockLength;
+    _idata->features[Plugin_Feature_BufSize_Bounded]->data = NULL;
 
-    _idata->lv2.features[Plugin_Feature_BufSize_Fixed]->URI    = LV2_BUF_SIZE__fixedBlockLength;
-    _idata->lv2.features[Plugin_Feature_BufSize_Fixed]->data   = NULL;
+    _idata->features[Plugin_Feature_BufSize_Fixed]->URI    = LV2_BUF_SIZE__fixedBlockLength;
+    _idata->features[Plugin_Feature_BufSize_Fixed]->data   = NULL;
 
-    _idata->lv2.features[Plugin_Feature_Options]->URI     = LV2_OPTIONS__options;
-    _idata->lv2.features[Plugin_Feature_Options]->data    = _idata->lv2.options.opts;
+    _idata->features[Plugin_Feature_Options]->URI     = LV2_OPTIONS__options;
+    _idata->features[Plugin_Feature_Options]->data    = _idata->options.opts;
 
-    _idata->lv2.features[Plugin_Feature_URI_Map]->URI     = LV2_URI_MAP_URI;
-    _idata->lv2.features[Plugin_Feature_URI_Map]->data    = uriMapFt;
+    _idata->features[Plugin_Feature_URI_Map]->URI     = LV2_URI_MAP_URI;
+    _idata->features[Plugin_Feature_URI_Map]->data    = uriMapFt;
 
-    _idata->lv2.features[Plugin_Feature_URID_Map]->URI    = LV2_URID__map;
-    _idata->lv2.features[Plugin_Feature_URID_Map]->data   = uridMapFt;
+    _idata->features[Plugin_Feature_URID_Map]->URI    = LV2_URID__map;
+    _idata->features[Plugin_Feature_URID_Map]->data   = uridMapFt;
 
-    _idata->lv2.features[Plugin_Feature_URID_Unmap]->URI  = LV2_URID__unmap;
-    _idata->lv2.features[Plugin_Feature_URID_Unmap]->data = uridUnmapFt;
+    _idata->features[Plugin_Feature_URID_Unmap]->URI  = LV2_URID__unmap;
+    _idata->features[Plugin_Feature_URID_Unmap]->data = uridUnmapFt;
 #ifdef LV2_WORKER_SUPPORT
-    _idata->lv2.features[Plugin_Feature_Make_path]->URI   = LV2_STATE__makePath;
-    _idata->lv2.features[Plugin_Feature_Make_path]->data  = nonMakePath;
+    _idata->features[Plugin_Feature_Make_path]->URI   = LV2_STATE__makePath;
+    _idata->features[Plugin_Feature_Make_path]->data  = nonMakePath;
 
-    _idata->lv2.features[Plugin_Feature_Worker_Schedule]->URI  = LV2_WORKER__schedule;
-    _idata->lv2.features[Plugin_Feature_Worker_Schedule]->data = m_lv2_schedule;
+    _idata->features[Plugin_Feature_Worker_Schedule]->URI  = LV2_WORKER__schedule;
+    _idata->features[Plugin_Feature_Worker_Schedule]->data = m_lv2_schedule;
 #endif
 
 #ifdef USE_SUIL
-    _idata->lv2.features[Plugin_Feature_Resize]->URI  = LV2_UI__resize;
-    _idata->lv2.features[Plugin_Feature_Resize]->data = uiResizeFt;
+    _idata->features[Plugin_Feature_Resize]->URI  = LV2_UI__resize;
+    _idata->features[Plugin_Feature_Resize]->data = uiResizeFt;
 #endif
     
 #ifdef PRESET_SUPPORT
@@ -1819,7 +1819,7 @@ LV2_Plugin::non_worker_init(LV2_Plugin* plug,
                  bool                        threaded)
 {
     DMESSAGE("Threaded = %d", threaded);
-    plug->_idata->lv2.ext.worker = iface;
+    plug->_idata->ext.worker = iface;
     plug->_b_threaded = threaded;
 
     if (threaded)
@@ -1847,7 +1847,7 @@ LV2_Plugin::non_worker_emit_responses( LilvInstance* instance)
             if (zix_ring_read(_zix_responses, _worker_response, size) == size)
             {
                 DMESSAGE("Got work response");
-                _idata->lv2.ext.worker->work_response(
+                _idata->ext.worker->work_response(
                     instance->lv2_handle, size, _worker_response);
             }
         }
@@ -2377,7 +2377,7 @@ LV2_Plugin::try_custom_ui()
         }
     }
 
-    _idata->lv2.ext.ext_data.data_access =
+    _idata->ext.ext_data.data_access =
         lilv_instance_get_descriptor(_lilv_instance)->extension_data;
     const LV2UI_Idle_Interface* idle_iface = NULL;
     const LV2UI_Show_Interface* show_iface = NULL; 
@@ -2386,15 +2386,15 @@ LV2_Plugin::try_custom_ui()
     {
         if(_ui_instance)
         {
-            idle_iface = _idata->lv2.ext.idle_iface = (const LV2UI_Idle_Interface*)suil_instance_extension_data(
+            idle_iface = _idata->ext.idle_iface = (const LV2UI_Idle_Interface*)suil_instance_extension_data(
                 _ui_instance, LV2_UI__idleInterface);
 
-            _idata->lv2.ext.resize_ui = (const LV2UI_Resize*)suil_instance_extension_data(
+            _idata->ext.resize_ui = (const LV2UI_Resize*)suil_instance_extension_data(
                 _ui_instance, LV2_UI__resize);
 
             if( _use_showInterface )
             {
-                show_iface = _idata->lv2.ext.ui_showInterface = (const LV2UI_Show_Interface*)suil_instance_extension_data(
+                show_iface = _idata->ext.ui_showInterface = (const LV2UI_Show_Interface*)suil_instance_extension_data(
                     _ui_instance, LV2_UI__showInterface);
             }
 #ifdef LV2_EXTERNAL_UI
@@ -2520,22 +2520,22 @@ LV2_Plugin::custom_ui_instantiate()
         LV2_INSTANCE_ACCESS_URI, lilv_instance_get_handle(_lilv_instance)};
 
     const LV2_Feature data_feature = {LV2_DATA_ACCESS_URI,
-                                      &_idata->lv2.ext.ext_data};
+                                      &_idata->ext.ext_data};
 
     DMESSAGE("parent = %p: parent_feature->data = %p", parent, parent_feature.data);
     const LV2_Feature idle_feature = {LV2_UI__idleInterface, NULL};
 
-    const LV2_Feature* ui_features[] = {_idata->lv2.features[Plugin_Feature_URID_Map],
-                                        _idata->lv2.features[Plugin_Feature_URID_Unmap],
+    const LV2_Feature* ui_features[] = {_idata->features[Plugin_Feature_URID_Map],
+                                        _idata->features[Plugin_Feature_URID_Unmap],
                                         &instance_feature,
                                         &data_feature,
                                       //  &jalv->features.log_feature,
                                         &parent_feature,
-                                        _idata->lv2.features[Plugin_Feature_Options],
+                                        _idata->features[Plugin_Feature_Options],
                                         &idle_feature,
                                        // &jalv->features.request_value_feature,
-                                       _idata->lv2.features[Plugin_Feature_Resize],
-                                       _idata->lv2.features[Plugin_Feature_Make_path],
+                                       _idata->features[Plugin_Feature_Resize],
+                                       _idata->features[Plugin_Feature_Make_path],
 #ifdef LV2_EXTERNAL_UI
                                         &_lv2_ui_external_feature,
 #endif
@@ -2777,9 +2777,9 @@ LV2_Plugin::custom_update_ui()
         _X11_UI->idle();
     }
 
-    if( _idata->lv2.ext.idle_iface)
+    if( _idata->ext.idle_iface)
     {
-        if (_idata->lv2.ext.idle_iface->idle(suil_instance_get_handle(_ui_instance)))
+        if (_idata->ext.idle_iface->idle(suil_instance_get_handle(_ui_instance)))
         {
             DMESSAGE("INTERFACE CLOSED");
             _x_is_visible = false;
@@ -2805,7 +2805,7 @@ LV2_Plugin::close_custom_ui()
 
     if( _use_showInterface )
     {
-        _idata->lv2.ext.ui_showInterface->hide(suil_instance_get_handle(_ui_instance));
+        _idata->ext.ui_showInterface->hide(suil_instance_get_handle(_ui_instance));
         _x_is_visible = false;
 
         /* For some unknown reason the Calf plugins idle interface does not get reset
@@ -2844,7 +2844,7 @@ LV2_Plugin::show_custom_ui()
 {
     if( _use_showInterface )
     {
-        _idata->lv2.ext.ui_showInterface->show(suil_instance_get_handle(_ui_instance));
+        _idata->ext.ui_showInterface->show(suil_instance_get_handle(_ui_instance));
         _x_is_visible = true;
 
         Fl::add_timeout( 0.03f, &LV2_Plugin::custom_update_ui, this );
@@ -2880,14 +2880,14 @@ LV2_Plugin::hide_custom_ui()
 bool
 LV2_Plugin::isUiResizable() const
 {
-    NON_SAFE_ASSERT_RETURN(_idata->lv2.rdf_data != nullptr, false);
+    NON_SAFE_ASSERT_RETURN(_idata->rdf_data != nullptr, false);
 
-    for (uint32_t i=0; i < _idata->lv2.rdf_data->FeatureCount; ++i)
+    for (uint32_t i=0; i < _idata->rdf_data->FeatureCount; ++i)
     {
-        if (std::strcmp(_idata->lv2.rdf_data->Features[i].URI, LV2_UI__fixedSize) == 0)
+        if (std::strcmp(_idata->rdf_data->Features[i].URI, LV2_UI__fixedSize) == 0)
             return false;
 
-        if (std::strcmp(_idata->lv2.rdf_data->Features[i].URI, LV2_UI__noUserResize) == 0)
+        if (std::strcmp(_idata->rdf_data->Features[i].URI, LV2_UI__noUserResize) == 0)
             return false;
     }
 
@@ -2901,12 +2901,12 @@ LV2_Plugin::get_module_latency ( void ) const
     // FIXME: we should probably cache this value
     unsigned int nport = 0;
 
-    for ( unsigned int i = 0; i < _idata->lv2.rdf_data->PortCount; ++i )
+    for ( unsigned int i = 0; i < _idata->rdf_data->PortCount; ++i )
     {
-        if ( LV2_IS_PORT_OUTPUT( _idata->lv2.rdf_data->Ports[i].Types ) &&
-             LV2_IS_PORT_CONTROL( _idata->lv2.rdf_data->Ports[i].Types ) )
+        if ( LV2_IS_PORT_OUTPUT( _idata->rdf_data->Ports[i].Types ) &&
+             LV2_IS_PORT_CONTROL( _idata->rdf_data->Ports[i].Types ) )
         {
-            if ( LV2_IS_PORT_DESIGNATION_LATENCY( _idata->lv2.rdf_data->Ports[i].Designation ) )
+            if ( LV2_IS_PORT_DESIGNATION_LATENCY( _idata->rdf_data->Ports[i].Designation ) )
                 return control_output[nport].control_value();
             ++nport;
         }
@@ -2955,7 +2955,7 @@ LV2_Plugin::process ( nframes_t nframes )
         // Run the plugin for LV2
         for ( unsigned int i = 0; i < _idata->handle.size(); ++i )
         {
-            _idata->lv2.descriptor->run( _idata->handle[i], nframes );
+            _idata->descriptor->run( _idata->handle[i], nframes );
         }
 
 #ifdef LV2_WORKER_SUPPORT
@@ -2968,15 +2968,15 @@ LV2_Plugin::process ( nframes_t nframes )
 #endif  // LV2_MIDI_SUPPORT
 
         /* Process any worker replies. */
-        if ( _idata->lv2.ext.worker)
+        if ( _idata->ext.worker)
         {
             // FIXME
             // jalv_worker_emit_responses(&jalv->state_worker, jalv->instance);
             // non_worker_emit_responses(&jalv->state_worker, jalv->instance);
             non_worker_emit_responses(_lilv_instance);
-            if ( _idata->lv2.ext.worker && _idata->lv2.ext.worker->end_run)
+            if ( _idata->ext.worker && _idata->ext.worker->end_run)
             {
-                _idata->lv2.ext.worker->end_run(_lilv_instance->lv2_handle);
+                _idata->ext.worker->end_run(_lilv_instance->lv2_handle);
             }
         }
 #endif
@@ -3017,7 +3017,7 @@ LV2_Plugin::set_file (const std::string &file, int port_index, bool need_update 
 void
 LV2_Plugin::get ( Log_Entry &e ) const
 {
-    e.add( ":lv2_plugin_uri", _idata->lv2.descriptor->URI );
+    e.add( ":lv2_plugin_uri", _idata->descriptor->URI );
  
     /* these help us display the module on systems which are missing this plugin */
     e.add( ":plugin_ins", _plugin_ins );
