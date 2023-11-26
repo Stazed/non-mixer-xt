@@ -37,6 +37,11 @@ struct LADSPA_Plugin::ImplementationData
 {
     const LADSPA_Descriptor     *descriptor;
     std::vector<LADSPA_Handle>   handle;
+
+    ImplementationData()
+    {
+        descriptor = nullptr;
+    }
 };
 
 LADSPA_Plugin::LADSPA_Plugin ( ) :
