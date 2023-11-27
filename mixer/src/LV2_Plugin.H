@@ -71,6 +71,7 @@ public:
     void create_audio_ports();
     void create_control_ports();
     void create_atom_ports();
+    void initialize_presets(std::string uri);
 
     bool configure_inputs ( int );
     void handle_port_connection_change ( void );

@@ -664,15 +664,6 @@ LV2_Plugin::load_plugin ( Module::Picked picked )
 
     _idata->rdf_data = lv2_rdf_new( uri.c_str(), true );
 
-#ifdef PRESET_SUPPORT
-    _PresetList = _idata->rdf_data->PresetListStructs;
-    _uridMapFt =  (LV2_URID_Map*) _idata->features[Plugin_Feature_URID_Map]->data;
-    _uridUnmapFt = (LV2_URID_Unmap*) _idata->features[Plugin_Feature_URID_Unmap]->data;
-    LilvNode* plugin_uri = lilv_new_uri(get_lilv_world(), uri.c_str());
-    _lilv_plugin = lilv_plugins_get_by_uri(get_lilv_plugins(), plugin_uri);
-    lilv_node_free(plugin_uri);
-#endif
-
     _plugin_ins = _plugin_outs = 0;
 
     if ( ! _idata->rdf_data )
@@ -701,6 +692,7 @@ LV2_Plugin::load_plugin ( Module::Picked picked )
     base_label( _idata->rdf_data->Name );
     MESSAGE( "Name: %s", _idata->rdf_data->Name );
 
+    initialize_presets(uri);    // Must initialize before control ports
     get_plugin_extensions();
     create_audio_ports();
     create_control_ports();
@@ -717,27 +709,10 @@ LV2_Plugin::load_plugin ( Module::Picked picked )
     if(!_plugin_ins)
         is_zero_input_synth(true);
 
-    int instances = plugin_instances( 1 );
-
-    if ( instances )
-    {
-        bypass( false );
-    }
-
-#ifdef LV2_WORKER_SUPPORT
-    for (unsigned int i = 0; i < atom_input.size(); ++i)
-    {
-        set_lv2_port_properties( &atom_input[i], true );
-    }
-    
-    for (unsigned int i = 0; i < atom_output.size(); ++i)
-    {
-        set_lv2_port_properties( &atom_output[i], false );
-    }
-
     if ( control_input.size() > 50  )
         _use_custom_data = true;
 
+#ifdef LV2_WORKER_SUPPORT
     if ( _atom_ins || _atom_outs )
     {
         _use_custom_data = true;
@@ -758,8 +733,16 @@ LV2_Plugin::load_plugin ( Module::Picked picked )
         _loading_from_file = false;
 #endif  // LV2_WORKER_SUPPORT
 
+    int instances = plugin_instances( 1 );
+
+    if ( instances )
+    {
+        bypass( false );
+    }
+
     /* We are setting the initial buffer size here because some plugins seem to need it upon instantiation -- Distrho
-     The reset update is called too late so we get a crash upon the first call to run. */
+     The reset update is called too late so we get a crash upon the first call to run. Need to set instances
+     before this is set */
     if ( _idata->ext.options && _idata->ext.options->set  )
     {
         for ( unsigned int i = 0; i < _idata->handle.size(); ++i )
@@ -1118,6 +1101,29 @@ LV2_Plugin::create_atom_ports()
         }
 #endif
     }
+
+    for (unsigned int i = 0; i < atom_input.size(); ++i)
+    {
+        set_lv2_port_properties( &atom_input[i], true );
+    }
+    
+    for (unsigned int i = 0; i < atom_output.size(); ++i)
+    {
+        set_lv2_port_properties( &atom_output[i], false );
+    }
+}
+
+void
+LV2_Plugin::initialize_presets(std::string uri)
+{
+#ifdef PRESET_SUPPORT
+    _PresetList = _idata->rdf_data->PresetListStructs;
+    _uridMapFt =  (LV2_URID_Map*) _idata->features[Plugin_Feature_URID_Map]->data;
+    _uridUnmapFt = (LV2_URID_Unmap*) _idata->features[Plugin_Feature_URID_Unmap]->data;
+    LilvNode* plugin_uri = lilv_new_uri(get_lilv_world(), uri.c_str());
+    _lilv_plugin = lilv_plugins_get_by_uri(get_lilv_plugins(), plugin_uri);
+    lilv_node_free(plugin_uri);
+#endif
 }
 
 bool
