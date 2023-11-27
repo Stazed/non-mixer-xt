@@ -67,6 +67,10 @@ public:
     ImplementationData *_idata;
     
     virtual bool load_plugin ( Module::Picked picked );
+    void get_plugin_extensions();
+    void create_audio_ports();
+    void create_control_ports();
+    void create_atom_ports();
 
     bool configure_inputs ( int );
     void handle_port_connection_change ( void );

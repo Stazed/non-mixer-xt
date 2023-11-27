@@ -561,7 +561,6 @@ LV2_Plugin::LV2_Plugin ( ) :
 LV2_Plugin::~LV2_Plugin ( )
 {
     log_destroy();
-    plugin_instances( 0 );
 
     /* In case the user left the custom ui up */
 #ifdef LV2_WORKER_SUPPORT
@@ -657,6 +656,8 @@ LV2_Plugin::~LV2_Plugin ( )
     atom_input.clear();
 #endif  // LV2_WORKER_SUPPORT
 #endif  // LV2_MIDI_SUPPORT
+
+    plugin_instances( 0 );  // This must be last, or after UI destruction
 }
 
 bool
@@ -692,353 +693,32 @@ LV2_Plugin::load_plugin ( Module::Picked picked )
 
     _idata->descriptor = lv2_lib_manager.get_descriptor_for_uri( _idata->rdf_data->Binary, uri.c_str() );
 
-    base_label( _idata->rdf_data->Name );
-
-    if ( _idata->descriptor )
-    {
-        MESSAGE( "Name: %s", _idata->rdf_data->Name );
-
-        if ( _idata->descriptor->extension_data )
-        {
-            bool hasOptions = false;
-            bool hasState   = false;
-            bool hasWorker  = false;
-
-            for (uint32_t i=0, count=_idata->rdf_data->ExtensionCount; i<count; ++i)
-            {
-                const char* const extension(_idata->rdf_data->Extensions[i]);
-
-                /**/ if ( ! extension)
-                    continue;
-                else if ( ::strcmp(extension, LV2_OPTIONS__interface) == 0 )
-                    hasOptions = true;
-                else if ( ::strcmp(extension, LV2_STATE__interface) == 0   )
-                    hasState = true;
-                else if ( ::strcmp(extension, LV2_WORKER__interface) == 0  )
-                    hasWorker = true;
-            }
-
-            if (hasOptions)
-                _idata->ext.options = (const LV2_Options_Interface*)_idata->descriptor->extension_data(LV2_OPTIONS__interface);
-
-            if (hasState)
-                _idata->ext.state = (const LV2_State_Interface*)_idata->descriptor->extension_data(LV2_STATE__interface);
-
-            if (hasWorker)
-                _idata->ext.worker = (const LV2_Worker_Interface*)_idata->descriptor->extension_data(LV2_WORKER__interface);
-
-            // check if invalid
-            if ( _idata->ext.options != NULL && _idata->ext.options->get == NULL && _idata->ext.options->set == NULL )
-                _idata->ext.options = NULL;
-
-            if ( _idata->ext.state != NULL && ( _idata->ext.state->save == NULL || _idata->ext.state->restore == NULL ))
-            {
-                _idata->ext.state = NULL;
-            }
-#ifdef LV2_WORKER_SUPPORT
-            else
-            {
-                _safe_restore = true;
-            }
-#endif
-            if ( _idata->ext.worker != NULL && _idata->ext.worker->work == NULL )
-            {
-                _idata->ext.worker = NULL;
-            }
-#ifdef LV2_WORKER_SUPPORT
-            else
-            {
-                DMESSAGE("Setting worker initialization");
-
-                lv2_atom_forge_init(&_atom_forge, _uridMapFt);
-                non_worker_init(this,  _idata->ext.worker, true);
-
-		if (_safe_restore)   // FIXME
-                {
-                    DMESSAGE( "Plugin Has safe_restore - TODO" );
-                   // non_worker_init(this, _idata->ext.state, false);
-		}
-            }
-#endif
-        }
-        else    // Extension data
-        {
-            _idata->ext.options = NULL;
-            _idata->ext.state   = NULL;
-            _idata->ext.worker  = NULL;
-        }
-
-        for ( unsigned int i = 0; i < _idata->rdf_data->PortCount; ++i )
-        {
-            if ( LV2_IS_PORT_AUDIO( _idata->rdf_data->Ports[i].Types ) )
-            {
-                if ( LV2_IS_PORT_INPUT( _idata->rdf_data->Ports[i].Types ) )
-                {
-                    add_port( Port( this, Port::INPUT, Port::AUDIO, _idata->rdf_data->Ports[i].Name ) );
-                    audio_input[_plugin_ins].hints.plug_port_index = i;
-                    _plugin_ins++;
-                }
-                else if (LV2_IS_PORT_OUTPUT(_idata->rdf_data->Ports[i].Types))
-                {
-                    add_port( Port( this, Port::OUTPUT, Port::AUDIO, _idata->rdf_data->Ports[i].Name ) );
-                    audio_output[_plugin_outs].hints.plug_port_index = i;
-                    _plugin_outs++;
-                }
-            }
-#ifdef LV2_WORKER_SUPPORT
-            else if (LV2_IS_PORT_ATOM_SEQUENCE ( _idata->rdf_data->Ports[i].Types ))
-            {
-                if ( LV2_IS_PORT_INPUT( _idata->rdf_data->Ports[i].Types ) )
-                {
-#ifdef LV2_MIDI_SUPPORT
-                    if(LV2_PORT_SUPPORTS_MIDI_EVENT(_idata->rdf_data->Ports[i].Types))
-                    {
-                        add_port( Port( this, Port::INPUT, Port::MIDI, _idata->rdf_data->Ports[i].Name ) );
-
-                        _midi_ins++;
-
-                        DMESSAGE("LV2_PORT_SUPPORTS_MIDI_EVENT = %s", _idata->rdf_data->Ports[i].Name);
-                    }
-                    else
-                    {
-#endif
-                        add_port( Port( this, Port::INPUT, Port::ATOM, _idata->rdf_data->Ports[i].Name ) );
-
-                        if (LV2_PORT_SUPPORTS_PATCH_MESSAGE( _idata->rdf_data->Ports[i].Types ))
-                        {
-                            DMESSAGE(" LV2_PORT_SUPPORTS_PATCH_MESSAGE - INPUT ");
-                            atom_input[_atom_ins].hints.type = Port::Hints::PATCH_MESSAGE;
-                        }
-
-                        DMESSAGE("GOT ATOM SEQUENCE PORT IN = %s", _idata->rdf_data->Ports[i].Name);
-#ifdef LV2_MIDI_SUPPORT
-                    }
-#endif
-                    if(LV2_PORT_SUPPORTS_TIME_POSITION(_idata->rdf_data->Ports[i].Types))
-                    {
-                        atom_input[_atom_ins]._supports_time_position = true;
-                        DMESSAGE("LV2_PORT_SUPPORTS_TIME_POSITION: index = %d", i);
-                    }
-
-                    atom_input[_atom_ins].hints.plug_port_index = i;
-                    _atom_ins++;
-                }
-                else if (LV2_IS_PORT_OUTPUT(_idata->rdf_data->Ports[i].Types))
-                {
-#ifdef LV2_MIDI_SUPPORT
-                    if(LV2_PORT_SUPPORTS_MIDI_EVENT(_idata->rdf_data->Ports[i].Types))
-                    {
-                        add_port( Port( this, Port::OUTPUT, Port::MIDI, _idata->rdf_data->Ports[i].Name ) );
-
-                        _midi_outs++;
-
-                        DMESSAGE("LV2_PORT_SUPPORTS_MIDI_EVENT = %s", _idata->rdf_data->Ports[i].Name);
-                    }
-                    else
-                    {
-#endif
-                        add_port( Port( this, Port::OUTPUT, Port::ATOM, _idata->rdf_data->Ports[i].Name ) );
-
-                        if (LV2_PORT_SUPPORTS_PATCH_MESSAGE( _idata->rdf_data->Ports[i].Types ))
-                        {
-                            DMESSAGE(" LV2_PORT_SUPPORTS_PATCH_MESSAGE - OUTPUT ");
-                            atom_output[_atom_outs].hints.type = Port::Hints::PATCH_MESSAGE;
-                        }
-
-                        DMESSAGE("GOT ATOM SEQUENCE PORT OUT = %s", _idata->rdf_data->Ports[i].Name);
-#ifdef LV2_MIDI_SUPPORT
-                    }
-#endif
-                    atom_output[_atom_outs].hints.plug_port_index = i;
-                    _atom_outs++;
-                }
-            }
-#endif
-        }
-
-        MESSAGE( "Plugin has %i AUDIO inputs and %i AUDIO outputs", _plugin_ins, _plugin_outs);
-#ifdef LV2_WORKER_SUPPORT
-        MESSAGE( "Plugin has %i ATOM inputs and %i ATOM outputs", _atom_ins, _atom_outs);
-#ifdef LV2_MIDI_SUPPORT
-        MESSAGE( "Plugin has %i MIDI in ports and %i MIDI out ports", _midi_ins, _midi_outs);
-#endif
-#endif  // LV2_WORKER_SUPPORT
-
-        if(!_plugin_ins)
-            is_zero_input_synth(true);
-
-        for ( unsigned int i = 0; i < _idata->rdf_data->PortCount; ++i )
-        {
-            if ( LV2_IS_PORT_CONTROL( _idata->rdf_data->Ports[i].Types ) )
-            {
-                const LV2_RDF_Port& rdfport ( _idata->rdf_data->Ports[i] );
-
-                Port::Direction d = Port::INPUT;
-
-                if ( LV2_IS_PORT_INPUT( rdfport.Types ) )
-                {
-                    d = Port::INPUT;
-                }
-                else if ( LV2_IS_PORT_OUTPUT( rdfport.Types ) )
-                {
-                    d = Port::OUTPUT;
-                }
-
-                Port p( this, d, Port::CONTROL, rdfport.Name );
-
-                /* Used for OSC path creation unique symbol */
-                p.set_symbol(rdfport.Symbol);
-
-                if ( LV2_HAVE_MINIMUM_PORT_POINT( rdfport.Points.Hints ) )
-                {
-                    p.hints.ranged = true;
-                    p.hints.minimum = rdfport.Points.Minimum;
-                }
-                else
-                {
-                    p.hints.minimum = 0.0f;
-                }
-
-                if ( LV2_HAVE_MAXIMUM_PORT_POINT( rdfport.Points.Hints ) )
-                {
-                    p.hints.ranged = true;
-                    p.hints.maximum = rdfport.Points.Maximum;
-                }
-                else
-                {
-                    // just in case
-                    p.hints.maximum = p.hints.minimum + 0.1f;
-                }
-
-                if ( LV2_HAVE_DEFAULT_PORT_POINT( rdfport.Points.Hints ) )
-                {
-                    p.hints.default_value = rdfport.Points.Default;
-                }
-                else
-                {
-                    // just in case
-                    p.hints.default_value = p.hints.minimum;
-                }
-
-                if ( LV2_IS_PORT_SAMPLE_RATE( rdfport.Properties ) )
-                {
-                    p.hints.minimum *= sample_rate();
-                    p.hints.maximum *= sample_rate();
-                    p.hints.default_value *= sample_rate();
-                }
-
-                if ( LV2_IS_PORT_INTEGER( rdfport.Properties ) )
-                {
-                    p.hints.type = Port::Hints::LV2_INTEGER;
-
-                    if( LV2_IS_PORT_ENUMERATION(rdfport.Properties) )
-                    {
-                        p.hints.type = Port::Hints::LV2_INTEGER_ENUMERATION;
-
-                        if( rdfport.ScalePointCount )
-                        {
-                            for( unsigned i = 0; i < rdfport.ScalePointCount; ++i )
-                            {
-                                EnumeratorScalePoints item;
-                                item.Label = std::to_string( (int) rdfport.ScalePoints[i].Value);
-                                item.Label += " - ";
-
-                                std::string temp = rdfport.ScalePoints[i].Label;
-
-                                /* FLTK assumes '/' to be sub-menu, so we have to search the Label and escape it */
-                                for (unsigned ii = 0; ii < temp.size(); ++ii)
-                                {
-                                    if ( temp[ii] == '/' )
-                                    {
-                                        temp.insert(ii, "\\");
-                                        ++ii;
-                                        continue;
-                                    }
-                                }
-
-                                item.Label += temp;
-                                item.Value = rdfport.ScalePoints[i].Value;
-                                p.hints.ScalePoints.push_back(item);
-                               // DMESSAGE("Label = %s: Value = %f", rdfport.ScalePoints[i].Label, rdfport.ScalePoints[i].Value);
-                            }
-
-                            std::sort( p.hints.ScalePoints.begin(), p.hints.ScalePoints.end(), EnumeratorScalePoints::before );
-
-                            p.hints.minimum = p.hints.ScalePoints[0].Value;
-                            p.hints.maximum = p.hints.ScalePoints[ p.hints.ScalePoints.size() - 1 ].Value;
-                        }
-                        else    // Integer enumerator with no scale points
-                        {
-                            p.hints.minimum = rdfport.Points.Minimum;
-                            p.hints.maximum = rdfport.Points.Maximum;
-                            
-                            if ( p.hints.ranged &&
-                                 0 == (int)p.hints.minimum &&
-                                 1 == (int)p.hints.maximum )
-                                p.hints.type = Port::Hints::BOOLEAN;
-                            else
-                                p.hints.type = Port::Hints::INTEGER;
-                        }
-                    }
-                }
-                /* Should always check toggled after integer since some LV2s will have both */
-                if ( LV2_IS_PORT_TOGGLED( rdfport.Properties ) )
-                {
-                    p.hints.type = Port::Hints::BOOLEAN;
-                }
-                if ( LV2_IS_PORT_LOGARITHMIC( rdfport.Properties ) )
-                {
-                    p.hints.type = Port::Hints::LOGARITHMIC;
-                }
-
-                if ( LV2_IS_PORT_DESIGNATION_FREEWHEELING (rdfport.Designation) ||
-                     LV2_IS_PORT_DESIGNATION_SAMPLE_RATE (rdfport.Designation) ||
-                     LV2_IS_PORT_DESIGNATION_LATENCY (rdfport.Designation) ||
-                     LV2_IS_PORT_DESIGNATION_TIME (rdfport.Designation) ||
-                     LV2_IS_PORT_NOT_ON_GUI( rdfport.Properties ) )
-                {
-                    p.hints.visible = false;
-
-                    if ( LV2_IS_PORT_DESIGNATION_SAMPLE_RATE (rdfport.Designation) )
-                        p.hints.default_value = sample_rate();
-                }
-                
-                float *control_value = new float;
-
-                *control_value = p.hints.default_value;
-
-                p.connect_to( control_value );
-                
-                p.hints.plug_port_index = i;
-
-                add_port( p );
-
-                DMESSAGE( "Plugin has control port \"%s\" (default: %f)", rdfport.Name, p.hints.default_value );
-            }
-        }
-
-        if (bypassable()) {
-            Port pb( this, Port::INPUT, Port::CONTROL, "dsp/bypass" );
-            pb.hints.type = Port::Hints::BOOLEAN;
-            pb.hints.ranged = true;
-            pb.hints.maximum = 1.0f;
-            pb.hints.minimum = 0.0f;
-            pb.hints.dimensions = 1;
-            pb.hints.visible = false;
-            pb.hints.invisible_with_signals = true;
-            pb.connect_to( _bypass );
-            add_port( pb );
-        }
-
-
-    }
-    else
+    if ( _idata->descriptor == NULL )
     {
         WARNING( "Failed to load plugin" );
         /* We don't need to delete anything here because the plugin module gets deleted along with
            everything else. */
         return false;
     }
+
+    base_label( _idata->rdf_data->Name );
+    MESSAGE( "Name: %s", _idata->rdf_data->Name );
+
+    get_plugin_extensions();
+    create_audio_ports();
+    create_control_ports();
+    create_atom_ports();
+    
+    MESSAGE( "Plugin has %i AUDIO inputs and %i AUDIO outputs", _plugin_ins, _plugin_outs);
+#ifdef LV2_WORKER_SUPPORT
+    MESSAGE( "Plugin has %i ATOM inputs and %i ATOM outputs", _atom_ins, _atom_outs);
+#ifdef LV2_MIDI_SUPPORT
+    MESSAGE( "Plugin has %i MIDI in ports and %i MIDI out ports", _midi_ins, _midi_outs);
+#endif
+#endif  // LV2_WORKER_SUPPORT
+
+    if(!_plugin_ins)
+        is_zero_input_synth(true);
 
     int instances = plugin_instances( 1 );
 
@@ -1100,6 +780,347 @@ LV2_Plugin::load_plugin ( Module::Picked picked )
 #endif
 
     return instances;
+}
+
+void
+LV2_Plugin::get_plugin_extensions()
+{
+    if ( _idata->descriptor->extension_data )
+    {
+        bool hasOptions = false;
+        bool hasState   = false;
+        bool hasWorker  = false;
+
+        for (uint32_t i=0, count=_idata->rdf_data->ExtensionCount; i<count; ++i)
+        {
+            const char* const extension(_idata->rdf_data->Extensions[i]);
+
+            /**/ if ( ! extension)
+                continue;
+            else if ( ::strcmp(extension, LV2_OPTIONS__interface) == 0 )
+                hasOptions = true;
+            else if ( ::strcmp(extension, LV2_STATE__interface) == 0   )
+                hasState = true;
+            else if ( ::strcmp(extension, LV2_WORKER__interface) == 0  )
+                hasWorker = true;
+        }
+
+        if (hasOptions)
+            _idata->ext.options = (const LV2_Options_Interface*)_idata->descriptor->extension_data(LV2_OPTIONS__interface);
+
+        if (hasState)
+            _idata->ext.state = (const LV2_State_Interface*)_idata->descriptor->extension_data(LV2_STATE__interface);
+
+        if (hasWorker)
+            _idata->ext.worker = (const LV2_Worker_Interface*)_idata->descriptor->extension_data(LV2_WORKER__interface);
+
+        // check if invalid
+        if ( _idata->ext.options != NULL && _idata->ext.options->get == NULL && _idata->ext.options->set == NULL )
+            _idata->ext.options = NULL;
+
+        if ( _idata->ext.state != NULL && ( _idata->ext.state->save == NULL || _idata->ext.state->restore == NULL ))
+        {
+            _idata->ext.state = NULL;
+        }
+#ifdef LV2_WORKER_SUPPORT
+        else
+        {
+            _safe_restore = true;
+        }
+#endif
+        if ( _idata->ext.worker != NULL && _idata->ext.worker->work == NULL )
+        {
+            _idata->ext.worker = NULL;
+        }
+#ifdef LV2_WORKER_SUPPORT
+        else
+        {
+            DMESSAGE("Setting worker initialization");
+
+            lv2_atom_forge_init(&_atom_forge, _uridMapFt);
+            non_worker_init(this,  _idata->ext.worker, true);
+
+            if (_safe_restore)   // FIXME
+            {
+                DMESSAGE( "Plugin Has safe_restore - TODO" );
+               // non_worker_init(this, _idata->ext.state, false);
+            }
+        }
+#endif
+    }
+    else    // Extension data
+    {
+        _idata->ext.options = NULL;
+        _idata->ext.state   = NULL;
+        _idata->ext.worker  = NULL;
+    }
+}
+
+void
+LV2_Plugin::create_audio_ports()
+{
+    for ( unsigned int i = 0; i < _idata->rdf_data->PortCount; ++i )
+    {
+        if ( LV2_IS_PORT_AUDIO( _idata->rdf_data->Ports[i].Types ) )
+        {
+            if ( LV2_IS_PORT_INPUT( _idata->rdf_data->Ports[i].Types ) )
+            {
+                add_port( Port( this, Port::INPUT, Port::AUDIO, _idata->rdf_data->Ports[i].Name ) );
+                audio_input[_plugin_ins].hints.plug_port_index = i;
+                _plugin_ins++;
+            }
+            else if (LV2_IS_PORT_OUTPUT(_idata->rdf_data->Ports[i].Types))
+            {
+                add_port( Port( this, Port::OUTPUT, Port::AUDIO, _idata->rdf_data->Ports[i].Name ) );
+                audio_output[_plugin_outs].hints.plug_port_index = i;
+                _plugin_outs++;
+            }
+        }
+    }
+}
+
+void
+LV2_Plugin::create_control_ports()
+{
+    for ( unsigned int i = 0; i < _idata->rdf_data->PortCount; ++i )
+    {
+        if ( LV2_IS_PORT_CONTROL( _idata->rdf_data->Ports[i].Types ) )
+        {
+            const LV2_RDF_Port& rdfport ( _idata->rdf_data->Ports[i] );
+
+            Port::Direction d = Port::INPUT;
+
+            if ( LV2_IS_PORT_INPUT( rdfport.Types ) )
+            {
+                d = Port::INPUT;
+            }
+            else if ( LV2_IS_PORT_OUTPUT( rdfport.Types ) )
+            {
+                d = Port::OUTPUT;
+            }
+
+            Port p( this, d, Port::CONTROL, rdfport.Name );
+
+            /* Used for OSC path creation unique symbol */
+            p.set_symbol(rdfport.Symbol);
+
+            if ( LV2_HAVE_MINIMUM_PORT_POINT( rdfport.Points.Hints ) )
+            {
+                p.hints.ranged = true;
+                p.hints.minimum = rdfport.Points.Minimum;
+            }
+            else
+            {
+                p.hints.minimum = 0.0f;
+            }
+
+            if ( LV2_HAVE_MAXIMUM_PORT_POINT( rdfport.Points.Hints ) )
+            {
+                p.hints.ranged = true;
+                p.hints.maximum = rdfport.Points.Maximum;
+            }
+            else
+            {
+                // just in case
+                p.hints.maximum = p.hints.minimum + 0.1f;
+            }
+
+            if ( LV2_HAVE_DEFAULT_PORT_POINT( rdfport.Points.Hints ) )
+            {
+                p.hints.default_value = rdfport.Points.Default;
+            }
+            else
+            {
+                // just in case
+                p.hints.default_value = p.hints.minimum;
+            }
+
+            if ( LV2_IS_PORT_SAMPLE_RATE( rdfport.Properties ) )
+            {
+                p.hints.minimum *= sample_rate();
+                p.hints.maximum *= sample_rate();
+                p.hints.default_value *= sample_rate();
+            }
+
+            if ( LV2_IS_PORT_INTEGER( rdfport.Properties ) )
+            {
+                p.hints.type = Port::Hints::LV2_INTEGER;
+
+                if( LV2_IS_PORT_ENUMERATION(rdfport.Properties) )
+                {
+                    p.hints.type = Port::Hints::LV2_INTEGER_ENUMERATION;
+
+                    if( rdfport.ScalePointCount )
+                    {
+                        for( unsigned i = 0; i < rdfport.ScalePointCount; ++i )
+                        {
+                            EnumeratorScalePoints item;
+                            item.Label = std::to_string( (int) rdfport.ScalePoints[i].Value);
+                            item.Label += " - ";
+
+                            std::string temp = rdfport.ScalePoints[i].Label;
+
+                            /* FLTK assumes '/' to be sub-menu, so we have to search the Label and escape it */
+                            for (unsigned ii = 0; ii < temp.size(); ++ii)
+                            {
+                                if ( temp[ii] == '/' )
+                                {
+                                    temp.insert(ii, "\\");
+                                    ++ii;
+                                    continue;
+                                }
+                            }
+
+                            item.Label += temp;
+                            item.Value = rdfport.ScalePoints[i].Value;
+                            p.hints.ScalePoints.push_back(item);
+                           // DMESSAGE("Label = %s: Value = %f", rdfport.ScalePoints[i].Label, rdfport.ScalePoints[i].Value);
+                        }
+
+                        std::sort( p.hints.ScalePoints.begin(), p.hints.ScalePoints.end(), EnumeratorScalePoints::before );
+
+                        p.hints.minimum = p.hints.ScalePoints[0].Value;
+                        p.hints.maximum = p.hints.ScalePoints[ p.hints.ScalePoints.size() - 1 ].Value;
+                    }
+                    else    // Integer enumerator with no scale points
+                    {
+                        p.hints.minimum = rdfport.Points.Minimum;
+                        p.hints.maximum = rdfport.Points.Maximum;
+
+                        if ( p.hints.ranged &&
+                             0 == (int)p.hints.minimum &&
+                             1 == (int)p.hints.maximum )
+                            p.hints.type = Port::Hints::BOOLEAN;
+                        else
+                            p.hints.type = Port::Hints::INTEGER;
+                    }
+                }
+            }
+            /* Should always check toggled after integer since some LV2s will have both */
+            if ( LV2_IS_PORT_TOGGLED( rdfport.Properties ) )
+            {
+                p.hints.type = Port::Hints::BOOLEAN;
+            }
+            if ( LV2_IS_PORT_LOGARITHMIC( rdfport.Properties ) )
+            {
+                p.hints.type = Port::Hints::LOGARITHMIC;
+            }
+
+            if ( LV2_IS_PORT_DESIGNATION_FREEWHEELING (rdfport.Designation) ||
+                 LV2_IS_PORT_DESIGNATION_SAMPLE_RATE (rdfport.Designation) ||
+                 LV2_IS_PORT_DESIGNATION_LATENCY (rdfport.Designation) ||
+                 LV2_IS_PORT_DESIGNATION_TIME (rdfport.Designation) ||
+                 LV2_IS_PORT_NOT_ON_GUI( rdfport.Properties ) )
+            {
+                p.hints.visible = false;
+
+                if ( LV2_IS_PORT_DESIGNATION_SAMPLE_RATE (rdfport.Designation) )
+                    p.hints.default_value = sample_rate();
+            }
+
+            float *control_value = new float;
+
+            *control_value = p.hints.default_value;
+
+            p.connect_to( control_value );
+
+            p.hints.plug_port_index = i;
+
+            add_port( p );
+
+            DMESSAGE( "Plugin has control port \"%s\" (default: %f)", rdfport.Name, p.hints.default_value );
+        }
+    }
+
+    if (bypassable()) {
+        Port pb( this, Port::INPUT, Port::CONTROL, "dsp/bypass" );
+        pb.hints.type = Port::Hints::BOOLEAN;
+        pb.hints.ranged = true;
+        pb.hints.maximum = 1.0f;
+        pb.hints.minimum = 0.0f;
+        pb.hints.dimensions = 1;
+        pb.hints.visible = false;
+        pb.hints.invisible_with_signals = true;
+        pb.connect_to( _bypass );
+        add_port( pb );
+    }
+}
+
+void
+LV2_Plugin::create_atom_ports()
+{
+    for ( unsigned int i = 0; i < _idata->rdf_data->PortCount; ++i )
+    {
+#ifdef LV2_WORKER_SUPPORT
+        if (LV2_IS_PORT_ATOM_SEQUENCE ( _idata->rdf_data->Ports[i].Types ))
+        {
+            if ( LV2_IS_PORT_INPUT( _idata->rdf_data->Ports[i].Types ) )
+            {
+#ifdef LV2_MIDI_SUPPORT
+                if(LV2_PORT_SUPPORTS_MIDI_EVENT(_idata->rdf_data->Ports[i].Types))
+                {
+                    add_port( Port( this, Port::INPUT, Port::MIDI, _idata->rdf_data->Ports[i].Name ) );
+
+                    _midi_ins++;
+
+                    DMESSAGE("LV2_PORT_SUPPORTS_MIDI_EVENT = %s", _idata->rdf_data->Ports[i].Name);
+                }
+                else
+                {
+#endif
+                    add_port( Port( this, Port::INPUT, Port::ATOM, _idata->rdf_data->Ports[i].Name ) );
+
+                    if (LV2_PORT_SUPPORTS_PATCH_MESSAGE( _idata->rdf_data->Ports[i].Types ))
+                    {
+                        DMESSAGE(" LV2_PORT_SUPPORTS_PATCH_MESSAGE - INPUT ");
+                        atom_input[_atom_ins].hints.type = Port::Hints::PATCH_MESSAGE;
+                    }
+
+                    DMESSAGE("GOT ATOM SEQUENCE PORT IN = %s", _idata->rdf_data->Ports[i].Name);
+#ifdef LV2_MIDI_SUPPORT
+                }
+#endif
+                if(LV2_PORT_SUPPORTS_TIME_POSITION(_idata->rdf_data->Ports[i].Types))
+                {
+                    atom_input[_atom_ins]._supports_time_position = true;
+                    DMESSAGE("LV2_PORT_SUPPORTS_TIME_POSITION: index = %d", i);
+                }
+
+                atom_input[_atom_ins].hints.plug_port_index = i;
+                _atom_ins++;
+            }
+            else if (LV2_IS_PORT_OUTPUT(_idata->rdf_data->Ports[i].Types))
+            {
+#ifdef LV2_MIDI_SUPPORT
+                if(LV2_PORT_SUPPORTS_MIDI_EVENT(_idata->rdf_data->Ports[i].Types))
+                {
+                    add_port( Port( this, Port::OUTPUT, Port::MIDI, _idata->rdf_data->Ports[i].Name ) );
+
+                    _midi_outs++;
+
+                    DMESSAGE("LV2_PORT_SUPPORTS_MIDI_EVENT = %s", _idata->rdf_data->Ports[i].Name);
+                }
+                else
+                {
+#endif
+                    add_port( Port( this, Port::OUTPUT, Port::ATOM, _idata->rdf_data->Ports[i].Name ) );
+
+                    if (LV2_PORT_SUPPORTS_PATCH_MESSAGE( _idata->rdf_data->Ports[i].Types ))
+                    {
+                        DMESSAGE(" LV2_PORT_SUPPORTS_PATCH_MESSAGE - OUTPUT ");
+                        atom_output[_atom_outs].hints.type = Port::Hints::PATCH_MESSAGE;
+                    }
+
+                    DMESSAGE("GOT ATOM SEQUENCE PORT OUT = %s", _idata->rdf_data->Ports[i].Name);
+#ifdef LV2_MIDI_SUPPORT
+                }
+#endif
+                atom_output[_atom_outs].hints.plug_port_index = i;
+                _atom_outs++;
+            }
+        }
+#endif
+    }
 }
 
 bool
@@ -2811,10 +2832,17 @@ LV2_Plugin::close_custom_ui()
         /* For some unknown reason the Calf plugins idle interface does not get reset
            after the above ->hide is called. Any subsequent call to ->show then fails.
            So, instead we destroy the custom UI here and then re-create on show. */
-        suil_instance_free(_ui_instance);
-        _ui_instance = NULL;
-        suil_host_free(_ui_host);
-        _ui_host = NULL;
+        if(_ui_instance)
+        {
+            suil_instance_free(_ui_instance);
+            _ui_instance = NULL;
+        }
+
+        if(_ui_host)
+        {
+            suil_host_free(_ui_host);
+            _ui_host = NULL;
+        }
     }
 #ifdef LV2_EXTERNAL_UI
     else if( _use_external_ui )
@@ -2825,12 +2853,16 @@ LV2_Plugin::close_custom_ui()
         _x_is_visible = false;
 
         if(_ui_instance)
+        {
             suil_instance_free(_ui_instance);
+            _ui_instance = NULL;
+        }
 
-        _ui_instance = NULL;
-
-        suil_host_free(_ui_host);
-        _ui_host = NULL;
+        if(_ui_host)
+        {
+            suil_host_free(_ui_host);
+            _ui_host = NULL;
+        }
     }
 #endif
     else    // X11
