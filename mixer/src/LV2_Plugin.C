@@ -562,6 +562,11 @@ LV2_Plugin::~LV2_Plugin ( )
     /* In case the user left the custom ui up */
 #ifdef LV2_WORKER_SUPPORT
     _exit_process = true;
+    if ( _idata->ext.worker )
+    {
+        non_worker_finish();
+        non_worker_destroy();
+    }
 
     Fl::remove_timeout( &update_ui, this );
 #endif
@@ -613,12 +618,6 @@ LV2_Plugin::~LV2_Plugin ( )
 #endif
 
 #ifdef LV2_WORKER_SUPPORT
-    if ( _idata->ext.worker )
-    {
-        non_worker_finish();
-        non_worker_destroy();
-    }
-
     zix_ring_free(_plugin_to_ui);
     zix_ring_free(_ui_to_plugin);
     free(_ui_event_buf);
