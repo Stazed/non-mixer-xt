@@ -603,6 +603,12 @@ LV2_Plugin::~LV2_Plugin ( )
             suil_host_free(_ui_host);
             _ui_host = NULL;
         }
+        
+        if(_X11_UI != nullptr)
+        {
+            delete _X11_UI;
+            _X11_UI = nullptr;
+        }
     }
 #endif
 
