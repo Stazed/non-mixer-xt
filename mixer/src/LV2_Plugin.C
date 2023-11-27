@@ -35,10 +35,7 @@
 
 class Chain;    // forward declaration
 
-static const uint X11Key_Escape = 9;
-static const uint X11Key_W      = 25;
-
-#  define MSG_BUFFER_SIZE 1024
+#define MSG_BUFFER_SIZE 1024
 
 #ifdef USE_SUIL
 const std::vector<std::string> v_ui_types
