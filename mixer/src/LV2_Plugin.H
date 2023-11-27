@@ -103,9 +103,6 @@ public:
 #ifdef LV2_STATE_SAVE
     LV2_URID_Unmap* _uridUnmapFt;
     std::string _project_directory;
-
-    void save_LV2_plugin_state(const std::string directory);
-    void restore_LV2_plugin_state(const std::string directory);
 #endif  // LV2_STATE_SAVE
 
 #ifdef LV2_WORKER_SUPPORT
@@ -238,6 +235,11 @@ public:
 
     LOG_CREATE_FUNC( LV2_Plugin );
     MODULE_CLONE_FUNC( LV2_Plugin );
+
+#ifdef LV2_STATE_SAVE
+    void save_LV2_plugin_state(const std::string directory);
+    void restore_LV2_plugin_state(const std::string directory);
+#endif
 
 protected:
 

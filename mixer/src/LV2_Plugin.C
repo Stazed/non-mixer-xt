@@ -141,7 +141,7 @@ LV2_Plugin::update_control_parameters(int choice)
 
     lilv_state_free(state);
 }
-#endif
+#endif  // PRESET_SUPPORT
 
 #ifdef LV2_STATE_SAVE
 static const void*
@@ -186,54 +186,6 @@ get_port_value(const char* port_symbol,
     *size = *type = 0;
     return NULL;
 }
-
-void
-LV2_Plugin::save_LV2_plugin_state(const std::string directory)
-{
-    DMESSAGE("Saving plugin state to %s", directory.c_str());
-
-    LilvState* const state =
-        lilv_state_new_from_instance(_lilv_plugin,
-                                 _lilv_instance,
-                                 _uridMapFt,
-                                 NULL,
-                                 directory.c_str(),
-                                 directory.c_str(),
-                                 directory.c_str(),
-                                 get_port_value,
-                                 this,
-                                 LV2_STATE_IS_POD | LV2_STATE_IS_PORTABLE,
-                                 NULL);
-
-    lilv_state_save(
-        _lilvWorld, _uridMapFt, _uridUnmapFt, state, NULL, directory.c_str(), "state.ttl");
-
-    lilv_state_free(state);
-}
-
-void
-LV2_Plugin::restore_LV2_plugin_state(const std::string directory)
-{
-    std::string path = directory;
-    path.append("/state.ttl");
-
-    LilvState* state      = NULL;
-
-    state = lilv_state_new_from_file(_lilvWorld, _uridMapFt, NULL, path.c_str());
-
-    if (!state)
-    {
-        WARNING("Failed to load state from %s", path.c_str());
-        return;
-    }
-
-    DMESSAGE("Restoring plugin state from %s", path.c_str());
-
-    lilv_state_restore(state, _lilv_instance,  mixer_lv2_set_port_value, this, 0, _idata->features);
-
-    lilv_state_free(state);
-}
-
 #endif  // LV2_STATE_SAVE
 
 #ifdef LV2_WORKER_SUPPORT
@@ -559,7 +511,6 @@ LV2_Plugin::~LV2_Plugin ( )
 {
     log_destroy();
 
-    /* In case the user left the custom ui up */
 #ifdef LV2_WORKER_SUPPORT
     _exit_process = true;
     if ( _idata->ext.worker )
@@ -1611,6 +1562,53 @@ LV2_Plugin::plugin_instances ( unsigned int n )
     zix_ring_mlock(_plugin_to_ui);
 #endif
     return true;
+}
+
+void
+LV2_Plugin::save_LV2_plugin_state(const std::string directory)
+{
+    DMESSAGE("Saving plugin state to %s", directory.c_str());
+
+    LilvState* const state =
+        lilv_state_new_from_instance(_lilv_plugin,
+                                 _lilv_instance,
+                                 _uridMapFt,
+                                 NULL,
+                                 directory.c_str(),
+                                 directory.c_str(),
+                                 directory.c_str(),
+                                 get_port_value,
+                                 this,
+                                 LV2_STATE_IS_POD | LV2_STATE_IS_PORTABLE,
+                                 NULL);
+
+    lilv_state_save(
+        _lilvWorld, _uridMapFt, _uridUnmapFt, state, NULL, directory.c_str(), "state.ttl");
+
+    lilv_state_free(state);
+}
+
+void
+LV2_Plugin::restore_LV2_plugin_state(const std::string directory)
+{
+    std::string path = directory;
+    path.append("/state.ttl");
+
+    LilvState* state      = NULL;
+
+    state = lilv_state_new_from_file(_lilvWorld, _uridMapFt, NULL, path.c_str());
+
+    if (!state)
+    {
+        WARNING("Failed to load state from %s", path.c_str());
+        return;
+    }
+
+    DMESSAGE("Restoring plugin state from %s", path.c_str());
+
+    lilv_state_restore(state, _lilv_instance,  mixer_lv2_set_port_value, this, 0, _idata->features);
+
+    lilv_state_free(state);
 }
 
 void
