@@ -71,7 +71,7 @@ public:
     void create_audio_ports();
     void create_control_ports();
     void create_atom_ports();
-    void initialize_presets(std::string uri);
+    void initialize_presets(const std::string &uri);
 
     bool configure_inputs ( int );
     void handle_port_connection_change ( void );
@@ -237,8 +237,8 @@ public:
     MODULE_CLONE_FUNC( LV2_Plugin );
 
 #ifdef LV2_STATE_SAVE
-    void save_LV2_plugin_state(const std::string directory);
-    void restore_LV2_plugin_state(const std::string directory);
+    void save_LV2_plugin_state(const std::string &directory);
+    void restore_LV2_plugin_state(const std::string &directory);
 #endif
 
 protected:

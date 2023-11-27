@@ -616,7 +616,7 @@ LV2_Plugin::~LV2_Plugin ( )
 bool
 LV2_Plugin::load_plugin ( Module::Picked picked )
 {
-    const std::string uri = picked.s_unique_id.c_str();
+    const std::string uri = picked.s_unique_id;
 
     _idata->rdf_data = lv2_rdf_new( uri.c_str(), true );
 
@@ -1070,7 +1070,7 @@ LV2_Plugin::create_atom_ports()
 }
 
 void
-LV2_Plugin::initialize_presets(std::string uri)
+LV2_Plugin::initialize_presets(const std::string &uri)
 {
 #ifdef PRESET_SUPPORT
     _PresetList = _idata->rdf_data->PresetListStructs;
@@ -1565,7 +1565,7 @@ LV2_Plugin::plugin_instances ( unsigned int n )
 }
 
 void
-LV2_Plugin::save_LV2_plugin_state(const std::string directory)
+LV2_Plugin::save_LV2_plugin_state(const std::string &directory)
 {
     DMESSAGE("Saving plugin state to %s", directory.c_str());
 
@@ -1589,7 +1589,7 @@ LV2_Plugin::save_LV2_plugin_state(const std::string directory)
 }
 
 void
-LV2_Plugin::restore_LV2_plugin_state(const std::string directory)
+LV2_Plugin::restore_LV2_plugin_state(const std::string &directory)
 {
     std::string path = directory;
     path.append("/state.ttl");
@@ -3069,10 +3069,8 @@ LV2_Plugin::get ( Log_Entry &e ) const
         /* Export directory location */
         if(!export_import_strip.empty())
         {
-            std::string path = export_import_strip;
-
-            std::size_t found = path.find_last_of("/\\");
-            path = (path.substr(0, found));
+            std::size_t found = export_import_strip.find_last_of("/\\");
+            std::string path = (export_import_strip.substr(0, found));
 
             std::string location = pm->get_custom_data_location(path);
 

@@ -2445,7 +2445,7 @@ CLAP_Plugin::is_audio_thread()
 }
 
 void
-CLAP_Plugin::save_CLAP_plugin_state(const std::string filename)
+CLAP_Plugin::save_CLAP_plugin_state(const std::string &filename)
 {
     void* data = nullptr;
     if (const std::size_t dataSize = getState(&data))
@@ -2473,7 +2473,7 @@ CLAP_Plugin::save_CLAP_plugin_state(const std::string filename)
 }
 
 void
-CLAP_Plugin::restore_CLAP_plugin_state(const std::string filename)
+CLAP_Plugin::restore_CLAP_plugin_state(const std::string &filename)
 {
     FILE *fp = NULL;
     fp = fopen(filename.c_str(), "r");
@@ -2547,10 +2547,8 @@ CLAP_Plugin::get ( Log_Entry &e ) const
         /* Export directory location */
         if(!export_import_strip.empty())
         {
-            std::string path = export_import_strip;
-
-            std::size_t found = path.find_last_of("/\\");
-            path = (path.substr(0, found));
+            std::size_t found = export_import_strip.find_last_of("/\\");
+            std::string path = (export_import_strip.substr(0, found));
 
             std::string filename = pm->get_custom_data_location(path);
 

@@ -190,8 +190,8 @@ public:
     EventList m_params_out;
 
     // Save/Restore state
-    void save_CLAP_plugin_state(const std::string filename);
-    void restore_CLAP_plugin_state(const std::string filename);
+    void save_CLAP_plugin_state(const std::string &filename);
+    void restore_CLAP_plugin_state(const std::string &filename);
 
     uint64_t getState (void** const dataPtr);
 
