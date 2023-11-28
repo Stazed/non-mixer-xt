@@ -541,7 +541,7 @@ Spatializer_Module::Spatializer_Module ( ) : JACK_Module ( false )
 
 Spatializer_Module::~Spatializer_Module ( )
 {
-    configure_inputs(0);
+    Spatializer_Module::configure_inputs(0);
     delete _early_panner;
     delete _panner;
     for ( unsigned int i = 0; i < control_input.size(); i++ )
