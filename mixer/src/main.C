@@ -273,7 +273,7 @@ main ( int argc, char **argv )
 
     Fl::lock();
 
-    char *nsm_url = getenv( "NSM_URL" );
+    const char *nsm_url = getenv( "NSM_URL" );
 
     Fl_Double_Window *main_window;
 
@@ -284,8 +284,8 @@ main ( int argc, char **argv )
             main_window->xclass( APP_NAME );
 
             { 
-                Fl_Widget *o = mixer = new Mixer( 0, 0, main_window->w(), main_window->h(), NULL );
-                Fl_Group::current()->resizable(o);
+                Fl_Widget *m = mixer = new Mixer( 0, 0, main_window->w(), main_window->h(), NULL );
+                Fl_Group::current()->resizable(m);
             }
         }
         o->end();
