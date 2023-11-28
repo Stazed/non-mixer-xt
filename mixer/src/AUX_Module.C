@@ -52,7 +52,7 @@ AUX_Module::AUX_Module ( ) : JACK_Module ( false )
 AUX_Module::~AUX_Module ( )
 {
     AUX_Module::configure_outputs(0);
-    delete (float*)control_input[0].buffer();
+    delete static_cast<float*>(control_input[0].buffer());
 }
 
 
@@ -82,7 +82,9 @@ AUX_Module::process ( nframes_t nframes )
         for ( unsigned int i = 0; i < audio_input.size(); ++i )
         {
             if ( audio_input[i].connected() )
-                buffer_fill_with_silence( (sample_t*)aux_audio_output[i].jack_port()->buffer(nframes), nframes );
+                buffer_fill_with_silence(
+                        static_cast<sample_t*>(aux_audio_output[i].jack_port()->buffer(nframes)),
+                        nframes );
         }
     }
     else
@@ -98,7 +100,11 @@ AUX_Module::process ( nframes_t nframes )
             for ( unsigned int i = 0; i < audio_input.size(); ++i )
             {
                 if ( audio_input[i].connected() )
-                    buffer_copy_and_apply_gain_buffer( (sample_t*)aux_audio_output[i].jack_port()->buffer(nframes), (sample_t*)audio_input[i].buffer(), gainbuf, nframes );
+                    buffer_copy_and_apply_gain_buffer(
+                            static_cast<sample_t*>(aux_audio_output[i].jack_port()->buffer(nframes)),
+                            static_cast<sample_t*>(audio_input[i].buffer()),
+                            gainbuf,
+                            nframes );
             }
 
         }
@@ -107,7 +113,11 @@ AUX_Module::process ( nframes_t nframes )
             for ( unsigned int i = 0; i < audio_input.size(); ++i )
             {
                 if ( audio_input[i].connected() )
-                    buffer_copy_and_apply_gain( (sample_t*)aux_audio_output[i].jack_port()->buffer(nframes), (sample_t*)audio_input[i].buffer(), nframes, gt );
+                    buffer_copy_and_apply_gain(
+                            static_cast<sample_t*>(aux_audio_output[i].jack_port()->buffer(nframes)),
+                            static_cast<sample_t*>(audio_input[i].buffer()),
+                            nframes,
+                            gt );
             }
         }
     }
