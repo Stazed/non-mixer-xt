@@ -748,7 +748,7 @@ Mixer_Strip::init ( )
 
     end();
 
-    color( FL_BLACK );
+    Mixer_Strip::color( FL_BLACK );
 
     size( 96, h() );
 
