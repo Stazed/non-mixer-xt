@@ -1883,8 +1883,9 @@ LV2_Plugin::non_worker_finish( void )
 {
     if (_b_threaded) 
     {
-        zix_sem_post(&_zix_sem);
-        zix_thread_join(_zix_thread);
+       // zix_sem_post(&_zix_sem);
+       // zix_thread_join(_zix_thread); FIXME this causes intermittent freeze - why do we need it??
+        _b_threaded = false;
     }
 }
 
