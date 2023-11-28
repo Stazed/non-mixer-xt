@@ -360,7 +360,7 @@ public:
 
                 if ( buffer() )
                 {
-                    *((float*)buffer()) = f;
+                    *( static_cast<float*>(buffer()) ) = f;
                 }
             }
 
@@ -375,7 +375,7 @@ public:
         float control_value ( void ) const
             {
                 if ( buffer() )
-                    return *((float*)buffer());
+                    return *( static_cast<float*>(buffer()) );
                 else
                     return 0.0f;
             }
@@ -428,7 +428,7 @@ public:
 
 
         /* disconnect this port from any ports of modules belonging to strip /o/ */
-        void disconnect_from_strip ( Mixer_Strip *o );
+        void disconnect_from_strip ( const Mixer_Strip *o );
         
         void connect_to ( void *buf )
             {
@@ -712,8 +712,8 @@ protected:
     virtual void draw ( void ) { Module::draw_box(x(),y(),w(),h()); Module::draw_label(x(),y(),w(),h()); }
     virtual int handle ( int m );
 
-    virtual void get ( Log_Entry &e ) const;
-    virtual void set ( Log_Entry &e );
+    virtual void get ( Log_Entry &e ) const override;
+    virtual void set ( Log_Entry &e ) override;
 
     bool add_aux_port ( bool input, const char *prefix, int n , JACK::Port::type_e type );
 

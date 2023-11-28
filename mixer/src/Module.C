@@ -315,7 +315,7 @@ Module::base_label ( const char *s )
 
 
 void
-Module::Port::disconnect_from_strip ( Mixer_Strip *o )
+Module::Port::disconnect_from_strip ( const Mixer_Strip *o )
 {
     for ( std::list<Module::Port*>::iterator i = _connected.begin(); i != _connected.end();  )
     {
@@ -739,9 +739,9 @@ Module::set ( Log_Entry &e )
         {
             /* This trickiness is because we may need to know the name of
                our chain before we actually get added to it. */
-            unsigned int i;
-            sscanf( v, "%X", &i );
-            Chain *t = (Chain*)Loggable::find( i );
+            unsigned int ii;
+            sscanf( v, "%X", &ii );
+            Chain *t = static_cast<Chain*>(Loggable::find( ii ));
 
             assert( t );
 
@@ -767,9 +767,9 @@ Module::set ( Log_Entry &e )
         }
         else if ( ! strcmp( s, ":chain" ) )
         {
-            unsigned int i;
-            sscanf( v, "%X", &i );
-            Chain *t = (Chain*)Loggable::find( i );
+            unsigned int ii;
+            sscanf( v, "%X", &ii );
+            Chain *t = static_cast<Chain*>(Loggable::find( ii ));
 
             assert( t );
 
@@ -930,14 +930,14 @@ bool
 Module::show_analysis_window ( void )
 {
     /* use a large window for more accuracy at low frequencies */
-    nframes_t nframes = sample_rate() / 2;
-    float *buf = new float[nframes];
+    nframes_t enframes = sample_rate() / 2;
+    float *buf = new float[enframes];
 
-    memset( buf, 0, sizeof(float) * nframes );
+    memset( buf, 0, sizeof(float) * enframes );
     
     buf[0] = 1;
        
-    if ( ! get_impulse_response( buf, nframes ) )
+    if ( ! get_impulse_response( buf, enframes ) )
     {
         // return false;
     }
@@ -949,7 +949,7 @@ Module::show_analysis_window ( void )
         o->labelsize(10);
         o->align(FL_ALIGN_RIGHT|FL_ALIGN_TOP);
         o->sample_rate( sample_rate() );
-        o->data( buf, nframes );
+        o->data( buf, enframes );
     }
 
     w->end();
@@ -997,9 +997,9 @@ Module::draw_label ( int tx, int ty, int tw, int th )
     int LW = fl_width( lab );
     char *s = NULL;
 
-    bool initial = true;
     if ( LW > tw )
     {
+        bool initial = true;
         s = new char[strlen(lab) + 1];
         char *sp = s;
         const char *lp = lab;
@@ -1053,22 +1053,22 @@ Module::draw_label ( int tx, int ty, int tw, int th )
 }
 
 void
-Module::insert_menu_cb ( const Fl_Menu_ *m )
+Module::insert_menu_cb ( const Fl_Menu_ *menu )
 {
     
-    const char * picked =  m->mvalue()->label();
+    const char * s_picked =  menu->mvalue()->label();
 
-    DMESSAGE("picked = %s", picked );
+    DMESSAGE("picked = %s", s_picked );
 
     Module *mod = NULL;
     
-    if ( !strcmp( picked, "Aux" ) )
+    if ( !strcmp( s_picked, "Aux" ) )
     {
         AUX_Module *jm = new AUX_Module();
      
         mod = jm;
     }
-    if ( !strcmp( picked, "Spatializer" ) )
+    if ( !strcmp( s_picked, "Spatializer" ) )
     {
         int n = 0;
         for ( int i = 0; i < chain()->modules(); i++ )
@@ -1087,13 +1087,13 @@ Module::insert_menu_cb ( const Fl_Menu_ *m )
             mod = jm;
         }
     }
-    else if ( !strcmp( picked, "Gain" ) )
+    else if ( !strcmp( s_picked, "Gain" ) )
             mod = new Gain_Module();
-    else if ( !strcmp( picked, "Meter" ) )
+    else if ( !strcmp( s_picked, "Meter" ) )
         mod = new Meter_Module();
-    else if ( !strcmp( picked, "Mono Pan" ))
+    else if ( !strcmp( s_picked, "Mono Pan" ))
         mod = new Mono_Pan_Module();
-    else if ( !strcmp(picked, "Plugin" ))
+    else if ( !strcmp( s_picked, "Plugin" ))
     {
         Picked picked = Plugin_Chooser::plugin_chooser( this->ninputs() );
 
@@ -1499,7 +1499,7 @@ generate_port_name ( const char *aux, int direction, int n )
 }
 
 static void
-jack_port_activation_error ( JACK::Port *p )
+jack_port_activation_error ( const JACK::Port *p )
 {
     fl_alert( "Could not activate JACK port \"%s\"", p->name() );
 }
@@ -1583,7 +1583,7 @@ Module::destroy_connected_controller_module()
         /* destroy connected Controller_Module */
         if ( control_input[i].connected() )
         {
-            Module *o = (Module*)control_input[i].connected_port()->module();
+            Module *o = static_cast<Module*>( control_input[i].connected_port()->module() );
 
 	    if ( !o )
 	    {
@@ -1651,7 +1651,7 @@ Module::auto_disconnect_outputs ( void )
 }
 
 void
-Module::get_latency ( JACK::Port::direction_e dir, nframes_t *min, nframes_t *max ) const
+Module::get_latency ( JACK::Port::direction_e dir, nframes_t *t_min, nframes_t *t_max ) const
 {
     nframes_t tmin = JACK_MAX_FRAMES >> 1;
     nframes_t tmax = 0;
@@ -1685,8 +1685,8 @@ Module::get_latency ( JACK::Port::direction_e dir, nframes_t *min, nframes_t *ma
         tmin = 0;
     }
     
-    *min = tmin;
-    *max = tmax;
+    *t_min = tmin;
+    *t_max = tmax;
 }
 
 void
@@ -1728,7 +1728,7 @@ Module::add_aux_port ( bool input, const char *prefix, int i, JACK::Port::type_e
     {
         if ( input )
         {
-            Module::Port mp( (Module*)this, Module::Port::INPUT, Module::Port::AUX_AUDIO );
+            Module::Port mp( static_cast<Module*>(this), Module::Port::INPUT, Module::Port::AUX_AUDIO );
 
             mp.jack_port( po );
 
@@ -1736,7 +1736,7 @@ Module::add_aux_port ( bool input, const char *prefix, int i, JACK::Port::type_e
         }
         else
         {
-            Module::Port mp( (Module*)this, Module::Port::OUTPUT, Module::Port::AUX_AUDIO );
+            Module::Port mp( static_cast<Module*>(this), Module::Port::OUTPUT, Module::Port::AUX_AUDIO );
 
             mp.jack_port( po );
 
