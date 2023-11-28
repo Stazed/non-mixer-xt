@@ -203,7 +203,7 @@ JACK_Module::draw ( void )
 }
 
 static std::list<std::string>
-get_connections_for_ports ( std::vector<Module::Port> ports )
+get_connections_for_ports ( const std::vector<Module::Port> &ports )
 {
     std::list<std::string> names;
 

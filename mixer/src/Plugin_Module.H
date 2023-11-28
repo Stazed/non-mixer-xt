@@ -48,7 +48,7 @@ public:
         const std::string type;
         bool favorite;
 
-        Plugin_Info ( const std::string s_type ) :  // LADSPA, LV2 -- TODO other types
+        Plugin_Info ( const std::string &s_type ) :  // LADSPA, LV2 -- TODO other types
             s_unique_id(),
             id(0),
             clap_path(),
@@ -139,7 +139,7 @@ public:
 
 protected:
 
-    std::string get_custom_data_location(const std::string path);
+    std::string get_custom_data_location(const std::string &path);
     void set_ladspainfo( void );
 
     volatile nframes_t _latency;

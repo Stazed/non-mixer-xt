@@ -735,7 +735,7 @@ Module_Parameter_Editor::cb_save_state_handle ( Fl_Widget *, void *v )
 }
 
 void
-Module_Parameter_Editor::save_plugin_state(const std::string filename)
+Module_Parameter_Editor::save_plugin_state(const std::string &filename)
 {
     /* Change the filename to a directory */
     std::string directory = filename;
@@ -789,7 +789,7 @@ Module_Parameter_Editor::cb_restore_state_handle ( Fl_Widget *, void *v )
 }
 
 void
-Module_Parameter_Editor::restore_plugin_state(const std::string directory)
+Module_Parameter_Editor::restore_plugin_state(const std::string &directory)
 {
 #ifdef CLAP_SUPPORT
     if (_module->_plug_type == CLAP)

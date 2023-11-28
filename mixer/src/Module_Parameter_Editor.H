@@ -82,9 +82,9 @@ class Module_Parameter_Editor : public Fl_Double_Window
 #endif
 #ifdef LV2_STATE_SAVE
     static void cb_save_state_handle ( Fl_Widget *, void *v );
-    void save_plugin_state(const std::string filename);
+    void save_plugin_state(const std::string &filename);
     static void cb_restore_state_handle ( Fl_Widget *, void *v );
-    void restore_plugin_state(const std::string directory);
+    void restore_plugin_state(const std::string &directory);
 #endif
     static void cb_bound_handle ( Fl_Widget *w, void *v );
 #ifdef LV2_WORKER_SUPPORT

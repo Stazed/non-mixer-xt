@@ -242,7 +242,7 @@ LADSPAInfo::DiscardDescriptorByID(unsigned long unique_id)
 // ****************************************************************************
 
 unsigned long
-LADSPAInfo::GetIDFromFilenameAndLabel(std::string filename,
+LADSPAInfo::GetIDFromFilenameAndLabel(const std::string &filename,
                                       std::string &label)
 {
 	bool library_loaded = false;

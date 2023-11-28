@@ -565,7 +565,7 @@ Plugin_Module::resize_buffers ( nframes_t buffer_size )
  It generates the random directory suffix '.nABCD' to support multiple instances.
  */
 std::string
-Plugin_Module::get_custom_data_location(const std::string path)
+Plugin_Module::get_custom_data_location(const std::string &path)
 {
     std::string project_base = path;
 

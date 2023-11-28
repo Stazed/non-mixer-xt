@@ -81,7 +81,7 @@ public:
 // This is for backwards compatibility with older versions of SSM where the
 // path and label of the plugin was stored in the configuration - current
 // versions store the Unique ID
-	unsigned long                   GetIDFromFilenameAndLabel(std::string filename,
+	unsigned long                   GetIDFromFilenameAndLabel(const std::string &filename,
 	                                                          std::string &label);
 
 // Struct for plugin information returned by queries

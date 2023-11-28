@@ -741,7 +741,7 @@ struct nrpn_state
 
 static
 struct nrpn_state *
-decode_nrpn ( nrpn_state *state, midievent e, bool *emit_one )
+decode_nrpn ( nrpn_state *state, const midievent &e, bool *emit_one )
 {
     /* use a bit of state machine to allow people to misuse value LSB and value MSB CCs as regular CCs */
 
