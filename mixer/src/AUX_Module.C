@@ -51,7 +51,7 @@ AUX_Module::AUX_Module ( ) : JACK_Module ( false )
 
 AUX_Module::~AUX_Module ( )
 {
-    configure_outputs(0);
+    AUX_Module::configure_outputs(0);
     delete (float*)control_input[0].buffer();
 }
 

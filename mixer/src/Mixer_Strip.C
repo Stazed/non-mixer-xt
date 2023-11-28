@@ -70,7 +70,7 @@ Mixer_Strip::Mixer_Strip( const char *strip_name ) : Fl_Group( 0, 0, 120, 600 )
     label( strdup( strip_name ) );
     labeltype( FL_NO_LABEL );
 
-    init();
+    Mixer_Strip::init();
 
     /* create single member group */
     _group = new Group(strip_name, true);
@@ -83,7 +83,7 @@ Mixer_Strip::Mixer_Strip( const char *strip_name ) : Fl_Group( 0, 0, 120, 600 )
 
     _chain->configure_ports();
 
-    color( (Fl_Color)rand() );
+    Mixer_Strip::color( (Fl_Color)rand() );
 
 //    name( strdup( strip_name ) );
 
@@ -95,7 +95,7 @@ Mixer_Strip::Mixer_Strip() : Fl_Group( 0, 0, 120, 600 )
 {
     _number = 0;
 
-    init();
+    Mixer_Strip::init();
 
     log_create();
 }
