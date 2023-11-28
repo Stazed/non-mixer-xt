@@ -650,7 +650,7 @@ Mixer::Mixer ( int X, int Y, int W, int H, const char *L ) :
     }
     end();
 
-    resize( X,Y,W,H );
+    Mixer::resize( X,Y,W,H );
 
     update_frequency( 24 );
 
