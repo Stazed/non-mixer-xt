@@ -311,68 +311,65 @@ CLAP_Plugin::configure_inputs ( int n )
     {
         _crosswire = false;
 
-        if ( n != ninputs() )
+        if ( 1 == n && plugin_ins() > 1 )
         {
-            if ( 1 == n && plugin_ins() > 1 )
+            DMESSAGE( "Cross-wiring plugin inputs" );
+            _crosswire = true;
+
+            audio_input.clear();
+
+            for ( int i = n; i--; )
+                audio_input.push_back( Port( this, Port::INPUT, Port::AUDIO ) );
+        }
+#if 0   // FIXME instances
+        else if ( n >= plugin_ins() &&
+                  ( plugin_ins() == 1 && plugin_outs() == 1 ) )
+        {
+            DMESSAGE( "Running multiple instances of plugin" );
+
+            audio_input.clear();
+            audio_output.clear();
+
+            for ( int i = n; i--; )
             {
-                DMESSAGE( "Cross-wiring plugin inputs" );
-                _crosswire = true;
-
-                audio_input.clear();
-
-                for ( int i = n; i--; )
-                    audio_input.push_back( Port( this, Port::INPUT, Port::AUDIO ) );
+                add_port( Port( this, Port::INPUT, Port::AUDIO ) );
+                add_port( Port( this, Port::OUTPUT, Port::AUDIO ) );
             }
-#if 0
-            else if ( n >= plugin_ins() &&
-                      ( plugin_ins() == 1 && plugin_outs() == 1 ) )
-            {
-                DMESSAGE( "Running multiple instances of plugin" );
 
-                audio_input.clear();
-                audio_output.clear();
-
-                for ( int i = n; i--; )
-                {
-                    add_port( Port( this, Port::INPUT, Port::AUDIO ) );
-                    add_port( Port( this, Port::OUTPUT, Port::AUDIO ) );
-                }
-
-                inst = n;
-            }
+            inst = n;
+        }
 #endif
-            else if ( n == plugin_ins() )
-            {
-                DMESSAGE( "Plugin input configuration is a perfect match" );
-            }
-            else
-            {
-                DMESSAGE( "Unsupported input configuration" );
-                return false;
-            }
+        else if ( n == plugin_ins() )
+        {
+            DMESSAGE( "Plugin input configuration is a perfect match" );
+        }
+        else
+        {
+            DMESSAGE( "Unsupported input configuration" );
+            return false;
         }
     }
 
+#if 0   // FIXME instances
     if ( loaded() )
     {
         bool b = bypass();
 
-        // FIXME instances
-    //    if ( inst != _idata->handle.size() )
-    //    {
+        if ( inst != _idata->handle.size() )
+        {
             if ( !b )
                 deactivate();
             
-          //  if ( plugin_instances( inst ) )
-          //      instances( inst );
-          //  else
-          //      return false;
+            if ( plugin_instances( inst ) )
+                instances( inst );
+            else
+                return false;
             
             if ( !b )
                 activate();
-      //  }
+        }
     }
-
+#endif
     return true;
 }
 
@@ -1121,7 +1118,7 @@ CLAP_Plugin::entry_from_CLAP_file(const char *f)
             DMESSAGE("CLAP PLUG PATHS %s", path.c_str());
 
             // Find the clap path base name
-            std::size_t found = path.find_last_of("/\\");
+            found = path.find_last_of("/\\");
             std::string base = path.substr(found);
 
             // Compare the base names and if they match, then use the path
@@ -1488,6 +1485,8 @@ CLAP_Plugin::create_audio_ports()
 
     _audio_in_buffers = new float * [_plugin_ins];
     _audio_out_buffers = new float * [_plugin_outs];
+
+    MESSAGE( "Plugin has %i inputs and %i outputs", _plugin_ins, _plugin_outs);
 }
 
 void
@@ -1506,12 +1505,13 @@ CLAP_Plugin::create_control_ports()
         for (uint32_t i = 0; i < nparams; ++i)
         {
             Port::Direction d = Port::INPUT;
-            bool have_control_in = false;
 
             clap_param_info param_info;
             ::memset(&param_info, 0, sizeof(param_info));
             if (params->get_info(_plugin, i, &param_info))
             {
+                bool have_control_in = false;
+
                 if (param_info.flags & CLAP_PARAM_IS_READONLY)
                 {
                     d = Port::OUTPUT;
@@ -1592,6 +1592,8 @@ CLAP_Plugin::create_control_ports()
             add_port( pb );
         }
     }
+
+    MESSAGE( "Plugin has %i control ins and %i control outs", control_ins, control_outs);
 }
 
 void
@@ -1637,6 +1639,8 @@ CLAP_Plugin::create_note_ports()
             }
         }
     }
+
+    MESSAGE( "Plugin has %i MIDI ins and %i MIDI outs", _midi_ins, _midi_outs);
 }
 
 void
