@@ -1096,43 +1096,40 @@ LV2_Plugin::configure_inputs( int n )
     {
         _crosswire = false;
 
-        if ( n != ninputs() )
+        if ( 1 == n && plugin_ins() > 1 )
         {
-            if ( 1 == n && plugin_ins() > 1 )
+            DMESSAGE( "Cross-wiring plugin inputs" );
+            _crosswire = true;
+
+            audio_input.clear();
+
+            for ( int i = n; i--; )
+                audio_input.push_back( Port( this, Port::INPUT, Port::AUDIO ) );
+        }
+        else if ( n >= plugin_ins() &&
+                  ( plugin_ins() == 1 && plugin_outs() == 1 ) )
+        {
+            DMESSAGE( "Running multiple instances of plugin" );
+
+            audio_input.clear();
+            audio_output.clear();
+
+            for ( int i = n; i--; )
             {
-                DMESSAGE( "Cross-wiring plugin inputs" );
-                _crosswire = true;
-
-                audio_input.clear();
-
-                for ( int i = n; i--; )
-                    audio_input.push_back( Port( this, Port::INPUT, Port::AUDIO ) );
+                add_port( Port( this, Port::INPUT, Port::AUDIO ) );
+                add_port( Port( this, Port::OUTPUT, Port::AUDIO ) );
             }
-            else if ( n >= plugin_ins() &&
-                      ( plugin_ins() == 1 && plugin_outs() == 1 ) )
-            {
-                DMESSAGE( "Running multiple instances of plugin" );
 
-                audio_input.clear();
-                audio_output.clear();
-
-                for ( int i = n; i--; )
-                {
-                    add_port( Port( this, Port::INPUT, Port::AUDIO ) );
-                    add_port( Port( this, Port::OUTPUT, Port::AUDIO ) );
-                }
-
-                inst = n;
-            }
-            else if ( n == plugin_ins() )
-            {
-                DMESSAGE( "Plugin input configuration is a perfect match" );
-            }
-            else
-            {
-                DMESSAGE( "Unsupported input configuration" );
-                return false;
-            }
+            inst = n;
+        }
+        else if ( n == plugin_ins() )
+        {
+            DMESSAGE( "Plugin input configuration is a perfect match" );
+        }
+        else
+        {
+            DMESSAGE( "Unsupported input configuration" );
+            return false;
         }
     }
 
