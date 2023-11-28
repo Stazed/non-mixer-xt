@@ -84,7 +84,7 @@ DPM::DPM ( int X, int Y, int W, int H, const char *L ) :
 
     }
 
-    resize( X,Y,W,H);
+    DPM::resize( X,Y,W,H);
 }
 
 /* which marks to draw beside meter */
