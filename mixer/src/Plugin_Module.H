@@ -94,10 +94,6 @@ public:
 
     virtual bool load_plugin ( Module::Picked /* picked */ ) {return false;};
 
-    virtual bool get_impulse_response ( sample_t * /*buf*/, nframes_t /*nframes*/ ){return false;};
-
-    virtual nframes_t get_module_latency ( void ) const{return 0;};
-
     virtual void update ( void );
 
     static std::list<Plugin_Info> get_all_plugins ( void );
@@ -120,18 +116,11 @@ public:
     int can_support_inputs ( int );
     bool configure_inputs ( int );
 
-#ifdef LV2_MIDI_SUPPORT
-    virtual void configure_midi_inputs () {};
-    virtual void configure_midi_outputs () {};
-#endif
-
     virtual bool bypass ( void ) const { return *_bypass == 1.0f; }
     virtual void bypass ( bool /*v*/ ){};
 
     virtual void process ( nframes_t ){};
 
-    void handle_port_connection_change ( void ){};
-    void handle_sample_rate_change ( nframes_t /*sample_rate*/ ){};
     void resize_buffers ( nframes_t buffer_size );
 
     LOG_CREATE_FUNC( Plugin_Module );
