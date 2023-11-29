@@ -118,8 +118,8 @@ protected:
         void resize ( uint32_t nsize )
         {
                 uint8_t *old_eheap = m_eheap;
-                uint8_t *old_ehead = m_ehead;
-                uint8_t *old_etail = m_etail;
+                const uint8_t *old_ehead = m_ehead;
+                const uint8_t *old_etail = m_etail;
                 m_eheap = nullptr;
                 m_ehead = m_eheap;
                 m_etail = m_ehead;
