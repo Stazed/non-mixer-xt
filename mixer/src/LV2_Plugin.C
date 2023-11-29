@@ -503,7 +503,7 @@ LV2_Plugin::LV2_Plugin ( ) :
     _bpm(120.0f),
     _rolling(false)
 {
-    init();
+    LV2_Plugin::init();
     log_create();
 }
 

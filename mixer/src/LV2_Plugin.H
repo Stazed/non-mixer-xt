@@ -199,8 +199,8 @@ private:
 #ifdef LV2_WORKER_SUPPORT
 #ifdef LV2_MIDI_SUPPORT
 public:
-    void configure_midi_inputs ();
-    void configure_midi_outputs ();
+    void configure_midi_inputs () override;
+    void configure_midi_outputs () override;
 
     int _midi_ins;
     int _midi_outs;

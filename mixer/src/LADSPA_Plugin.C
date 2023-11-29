@@ -48,7 +48,7 @@ LADSPA_Plugin::LADSPA_Plugin ( ) :
     Plugin_Module(),
     _idata(nullptr)
 {
-    init();
+    LADSPA_Plugin::init();
     log_create();
 }
 
