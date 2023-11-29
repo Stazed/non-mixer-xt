@@ -449,7 +449,7 @@ CLAP_Plugin::resize_buffers ( nframes_t buffer_size )
 void
 CLAP_Plugin::set_input_buffer ( int n, void *buf )
 {
-    _audio_in_buffers[n] = (float*) buf;
+    _audio_in_buffers[n] = static_cast<float*>( buf );
 
 #if 0   // FIXME instances
     void* h;
@@ -479,7 +479,7 @@ CLAP_Plugin::set_input_buffer ( int n, void *buf )
 void
 CLAP_Plugin::set_output_buffer ( int n, void *buf )
 {
-    _audio_out_buffers[n] = (float*) buf;
+    _audio_out_buffers[n] = static_cast<float*>( buf );
 
 #if 0   // FIXME instances
     void* h;
@@ -781,7 +781,7 @@ CLAP_Plugin::process_jack_midi_out ( uint32_t nframes, unsigned int port )
                         int nBytes = static_cast<int> (size);
     
                         int ret =  jack_midi_event_write(buf, en->header.time,
-                                (jack_midi_data_t*) &midi_note[0], nBytes);
+                                static_cast<jack_midi_data_t*>( &midi_note[0] ), nBytes);
 
                         if ( ret )
                             WARNING("Jack MIDI note off error = %d", ret);
@@ -802,7 +802,7 @@ CLAP_Plugin::process_jack_midi_out ( uint32_t nframes, unsigned int port )
                         size_t size = 3;
                         int nBytes = static_cast<int> (size);
                         int ret =  jack_midi_event_write(buf, en->header.time,
-                                (jack_midi_data_t*) &midi_note[0], nBytes);
+                                static_cast<jack_midi_data_t*>( &midi_note[0] ), nBytes);
 
                         if ( ret )
                             WARNING("Jack MIDI note off error = %d", ret);
@@ -816,7 +816,7 @@ CLAP_Plugin::process_jack_midi_out ( uint32_t nframes, unsigned int port )
                     if (em)
                     {
                         int ret =  jack_midi_event_write(buf, em->header.time,
-                                (jack_midi_data_t*) &em->data[0], sizeof(em->data));
+                                static_cast<const jack_midi_data_t*>( &em->data[0] ), sizeof(em->data));
 
                         if ( ret )
                             WARNING("Jack MIDI write error = %d", ret);
@@ -1003,7 +1003,8 @@ CLAP_Plugin::process ( nframes_t nframes )
         /* There's not much we can do to automatically support other configurations. */
         if ( ninputs() == 1 && noutputs() == 2 )
         {
-            buffer_copy( (sample_t*)audio_output[1].buffer(), (sample_t*)audio_input[0].buffer(), nframes );
+            buffer_copy( static_cast<sample_t*>( audio_output[1].buffer() ),
+                    static_cast<sample_t*>( audio_input[0].buffer() ), nframes );
         }
 
         _latency = 0;
@@ -1133,7 +1134,7 @@ CLAP_Plugin::entry_from_CLAP_file(const char *f)
                 else
                 {
                     // We got a load, so we good to go
-                    iptr = (int *)dlsym(handle, "clap_entry");
+                    iptr = static_cast<int *>( dlsym(handle, "clap_entry") );
                     return (clap_plugin_entry_t *)iptr;
                 }
             }
@@ -1150,7 +1151,7 @@ CLAP_Plugin::entry_from_CLAP_file(const char *f)
     }
 
     // Found on the first try
-    iptr = (int *)dlsym(handle, "clap_entry");
+    iptr = static_cast<int *>( dlsym(handle, "clap_entry") );
 
     return (clap_plugin_entry_t *)iptr;
 }
@@ -1300,12 +1301,12 @@ CLAP_Plugin::clearParams (void)
     {
         // if it is NOT the bypass then delete the buffer
         if ( strcmp(control_input[i].name(), "dsp/bypass") )
-            delete (float*)control_input[i].buffer();
+            delete static_cast<float*>( control_input[i].buffer() );
     }
 
     for (unsigned i = 0; i < control_output.size(); ++i)
     {
-        delete (float*)control_output[i].buffer();
+        delete static_cast<float*>( control_output[i].buffer() );
     }
 
     control_input.clear();
