@@ -52,8 +52,8 @@ class Spatialization_Console : public Loggable, public Fl_Double_Window
 
 protected:
 
-    virtual void get ( Log_Entry &e ) const;
-    virtual void set ( Log_Entry &e );
+    virtual void get ( Log_Entry &e ) const override;
+    virtual void set ( Log_Entry &e ) override;
 
 public:
 

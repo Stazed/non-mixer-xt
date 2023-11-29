@@ -32,19 +32,19 @@ public:
     Gain_Module ( const Gain_Module & rhs );
     virtual ~Gain_Module ( );
 
-    const char *name ( void ) const { return "Gain"; }
+    const char *name ( void ) const override { return "Gain"; }
 
-    int can_support_inputs ( int n ) { return n; }
-    bool configure_inputs ( int n );
+    int can_support_inputs ( int n ) override { return n; }
+    bool configure_inputs ( int n ) override;
 
     LOG_CREATE_FUNC( Gain_Module );
 
     MODULE_CLONE_FUNC( Gain_Module );
 
-    virtual void handle_sample_rate_change ( nframes_t n );
+    virtual void handle_sample_rate_change ( nframes_t n ) override;
 
 protected:
 
-    virtual void process ( nframes_t nframes );
+    virtual void process ( nframes_t nframes ) override;
 
 };

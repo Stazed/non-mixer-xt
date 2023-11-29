@@ -231,7 +231,7 @@ private:
     void create_control_ports();
     void activate ( void );
     void deactivate ( void );
-    void add_port ( const Port &p );
+    void add_port ( const Port &p ) override;
 
     // Transfer parameter changes...
     void process_params_out ();

@@ -66,24 +66,24 @@ public:
 
     ImplementationData *_idata;
     
-    virtual bool load_plugin ( Module::Picked picked );
+    virtual bool load_plugin ( Module::Picked picked ) override;
     void get_plugin_extensions();
     void create_audio_ports();
     void create_control_ports();
     void create_atom_ports();
     void initialize_presets(const std::string &uri);
 
-    bool configure_inputs ( int );
-    void handle_port_connection_change ( void );
-    void handle_chain_name_changed ( void );
-    void handle_sample_rate_change ( nframes_t sample_rate );
-    void resize_buffers ( nframes_t buffer_size );
+    bool configure_inputs ( int ) override;
+    void handle_port_connection_change ( void ) override;
+    void handle_chain_name_changed ( void ) override;
+    void handle_sample_rate_change ( nframes_t sample_rate ) override;
+    void resize_buffers ( nframes_t buffer_size ) override;
 
-    virtual bool bypass ( void ) const { return *_bypass == 1.0f; }
-    virtual void bypass ( bool v );
+    virtual bool bypass ( void ) const override { return *_bypass == 1.0f; }
+    virtual void bypass ( bool v ) override;
 
-    void freeze_ports ( void );
-    void thaw_ports ( void );
+    void freeze_ports ( void ) override;
+    void thaw_ports ( void ) override;
 
 #ifdef PRESET_SUPPORT
     std::vector<LV2_RDF_Preset> _PresetList;
@@ -222,16 +222,16 @@ private:
 
     void activate ( void );
     void deactivate ( void );
-    void add_port ( const Port &p );
-    void init ( void );
+    void add_port ( const Port &p ) override;
+    void init ( void ) override;
 
 public:
 
     LV2_Plugin ( );
     virtual ~LV2_Plugin();
 
-    nframes_t get_module_latency ( void ) const;
-    void process ( nframes_t );
+    nframes_t get_module_latency ( void ) const override;
+    void process ( nframes_t ) override;
 
     LOG_CREATE_FUNC( LV2_Plugin );
     MODULE_CLONE_FUNC( LV2_Plugin );
@@ -246,7 +246,7 @@ protected:
     void handlePluginUIClosed() override;
     void handlePluginUIResized(const uint width, const uint height) override;
     bool plugin_instances ( unsigned int );
-    void get ( Log_Entry &e ) const;
-    void set ( Log_Entry &e );
+    void get ( Log_Entry &e ) const override;
+    void set ( Log_Entry &e ) override;
 
 };

@@ -34,22 +34,22 @@ public:
 
     ImplementationData *_idata;
 
-    virtual bool load_plugin ( Module::Picked picked );
+    virtual bool load_plugin ( Module::Picked picked ) override;
     void create_audio_ports();
     void create_control_ports();
 
-    virtual bool get_impulse_response ( sample_t *buf, nframes_t nframes );
+    virtual bool get_impulse_response ( sample_t *buf, nframes_t nframes ) override;
     
-    bool configure_inputs ( int );
-    void handle_port_connection_change ( void );
-    void resize_buffers ( nframes_t buffer_size );
+    bool configure_inputs ( int ) override;
+    void handle_port_connection_change ( void ) override;
+    void resize_buffers ( nframes_t buffer_size ) override;
 
-    virtual bool bypass ( void ) const { return *_bypass == 1.0f; }
-    virtual void bypass ( bool v );
+    virtual bool bypass ( void ) const override { return *_bypass == 1.0f; }
+    virtual void bypass ( bool v ) override;
 
 private:
 
-    void init ( void );
+    void init ( void ) override;
     bool apply ( sample_t *buf, nframes_t nframes );
     void set_input_buffer ( int n, void *buf );
     void set_output_buffer ( int n, void *buf );
@@ -62,8 +62,8 @@ public:
     LADSPA_Plugin ( );
     virtual ~LADSPA_Plugin();
 
-    nframes_t get_module_latency ( void ) const;
-    void process ( nframes_t );
+    nframes_t get_module_latency ( void ) const override;
+    void process ( nframes_t ) override;
 
     LOG_CREATE_FUNC( LADSPA_Plugin );
     MODULE_CLONE_FUNC( LADSPA_Plugin );
@@ -71,7 +71,7 @@ public:
 protected:
 
     bool plugin_instances ( unsigned int );
-    void get ( Log_Entry &e ) const;
-    void set ( Log_Entry &e );
+    void get ( Log_Entry &e ) const override;
+    void set ( Log_Entry &e ) override;
 
 };
