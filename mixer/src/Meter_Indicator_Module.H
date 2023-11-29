@@ -41,20 +41,20 @@ class Meter_Indicator_Module : public Module
 
 public:
 
-    virtual void update ( void );
+    virtual void update ( void ) override;
 
     void disable_context_menu ( bool b ) { _disable_context_menu = b; }
 
-    void handle_control_changed ( Port *p );
+    void handle_control_changed ( Port *p ) override;
 
     Meter_Indicator_Module ( bool is_default = false );
     virtual ~Meter_Indicator_Module ( );
 
     bool allows_external_control ( void ) const { return false; }
-    const char *name ( void ) const { return "Meter Indicator"; }
+    const char *name ( void ) const override { return "Meter Indicator"; }
 
-    int can_support_inputs ( int ) { return 0; }
-    bool configure_inputs ( int ) { return false; }
+    int can_support_inputs ( int ) override { return 0; }
+    bool configure_inputs ( int ) override { return false; }
 
     void pad ( bool v ) { _pad = v; }
 
@@ -65,16 +65,16 @@ public:
 
     LOG_CREATE_FUNC( Meter_Indicator_Module );
 
-    virtual void process ( nframes_t );
+    virtual void process ( nframes_t ) override;
 
 protected:
 
-    void get ( Log_Entry &e ) const;
-    void set ( Log_Entry &e );
+    void get ( Log_Entry &e ) const override;
+    void set ( Log_Entry &e ) override;
 
-    virtual void draw ( void );
-    virtual void resize ( int X, int Y, int W, int H );
-    virtual int handle ( int m );
+    virtual void draw ( void ) override;
+    virtual void resize ( int X, int Y, int W, int H ) override;
+    virtual int handle ( int m ) override;
 
 private:
 

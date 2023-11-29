@@ -46,11 +46,11 @@ class Spatializer_Module : public JACK_Module
     
 public:
 
-    virtual const char *name ( void ) const { return "Spatializer"; }
+    virtual const char *name ( void ) const override { return "Spatializer"; }
 
-    int can_support_inputs ( int n ) { return n > 0 && n < 3 ? 4 : -1; }
+    int can_support_inputs ( int n ) override { return n > 0 && n < 3 ? 4 : -1; }
 
-    virtual bool configure_inputs ( int n );
+    virtual bool configure_inputs ( int n ) override;
 
     Spatializer_Module ( );
     virtual ~Spatializer_Module ( );
@@ -59,13 +59,13 @@ public:
 
     MODULE_CLONE_FUNC(Spatializer_Module);
     
-    virtual void handle_sample_rate_change ( nframes_t n );
-    virtual void handle_control_changed ( Port *p );
-    virtual void draw ( void );
+    virtual void handle_sample_rate_change ( nframes_t n ) override;
+    virtual void handle_control_changed ( Port *p ) override;
+    virtual void draw ( void ) override;
 
 protected:
 
-    virtual void process ( nframes_t nframes );
+    virtual void process ( nframes_t nframes ) override;
 
 };
 

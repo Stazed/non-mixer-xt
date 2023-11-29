@@ -31,14 +31,18 @@ public:
     
 protected:
 
-    int command_open ( const char *name, const char *display_name, const char *client_id, char **out_msg );
-    int command_save ( char **out_msg );
+    int command_open ( const char *name,
+            const char *display_name,
+            const char *client_id,
+            char **out_msg ) override;
 
-    void command_active ( bool active );
+    int command_save ( char **out_msg ) override;
 
-    int command_broadcast ( const char *path, lo_message msg );
+    void command_active ( bool active ) override;
 
-    void command_hide_gui( void );
-    void command_show_gui( void );
+    int command_broadcast ( const char *path, lo_message msg ) override;
+
+    void command_hide_gui( void ) override;
+    void command_show_gui( void ) override;
 
 };
