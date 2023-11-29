@@ -118,9 +118,9 @@ Chain::Chain ( ) : Fl_Group( 0, 0, 100, 100, "")
     Y += 18;
     H -= 18;
 
-    { Fl_Group *o = chain_tab = new Fl_Group( X, Y, W, H, "" );
-        o->labeltype( FL_NO_LABEL );
-        o->box( FL_FLAT_BOX );
+    { Fl_Group *g = chain_tab = new Fl_Group( X, Y, W, H, "" );
+        g->labeltype( FL_NO_LABEL );
+        g->box( FL_FLAT_BOX );
 //        o->color( fl_darker( FL_BACKGROUND_COLOR ) );
 //        o->color( FL_BACKGROUND_COLOR );
 //        o->box( FL_NO_BOX );
@@ -129,38 +129,38 @@ Chain::Chain ( ) : Fl_Group( 0, 0, 100, 100, "")
 //            o->box( FL_FLAT_BOX );
             o->box( FL_THIN_UP_BOX );
             o->type( Fl_Scroll::VERTICAL );
-            { Fl_Pack *o = modules_pack = new Fl_Pack( X, Y, W, H );
-                o->type( Fl_Pack::VERTICAL );
-                o->spacing( 6 );
-                o->end();
-                Fl_Group::current()->resizable( o );
+            { Fl_Pack *mp = modules_pack = new Fl_Pack( X, Y, W, H );
+                mp->type( Fl_Pack::VERTICAL );
+                mp->spacing( 6 );
+                mp->end();
+                Fl_Group::current()->resizable( mp );
             }
             o->end();
         }
-        o->end();
+        g->end();
     }
-    { Fl_Group *o = control_tab = new Fl_Group( X, Y, W, H, "" );
-        o->box( FL_FLAT_BOX );
-        o->color( FL_BACKGROUND_COLOR );
-        o->labeltype( FL_NO_LABEL );
-        o->hide();
+    { Fl_Group *g = control_tab = new Fl_Group( X, Y, W, H, "" );
+        g->box( FL_FLAT_BOX );
+        g->color( FL_BACKGROUND_COLOR );
+        g->labeltype( FL_NO_LABEL );
+        g->hide();
         { Fl_Scroll *o = new Fl_Scroll( X, Y, W, H );
             o->color( FL_BACKGROUND_COLOR );
             o->box( FL_NO_BOX );
             o->type( Fl_Scroll::VERTICAL );
-            { Fl_Pack *o = controls_pack = new Fl_Pack( X, Y, W, H );
-                o->type( Fl_Pack::VERTICAL );
-                o->spacing( 5 );
-//            o->color( FL_RED );
-                o->end();
-                Fl_Group::current()->resizable( o );
+            { Fl_Pack *cp = controls_pack = new Fl_Pack( X, Y, W, H );
+                cp->type( Fl_Pack::VERTICAL );
+                cp->spacing( 5 );
+//            cp->color( FL_RED );
+                cp->end();
+                Fl_Group::current()->resizable( cp );
             }
             o->end();
             Fl_Group::current()->resizable( o );
         }
-        o->end();
-        o->hide();
-        Fl_Group::current()->resizable( o );
+        g->end();
+        g->hide();
+        Fl_Group::current()->resizable( g );
     }
     end();
 
@@ -182,7 +182,8 @@ Chain::~Chain ( )
 	client()->lock();
 
     for ( unsigned int i = scratch_port.size(); i--; )
-        free( (sample_t*)scratch_port[i].buffer() );
+        free( static_cast<sample_t*>(scratch_port[i].buffer()) );
+
     scratch_port.clear();
     
     /* if we leave this up to FLTK, it will happen after we've
@@ -226,9 +227,9 @@ Chain::set ( Log_Entry &e )
         }
         else if ( ! strcmp( s, ":strip" ) )
         {
-            unsigned int i;
-            sscanf( v, "%X", &i );
-            Mixer_Strip *t = (Mixer_Strip*)Loggable::find( i );
+            unsigned int j;
+            sscanf( v, "%X", &j );
+            Mixer_Strip *t = static_cast<Mixer_Strip*>(Loggable::find( j ) );
 
             assert( t );
 
@@ -250,7 +251,7 @@ Chain::log_children ( void ) const
 
     for ( int i = 0; i < controls_pack->children(); ++i )
     {
-        Controller_Module *cm = (Controller_Module*)controls_pack->child( i );
+        const Controller_Module *cm = static_cast<Controller_Module*>( controls_pack->child( i ) );
 
         cm->log_create();
     }
@@ -290,7 +291,7 @@ Chain::initialize_with_default ( void )
 void Chain::cb_handle(Fl_Widget* o) {
     if ( o == tab_button )
     {
-        Fl_Flip_Button *fb = (Fl_Flip_Button*)o;
+        Fl_Flip_Button *fb = static_cast<Fl_Flip_Button*>( o );
 
         if ( fb->value() == 0 )
         {
@@ -367,8 +368,8 @@ Chain::remove ( Module *m )
                a zero input synth */
             if(module( i - 1 )->is_jack_module() )
             {
-                Module *m = module( i - 1 );
-                JACK_Module *j = static_cast<JACK_Module *> (m);
+                Module *jm = module( i - 1 );
+                JACK_Module *j = static_cast<JACK_Module *> (jm);
                 j->configure_outputs( 1 );
             }
         }
@@ -413,7 +414,7 @@ Chain::configure_ports ( void )
         {
             Module::Port p( NULL, Module::Port::OUTPUT, Module::Port::AUDIO );
             p.set_buffer( buffer_alloc( client()->nframes() ) );
-            buffer_fill_with_silence( (sample_t*)p.buffer(), client()->nframes() );
+            buffer_fill_with_silence( static_cast<sample_t*>( p.buffer() ), client()->nframes() );
             scratch_port.push_back( p );
         }
     }
@@ -641,8 +642,8 @@ Chain::insert ( Module *m, Module *n )
             {
                 if(module( 0 )->is_jack_module() )
                 {
-                    Module *m = module( 0 );
-                    JACK_Module *j = static_cast<JACK_Module *> (m);
+                    Module *jm = module( 0 );
+                    JACK_Module *j = static_cast<JACK_Module *> (jm);
                     j->configure_outputs( 0 );
                 }
             }
@@ -721,8 +722,8 @@ Chain::insert ( Module *m, Module *n )
             {
                 if(module( jack_module )->is_jack_module() )
                 {
-                    Module *m = module( i - 1 );
-                    JACK_Module *j = static_cast<JACK_Module *> (m);
+                    Module *jm = module( i - 1 );
+                    JACK_Module *j = static_cast<JACK_Module *> (jm);
                     j->configure_outputs( 0 );
                 }
             }
@@ -797,7 +798,7 @@ Chain::draw_connections ( Module *m )
 
     int X, Y, W, H;
 
-    ((Fl_Packscroller*)chain_tab->child( 0 ))->bbox( X, Y, W, H );
+    ( static_cast<Fl_Packscroller*>( chain_tab->child( 0 ) ) )->bbox( X, Y, W, H );
 
     fl_push_clip( X, Y, W, H );
 
@@ -848,7 +849,7 @@ Chain::build_process_queue ( void )
 
     for ( int i = 0; i < modules(); ++i )
     {
-        Module *m = (Module*)module( i );
+        Module *m = static_cast<Module*>( module( i ) );
 
         /* controllers */
         for ( unsigned int j = 0; j < m->control_input.size(); ++j )
@@ -1104,7 +1105,7 @@ Chain::update ( void )
 {
     for ( int i = 0; i < controls_pack->children(); ++i )
     {
-        Controller_Module *cm = (Controller_Module*)controls_pack->child( i );
+        Controller_Module *cm = static_cast<Controller_Module*>( controls_pack->child( i ) );
         cm->update();
     }
 
