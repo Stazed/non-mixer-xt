@@ -145,7 +145,7 @@ const clap_plugin_entry_t *entryFromCLAPPath(const std::filesystem::path &p)
 	return nullptr;
     }
 
-    iptr = (int *)dlsym(handle, "clap_entry");
+    iptr = static_cast<int *>( dlsym(handle, "clap_entry") );
 
     return (clap_plugin_entry_t *)iptr;
 }
