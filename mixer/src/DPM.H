@@ -56,7 +56,7 @@ class DPM : public Meter
     
 protected:
 
-    virtual void draw ( void );
+    virtual void draw ( void ) override;
     virtual void resize ( int, int, int, int );
     /* virtual void draw_label ( void ); */
 
@@ -74,7 +74,7 @@ public:
     void dim ( float v ) { _dim = v; if ( visible_r() ) redraw(); }
 
     
-    virtual void value ( float v )
+    virtual void value ( float v ) override
         {
 	    /* only  trigger redraw for changes at or above our resolution*/
 	    if ( pos( value() ) != pos( v ) && visible_r() )
@@ -83,7 +83,7 @@ public:
 	    Meter::value( v );
         }
 
-    virtual float value ( void ) { return Meter::value(); }
+    virtual float value ( void ) override { return Meter::value(); }
 
     void update ( void );
     

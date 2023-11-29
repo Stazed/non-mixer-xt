@@ -42,15 +42,15 @@ class Group : public Loggable, public JACK::Client, public Mutex
     volatile float _dsp_load;
     float _load_coef;
 
-    int sample_rate_changed ( nframes_t srate );
-    void shutdown ( void );
-    int process ( nframes_t nframes );
-    int xrun ( void );
-    void freewheel ( bool yes );
-    int buffer_size ( nframes_t nframes );
-    void thread_init ( void );
-    void port_connect ( jack_port_id_t a, jack_port_id_t b, int connect );
-    virtual void latency ( jack_latency_callback_mode_t mode );
+    int sample_rate_changed ( nframes_t srate ) override;
+    void shutdown ( void ) override;
+    int process ( nframes_t nframes ) override;
+    int xrun ( void ) override;
+    void freewheel ( bool yes ) override;
+    int buffer_size ( nframes_t nframes ) override;
+    void thread_init ( void ) override;
+    void port_connect ( jack_port_id_t a, jack_port_id_t b, int connect ) override;
+    virtual void latency ( jack_latency_callback_mode_t mode ) override;
 
     /* not allowed */
     Group ( const Group &rhs );
@@ -62,8 +62,8 @@ class Group : public Loggable, public JACK::Client, public Mutex
 
 protected:
 
-    virtual void get ( Log_Entry &e ) const;
-    virtual void set ( Log_Entry &e );
+    virtual void get ( Log_Entry &e ) const override;
+    virtual void set ( Log_Entry &e ) override;
 
 private:
 

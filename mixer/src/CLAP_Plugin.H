@@ -51,25 +51,25 @@ class CLAP_Plugin : public Plugin_Module,
 
 public:
 
-    virtual bool load_plugin ( Module::Picked picked );
+    virtual bool load_plugin ( Module::Picked picked ) override;
 
-    bool configure_inputs ( int );
-    void handle_port_connection_change ( void );
-    void handle_chain_name_changed ( void );
-    void handle_sample_rate_change ( nframes_t sample_rate );
-    void resize_buffers ( nframes_t buffer_size );
+    bool configure_inputs ( int ) override;
+    void handle_port_connection_change ( void ) override;
+    void handle_chain_name_changed ( void ) override;
+    void handle_sample_rate_change ( nframes_t sample_rate ) override;
+    void resize_buffers ( nframes_t buffer_size ) override;
 
-    virtual bool bypass ( void ) const { return *_bypass == 1.0f; }
-    virtual void bypass ( bool v );
+    virtual bool bypass ( void ) const override { return *_bypass == 1.0f; }
+    virtual void bypass ( bool v ) override;
 
-    void freeze_ports ( void );
-    void thaw_ports ( void );
+    void freeze_ports ( void ) override;
+    void thaw_ports ( void ) override;
     
-    void configure_midi_inputs ();
-    void configure_midi_outputs ();
+    void configure_midi_inputs () override;
+    void configure_midi_outputs () override;
 
-    nframes_t get_module_latency ( void ) const;
-    void process ( nframes_t );
+    nframes_t get_module_latency ( void ) const override;
+    void process ( nframes_t ) override;
 
     LOG_CREATE_FUNC( CLAP_Plugin );
     MODULE_CLONE_FUNC( CLAP_Plugin );
@@ -354,8 +354,8 @@ protected:
     bool clapUnregisterTimer(const clap_id timerId);
 
     bool plugin_instances ( unsigned int );
-    void get ( Log_Entry &e ) const;
-    void set ( Log_Entry &e );
+    void get ( Log_Entry &e ) const override;
+    void set ( Log_Entry &e ) override;
 
 };
 

@@ -69,7 +69,7 @@ private:
 
     nframes_t _last_latency;
     
-    void bbox ( int &X, int &Y, int &W, int &H )
+    void bbox ( int &X, int &Y, int &W, int &H ) override
         {
             X = x();
             Y = y() + 5;
@@ -94,7 +94,7 @@ public:
 
     virtual bool load_plugin ( Module::Picked /* picked */ ) {return false;};
 
-    virtual void update ( void );
+    virtual void update ( void ) override;
 
     static std::list<Plugin_Info> get_all_plugins ( void );
     void scan_LADSPA_plugins( std::list<Plugin_Info> & pr );
@@ -111,17 +111,17 @@ public:
     int plugin_ins ( void ) const { return _plugin_ins; }
     int plugin_outs ( void ) const { return _plugin_outs; }
 
-    const char *name ( void ) const { return "Plugin"; }
+    const char *name ( void ) const override { return "Plugin"; }
 
-    int can_support_inputs ( int );
-    bool configure_inputs ( int );
+    int can_support_inputs ( int ) override;
+    bool configure_inputs ( int ) override;
 
-    virtual bool bypass ( void ) const { return *_bypass == 1.0f; }
-    virtual void bypass ( bool /*v*/ ){};
+    virtual bool bypass ( void ) const override { return *_bypass == 1.0f; }
+    virtual void bypass ( bool /*v*/ ) override {};
 
-    virtual void process ( nframes_t ){};
+    virtual void process ( nframes_t ) override {};
 
-    void resize_buffers ( nframes_t buffer_size );
+    void resize_buffers ( nframes_t buffer_size ) override;
 
     LOG_CREATE_FUNC( Plugin_Module );
     MODULE_CLONE_FUNC( Plugin_Module );
@@ -132,9 +132,9 @@ protected:
     void set_ladspainfo( void );
 
     volatile nframes_t _latency;
-    void init ( void );
+    void init ( void ) override;
 
-    void get ( Log_Entry & /*e*/ ) const{};
-    void set ( Log_Entry &e );
+    void get ( Log_Entry & /*e*/ ) const override {};
+    void set ( Log_Entry &e ) override;
 
 };

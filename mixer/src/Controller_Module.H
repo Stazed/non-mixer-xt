@@ -79,10 +79,10 @@ public:
     Controller_Module ( bool is_default = false );
     virtual ~Controller_Module ( );
 
-    const char *name ( void ) const { return "Controller"; }
+    const char *name ( void ) const override { return "Controller"; }
 
-    int can_support_inputs ( int ) { return 0; }
-    bool configure_inputs ( int ) { return false; }
+    int can_support_inputs ( int ) override { return 0; }
+    bool configure_inputs ( int ) override { return false; }
 
     void pad ( bool v ) { _pad = v; }
 
@@ -96,29 +96,29 @@ public:
     bool connect_spatializer_radius_to ( Module *m );
     void disconnect ( void );
 
-    void handle_control_changed ( Port *p );
-    void handle_chain_name_changed ( void );
-    void handle_control_disconnect ( Port *p );
+    void handle_control_changed ( Port *p ) override;
+    void handle_chain_name_changed ( void ) override;
+    void handle_control_disconnect ( Port *p ) override;
 
-    virtual void command_remove ( void );
+    virtual void command_remove ( void ) override;
 
     LOG_CREATE_FUNC( Controller_Module );
 
-    virtual void update ( void );
+    virtual void update ( void ) override;
 
-    virtual void process ( nframes_t nframes );
+    virtual void process ( nframes_t nframes ) override;
 
-    void draw ( void );
+    void draw ( void ) override;
 
-    int handle ( int m );
+    int handle ( int m ) override;
 
     void take_focus ( void );
 //    void set_control_value ( float f ) { control_value = f; }
 
 protected:
 
-    void get ( Log_Entry &e ) const;
-    void set ( Log_Entry &e );
+    void get ( Log_Entry &e ) const override;
+    void set ( Log_Entry &e ) override;
 
 private:
 

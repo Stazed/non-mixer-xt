@@ -75,8 +75,8 @@ private:
 
 protected:
 
-    void get ( Log_Entry &e ) const;
-    void set ( Log_Entry &e );
+    void get ( Log_Entry &e ) const override;
+    void set ( Log_Entry &e ) override;
 
 public:
 
@@ -138,7 +138,7 @@ public:
 
     Fl_Callback * configure_outputs_callback ( void ) const { return _configure_outputs_callback; }
 
-    virtual void log_children ( void ) const;
+    virtual void log_children ( void ) const override;
 
     static unsigned int maximum_name_length ( void );
 

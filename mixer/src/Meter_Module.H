@@ -49,19 +49,19 @@ public:
     Meter_Module ( );
     virtual ~Meter_Module ( );
 
-    const char *name ( void ) const { return "Meter"; }
+    const char *name ( void ) const override { return "Meter"; }
 
-    int can_support_inputs ( int n ) { return n > 0 ? n : -1; }
-    bool configure_inputs ( int n );
+    int can_support_inputs ( int n ) override { return n > 0 ? n : -1; }
+    bool configure_inputs ( int n ) override;
 
     LOG_CREATE_FUNC( Meter_Module );
 
-    virtual void update ( void );
+    virtual void update ( void ) override;
 
 protected:
 
-    virtual int handle ( int m );
-    virtual void process ( nframes_t nframes );
-    virtual void draw ( void );
-    virtual void resize ( int X, int Y, int W, int H );
+    virtual int handle ( int m ) override;
+    virtual void process ( nframes_t nframes ) override;
+    virtual void draw ( void ) override;
+    virtual void resize ( int X, int Y, int W, int H ) override;
 };
