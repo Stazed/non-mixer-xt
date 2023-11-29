@@ -103,7 +103,7 @@ Plugin_Chooser::search ( const char *name, const char *author, const char *categ
                         int ninputs, int noutputs, bool favorites, const char *plug_type )
 {
     _plugin_rows.clear();
-    
+
     for ( std::list<Plugin_Module::Plugin_Info>::iterator i = _plugins.begin(); i != _plugins.end(); ++i )
     {
         Plugin_Module::Plugin_Info *p = &(*i);
@@ -139,45 +139,26 @@ Plugin_Chooser::search ( const char *name, const char *author, const char *categ
             if ( favorites > 0 && ! p->favorite )
                 continue;
 
+            // If category is not 'Any' then match the category
             if ( strcmp( category, "Any" ) )
             {
-                if ( !p->category.c_str() && strcmp( category, "Unclassified" ))
-                    continue;
-
                 if (strncmp( p->category.c_str(), category, strlen( category )))
                     continue;
             }
 
-            // if we want LV2 types only
-            if( !strcmp( plug_type, "LV2" ) )
+            // If plug_type is not 'ALL' then match the type
+            if( strcmp( plug_type, "ALL" ) )
             {
-                if( strcmp(p->type.c_str(), "LV2") )
-                {
-                    continue;   // Not LV2 so skip it
-                }
+                if( strcmp(p->type.c_str(), plug_type) )
+                    continue;
             }
-            else if( !strcmp( plug_type, "LADSPA" ) )   // if we want LADSPA only
-            {
-                if( strcmp( p->type.c_str(), "LADSPA" ) )
-                {
-                    continue;   // Not LADSPA so skip it
-                }
-            }
-            else if( !strcmp( plug_type, "CLAP" ) )   // if we want CLAP only
-            {
-                if( strcmp( p->type.c_str(), "CLAP" ) )
-                {
-                    continue;   // Not CLAP so skip it
-                }
-            }
-
-            // TODO other types
 
             _plugin_rows.push_back( p );
         }
     }
 
     ui->table->rows( _plugin_rows.size() );
+    ui->table->redraw();
 }
 
 void
@@ -390,10 +371,10 @@ Plugin_Chooser::load_favorites ( void )
 
     unsigned long id;
     char *type;
-    char *s_unique_id;
+    char *c_unique_id;
     int favorites = 0;
 
-    while ( 3 == fscanf( fp, "%m[^:]:%lu:%m[^]\n]\n", &type, &id, &s_unique_id ) )
+    while ( 3 == fscanf( fp, "%m[^:]:%lu:%m[^]\n]\n", &type, &id, &c_unique_id ) )
     {
         for ( std::list<Plugin_Module::Plugin_Info>::iterator i = _plugins.begin();
               i != _plugins.end();
@@ -404,7 +385,7 @@ Plugin_Chooser::load_favorites ( void )
             {
                 if( !strcmp(type, "LV2") )
                 {
-                    if( !strcmp(s_unique_id, (*i).s_unique_id.c_str()) )
+                    if( !strcmp(c_unique_id, (*i).s_unique_id.c_str()) )
                     {
                         (*i).favorite = 1;
                         favorites++;
@@ -418,7 +399,7 @@ Plugin_Chooser::load_favorites ( void )
 #ifdef CLAP_SUPPORT
                 else if ( !strcmp(type, "CLAP") )
                 {
-                    if ( !strcmp(s_unique_id, (*i).s_unique_id.c_str()) )
+                    if ( !strcmp(c_unique_id, (*i).s_unique_id.c_str()) )
                     {
                         (*i).favorite = 1;
                         favorites++;
@@ -429,7 +410,7 @@ Plugin_Chooser::load_favorites ( void )
             }
         }
 
-        free(s_unique_id);
+        free(c_unique_id);
         free(type);
     }
 

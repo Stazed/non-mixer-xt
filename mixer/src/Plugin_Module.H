@@ -54,7 +54,7 @@ public:
             clap_path(),
             name(),
             author(),
-            category(),
+            category("Unclassified"),
             audio_inputs(0),
             audio_outputs(0),
             type(s_type),
