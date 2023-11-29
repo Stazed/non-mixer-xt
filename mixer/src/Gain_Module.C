@@ -78,8 +78,8 @@ Gain_Module::Gain_Module ( )
 
 Gain_Module::~Gain_Module ( )
 {
-    delete (float*)control_input[0].buffer();
-    delete (float*)control_input[1].buffer();
+    delete static_cast<float*>( control_input[0].buffer() );
+    delete static_cast<float*>( control_input[1].buffer() );
     log_destroy();
 }
 
@@ -133,7 +133,7 @@ Gain_Module::process ( nframes_t nframes )
             {
                 if ( audio_input[i].connected() && audio_output[i].connected() )
                 {
-                    sample_t *out = (sample_t*)audio_input[i].buffer();
+                    sample_t *out = static_cast<sample_t*>( audio_input[i].buffer() );
 
                     buffer_apply_gain_buffer( out, gainbuf, nframes );
                 }
@@ -144,7 +144,7 @@ Gain_Module::process ( nframes_t nframes )
             {
                 if ( audio_input[i].connected() && audio_output[i].connected() )
                 {
-                    buffer_apply_gain( (sample_t*)audio_input[i].buffer(), nframes, gt );
+                    buffer_apply_gain( static_cast<sample_t*>( audio_input[i].buffer() ), nframes, gt );
                 }
             }
     }
