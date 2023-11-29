@@ -246,23 +246,23 @@ struct ImplementationData
 _Pragma("GCC diagnostic push")
 _Pragma("GCC diagnostic ignored \"-Wdeprecated-declarations\"")
         if ( features[Plugin_Feature_URI_Map] && features[Plugin_Feature_URI_Map]->data )
-            delete (LV2_URI_Map_Feature*)features[Plugin_Feature_URI_Map]->data;
+            delete static_cast<LV2_URI_Map_Feature*>(features[Plugin_Feature_URI_Map]->data);
 _Pragma("GCC diagnostic pop")
         if ( features[Plugin_Feature_URID_Map] && features[Plugin_Feature_URID_Map]->data )
-            delete (LV2_URID_Map*)features[Plugin_Feature_URID_Map]->data;
+            delete static_cast<LV2_URID_Map*>(features[Plugin_Feature_URID_Map]->data);
 
         if ( features[Plugin_Feature_URID_Unmap] && features[Plugin_Feature_URID_Unmap]->data )
-            delete (LV2_URID_Unmap*)features[Plugin_Feature_URID_Unmap]->data;
+            delete static_cast<LV2_URID_Unmap*>(features[Plugin_Feature_URID_Unmap]->data);
 
         if ( features[Plugin_Feature_Make_path] && features[Plugin_Feature_Make_path]->data )
-            delete (LV2_State_Make_Path*)features[Plugin_Feature_Make_path]->data;
+            delete static_cast<LV2_State_Make_Path*>(features[Plugin_Feature_Make_path]->data);
 #ifdef LV2_WORKER_SUPPORT
         if ( features[Plugin_Feature_Worker_Schedule] && features[Plugin_Feature_Worker_Schedule]->data )
-            delete (LV2_Worker_Schedule*)features[Plugin_Feature_Worker_Schedule]->data;
+            delete static_cast<LV2_Worker_Schedule*>(features[Plugin_Feature_Worker_Schedule]->data);
 #endif
 #ifdef USE_SUIL
         if ( features[Plugin_Feature_Resize] && features[Plugin_Feature_Resize]->data )
-            delete (LV2UI_Resize*)features[Plugin_Feature_Resize]->data;
+            delete static_cast<LV2UI_Resize*>(features[Plugin_Feature_Resize]->data);
 #endif
     }
 
@@ -344,7 +344,7 @@ _Pragma("GCC diagnostic pop")
             return Plugin_Module_URI_time_beatsPerMinute;
 #endif
 
-        ImplementationData* self = (ImplementationData*)handle;
+        ImplementationData* self = static_cast<ImplementationData*>(handle);
 
         uint32_t ret = 0;
         for (std::vector<std::string>::iterator it = self->mappedURIs.begin(), end = self->mappedURIs.end(); it != end; ++it)
@@ -372,7 +372,7 @@ _Pragma("GCC diagnostic pop")
         if ( handle == NULL || urid == 0 )
             return NULL;
 
-        ImplementationData* self = (ImplementationData*)handle;
+        ImplementationData* self = static_cast<ImplementationData*>(handle);
 
         if ( urid <= self->mappedURIs.size() )
             return self->mappedURIs[urid].c_str();
