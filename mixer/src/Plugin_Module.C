@@ -62,7 +62,7 @@ Plugin_Module::Plugin_Module ( ) :
     
     end();
 
-    init();
+    Plugin_Module::init();
     log_create();
 }
 
