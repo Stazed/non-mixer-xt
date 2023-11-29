@@ -65,24 +65,24 @@ public:
     JACK_Module ( bool log = true );
     virtual ~JACK_Module ( );
 
-    virtual const char *basename ( void ) const { return "JACK"; }
-    virtual const char *name ( void ) const { return "JACK"; }
+    virtual const char *basename ( void ) const override { return "JACK"; }
+    virtual const char *name ( void ) const override { return "JACK"; }
 
-    virtual void draw ( void );
-    virtual int handle ( int m );
+    virtual void draw ( void ) override;
+    virtual int handle ( int m ) override;
 
-    virtual int can_support_inputs ( int );
+    virtual int can_support_inputs ( int ) override;
     void remove_aux_audio_outputs ( void );
-    virtual bool configure_inputs ( int n );
+    virtual bool configure_inputs ( int n ) override;
     virtual bool configure_outputs ( int n );
 
-    virtual void handle_control_changed ( Port *p );
+    virtual void handle_control_changed ( Port *p ) override;
 
     LOG_CREATE_FUNC( JACK_Module );
 
 
 protected:
 
-    virtual void process ( nframes_t nframes );
+    virtual void process ( nframes_t nframes ) override;
 
 };

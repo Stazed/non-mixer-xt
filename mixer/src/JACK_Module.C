@@ -106,21 +106,21 @@ JACK_Module::JACK_Module ( bool log )
     }
 
 
-    { Fl_Scalepack *o = new Fl_Scalepack( x() +  Fl::box_dx(box()),
+    { Fl_Scalepack *sp1 = new Fl_Scalepack( x() +  Fl::box_dx(box()),
                                           y() + Fl::box_dy(box()),
                                           w() - Fl::box_dw(box()),
                                           h() - Fl::box_dh(box()) );
-        o->type( Fl_Pack::VERTICAL );
-        o->spacing(0);
+        sp1->type( Fl_Pack::VERTICAL );
+        sp1->spacing(0);
 
 
-        { Fl_Scalepack *o = new Fl_Scalepack( x() +  Fl::box_dx(box()),
+        { Fl_Scalepack *sp2 = new Fl_Scalepack( x() +  Fl::box_dx(box()),
                                               y() + Fl::box_dy(box()),
                                               w(),
                                               24 - Fl::box_dh(box()) );
-            o->type( Fl_Pack::HORIZONTAL );
+            sp2->type( Fl_Pack::HORIZONTAL );
     
-            o->spacing( 0 );
+            sp2->spacing( 0 );
 
 
             { Fl_Box *o = input_connection_handle = new Fl_Box( x(), y(), 18, 18 );
@@ -160,7 +160,7 @@ JACK_Module::JACK_Module ( bool log )
                 o->hide();
             }
 
-            o->end();
+            sp2->end();
         }
 
         {
@@ -175,8 +175,8 @@ JACK_Module::JACK_Module ( bool log )
             
             Fl_Group::current()->resizable(o);
         }
-        o->end();
-        resizable(o);
+        sp1->end();
+        resizable(sp1);
     }
     end();    
 }
@@ -571,7 +571,7 @@ JACK_Module::handle ( int m )
             {
                 DMESSAGE( "initiation of drag" );
 
-                char *s = (char*)malloc(256);
+                char *s = static_cast<char*>(malloc(256));
                 s[0] = 0;
   
                 for ( unsigned int i = _connection_handle_outputs[connection_handle][0]; 
@@ -582,7 +582,7 @@ JACK_Module::handle ( int m )
                     asprintf(&s2, "jack.port://%s\r\n", 
                              aux_audio_output[i].jack_port()->jack_name() );
                     
-                    tmp = (char*)realloc( s, strlen( s ) + strlen( s2 ) + 1 ); 
+                    tmp = static_cast<char*>( realloc( s, strlen( s ) + strlen( s2 ) + 1 ) ); 
                     
                     if(tmp)
                     {
@@ -727,8 +727,8 @@ JACK_Module::process ( nframes_t nframes )
     {
         if ( audio_input[i].connected() )
         {
-            buffer_copy( (sample_t*)aux_audio_output[i].jack_port()->buffer(nframes),
-                         (sample_t*)audio_input[i].buffer(),
+            buffer_copy( static_cast<sample_t*>( aux_audio_output[i].jack_port()->buffer(nframes) ),
+                         static_cast<sample_t*>( audio_input[i].buffer() ),
                          nframes );
         }
                          
@@ -738,8 +738,8 @@ JACK_Module::process ( nframes_t nframes )
     {
         if ( audio_output[i].connected() )
         {
-            buffer_copy( (sample_t*)audio_output[i].buffer(),
-                         (sample_t*)aux_audio_input[i].jack_port()->buffer(nframes),
+            buffer_copy( static_cast<sample_t*>( audio_output[i].buffer() ),
+                         static_cast<sample_t*>( aux_audio_input[i].jack_port()->buffer(nframes) ),
                          nframes );
         }
     }
