@@ -1894,11 +1894,7 @@ LV2_Plugin::non_worker_destroy( void )
 {
     if (_zix_requests) 
     {
-        if (_b_threaded)
-        {
-            zix_ring_free(_zix_requests);
-        }
-
+        zix_ring_free(_zix_requests);
         zix_ring_free(_zix_responses);
         free(_worker_response);
     }
