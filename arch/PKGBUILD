@@ -9,7 +9,7 @@ url="https://github.com/Stazed/non-mixer-xt"
 license=('GPL2')
 provides=("${pkgname}")
 conflicts=("${pkgname}")
-depends=('ntk' 'jack' 'liblo' 'ladspa' 'liblrdf' 'lv2' 'lilv' 'suil' 'zix-git' 'clap')
+depends=('ntk' 'jack' 'liblo' 'ladspa' 'liblrdf' 'lv2' 'lilv' 'suil' 'zix' 'clap')
 makedepends=('git' 'cmake')
 source=("git+https://Stazed@github.com/Stazed/non-mixer-xt.git#branch=main")
 md5sums=('SKIP')
