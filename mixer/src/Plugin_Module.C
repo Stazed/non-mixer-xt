@@ -232,11 +232,11 @@ Plugin_Module::scan_LADSPA_plugins( std::list<Plugin_Info> & pr )
     for (std::vector<LADSPAInfo::PluginEntry>::const_iterator i= pe.begin();
          i !=pe.end(); ++i )
     {
-        for ( std::list<Plugin_Info>::iterator j = pr.begin(); j != pr.end(); ++j )
+        for ( std::list<Plugin_Info>::iterator k = pr.begin(); k != pr.end(); ++k )
         {
-            if ( j->id == i->UniqueID )
+            if ( k->id == i->UniqueID )
             {
-                j->category = i->Category;
+                k->category = i->Category;
             }
         }
     }
@@ -388,10 +388,10 @@ Plugin_Module::scan_LV2_plugins( std::list<Plugin_Info> & pr )
         
         // get name and author
         LilvNode* name_node = lilv_plugin_get_name(lilvPlugin);
-        const char* const name = lilv_node_as_string( name_node );
-        if( name )
+        const char* const s_name = lilv_node_as_string( name_node );
+        if( s_name )
         {
-            pi.name = name;
+            pi.name = s_name;
         }
         lilv_node_free(name_node);
 
@@ -412,10 +412,10 @@ Plugin_Module::scan_LV2_plugins( std::list<Plugin_Info> & pr )
         if (const char* const category = lilvPlugin.get_class().get_label().as_string())
         {
             pi.category = category;
-            for(unsigned i = 0; i < type_matches.size(); ++i)
+            for(unsigned k = 0; k < type_matches.size(); ++k)
             {
-                if(!strcmp(type_matches[i].LV2_type.c_str(), pi.category.c_str()))
-                    pi.category = type_matches[i].cat_type;
+                if(!strcmp(type_matches[k].LV2_type.c_str(), pi.category.c_str()))
+                    pi.category = type_matches[k].cat_type;
             }
         }
 
@@ -452,7 +452,7 @@ Plugin_Module::scan_CLAP_plugins( std::list<Plugin_Info> & pr )
             continue;
         }
 
-        auto fac = (clap_plugin_factory_t *)entry->get_factory(CLAP_PLUGIN_FACTORY_ID);
+        auto fac = static_cast<const clap_plugin_factory_t *>( entry->get_factory(CLAP_PLUGIN_FACTORY_ID) );
         
         if ( !fac )
         {
