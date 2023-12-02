@@ -36,9 +36,10 @@
 
 #include "../../nonlib/debug.h"
 
+#ifdef LADSPA_SUPPORT
 #define HAVE_LIBLRDF 1
-
 static LADSPAInfo *ladspainfo;
+#endif
 
 #ifdef CLAP_SUPPORT
     #include "Clap_Discovery.H"
@@ -52,7 +53,9 @@ static bool warn_legacy_once = false;
 Plugin_Module::Plugin_Module ( ) :
     Module( 50, 35, name() ),
     _last_latency(0),
+#ifdef LADSPA_SUPPORT
     _ladspainfo(nullptr),
+#endif
     _plugin_ins(0),
     _plugin_outs(0),
     _crosswire(false),
@@ -71,11 +74,13 @@ Plugin_Module::~Plugin_Module ( )
     log_destroy();
 }
 
+#ifdef LADSPA_SUPPORT
 void
 Plugin_Module::set_ladspainfo( void )
 {
     _ladspainfo = ladspainfo;
 }
+#endif
 
 void
 Plugin_Module::init ( void )
@@ -147,8 +152,9 @@ Plugin_Module::discover_thread ( void * )
     THREAD_ASSERT( Plugin_Discover );
 
     DMESSAGE( "Discovering plugins in the background" );
-
+#ifdef LADSPA_SUPPORT
     ladspainfo = new LADSPAInfo();
+#endif
 
     Lv2WorldClass::getInstance().initIfNeeded(/*::getenv("LV2_PATH")*/);
 
@@ -180,6 +186,7 @@ Plugin_Module::join_discover_thread ( void )
 std::list<Plugin_Module::Plugin_Info>
 Plugin_Module::get_all_plugins ( void )
 {
+#ifdef LADSPA_SUPPORT
     if ( !ladspainfo )
     {
         if ( ! plugin_discover_thread )
@@ -187,13 +194,13 @@ Plugin_Module::get_all_plugins ( void )
         else
             plugin_discover_thread->join();
     }
-
+#endif
     std::list<Plugin_Module::Plugin_Info> pr;
 
     Plugin_Module pm;
-
+#ifdef LADSPA_SUPPORT
     pm.scan_LADSPA_plugins( pr );   // Scan LADSPA
-
+#endif
     pm.scan_LV2_plugins( pr );      // Scan LV2
 #ifdef CLAP_SUPPORT
     pm.scan_CLAP_plugins( pr );     // Scan CLAP
@@ -205,6 +212,7 @@ Plugin_Module::get_all_plugins ( void )
     return pr;
 }
 
+#ifdef LADSPA_SUPPORT
 void
 Plugin_Module::scan_LADSPA_plugins( std::list<Plugin_Info> & pr )
 {
@@ -241,6 +249,7 @@ Plugin_Module::scan_LADSPA_plugins( std::list<Plugin_Info> & pr )
         }
     }
 }
+#endif  // LADSPA_SUPPORT
 
 void
 Plugin_Module::scan_LV2_plugins( std::list<Plugin_Info> & pr )

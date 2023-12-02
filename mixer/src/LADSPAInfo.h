@@ -21,7 +21,7 @@
 #ifndef __ladspa_info_h__
 #define __ladspa_info_h__
 
-// #include <config.h>
+#ifdef LADSPA_SUPPORT
 
 #include <string>
 #include <vector>
@@ -204,5 +204,7 @@ private:
 	StringMap                       m_FilenameLookup;
 	unsigned long                   m_MaxInputPortCount;
 };
+
+#endif  // LADSPA_SUPPORT
 
 #endif // __ladspa_info_h__

@@ -45,7 +45,11 @@
 #include "Gain_Module.H"
 #include "Spatializer_Module.H"
 #include "Plugin_Module.H"
+
+#ifdef LADSPA_SUPPORT
 #include "LADSPA_Plugin.H"
+#endif
+
 #include "LV2_Plugin.H"
 
 #ifdef CLAP_SUPPORT
@@ -181,7 +185,9 @@ main ( int argc, char **argv )
 #ifdef CLAP_SUPPORT
     LOG_REGISTER_CREATE( CLAP_Plugin );
 #endif
+#ifdef LADSPA_SUPPORT
     LOG_REGISTER_CREATE( LADSPA_Plugin );
+#endif
     LOG_REGISTER_CREATE( Gain_Module );
     LOG_REGISTER_CREATE( Spatializer_Module );
     LOG_REGISTER_CREATE( Meter_Module );

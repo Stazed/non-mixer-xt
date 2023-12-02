@@ -22,6 +22,8 @@
  * Created on November 24, 2022, 4:32 PM
  */
 
+#ifdef LADSPA_SUPPORT
+
 #include <math.h>
 
 #include "../../nonlib/dsp.h"
@@ -792,3 +794,5 @@ LADSPA_Plugin::set ( Log_Entry &e )
 
     Module::set( e );
 }
+
+#endif // LADSPA_SUPPORT

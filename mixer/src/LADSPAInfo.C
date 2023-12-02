@@ -19,6 +19,7 @@
 //
 
 // #include <config.h>
+#ifdef LADSPA_SUPPORT
 
 #include <vector>
 #include <string>
@@ -826,3 +827,5 @@ LADSPAInfo::GetDescriptorFunctionForLibrary(unsigned long library_index)
 
 	return desc_func;
 }
+
+#endif // LADSPA_SUPPORT

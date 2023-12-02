@@ -24,6 +24,8 @@
 
 #pragma once
 
+#ifdef LADSPA_SUPPORT
+
 #include "Plugin_Module.H"
 
 
@@ -75,3 +77,5 @@ protected:
     void set ( Log_Entry &e ) override;
 
 };
+
+#endif // LADSPA_SUPPORT

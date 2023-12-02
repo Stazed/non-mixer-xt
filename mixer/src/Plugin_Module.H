@@ -23,7 +23,9 @@
 
 #include "../../nonlib/Loggable.H"
 
+#ifdef LADSPA_SUPPORT
 #include "LADSPAInfo.h"
+#endif
 
 class Fl_Menu_Button;
 class Thread;
@@ -78,8 +80,9 @@ private:
         }
 
 public:
-
+#ifdef LADSPA_SUPPORT
     LADSPAInfo *_ladspainfo;
+#endif
 
     int _plugin_ins;
     int _plugin_outs;
@@ -97,7 +100,9 @@ public:
     virtual void update ( void ) override;
 
     static std::list<Plugin_Info> get_all_plugins ( void );
+#ifdef LADSPA_SUPPORT
     void scan_LADSPA_plugins( std::list<Plugin_Info> & pr );
+#endif
     void scan_LV2_plugins( std::list<Plugin_Info> & pr );
 #ifdef CLAP_SUPPORT
     void scan_CLAP_plugins( std::list<Plugin_Info> & pr );
@@ -129,7 +134,9 @@ public:
 protected:
 
     std::string get_custom_data_location(const std::string &path);
+#ifdef LADSPA_SUPPORT
     void set_ladspainfo( void );
+#endif
 
     volatile nframes_t _latency;
     void init ( void ) override;

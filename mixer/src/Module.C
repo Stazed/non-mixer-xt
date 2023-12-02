@@ -1099,6 +1099,7 @@ Module::insert_menu_cb ( const Fl_Menu_ *menu )
 
         switch ( picked.plugin_type )
         {
+#ifdef LADSPA_SUPPORT
             case LADSPA:
             {
                 LADSPA_Plugin *m = new LADSPA_Plugin();
@@ -1112,7 +1113,7 @@ Module::insert_menu_cb ( const Fl_Menu_ *menu )
                 mod = m;
                 break;
             }
-
+#endif  // LADSPA_SUPPORT
             case LV2:
             {
                 LV2_Plugin *m = new LV2_Plugin();

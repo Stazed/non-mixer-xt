@@ -59,12 +59,13 @@ Plugin_Chooser::plugin_chooser ( int ninputs )
     
     switch ( picked.plugin_type )
     {
+#ifdef LADSPA_SUPPORT
         case LADSPA:
         {
             picked.unique_id = o->value();
             break;
         }
-        
+#endif
         case LV2:
         {
             if (!o->s_unique_id().empty())
@@ -323,11 +324,13 @@ Plugin_Chooser::cb_table ( Fl_Widget *w )
                 _s_unique_id   = _plugin_rows[R]->s_unique_id;
                 _plugin_type = LV2;
             }
+#ifdef LADSPA_SUPPORT
             else if(::strcmp(_plugin_rows[R]->type.c_str(), "LADSPA") == 0)
             {
                 _value = _plugin_rows[R]->id;
                 _plugin_type = LADSPA;
             }
+#endif
 #ifdef CLAP_SUPPORT
             else if(::strcmp(_plugin_rows[R]->type.c_str(), "CLAP") == 0)
             {
@@ -391,11 +394,13 @@ Plugin_Chooser::load_favorites ( void )
                         favorites++;
                     }
                 }
+#ifdef LADSPA_SUPPORT
                 else if( !strcmp(type, "LADSPA") )
                 {
                     (*i).favorite = 1;
                     favorites++;
                 }
+#endif
 #ifdef CLAP_SUPPORT
                 else if ( !strcmp(type, "CLAP") )
                 {
