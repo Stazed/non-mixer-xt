@@ -172,9 +172,9 @@ Controller_Module::set ( Log_Entry &e )
         }
         else if ( ! strcmp( s, ":module" ) )
         {
-            unsigned int i;
-            sscanf( v, "%X", &i );
-            Module *t = (Module*)Loggable::find( i );
+            unsigned int ii;
+            sscanf( v, "%X", &ii );
+            Module *t = static_cast<Module*>( Loggable::find( ii ) );
 
             assert( t );
 
@@ -216,11 +216,11 @@ Controller_Module::mode ( Mode m )
             
             char prefix[512];
 
-	    const Module *m = p->module();
+	    const Module *pm = p->module();
 	    
-	    if ( m->number() >= 0 )
+	    if ( pm->number() >= 0 )
 		/* we do it this way now to ensure uniqueness */
-		snprintf( prefix, sizeof(prefix), "CV-%s/%s", m->label(), p->name() );
+		snprintf( prefix, sizeof(prefix), "CV-%s/%s", pm->label(), p->name() );
 	    else
 		snprintf( prefix, sizeof(prefix), "CV-%s", p->name() );
 
@@ -282,7 +282,7 @@ Controller_Module::connect_spatializer_radius_to ( Module *m )
 
     maybe_create_panner();
     
-    Panner *o = (Panner*)control;
+    Panner *o = static_cast<Panner*>( control );
 
     o->point( 0 )->radius( radius_value );
    
@@ -395,7 +395,7 @@ Controller_Module::connect_spatializer_to ( Module *m )
 
     maybe_create_panner();
     
-    Panner *o = (Panner*)control;
+    Panner *o = static_cast<Panner*>( control );
 
     o->point( 0 )->azimuth( azimuth_value );
     o->point( 0 )->elevation( elevation_value );
@@ -442,7 +442,7 @@ Controller_Module::connect_to ( Port *p )
 
         _type = TOGGLE;
 
-        control = (Fl_Button*)o;
+        control = static_cast<Fl_Button*>( o );
     }
     else if ( p->hints.type == Module::Port::Hints::INTEGER )
     {
@@ -476,31 +476,31 @@ Controller_Module::connect_to ( Port *p )
             o->add( p->hints.ScalePoints[count].Label.c_str() );
         }
 
-        control = (Fl_Choice*)o;
+        control = static_cast<Fl_Choice*>( o );
         w = o;
  
         _type = CHOICE;
         
         /* We set the Fl_Choice menu according to the position in the ScalePoints vector */
-        int menu = 0;
+        int menu_location = 0;
         
         for( unsigned i = 0; i < p->hints.ScalePoints.size(); ++i)
         {
             if ( (int) p->hints.ScalePoints[i].Value == (int) (p->control_value() + .5) )   // .5 for float rounding
             {
-                menu = i;
+                menu_location = i;
                 break;
             }
         }
             
-        o->value( menu );
+        o->value( menu_location );
     }
     //  else if ( p->hints.type == Module::Port::Hints::LOGARITHMIC || Module::Port::Hints::LV2_INTEGER )
     else
     {
         Fl_Value_SliderX *o = new Fl_Value_SliderX(0, 0, 30, 250 );
 
-        control = ( Fl_Value_SliderX* )o;
+        control = static_cast<Fl_Value_SliderX*>( o );
         w = o;
 
         if ( ! _horizontal )
@@ -636,8 +636,8 @@ Controller_Module::cb_handle ( Fl_Widget *w )
     else if ( type() == CHOICE )
     {
         /* We set the control value according to the menu position in the ScalePoints vector */
-        int menu = (int) ((Fl_Choice*)w)->value();
-        control_value = control_output[0].hints.ScalePoints[menu].Value;
+        int menu_location = (int) ((Fl_Choice*)w)->value();
+        control_value = control_output[0].hints.ScalePoints[menu_location].Value;
     }
     else
         control_value = ((Fl_Valuator*)w)->value();
@@ -656,7 +656,7 @@ Controller_Module::cb_spatializer_handle ( Fl_Widget *w, void *v )
 void
 Controller_Module::cb_spatializer_handle ( Fl_Widget *w )
 {
-    Panner *pan = (Panner*)w;
+    Panner *pan = static_cast<Panner*>( w );
 
     if ( control_output[0].connected() &&
          control_output[1].connected() )
@@ -719,7 +719,7 @@ Controller_Module::menu_cb ( const Fl_Menu_ *m )
         /* *index( peer_name, '/' ) = 0; */
 
 //        OSC::Signal s = (OSC::Signal*)m->mvalue()->user_data();
-        const char *path = (const char*)m->mvalue()->user_data();
+        const char *path = static_cast<const char*>( m->mvalue()->user_data() );
 
         /* if ( ! _osc_output()->is_connected_to( ((OSC::Signal*)m->mvalue()->user_data()) ) ) */
         /* { */
@@ -806,7 +806,7 @@ Controller_Module::peer_callback( OSC::Signal *sig,  OSC::Signal::State /*state*
 
         asprintf( &s, "%s/%s", peer_prefix, path );
 
-        peer_menu->add( s, 0, NULL, (void*)( sig ), 0 );
+        peer_menu->add( s, 0, NULL, static_cast<void*>( sig ), 0 );
 
                         /*     FL_MENU_TOGGLE | */
                         /* ( ((Controller_Module*)v)->_osc_output()->is_connected_to( sig ) ? FL_MENU_VALUE : 0 ) ); */
@@ -832,7 +832,7 @@ void
 Controller_Module::add_osc_connections_to_menu ( Fl_Menu_Button *, const char *prefix )
 {
     /* peer_menu = m; */
-    const char *peer_prefix = prefix;
+    const char *a_peer_prefix = prefix;
 
 //    mixer->osc_endpoint->list_peer_signals( this );
 
@@ -858,7 +858,7 @@ Controller_Module::add_osc_connections_to_menu ( Fl_Menu_Button *, const char *p
                 unescape_url( path );
 
                 char *ns;
-                asprintf( &ns, "%s/%s", peer_prefix, path );
+                asprintf( &ns, "%s/%s", a_peer_prefix, path );
             
                 peer_menu->add( ns, 0, NULL, const_cast<char*>(*s), 0 );
     
@@ -890,7 +890,7 @@ Controller_Module::menu ( void )
     m.add( "Remove", 0, 0, 0, is_default() ? FL_MENU_INACTIVE : 0 );
 
 //    menu_set_callback( m.items(), &Controller_Module::menu_cb, (void*)this );
-    m.callback( &Controller_Module::menu_cb, (void*)this );
+    m.callback( &Controller_Module::menu_cb, static_cast<void*>( this ));
     //   m.copy( items, (void*)this );
 
     return m;
@@ -1003,7 +1003,7 @@ Controller_Module::handle_control_changed ( Port *p )
 
     if ( type() == SPATIALIZATION )
     {
-        Panner *pan = (Panner*)control;
+        Panner *pan = static_cast<Panner*>( control );
 
         pan->point( 0 )->azimuth( control_output[0].control_value() );
         pan->point( 0 )->elevation( control_output[1].control_value() );
@@ -1029,18 +1029,18 @@ Controller_Module::handle_control_changed ( Port *p )
         {
             // DMESSAGE("control_value = %f: size = %d", control_value, p->hints.ScalePoints.size());
             /* We set the Fl_Choice menu according to the position in the ScalePoints vector */
-            int menu = 0;
+            int menu_location = 0;
 
             for( unsigned i = 0; i < p->hints.ScalePoints.size(); ++i)
             {
                 if ( (int) p->hints.ScalePoints[i].Value == (int) (control_value + .5 ))    // .5 for float rounding
                 {
-                    menu = i;
+                    menu_location = i;
                     break;
                 }
             }
             
-            ((Fl_Choice*)control)->value(menu);
+            ((Fl_Choice*)control)->value(menu_location);
         }
         else
             ((Fl_Valuator*)control)->value(control_value);
@@ -1079,7 +1079,7 @@ Controller_Module::process ( nframes_t nframes )
 
         if ( mode() == CV )
         {
-            f = *((float*)aux_audio_input[0].jack_port()->buffer( nframes ));
+            f = *(static_cast<float*>( aux_audio_input[0].jack_port()->buffer( nframes ) ));
 
             const Port *p = control_output[0].connected_port();
 
@@ -1097,7 +1097,7 @@ Controller_Module::process ( nframes_t nframes )
 //        else
 //            f =  *((float*)control_output[0].buffer());
 
-        *((float*)control_output[0].buffer()) = f;
+        *(static_cast<float*>( control_output[0].buffer() )) = f;
 
         control_value = f;
     }
