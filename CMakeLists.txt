@@ -26,6 +26,8 @@ option (EnableOptimizations "Enable optimizations" ON)
 option (EnableSSE "Enable SSE (default=automatic check)" ON)
 option (EnableSSE2 "Enable SSE2 (default=automatic check)" ON)
 option (NativeOptimizations "Enable native CPU optimizations" ON)
+option (EnableLADSPASupport "Enable LADSPA plugin support" ON)
+option (EnableLV2Support "Enable LV2 plugin support" ON)
 option (EnableCLAPSupport "Enable CLAP plugin support" ON)
 
 
@@ -68,13 +70,32 @@ endif()
 
 pkg_check_modules(JACK REQUIRED jack>=0.115.6)
 pkg_check_modules(LIBLO liblo>=0.26 REQUIRED)
-pkg_check_modules(LV2 REQUIRED lv2>=1.10.0)
-pkg_check_modules(LRDF REQUIRED lrdf>=0.4.0)
-pkg_check_modules(LILV REQUIRED lilv-0>=0.20.0)
-pkg_check_modules(SUIL REQUIRED suil-0>=0.10.0)
 pkg_check_modules(NTK ntk REQUIRED)
 pkg_check_modules(NTK_IMAGES ntk_images REQUIRED)
-pkg_check_modules(ZIX zix-0 REQUIRED)
+
+if (EnableLADSPASupport)
+    pkg_check_modules(LRDF REQUIRED lrdf>=0.4.0)
+
+    check_include_file (ladspa.h HAVE_LADSPA_H)
+    if (NOT HAVE_LADSPA_H)
+        message(FATAL_ERROR "Ladspa required but not found")
+    endif ()
+
+    if (HAVE_LADSPA_H)
+        add_definitions(-D'LADSPA_SUPPORT=1')
+    endif()
+endif (EnableLADSPASupport)
+
+if (EnableLV2Support)
+    pkg_check_modules(LV2 REQUIRED lv2>=1.10.0)
+    pkg_check_modules(LILV REQUIRED lilv-0>=0.20.0)
+    pkg_check_modules(SUIL REQUIRED suil-0>=0.10.0)
+    pkg_check_modules(ZIX zix-0 REQUIRED)
+
+    if (LV2_FOUND)
+        add_definitions(-D'LV2_SUPPORT=1')
+    endif(LV2_FOUND)
+endif (EnableLV2Support)
 
 if (EnableCLAPSupport)
     pkg_check_modules(CLAP clap REQUIRED)
@@ -90,11 +111,6 @@ endif (EnableCLAPSupport)
 #    message(STATUS "NTK fluid not found")
 #endif(FLTK_FLUID_EXECUTABLE)
 
-# Check for LADSPA headers.
-check_include_file (ladspa.h HAVE_LADSPA_H)
-if (NOT HAVE_LADSPA_H)
-    message(FATAL_ERROR "Ladspa required but not found")
-endif ()
 
 include(CheckSymbolExists)
 
@@ -233,8 +249,13 @@ package_status(ZIX_FOUND           "zix-0 support. . . . . . . . . . . . . . . .
 package_status(JACK_FOUND          "JACK Audio Connection Kit library. . . . . . . . . . . .:"  )
 package_status(FONTCONFIG_FOUND    "Fontconfig support . . . . . . . . . . . . . . . . . . .:"  )
 
-package_status(HAVE_LADSPA_H       "LADSPA support . . . . . . . . . . . . . . . . . . . . .:"  )
-package_status(LV2_FOUND           "LV2 support. . . . . . . . . . . . . . . . . . . . . . .:"  )
+if (EnableLADSPASupport)
+    package_status(HAVE_LADSPA_H   "LADSPA support . . . . . . . . . . . . . . . . . . . . .:"  )
+endif (EnableLADSPASupport)
+
+if (EnableLV2Support)
+    package_status(LV2_FOUND       "LV2 support. . . . . . . . . . . . . . . . . . . . . . .:"  )
+endif (EnableLV2Support)
 
 if (EnableCLAPSupport)
     package_status(CLAP_FOUND      "CLAP support . . . . . . . . . . . . . . . . . . . . . .:"  )
@@ -249,6 +270,8 @@ package_status(HAVE_BUILTIN_ALIGNED "Has builtin assume aligned . . . . . . . . 
 
 message (STATUS)
 message (STATUS                    "____________________ User Options________________________"  )
+package_status(EnableLADSPASupport "Build LADSPA support . . . . . . . . . . . . . . . . . .:"  )
+package_status(EnableLV2Support    "Build LV2 support. . . . . . . . . . . . . . . . . . . .:"  )
 package_status(EnableCLAPSupport   "Build CLAP support . . . . . . . . . . . . . . . . . . .:"  )
 package_status(EnableOptimizations "Use optimizations. . . . . . . . . . . . . . . . . . . .:"  )
 package_status(EnableSSE           "Use sse. . . . . . . . . . . . . . . . . . . . . . . . .:"  )
