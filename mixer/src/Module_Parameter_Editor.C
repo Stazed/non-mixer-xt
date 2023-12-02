@@ -96,7 +96,7 @@ Module_Parameter_Editor::Module_Parameter_Editor ( Module *module ) : Fl_Double_
 
     _min_width = 30 + fl_width( module->label() );
     
-    { Fl_Group *o = new Fl_Group( 0, 0, w(), 25 );
+    { Fl_Group *g = new Fl_Group( 0, 0, w(), 25 );
 
         // TODO other types
 
@@ -158,11 +158,11 @@ Module_Parameter_Editor::Module_Parameter_Editor ( Module *module ) : Fl_Double_
         }
 #endif  // LV2_STATE_SAVE
 
-        o->resizable(0);
-        o->end();
+        g->resizable(0);
+        g->end();
     }   // Fl_Group
 
-    { Fl_Group *o = new Fl_Group( 0, 40, w(), h() - 40 );
+    { Fl_Group *g = new Fl_Group( 0, 40, w(), h() - 40 );
         { Fl_Flowpack *o = control_pack = new Fl_Flowpack( 50, 40, w() - 100, h() - 40 );
             o->type( FL_HORIZONTAL );
             o->flow( true );
@@ -171,8 +171,8 @@ Module_Parameter_Editor::Module_Parameter_Editor ( Module *module ) : Fl_Double_
 
             o->end();   // control_pack
         }
-        o->resizable( 0 );
-        o->end();       // Fl_Group
+        g->resizable( 0 );
+        g->end();       // Fl_Group
     }
 
     end();
@@ -231,7 +231,7 @@ Module_Parameter_Editor::make_controls ( void )
         o->labelsize(14);
         o->align(FL_ALIGN_TOP);
 
-        Fl_Labelpad_Group *flg = new Fl_Labelpad_Group( (Fl_Widget*)o );
+        Fl_Labelpad_Group *flg = new Fl_Labelpad_Group( static_cast<Fl_Widget*>( o ));
 
         flg->hide();
 
@@ -331,11 +331,11 @@ Module_Parameter_Editor::make_controls ( void )
             /* We set the Fl_Choice menu according to the position in the ScalePoints vector */
             int menu = 0;
 
-            for( unsigned i = 0; i < p->hints.ScalePoints.size(); ++i)
+            for( unsigned ii = 0; ii < p->hints.ScalePoints.size(); ++ii)
             {
-                if ( (int) p->hints.ScalePoints[i].Value == (int) (p->control_value() + .5) )   // .5 for float rounding
+                if ( (int) p->hints.ScalePoints[ii].Value == (int) (p->control_value() + .5) )   // .5 for float rounding
                 {
-                    menu = i;
+                    menu = ii;
                     break;
                 }
             }
@@ -614,7 +614,7 @@ Module_Parameter_Editor::update_control_visibility ( void )
 void
 Module_Parameter_Editor::cb_filechooser_handle ( Fl_Widget *w, void *v )
 {
-    callback_data *cd = (callback_data*)v;
+    callback_data *cd = static_cast<callback_data*>( v );
 
     /* Set file chooser location based on previous selected file path */
     LV2_Plugin * pm = static_cast<LV2_Plugin *> (cd->base_widget->_module);
@@ -646,7 +646,7 @@ Module_Parameter_Editor::cb_filechooser_handle ( Fl_Widget *w, void *v )
 void
 Module_Parameter_Editor::cb_enumeration_handle ( Fl_Widget *w, void *v )
 {
-    callback_data *cd = (callback_data*)v;
+    callback_data *cd = static_cast<callback_data*>( v );
     
     cd->base_widget->set_choice_value( cd->port_number[0], (int) ((Fl_Choice*)w)->value() );
 }
@@ -654,7 +654,7 @@ Module_Parameter_Editor::cb_enumeration_handle ( Fl_Widget *w, void *v )
 void
 Module_Parameter_Editor::cb_value_handle ( Fl_Widget *w, void *v )
 {
-    callback_data *cd = (callback_data*)v;
+    callback_data *cd = static_cast<callback_data*>( v );
 
     cd->base_widget->set_value( cd->port_number[0], ((Fl_Valuator*)w)->value() );
 }
@@ -662,7 +662,7 @@ Module_Parameter_Editor::cb_value_handle ( Fl_Widget *w, void *v )
 void
 Module_Parameter_Editor::cb_button_handle ( Fl_Widget *w, void *v )
 {
-    callback_data *cd = (callback_data*)v;
+    callback_data *cd = static_cast<callback_data*>( v );
 
     cd->base_widget->set_value( cd->port_number[0], ((Fl_Button*)w)->value() );
 }
@@ -671,7 +671,7 @@ Module_Parameter_Editor::cb_button_handle ( Fl_Widget *w, void *v )
 void
 Module_Parameter_Editor::cb_panner_value_handle ( Fl_Widget *w, void *v )
 {
-    callback_data *cd = (callback_data*)v;
+    callback_data *cd = static_cast<callback_data*>( v );
 
     cd->base_widget->set_value( cd->port_number[0], ((Panner*)w)->point( 0 )->azimuth() );
     cd->base_widget->set_value( cd->port_number[1], ((Panner*)w)->point( 0 )->elevation() );
@@ -689,7 +689,7 @@ Module_Parameter_Editor::cb_mode_handle ( Fl_Widget *, void *v )
 void
 Module_Parameter_Editor::cb_preset_handle ( Fl_Widget *w, void *v )
 {
-    Fl_Choice *m = (Fl_Choice*)w;
+    Fl_Choice *m = static_cast<Fl_Choice*>( w );
     ((Module_Parameter_Editor*)v)->set_preset_controls( (int) m->value());
 }
 #endif
@@ -838,7 +838,7 @@ Module_Parameter_Editor::handle_control_changed ( Module::Port *p )
          i == elevation_port_number ||
         i == radius_port_number )
     {
-        Panner *_panner = (Panner*)w;
+        Panner *_panner = static_cast<Panner*>( w );
 
         if ( i == azimuth_port_number )
             _panner->point(0)->azimuth( p->control_value() );
@@ -855,22 +855,22 @@ Module_Parameter_Editor::handle_control_changed ( Module::Port *p )
 
     if ( p->hints.type == Module::Port::Hints::BOOLEAN )
     {
-        Fl_Button *v = (Fl_Button*)w;
+        Fl_Button *v = static_cast<Fl_Button*>( w );
 
         v->value( p->control_value() );
     }        
     else if ( p->hints.type == Module::Port::Hints::LV2_INTEGER_ENUMERATION )
     {
-        Fl_Choice *v = (Fl_Choice*)w;
+        Fl_Choice *v = static_cast<Fl_Choice*>( w );
         
         /* We set the Fl_Choice menu according to the position in the ScalePoints vector */
         int menu = 0;
         
-        for( unsigned i = 0; i < p->hints.ScalePoints.size(); ++i)
+        for( unsigned ii = 0; ii < p->hints.ScalePoints.size(); ++ii)
         {
-            if ( (int) p->hints.ScalePoints[i].Value == (int) (p->control_value() + .5) )   // .5 for float rounding
+            if ( (int) p->hints.ScalePoints[ii].Value == (int) (p->control_value() + .5) )   // .5 for float rounding
             {
-                menu = i;
+                menu = ii;
                 break;
             }
         }
@@ -879,7 +879,7 @@ Module_Parameter_Editor::handle_control_changed ( Module::Port *p )
     }
     else
     {
-        Fl_Valuator *v = (Fl_Valuator*)w;
+        Fl_Valuator *v = static_cast<Fl_Valuator*>( w );
     
         v->value( p->control_value() );
     }
@@ -897,7 +897,7 @@ Module_Parameter_Editor::refresh_file_button_label(int index)
     if ( p->hints.type == Module::Port::Hints::PATCH_MESSAGE && p->hints.visible )
     {
         std::string base_filename  = p->_file.substr(p->_file.find_last_of("/\\") + 1);
-        Fl_Button *w =  (Fl_Button *) atom_port_controller[index];
+        Fl_Button *w =  static_cast<Fl_Button *>( atom_port_controller[index] );
         w->copy_label( base_filename.c_str() );
     }
 }
@@ -1018,9 +1018,9 @@ Module_Parameter_Editor::handle ( int m )
                     {
                         _selected_control = i;
 
-                        Fl_Menu_Button &m = menu();
+                        Fl_Menu_Button &mb = menu();
 
-                        menu_popup(&m,Fl::event_x(), Fl::event_y());
+                        menu_popup(&mb,Fl::event_x(), Fl::event_y());
 
                         return 1;
                     }
