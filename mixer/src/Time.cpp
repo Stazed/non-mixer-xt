@@ -23,6 +23,8 @@
   ==============================================================================
 */
 
+#ifdef CLAP_SUPPORT
+
 #include "Time.h"
 #include "Atomic.h"
 
@@ -135,3 +137,5 @@ uint32_t Time::getMillisecondCounter() noexcept
 }
 
 }
+
+#endif // CLAP_SUPPORT

@@ -26,6 +26,8 @@
 #ifndef WATER_TIME_H_INCLUDED
 #define WATER_TIME_H_INCLUDED
 
+#ifdef CLAP_SUPPORT
+
 #include <cstdint>
 //#include "../water.h"
 
@@ -58,5 +60,7 @@ uint32_t getMillisecondCounter() noexcept;
 
 }
 }
+
+#endif  // CLAP_SUPPORT
 
 #endif // WATER_TIME_H_INCLUDED

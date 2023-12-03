@@ -35,6 +35,7 @@
 #include "CarlaClapUtils.H"
 
 #include <FL/fl_ask.H>  // fl_alert()
+#include <dlfcn.h>      // dlopen, dlerror, dlsym
 
 const unsigned char  EVENT_NOTE_OFF         = 0x80;
 const unsigned char  EVENT_NOTE_ON          = 0x90;
