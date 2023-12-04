@@ -37,7 +37,7 @@
 #include <algorithm>
 
 
-#ifdef LV2_WORKER_SUPPORT
+#ifdef LV2_SUPPORT
 #include "lv2/lv2_evbuf.h"
 #include "lilv/lilvmm.hpp"
 #endif
@@ -245,7 +245,7 @@ public:
                 _by_number_path = 0;
                 _by_number_number = -1;
                 _jack_port = 0;
-#ifdef LV2_WORKER_SUPPORT
+#ifdef LV2_SUPPORT
                 _evbuf = NULL;
                 _property = NULL;
                 _lilv_symbol = NULL;
@@ -276,7 +276,7 @@ public:
                 _by_number_number = -1;
                 _jack_port = p._jack_port;
                 _feedback_milliseconds = 0;
-#ifdef LV2_WORKER_SUPPORT
+#ifdef LV2_SUPPORT
                 _evbuf = p._evbuf;
                 _property = p._property;
                 _lilv_symbol = p._lilv_symbol;
@@ -296,7 +296,7 @@ public:
                 if ( _by_number_path )
                     free( _by_number_path );
                 _by_number_path = NULL;
-#ifdef LV2_WORKER_SUPPORT
+#ifdef LV2_SUPPORT
                 if ( _evbuf )
                     lv2_evbuf_free( _evbuf );
                 _evbuf = NULL;
@@ -315,10 +315,9 @@ public:
 
         void buffer ( void *buf, nframes_t nframes ) { _buf = buf; _nframes = nframes; };
         void *buffer ( void ) const { return _buf; }
-#ifdef LV2_WORKER_SUPPORT
+#ifdef LV2_SUPPORT
         void event_buffer ( LV2_Evbuf * evbuf ) { _evbuf = evbuf; }
         LV2_Evbuf* event_buffer ( void ) const { return _evbuf; }
-        
 #endif
         OSC::Signal *scaled_signal ( void ) { return _scaled_signal; }
         OSC::Signal *unscaled_signal ( void ) { return _unscaled_signal; }
@@ -494,11 +493,10 @@ public:
         Module *_module;
         /* used for auxilliary I/Os */
         JACK::Port *_jack_port;
-#ifdef LV2_WORKER_SUPPORT
+        
+#ifdef LV2_SUPPORT
         LV2_Evbuf* _evbuf;
-
     public:
-        // FIXME encapsulate
         const LilvNode* _property;
         LilvNode*   _lilv_symbol;       ///< Symbol
 	LilvNode*   _lilv_label;        ///< Human readable label

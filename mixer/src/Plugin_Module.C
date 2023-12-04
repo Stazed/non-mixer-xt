@@ -330,13 +330,12 @@ Plugin_Module::scan_LV2_plugins( std::list<Plugin_Info> & pr )
                 continue;
             if ( ::strcmp( featureURI, LV2_URID__unmap      ) == 0 )
                 continue;
-#ifdef LV2_WORKER_SUPPORT
             if ( ::strcmp( featureURI, LV2_WORKER__schedule ) == 0 )
             {
               //  DMESSAGE("GOT Worker.schedule = %s", lilvPlugin.get_name().as_string());
                 continue;
             }
-#endif
+
             supported = false;
             break;
         }
@@ -376,19 +375,14 @@ Plugin_Module::scan_LV2_plugins( std::list<Plugin_Info> & pr )
             {
                 // supported or optional
             }
-#ifdef LV2_WORKER_SUPPORT
             else if (lilvPort.is_a(lv2World.port_atom))
             {
                 if (lilvPort.supports_event(lv2World.midi_event) || lilvPort.supports_event(lv2World.time_position))
                 {
-#ifndef LV2_MIDI_SUPPORT
-                    supported = false;
-                    break;  
-#endif
+                    // supported
                 }
                 // supported or optional
             }
-#endif
             else
             {
                 // not supported
