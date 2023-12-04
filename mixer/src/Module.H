@@ -55,7 +55,8 @@ class Mixer_Strip;
 
 enum Plugin_Index
 {
-    LADSPA = 0,
+    NONE = 0,
+    LADSPA,
     LV2,
     CLAP
     // VST3

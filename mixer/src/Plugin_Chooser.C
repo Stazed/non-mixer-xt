@@ -39,7 +39,7 @@ static int plugin_type = 0;
 Module::Picked
 Plugin_Chooser::plugin_chooser ( int ninputs )
 {
-    Module::Picked picked = { LADSPA, "", 0 , "" };
+    Module::Picked picked = { NONE, "", 0 , "" };
 
     Plugin_Chooser *o = new Plugin_Chooser( 0,0,735,500,"Plugin Chooser");
 

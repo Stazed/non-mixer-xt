@@ -144,7 +144,7 @@ Module::init ( void )
     _base_label = NULL;
     _number = -2;	/* magic number indicates old instance, before numbering */
     
-    _plug_type = LADSPA;
+    _plug_type = NONE;
     _is_from_custom_ui = false;
     _is_removed = false;
     _use_custom_data = false;
