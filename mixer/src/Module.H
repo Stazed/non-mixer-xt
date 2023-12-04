@@ -139,7 +139,7 @@ public:
         std::string clap_path;
     };
 
-    /* LV2 */
+#ifdef LV2_SUPPORT
     struct EnumeratorScalePoints
     {
         std::string Label;
@@ -149,6 +149,7 @@ public:
         
         EnumeratorScalePoints() : Value(0.0) {}
     };
+#endif
 
     unsigned int _plug_type;    // LADSPA, LV2, etc
     bool _is_from_custom_ui;
@@ -229,7 +230,7 @@ public:
             {
                 _name = name;
                 /* On port creation, we set _symbol to name for internal/LADSPA plugins that don't 
-                   have a symbol for OSC path. For LV2 we replace after creation with the actual symbol */
+                   have a symbol for OSC path. For LV2/CLAP we replace after creation with the actual symbol */
                 if(name)
                 {
                     _symbol = name;

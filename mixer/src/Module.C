@@ -34,9 +34,17 @@
 #include "Mono_Pan_Module.H"
 #include "Meter_Module.H"
 #include "Plugin_Module.H"
+
+#ifdef LV2_SUPPORT
 #include "LV2_Plugin.H"
-#include "LADSPA_Plugin.H"
+#endif
+#ifdef CLAP_SUPPORT
 #include "CLAP_Plugin.H"
+#endif
+#ifdef LADSPA_SUPPORT
+#include "LADSPA_Plugin.H"
+#endif
+
 #include "AUX_Module.H"
 #include "Spatializer_Module.H"
 
