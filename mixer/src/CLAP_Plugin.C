@@ -1188,10 +1188,10 @@ CLAP_Plugin::get_extension(const clap_host* host, const char* ext_id)
         else
         if (::strcmp(ext_id, CLAP_EXT_THREAD_CHECK) == 0)
                 return &host_data->g_host_thread_check;
-#if 0
         else
         if (::strcmp(ext_id, CLAP_EXT_LOG) == 0)
                 return &host_data->g_host_log;
+#if 0
         else
         if (::strcmp(ext_id, CLAP_EXT_POSIX_FD_SUPPORT) == 0)
                 return &host_data->g_host_posix_fd_support;
@@ -2448,6 +2448,37 @@ bool
 CLAP_Plugin::is_audio_thread()
 {
     return Thread::is ( "RT" );
+}
+
+// Host LOG callbacks...
+void
+CLAP_Plugin::host_log (
+	const clap_host *host, clap_log_severity severity, const char *msg )
+{
+    switch (severity)
+    {
+    case CLAP_LOG_DEBUG:
+            DMESSAGE("CLAP_log: Debug: %s", msg);
+            break;
+    case CLAP_LOG_INFO:
+            MESSAGE("CLAP_log: Info: %s", msg);
+            break;
+    case CLAP_LOG_WARNING:
+            WARNING("CLAP_log: Warning: %s", msg);
+            break;
+    case CLAP_LOG_ERROR:
+            WARNING("CLAP_log: Error: %s", msg);
+            break;
+    case CLAP_LOG_FATAL:
+            WARNING("CLAP_log: Fatal: %s", msg);
+            break;
+    case CLAP_LOG_HOST_MISBEHAVING:
+            WARNING("CALP_log: Host misbehaving: %s", msg);
+            break;
+    default:
+            DMESSAGE("CLAP_log: Unknown: %s", msg);
+            break;
+    }
 }
 
 void

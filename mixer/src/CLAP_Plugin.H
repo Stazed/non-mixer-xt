@@ -345,6 +345,14 @@ protected:
             host_is_audio_thread,
     };
 
+    // Host LOG callbacks...
+    static void host_log (
+            const clap_host *host, clap_log_severity severity, const char *msg);
+
+    static const constexpr clap_host_log g_host_log = {
+            host_log,
+    };
+
     bool is_main_thread();
     bool is_audio_thread();
 
