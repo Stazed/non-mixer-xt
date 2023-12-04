@@ -59,7 +59,14 @@
 #include "Gain_Module.H"
 #include "Plugin_Module.H"
 #include "Controller_Module.H"
+
+#ifdef LV2_SUPPORT
 #include "LV2_Plugin.H"
+#endif
+
+#ifdef CLAP_SUPPORT
+#include "CLAP_Plugin.H"
+#endif
 
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Menu.H>
@@ -621,7 +628,7 @@ Chain::insert ( Module *m, Module *n )
             n->configure_inputs( 0 );
             modules_pack->add( n );
 
-#ifdef LV2_MIDI_SUPPORT
+#if defined(LV2_SUPPORT) || defined(CLAP_SUPPORT)
             n->configure_midi_inputs();
             n->configure_midi_outputs();
 #endif
@@ -633,7 +640,7 @@ Chain::insert ( Module *m, Module *n )
             n->configure_inputs( module( modules() - 1 )->noutputs() );
             modules_pack->add( n );
     
-#ifdef LV2_MIDI_SUPPORT
+#if defined(LV2_SUPPORT) || defined(CLAP_SUPPORT)
             n->configure_midi_inputs();
             n->configure_midi_outputs();
 
@@ -713,7 +720,7 @@ Chain::insert ( Module *m, Module *n )
                 goto err;
             }
 
-#ifdef LV2_MIDI_SUPPORT
+#if defined(LV2_SUPPORT) || defined(CLAP_SUPPORT)
             n->configure_midi_inputs();
             n->configure_midi_outputs();
 
@@ -752,8 +759,7 @@ Chain::insert ( Module *m, Module *n )
 
 err:
 
-#ifdef LV2_WORKER_SUPPORT
-#ifdef LV2_MIDI_SUPPORT
+#if defined(LV2_SUPPORT) || defined(CLAP_SUPPORT)
     /* If the plugin has MIDI, the JACK ports will not get configured on err,
     so on module delete, we destroy all related JACK ports. This is not a problem for audio
     ins and outs above since they do not have JACK ports. Since the failure
@@ -765,7 +771,14 @@ err:
         plug->atom_input.clear();
         plug->atom_output.clear();
     }
-#endif
+
+    if(n->_plug_type == CLAP)
+    {
+        CLAP_Plugin *plug = static_cast<CLAP_Plugin *> (n);
+        plug->note_input.clear();
+        plug->note_output.clear();
+    }
+
 #endif
 
     client()->unlock();
