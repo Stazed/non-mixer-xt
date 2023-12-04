@@ -17,6 +17,8 @@
 
 #pragma once
 
+#if defined(LV2_SUPPORT) || defined(CLAP_SUPPORT)
+
 #include "../../nonlib/debug.h"
 #include <cstring>
 
@@ -56,3 +58,4 @@ void non_zeroStruct(T& s) noexcept
     std::memset(&s, 0, sizeof(T));
 }
 
+#endif  // #if defined(LV2_SUPPORT) || defined(CLAP_SUPPORT)

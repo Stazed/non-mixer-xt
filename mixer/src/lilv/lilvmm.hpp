@@ -17,6 +17,8 @@
 #ifndef LILV_LILVMM_HPP
 #define LILV_LILVMM_HPP
 
+#ifdef LV2_SUPPORT
+
 #include "lilv/lilv.h"
 
 #if __GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 1)
@@ -359,5 +361,7 @@ struct World {
 };
 
 } /* namespace Lilv */
+
+#endif  // LV2_SUPPORT
 
 #endif /* LILV_LILVMM_HPP */

@@ -26,6 +26,8 @@
 #ifndef LV2_ATOM_H
 #define LV2_ATOM_H
 
+#ifdef LV2_SUPPORT
+
 #include <stdint.h>
 #include <stddef.h>
 
@@ -252,5 +254,7 @@ typedef struct {
 #ifdef __cplusplus
 }  /* extern "C" */
 #endif
+
+#endif  // LV2_SUPPORT
 
 #endif  /* LV2_ATOM_H */

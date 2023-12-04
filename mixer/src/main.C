@@ -49,9 +49,9 @@
 #ifdef LADSPA_SUPPORT
 #include "LADSPA_Plugin.H"
 #endif
-
+#ifdef LV2_SUPPORT
 #include "LV2_Plugin.H"
-
+#endif
 #ifdef CLAP_SUPPORT
 #include "CLAP_Plugin.H"
 #endif
@@ -181,7 +181,9 @@ main ( int argc, char **argv )
     LOG_REGISTER_CREATE( Mixer_Strip );
     LOG_REGISTER_CREATE( Chain );
     LOG_REGISTER_CREATE( Plugin_Module );
+#ifdef LV2_SUPPORT
     LOG_REGISTER_CREATE( LV2_Plugin );
+#endif
 #ifdef CLAP_SUPPORT
     LOG_REGISTER_CREATE( CLAP_Plugin );
 #endif

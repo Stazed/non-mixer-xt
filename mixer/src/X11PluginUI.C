@@ -22,6 +22,8 @@
  * Created on November 20, 2023, 3:08 PM
  */
 
+#if defined(LV2_SUPPORT) || defined(CLAP_SUPPORT)
+
 #include <unistd.h> // getpid()
 #include <X11/Xatom.h>
 #include <X11/Xutil.h>
@@ -525,3 +527,5 @@ X11PluginUI::getChildWindow() const
 
     return ret;
 }
+
+#endif // defined(LV2_SUPPORT) || defined(CLAP_SUPPORT)

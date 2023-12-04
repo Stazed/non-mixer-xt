@@ -23,6 +23,8 @@
 
 #pragma once
 
+#ifdef LV2_SUPPORT
+
 #include "LV2_RDF_Utils.hpp"
 #include <lv2/data-access/data-access.h>
 #include <dlfcn.h>
@@ -437,3 +439,4 @@ private:
     std::vector<LV2LibraryInfo> libraries;
 };
 
+#endif  // LV2_SUPPORT

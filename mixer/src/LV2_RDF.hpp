@@ -18,6 +18,8 @@
 #ifndef LV2_RDF_HPP_INCLUDED
 #define LV2_RDF_HPP_INCLUDED
 
+#ifdef LV2_SUPPORT
+
 #include <stdint.h>
 #include <stdlib.h>
 
@@ -638,4 +640,6 @@ struct LV2_RDF_Descriptor {
     }
 };
 
-#endif // LV2_RDF_HPP_INCLUDED
+#endif  // LV2_SUPPORT
+
+#endif  // LV2_RDF_HPP_INCLUDED

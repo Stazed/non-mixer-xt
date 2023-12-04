@@ -18,6 +18,8 @@
 #ifndef LV2_EXTERNAL_UI_H
 #define LV2_EXTERNAL_UI_H
 
+#ifdef LV2_SUPPORT
+
 #include <lv2/lv2plug.in/ns/extensions/ui/ui.h>
 
 #define LV2_EXTERNAL_UI_URI     "http://kxstudio.sf.net/ns/lv2ext/external-ui"
@@ -105,5 +107,7 @@ typedef struct _LV2_External_UI_Host {
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
+
+#endif  // LV2_SUPPORT
 
 #endif /* LV2_EXTERNAL_UI_H */

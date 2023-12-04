@@ -27,6 +27,8 @@
 #ifndef LV2_URID_H
 #define LV2_URID_H
 
+#ifdef LV2_SUPPORT
+
 #define LV2_URID_URI    "http://lv2plug.in/ns/ext/urid"  ///< http://lv2plug.in/ns/ext/urid
 #define LV2_URID_PREFIX LV2_URID_URI "#"                 ///< http://lv2plug.in/ns/ext/urid#
 
@@ -128,6 +130,8 @@ typedef struct _LV2_URID_Unmap {
 #ifdef __cplusplus
 }  /* extern "C" */
 #endif
+
+#endif  // LV2_SUPPORT
 
 #endif /* LV2_URID_H */
 

@@ -22,6 +22,8 @@
  * Created on November 24, 2022, 1:36 PM
  */
 
+#ifdef LV2_SUPPORT
+
 #include "LV2_Plugin.H"
 #include "Module_Parameter_Editor.H"
 #include <lv2/instance-access/instance-access.h>
@@ -3203,3 +3205,5 @@ LV2_Plugin::set ( Log_Entry &e )
         restore_LV2_plugin_state(restore);
     }
 }
+
+#endif  // LV2_SUPPORT

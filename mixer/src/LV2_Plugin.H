@@ -24,6 +24,8 @@
 
 #pragma once
 
+#ifdef LV2_SUPPORT
+
 #include <zix-0/zix/ring.h>
 #include <zix-0/zix/sem.h>
 #include <zix-0/zix/thread.h>
@@ -250,3 +252,5 @@ protected:
     void set ( Log_Entry &e ) override;
 
 };
+
+#endif // LV2_SUPPORT

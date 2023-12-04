@@ -103,7 +103,9 @@ public:
 #ifdef LADSPA_SUPPORT
     void scan_LADSPA_plugins( std::list<Plugin_Info> & pr );
 #endif
+#ifdef LV2_SUPPORT
     void scan_LV2_plugins( std::list<Plugin_Info> & pr );
+#endif
 #ifdef CLAP_SUPPORT
     void scan_CLAP_plugins( std::list<Plugin_Info> & pr );
 #endif

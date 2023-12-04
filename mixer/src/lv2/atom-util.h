@@ -31,6 +31,8 @@
 #ifndef LV2_ATOM_UTIL_H
 #define LV2_ATOM_UTIL_H
 
+#ifdef LV2_SUPPORT
+
 #include <stdarg.h>
 #include <stdint.h>
 #include <string.h>
@@ -516,5 +518,7 @@ lv2_atom_object_get_typed(const LV2_Atom_Object* object, ...)
 #ifdef __cplusplus
 }  /* extern "C" */
 #endif
+
+#endif  // LV2_SUPPORT
 
 #endif /* LV2_ATOM_UTIL_H */

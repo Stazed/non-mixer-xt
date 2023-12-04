@@ -14,6 +14,8 @@
   OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
+#ifdef LV2_SUPPORT
+
 #include "lv2_evbuf.h"
 
 #include "lv2/atom/atom.h"
@@ -193,3 +195,5 @@ lv2_evbuf_write(LV2_Evbuf_Iterator* iter,
 
   return true;
 }
+
+#endif  // LV2_SUPPORT

@@ -18,6 +18,8 @@
 #ifndef LV2_RDF_UTILS_HPP_INCLUDED
 #define LV2_RDF_UTILS_HPP_INCLUDED
 
+#ifdef LV2_SUPPORT
+
 // disable -Wdocumentation for LV2 headers
 #if defined(__clang__) && (__clang_major__ * 100 + __clang_minor__) > 300
 # pragma clang diagnostic push
@@ -1460,5 +1462,7 @@ const LV2_RDF_Descriptor* lv2_rdf_new(const LV2_URI uri, const bool loadPresets)
 }
 
 // -----------------------------------------------------------------------
+
+#endif  // LV2_SUPPORT
 
 #endif // LV2_RDF_UTILS_HPP_INCLUDED

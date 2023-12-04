@@ -23,6 +23,8 @@
 
 #pragma once
 
+#if defined(LV2_SUPPORT) || defined(CLAP_SUPPORT)
+
 typedef void (*EventProcPtr)(XEvent* ev);
 
 class X11PluginUI
@@ -74,3 +76,4 @@ private:
 
 };
 
+#endif // defined(LV2_SUPPORT) || defined(CLAP_SUPPORT)

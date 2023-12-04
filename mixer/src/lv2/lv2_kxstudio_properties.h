@@ -23,11 +23,15 @@
 #ifndef LV2_KXSTUDIO_PROPERTIES_H
 #define LV2_KXSTUDIO_PROPERTIES_H
 
+#ifdef LV2_SUPPORT
+
 #define LV2_KXSTUDIO_PROPERTIES_URI    "http://kxstudio.sf.net/ns/lv2ext/props"
 #define LV2_KXSTUDIO_PROPERTIES_PREFIX LV2_KXSTUDIO_PROPERTIES_URI "#"
 
 #define LV2_KXSTUDIO_PROPERTIES__NonAutomable             LV2_KXSTUDIO_PROPERTIES_PREFIX "NonAutomable"
 #define LV2_KXSTUDIO_PROPERTIES__TimePositionTicksPerBeat LV2_KXSTUDIO_PROPERTIES_PREFIX "TimePositionTicksPerBeat"
 #define LV2_KXSTUDIO_PROPERTIES__TransientWindowId        LV2_KXSTUDIO_PROPERTIES_PREFIX "TransientWindowId"
+
+#endif  // LV2_SUPPORT
 
 #endif /* LV2_KXSTUDIO_PROPERTIES_H */

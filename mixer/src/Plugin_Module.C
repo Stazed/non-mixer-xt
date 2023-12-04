@@ -156,7 +156,9 @@ Plugin_Module::discover_thread ( void * )
     ladspainfo = new LADSPAInfo();
 #endif
 
+#ifdef LV2_SUPPORT
     Lv2WorldClass::getInstance().initIfNeeded(/*::getenv("LV2_PATH")*/);
+#endif
 
     return NULL;
 }
@@ -201,7 +203,9 @@ Plugin_Module::get_all_plugins ( void )
 #ifdef LADSPA_SUPPORT
     pm.scan_LADSPA_plugins( pr );   // Scan LADSPA
 #endif
+#ifdef LV2_SUPPORT
     pm.scan_LV2_plugins( pr );      // Scan LV2
+#endif
 #ifdef CLAP_SUPPORT
     pm.scan_CLAP_plugins( pr );     // Scan CLAP
 #endif
@@ -251,6 +255,7 @@ Plugin_Module::scan_LADSPA_plugins( std::list<Plugin_Info> & pr )
 }
 #endif  // LADSPA_SUPPORT
 
+#ifdef LV2_SUPPORT
 void
 Plugin_Module::scan_LV2_plugins( std::list<Plugin_Info> & pr )
 {
@@ -431,6 +436,7 @@ Plugin_Module::scan_LV2_plugins( std::list<Plugin_Info> & pr )
         pr.push_back( pi );
     }
 }
+#endif  // LV2_SUPPORT
 
 #ifdef CLAP_SUPPORT
 void

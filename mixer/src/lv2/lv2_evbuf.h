@@ -17,6 +17,8 @@
 #ifndef LV2_EVBUF_H
 #define LV2_EVBUF_H
 
+#ifdef LV2_SUPPORT
+
 #include <stdint.h>
 
 #ifdef __cplusplus
@@ -140,5 +142,7 @@ lv2_evbuf_write(LV2_Evbuf_Iterator* iter,
 #ifdef __cplusplus
 }
 #endif
+
+#endif  // LV2_SUPPORT
 
 #endif // LV2_EVBUF_H

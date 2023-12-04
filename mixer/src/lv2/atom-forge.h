@@ -48,6 +48,8 @@
 #ifndef LV2_ATOM_FORGE_H
 #define LV2_ATOM_FORGE_H
 
+#ifdef LV2_SUPPORT
+
 #include <assert.h>
 
 #include "atom.h"
@@ -706,5 +708,7 @@ lv2_atom_forge_beat_time(LV2_Atom_Forge* forge, double beats)
 #ifdef __cplusplus
 }  /* extern "C" */
 #endif
+
+#endif  // LV2_SUPPORT
 
 #endif  /* LV2_ATOM_FORGE_H */
