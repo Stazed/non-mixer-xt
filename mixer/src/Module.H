@@ -40,9 +40,6 @@
 #ifdef LV2_SUPPORT
 #include "lv2/lv2_evbuf.h"
 #include "lilv/lilvmm.hpp"
-#endif
-
-#if USE_SUIL
 #include <suil/suil.h>
 #endif
 

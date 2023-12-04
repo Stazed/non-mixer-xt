@@ -151,7 +151,7 @@ check_sigterm ( void * )
 int
 main ( int argc, char **argv )
 {
-#if USE_SUIL
+#ifdef LV2_SUPPORT
     suil_init(&argc, &argv, SUIL_ARG_NONE);
 #endif
     bool no_ui = false;
