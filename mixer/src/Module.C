@@ -449,9 +449,11 @@ Module::handle_control_changed ( Module::Port *p )
         }
     }
 
-    // TODO other types...
-#ifdef USE_SUIL
+#if defined(LV2_SUPPORT) || defined(CLAP_SUPPORT)
     Module *m = p->module();
+#endif
+
+#ifdef LV2_SUPPORT
     if (m->_plug_type == LV2)
     {
         if(m->_is_from_custom_ui)
@@ -471,7 +473,7 @@ Module::handle_control_changed ( Module::Port *p )
     }
 #endif
 #ifdef CLAP_SUPPORT
-    else if (m->_plug_type == CLAP)
+    if (m->_plug_type == CLAP)
     {
         if(m->_is_from_custom_ui)
         {
@@ -1114,6 +1116,7 @@ Module::insert_menu_cb ( const Fl_Menu_ *menu )
                 break;
             }
 #endif  // LADSPA_SUPPORT
+#ifdef LV2_SUPPORT
             case LV2:
             {
                 LV2_Plugin *m = new LV2_Plugin();
@@ -1127,6 +1130,7 @@ Module::insert_menu_cb ( const Fl_Menu_ *menu )
                 mod = m;
                 break;
             }
+#endif  // LV2_SUPPORT
 #ifdef CLAP_SUPPORT
             case CLAP:
             {
@@ -1346,9 +1350,9 @@ Module::handle ( int m )
                the generic UI. */
             if ( !( Fl::event_key(FL_Control_L) ) &&  !( Fl::event_key(FL_Control_R) ) && (Fl::event_key(32)) ) // 32 == space bar
             {
+#ifdef LV2_SUPPORT
                 if(_plug_type == LV2)
                 {
-#ifdef USE_SUIL
                     LV2_Plugin *pm = static_cast<LV2_Plugin *> (this);
                     if(!pm->try_custom_ui())
                     {
@@ -1358,20 +1362,21 @@ Module::handle ( int m )
                     {
                         set_dirty();
                     }
-#endif
                 }
+                else
+#endif
 #ifdef CLAP_SUPPORT
-                else if(_plug_type == CLAP)
+                if(_plug_type == CLAP)
                 {
                     CLAP_Plugin *pm = static_cast<CLAP_Plugin *> (this);
                     if(!pm->try_custom_ui())
                     {
                         command_open_parameter_editor();
                     }
-                }  
+                }
+                else
 #endif
-                // TODO other types here
-                else    // LADSPA and internal
+                // LADSPA and internal
                 {
                     command_open_parameter_editor();
                 }
@@ -1410,9 +1415,9 @@ Module::handle ( int m )
             }
             else if ( e & FL_BUTTON1 )
             {
+#ifdef LV2_SUPPORT
                 if(_plug_type == LV2)
                 {
-#ifdef USE_SUIL
                     LV2_Plugin *pm = static_cast<LV2_Plugin *> (this);
                     if(!pm->try_custom_ui())
                     {
@@ -1422,20 +1427,20 @@ Module::handle ( int m )
                     {
                         set_dirty();
                     }
-#endif
                 }
+                else
+#endif  
 #ifdef CLAP_SUPPORT
-                else if(_plug_type == CLAP)
+                if(_plug_type == CLAP)
                 {
                     CLAP_Plugin *pm = static_cast<CLAP_Plugin *> (this);
                     if(!pm->try_custom_ui())
                     {
                         command_open_parameter_editor();
                     }
-                }  
+                }
+                else
 #endif
-                // TODO other types here
-                else    // LADSPA and internal
                 {
                     command_open_parameter_editor();
                 }

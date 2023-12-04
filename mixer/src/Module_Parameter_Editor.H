@@ -32,7 +32,10 @@ class SpectrumView;
 
 #include <vector>
 #include <list>
+
+#ifdef LV2_SUPPORT
 #include "LV2_Plugin.H"
+#endif
 
 class Module_Parameter_Editor : public Fl_Double_Window
 {
@@ -76,18 +79,18 @@ class Module_Parameter_Editor : public Fl_Double_Window
     static void cb_value_handle ( Fl_Widget *w, void *v );
     static void cb_panner_value_handle ( Fl_Widget *w, void *v );
     static void cb_mode_handle ( Fl_Widget *w, void *v );
-#ifdef PRESET_SUPPORT
+#ifdef LV2_SUPPORT
     static void cb_preset_handle ( Fl_Widget *w, void *v );
     void set_preset_controls(int choice);
 #endif
-#ifdef LV2_STATE_SAVE
+#if defined(LV2_SUPPORT) || defined(CLAP_SUPPORT)
     static void cb_save_state_handle ( Fl_Widget *, void *v );
     void save_plugin_state(const std::string &filename);
     static void cb_restore_state_handle ( Fl_Widget *, void *v );
     void restore_plugin_state(const std::string &directory);
 #endif
     static void cb_bound_handle ( Fl_Widget *w, void *v );
-#ifdef LV2_WORKER_SUPPORT
+#ifdef LV2_SUPPORT
     static void cb_filechooser_handle ( Fl_Widget *w, void *v );
     void set_plugin_file(int port, const std::string &filename);
 #endif
@@ -125,7 +128,7 @@ public:
 
     void reload ( void );
     void handle_control_changed ( Module::Port *p );
-#ifdef LV2_WORKER_SUPPORT
+#ifdef LV2_SUPPORT
     void refresh_file_button_label(int index);
 #endif
     int handle ( int m );

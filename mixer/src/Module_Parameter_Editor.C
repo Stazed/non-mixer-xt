@@ -54,7 +54,7 @@
 #include "SpectrumView.H"
 #include "string.h"
 
-#ifdef LV2_WORKER_SUPPORT
+#if defined(LV2_SUPPORT) || defined(CLAP_SUPPORT)
 #include <FL/Fl_File_Chooser.H>
 #endif
 
@@ -99,10 +99,9 @@ Module_Parameter_Editor::Module_Parameter_Editor ( Module *module ) : Fl_Double_
     { Fl_Group *g = new Fl_Group( 0, 0, w(), 25 );
 
         // TODO other types
-
+#ifdef LV2_SUPPORT
         if (_module->_plug_type == LV2)
         {
-#ifdef PRESET_SUPPORT
             LV2_Plugin *pm = static_cast<LV2_Plugin *> (_module);
             
             if( !pm->_PresetList.empty() )
@@ -133,9 +132,9 @@ Module_Parameter_Editor::Module_Parameter_Editor ( Module *module ) : Fl_Double_
                     o->callback( cb_preset_handle,  this );
                 }
             }
-#endif  // PRESET_SUPPORT
         }
-#ifdef LV2_STATE_SAVE
+#endif  // LV2_SUPPORT
+#if defined(LV2_SUPPORT) || defined(CLAP_SUPPORT)
         if ((_module->_plug_type == LV2) || (_module->_plug_type == CLAP))
         {
             Fl_Color fc = fl_color_add_alpha( FL_CYAN, 200 );
@@ -156,7 +155,7 @@ Module_Parameter_Editor::Module_Parameter_Editor ( Module *module ) : Fl_Double_
                 o->callback( cb_restore_state_handle, this );
             }
         }
-#endif  // LV2_STATE_SAVE
+#endif  // defined(LV2_SUPPORT) || defined(CLAP_SUPPORT)
 
         g->resizable(0);
         g->end();
@@ -454,7 +453,7 @@ Module_Parameter_Editor::make_controls ( void )
         ++y_location;
     }
 
-#ifdef LV2_WORKER_SUPPORT
+#ifdef LV2_SUPPORT
     if(module->_plug_type == LV2)
     {
         LV2_Plugin *pm = static_cast<LV2_Plugin *> (module);
@@ -515,7 +514,7 @@ Module_Parameter_Editor::make_controls ( void )
             ++y_location;   // increment the scroll widget counter to set for next item if any
         }
     }
-#endif
+#endif  // LV2_SUPPORT
 
     if ( azimuth_port_number >= 0 && elevation_port_number >= 0 )
     {
@@ -558,7 +557,7 @@ Module_Parameter_Editor::make_controls ( void )
     update_control_visibility();
 }
 
-#ifdef PRESET_SUPPORT
+#ifdef LV2_SUPPORT
 void
 Module_Parameter_Editor::set_preset_controls(int choice)
 {
@@ -610,7 +609,7 @@ Module_Parameter_Editor::update_control_visibility ( void )
 
 }
 
-#ifdef LV2_WORKER_SUPPORT
+#ifdef LV2_SUPPORT
 void
 Module_Parameter_Editor::cb_filechooser_handle ( Fl_Widget *w, void *v )
 {
@@ -641,7 +640,7 @@ Module_Parameter_Editor::cb_filechooser_handle ( Fl_Widget *w, void *v )
     /* Send the file to the plugin */
     cd->base_widget->set_plugin_file( cd->port_number[0], filename );
 }
-#endif
+#endif  // LV2_SUPPORT
 
 void
 Module_Parameter_Editor::cb_enumeration_handle ( Fl_Widget *w, void *v )
@@ -685,7 +684,7 @@ Module_Parameter_Editor::cb_mode_handle ( Fl_Widget *, void *v )
     ((Module_Parameter_Editor*)v)->make_controls();
 }
 
-#ifdef PRESET_SUPPORT
+#ifdef LV2_SUPPORT
 void
 Module_Parameter_Editor::cb_preset_handle ( Fl_Widget *w, void *v )
 {
@@ -694,11 +693,10 @@ Module_Parameter_Editor::cb_preset_handle ( Fl_Widget *w, void *v )
 }
 #endif
 
-#ifdef LV2_STATE_SAVE
+#if defined(LV2_SUPPORT) || defined(CLAP_SUPPORT)
 void
 Module_Parameter_Editor::cb_save_state_handle ( Fl_Widget *, void *v )
 {
-#ifdef LV2_WORKER_SUPPORT
     /* TODO Set file chooser location based on ... */
     std::string file_chooser_location = "";
 
@@ -719,19 +717,18 @@ Module_Parameter_Editor::cb_save_state_handle ( Fl_Widget *, void *v )
     filename = fl_filename_setext(filename, EXT);
 #undef EXT
     }
-    else
 #endif  // CLAP_SUPPORT
+#ifdef LV2_SUPPORT
     if ( ((Module_Parameter_Editor*)v)->_module->_plug_type == LV2 )
     {
         filename = fl_file_chooser(title.c_str(), "", file_chooser_location.c_str(), 0);
     }
-            
+#endif
     if (filename == NULL)
         return;
 
     /* Save the state to location */
     ((Module_Parameter_Editor*)v)->save_plugin_state( filename );
-#endif  // LV2_WORKER_SUPPORT
 }
 
 void
@@ -747,19 +744,19 @@ Module_Parameter_Editor::save_plugin_state(const std::string &filename)
         CLAP_Plugin *pm = static_cast<CLAP_Plugin *> (_module);
         pm->save_CLAP_plugin_state(filename);
     }
-    else
 #endif
+#ifdef LV2_SUPPORT
     if (_module->_plug_type == LV2)
     {
         LV2_Plugin *pm = static_cast<LV2_Plugin *> (_module);
         pm->save_LV2_plugin_state(directory);
     }
+#endif
 }
 
 void
 Module_Parameter_Editor::cb_restore_state_handle ( Fl_Widget *, void *v )
 {
-#ifdef LV2_WORKER_SUPPORT
     /* TODO Set file chooser location based on ... */
     std::string file_chooser_location = "";
 
@@ -773,19 +770,18 @@ Module_Parameter_Editor::cb_restore_state_handle ( Fl_Widget *, void *v )
     {
         directory = fl_file_chooser(title.c_str(), "*.state", file_chooser_location.c_str(), 0);
     }
-    else
 #endif
+#ifdef LV2_SUPPORT
     if (((Module_Parameter_Editor*)v)->_module->_plug_type == LV2 )
     {
         directory = fl_dir_chooser(title.c_str(), file_chooser_location.c_str(), 0);
     }
-
+#endif
     if (directory == NULL)
         return;
 
     /* Save the state to location */
     ((Module_Parameter_Editor*)v)->restore_plugin_state( directory );
-#endif  // LV2_WORKER_SUPPORT
 }
 
 void
@@ -797,15 +793,16 @@ Module_Parameter_Editor::restore_plugin_state(const std::string &directory)
         CLAP_Plugin *pm = static_cast<CLAP_Plugin *> (_module);
         pm->restore_CLAP_plugin_state(directory);
     }
-    else
 #endif
+#ifdef LV2_SUPPORT
     if (_module->_plug_type == LV2)
     {
         LV2_Plugin *pm = static_cast<LV2_Plugin *> (_module);
         pm->restore_LV2_plugin_state(directory);
     }
-}
 #endif
+}
+#endif  // #if defined(LV2_SUPPORT) || defined(CLAP_SUPPORT)
 
 void
 Module_Parameter_Editor::bind_control ( int i )
@@ -887,7 +884,7 @@ Module_Parameter_Editor::handle_control_changed ( Module::Port *p )
     update_spectrum();
 }
 
-#ifdef LV2_WORKER_SUPPORT
+#ifdef LV2_SUPPORT
 void
 Module_Parameter_Editor::refresh_file_button_label(int index)
 {
@@ -911,7 +908,7 @@ Module_Parameter_Editor::reload ( void )
     redraw();
 }
 
-#ifdef LV2_WORKER_SUPPORT
+#ifdef LV2_SUPPORT
 void
 Module_Parameter_Editor::set_plugin_file(int port, const std::string &filename )
 {

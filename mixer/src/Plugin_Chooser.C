@@ -66,6 +66,7 @@ Plugin_Chooser::plugin_chooser ( int ninputs )
             break;
         }
 #endif
+#ifdef LV2_SUPPORT
         case LV2:
         {
             if (!o->s_unique_id().empty())
@@ -74,6 +75,7 @@ Plugin_Chooser::plugin_chooser ( int ninputs )
             }
             break;
         }
+#endif
 #ifdef CLAP_SUPPORT
         case CLAP:
         {
@@ -319,20 +321,22 @@ Plugin_Chooser::cb_table ( Fl_Widget *w )
         }
         else
         {
+#ifdef LV2_SUPPORT
             if (::strcmp(_plugin_rows[R]->type.c_str(), "LV2") == 0)
             {
                 _s_unique_id   = _plugin_rows[R]->s_unique_id;
                 _plugin_type = LV2;
             }
+#endif
 #ifdef LADSPA_SUPPORT
-            else if(::strcmp(_plugin_rows[R]->type.c_str(), "LADSPA") == 0)
+            if(::strcmp(_plugin_rows[R]->type.c_str(), "LADSPA") == 0)
             {
                 _value = _plugin_rows[R]->id;
                 _plugin_type = LADSPA;
             }
 #endif
 #ifdef CLAP_SUPPORT
-            else if(::strcmp(_plugin_rows[R]->type.c_str(), "CLAP") == 0)
+            if(::strcmp(_plugin_rows[R]->type.c_str(), "CLAP") == 0)
             {
                 _s_unique_id   = _plugin_rows[R]->s_unique_id;
                 _value = _plugin_rows[R]->id;
@@ -386,6 +390,7 @@ Plugin_Chooser::load_favorites ( void )
             if ( !strcmp( (*i).type.c_str(), type ) &&
                  (*i).id == id )
             {
+#ifdef LV2_SUPPORT
                 if( !strcmp(type, "LV2") )
                 {
                     if( !strcmp(c_unique_id, (*i).s_unique_id.c_str()) )
@@ -394,15 +399,16 @@ Plugin_Chooser::load_favorites ( void )
                         favorites++;
                     }
                 }
+#endif
 #ifdef LADSPA_SUPPORT
-                else if( !strcmp(type, "LADSPA") )
+                if( !strcmp(type, "LADSPA") )
                 {
                     (*i).favorite = 1;
                     favorites++;
                 }
 #endif
 #ifdef CLAP_SUPPORT
-                else if ( !strcmp(type, "CLAP") )
+                if ( !strcmp(type, "CLAP") )
                 {
                     if ( !strcmp(c_unique_id, (*i).s_unique_id.c_str()) )
                     {
