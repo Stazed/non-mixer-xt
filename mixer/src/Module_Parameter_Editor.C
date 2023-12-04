@@ -377,12 +377,13 @@ Module_Parameter_Editor::make_controls ( void )
 
             if ( p->hints.type & Module::Port::Hints::LOGARITHMIC )
                 o->log(true);
-
+#ifdef LV2_SUPPORT
             if ( p->hints.type == Module::Port::Hints::LV2_INTEGER )
             {
                 o->precision(0);
             }
             else    // floats
+#endif
             {
                 o->precision( 2 );
                 /* a couple of plugins have ridiculously small units */
@@ -587,7 +588,7 @@ Module_Parameter_Editor::update_control_visibility ( void )
 
     int width = control_pack->w() + 100; // LADSPA
 
-    // TODO other types ???
+#if defined(LV2_SUPPORT) || defined(CLAP_SUPPORT)
     if ( (_module->_plug_type == LV2) || (_module->_plug_type == CLAP))
     {
         /* When the scroller is not used, we need to expand width to account for 
@@ -595,6 +596,7 @@ Module_Parameter_Editor::update_control_visibility ( void )
         if(!_use_scroller)
             width = control_pack->w() + 225;
     }
+#endif
 
     int height = control_pack->h() + 60;
 

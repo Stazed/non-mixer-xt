@@ -538,12 +538,13 @@ Controller_Module::connect_to ( Port *p )
                 o->maximum( p->hints.maximum );
             }
         }
-
+#ifdef LV2_SUPPORT
         if ( p->hints.type == Module::Port::Hints::LV2_INTEGER )
         {
             o->precision(0);
         }
         else
+#endif
         {
             o->precision(2);
         }

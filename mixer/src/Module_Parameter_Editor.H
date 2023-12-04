@@ -108,7 +108,9 @@ class Module_Parameter_Editor : public Fl_Double_Window
     SpectrumView *spectrum_view;
     Fl_Scroll *control_scroll;
     Fl_Flowpack *control_pack;
+#ifdef LV2_SUPPORT
     Fl_Choice *LV2_presets_choice;
+#endif
     bool _resized;
     int _min_width;
     int _selected_control;
