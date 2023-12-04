@@ -423,11 +423,12 @@ void
 Controller_Module::connect_to ( Port *p )
 {
     control_output[0].connect_to( p );
-    
+
+#ifdef LV2_SUPPORT
     /* The controller needs the ScalePoints vector to set the Fl_Choice menu based on 
        ScalePoints Value since the Fl_Menu value may differ from the controller value */
     control_output[0].hints.ScalePoints = p->hints.ScalePoints;
-
+#endif
     clear();
 
     Fl_Widget *w;
@@ -465,6 +466,7 @@ Controller_Module::connect_to ( Port *p )
 
         o->value( p->control_value() );
     }
+#ifdef LV2_SUPPORT
     else if ( p->hints.type == Module::Port::Hints::LV2_INTEGER_ENUMERATION )
     {
         Fl_Choice *o =  new Fl_Choice( 0, 0, 200, 20 );
@@ -495,6 +497,7 @@ Controller_Module::connect_to ( Port *p )
             
         o->value( menu_location );
     }
+#endif  // LV2_SUPPORT
     //  else if ( p->hints.type == Module::Port::Hints::LOGARITHMIC || Module::Port::Hints::LV2_INTEGER )
     else
     {
@@ -633,12 +636,14 @@ Controller_Module::cb_handle ( Fl_Widget *w )
     {
         control_value = ((Fl_Button*)w)->value();
     }
+#ifdef LV2_SUPPORT
     else if ( type() == CHOICE )
     {
         /* We set the control value according to the menu position in the ScalePoints vector */
         int menu_location = (int) ((Fl_Choice*)w)->value();
         control_value = control_output[0].hints.ScalePoints[menu_location].Value;
     }
+#endif
     else
         control_value = ((Fl_Valuator*)w)->value();
 
@@ -1025,6 +1030,7 @@ Controller_Module::handle_control_changed ( Port *p )
         {
             ((Fl_Button*)control)->value(control_value);
         }
+#ifdef LV2_SUPPORT
         else if ( type() == CHOICE )
         {
             // DMESSAGE("control_value = %f: size = %d", control_value, p->hints.ScalePoints.size());
@@ -1042,6 +1048,7 @@ Controller_Module::handle_control_changed ( Port *p )
             
             ((Fl_Choice*)control)->value(menu_location);
         }
+#endif  // LV2_SUPPORT
         else
             ((Fl_Valuator*)control)->value(control_value);
     }

@@ -75,11 +75,11 @@ class Module_Parameter_Editor : public Fl_Double_Window
 
     void update_control_visibility ( void );
     static void cb_button_handle ( Fl_Widget *w, void *v );
-    static void cb_enumeration_handle ( Fl_Widget *w, void *v );
     static void cb_value_handle ( Fl_Widget *w, void *v );
     static void cb_panner_value_handle ( Fl_Widget *w, void *v );
     static void cb_mode_handle ( Fl_Widget *w, void *v );
 #ifdef LV2_SUPPORT
+    static void cb_enumeration_handle ( Fl_Widget *w, void *v );
     static void cb_preset_handle ( Fl_Widget *w, void *v );
     void set_preset_controls(int choice);
 #endif
@@ -93,8 +93,8 @@ class Module_Parameter_Editor : public Fl_Double_Window
 #ifdef LV2_SUPPORT
     static void cb_filechooser_handle ( Fl_Widget *w, void *v );
     void set_plugin_file(int port, const std::string &filename);
-#endif
     void set_choice_value(int port, int menu);
+#endif
     void set_value (int i, float value );
     void bind_control ( int i );
     void make_controls ( void );

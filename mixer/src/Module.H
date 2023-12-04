@@ -195,7 +195,9 @@ public:
 #ifdef CLAP_SUPPORT
             uint32_t parameter_id;
 #endif
+#ifdef LV2_SUPPORT
             std::vector<EnumeratorScalePoints>ScalePoints;
+#endif
 
             Hints ( )
                 {
@@ -266,7 +268,9 @@ public:
                 _nframes = p._nframes;
                 _module = p._module;
                 hints = p.hints;
+#ifdef LV2_SUPPORT
                 hints.ScalePoints = p.hints.ScalePoints;
+#endif
                 _scaled_signal = p._scaled_signal;
                 _unscaled_signal = p._unscaled_signal;
                 _by_number_path = 0;

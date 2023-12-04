@@ -316,6 +316,7 @@ Module_Parameter_Editor::make_controls ( void )
             o->value( p->control_value() );
             o->align(FL_ALIGN_RIGHT);
         }
+#ifdef LV2_SUPPORT
         else if ( p->hints.type == Module::Port::Hints::LV2_INTEGER_ENUMERATION )
         {
             Fl_Choice *o =  new Fl_Choice( 75, (y_location*24) + 24, 200, 24, p->name() );
@@ -342,6 +343,7 @@ Module_Parameter_Editor::make_controls ( void )
             o->value( menu );
             o->selection_color( fc );
         }
+#endif  // LV2_SUPPORT
         else if ( p->hints.type == Module::Port::Hints::INTEGER )
         {
             Fl_Counter *o = new Fl_Counter(75, (y_location*24) + 24, 200, 24, p->name() );
@@ -419,8 +421,10 @@ Module_Parameter_Editor::make_controls ( void )
 
         if ( p->hints.type == Module::Port::Hints::BOOLEAN )
             w->callback( cb_button_handle, &_callback_data.back() );
+#ifdef LV2_SUPPORT
         else if ( p->hints.type == Module::Port::Hints::LV2_INTEGER_ENUMERATION )
             w->callback( cb_enumeration_handle, &_callback_data.back() );
+#endif
         else
             w->callback( cb_value_handle, &_callback_data.back() );
 
@@ -640,7 +644,6 @@ Module_Parameter_Editor::cb_filechooser_handle ( Fl_Widget *w, void *v )
     /* Send the file to the plugin */
     cd->base_widget->set_plugin_file( cd->port_number[0], filename );
 }
-#endif  // LV2_SUPPORT
 
 void
 Module_Parameter_Editor::cb_enumeration_handle ( Fl_Widget *w, void *v )
@@ -649,6 +652,7 @@ Module_Parameter_Editor::cb_enumeration_handle ( Fl_Widget *w, void *v )
     
     cd->base_widget->set_choice_value( cd->port_number[0], (int) ((Fl_Choice*)w)->value() );
 }
+#endif  // LV2_SUPPORT
 
 void
 Module_Parameter_Editor::cb_value_handle ( Fl_Widget *w, void *v )
@@ -855,7 +859,8 @@ Module_Parameter_Editor::handle_control_changed ( Module::Port *p )
         Fl_Button *v = static_cast<Fl_Button*>( w );
 
         v->value( p->control_value() );
-    }        
+    }
+#ifdef LV2_SUPPORT
     else if ( p->hints.type == Module::Port::Hints::LV2_INTEGER_ENUMERATION )
     {
         Fl_Choice *v = static_cast<Fl_Choice*>( w );
@@ -874,6 +879,7 @@ Module_Parameter_Editor::handle_control_changed ( Module::Port *p )
 
         v->value( menu );
     }
+#endif  // LV2_SUPPORT
     else
     {
         Fl_Valuator *v = static_cast<Fl_Valuator*>( w );
@@ -915,7 +921,6 @@ Module_Parameter_Editor::set_plugin_file(int port, const std::string &filename )
     LV2_Plugin *pm = static_cast<LV2_Plugin *> (_module);
     pm->send_file_to_plugin(port, filename);
 }
-#endif
 
 void
 Module_Parameter_Editor::set_choice_value(int port, int menu)
@@ -925,6 +930,7 @@ Module_Parameter_Editor::set_choice_value(int port, int menu)
     /* We have to send the port ScalePoints value not menu choice value */
     set_value( port, _module->control_input[port].hints.ScalePoints[menu].Value );
 }
+#endif  // LV2_SUPPORT
 
 void
 Module_Parameter_Editor::set_value (int i, float value )

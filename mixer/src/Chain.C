@@ -759,26 +759,26 @@ Chain::insert ( Module *m, Module *n )
 
 err:
 
-#if defined(LV2_SUPPORT) || defined(CLAP_SUPPORT)
     /* If the plugin has MIDI, the JACK ports will not get configured on err,
     so on module delete, we destroy all related JACK ports. This is not a problem for audio
     ins and outs above since they do not have JACK ports. Since the failure
     above meant we don't have JACK ports created for MIDI, we clear any MIDI
     vectors here so the JACK port deletion does not get called on NULL ports and crash */
+#ifdef LV2_SUPPORT
     if(n->_plug_type == LV2)
     {
         LV2_Plugin *plug = static_cast<LV2_Plugin *> (n);
         plug->atom_input.clear();
         plug->atom_output.clear();
     }
-
+#endif
+#ifdef CLAP_SUPPORT
     if(n->_plug_type == CLAP)
     {
         CLAP_Plugin *plug = static_cast<CLAP_Plugin *> (n);
         plug->note_input.clear();
         plug->note_output.clear();
     }
-
 #endif
 
     client()->unlock();
