@@ -25,13 +25,13 @@
 #ifdef LV2_SUPPORT
 
 #include "LV2_Plugin.H"
-#include "Module_Parameter_Editor.H"
+#include "../Module_Parameter_Editor.H"
 #include <lv2/instance-access/instance-access.h>
 #include <unistd.h>    // usleep()
 
-#include "../../nonlib/dsp.h"
+#include "../../../nonlib/dsp.h"
 
-#include "Chain.H"
+#include "../Chain.H"
 
 class Chain;    // forward declaration
 

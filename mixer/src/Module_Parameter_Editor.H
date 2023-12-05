@@ -34,7 +34,7 @@ class SpectrumView;
 #include <list>
 
 #ifdef LV2_SUPPORT
-#include "LV2_Plugin.H"
+#include "lv2/LV2_Plugin.H"
 #endif
 
 class Module_Parameter_Editor : public Fl_Double_Window

@@ -50,7 +50,7 @@
 #include "ladspa/LADSPA_Plugin.H"
 #endif
 #ifdef LV2_SUPPORT
-#include "LV2_Plugin.H"
+#include "lv2/LV2_Plugin.H"
 #endif
 #ifdef CLAP_SUPPORT
 #include "CLAP_Plugin.H"

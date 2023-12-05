@@ -30,14 +30,14 @@
 #include <zix-0/zix/sem.h>
 #include <zix-0/zix/thread.h>
 
-#include "Mixer_Strip.H"
-#include "Module.H"
-#include "Plugin_Module.H"
-#include "x11/XTUtils.H"
-#include "lv2/LV2_RDF_Utils.hpp"
-#include "lv2/ImplementationData.H"
-#include "lv2/atom-forge.h"
-#include "x11/X11PluginUI.H"
+#include "../Mixer_Strip.H"
+#include "../Module.H"
+#include "../Plugin_Module.H"
+#include "../x11/XTUtils.H"
+#include "../x11/X11PluginUI.H"
+#include "LV2_RDF_Utils.hpp"
+#include "ImplementationData.H"
+#include "atom-forge.h"
 
 #define PRESET_SUPPORT 1
 #define LV2_STATE_SAVE 1

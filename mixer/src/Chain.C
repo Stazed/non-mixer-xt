@@ -61,7 +61,7 @@
 #include "Controller_Module.H"
 
 #ifdef LV2_SUPPORT
-#include "LV2_Plugin.H"
+#include "lv2/LV2_Plugin.H"
 #endif
 
 #ifdef CLAP_SUPPORT
