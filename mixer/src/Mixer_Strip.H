@@ -126,8 +126,6 @@ private:
     Fl_Progress *dsp_load_progress;
 
     Fl_Box *color_box;
-    
-    nframes_t nframes;
 
     Fl_Color _color;
 

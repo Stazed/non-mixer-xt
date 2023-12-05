@@ -64,9 +64,17 @@ extern char *clipboard_dir;
 
 
 /* add a new mixer strip (with default configuration) */
-Mixer_Strip::Mixer_Strip( const char *strip_name ) : Fl_Group( 0, 0, 120, 600 )
+Mixer_Strip::Mixer_Strip( const char *strip_name ) :
+    Fl_Group( 0, 0, 120, 600 ),
+    _auto_input(0),
+    _dsp_load_index(0),
+    _gain_controller_mode(0),
+    _mute_controller_mode(0),
+    _manual_connection(0),
+    _number(0),
+    _chain(0),
+    _group(0)
 {
-    _number = 0;
     label( strdup( strip_name ) );
     labeltype( FL_NO_LABEL );
 
@@ -91,10 +99,17 @@ Mixer_Strip::Mixer_Strip( const char *strip_name ) : Fl_Group( 0, 0, 120, 600 )
 }
 
 /* virgin strip created from journal */
-Mixer_Strip::Mixer_Strip() : Fl_Group( 0, 0, 120, 600 )
+Mixer_Strip::Mixer_Strip() :
+    Fl_Group( 0, 0, 120, 600 ),
+    _auto_input(0),
+    _dsp_load_index(0),
+    _gain_controller_mode(0),
+    _mute_controller_mode(0),
+    _manual_connection(0),
+    _number(0),
+    _chain(0),
+    _group(0)
 {
-    _number = 0;
-
     Mixer_Strip::init();
 
     log_create();
@@ -549,14 +564,6 @@ void
 Mixer_Strip::init ( )
 {
     selection_color( FL_YELLOW );
-    _manual_connection = 0;
-    _auto_input = 0;
-    _mute_controller_mode = 0;
-    _gain_controller_mode = 0;
-    _chain = 0;
-    _group = 0;
-
-    _dsp_load_index = 0;
 
     box( FL_FLAT_BOX );
     labeltype( FL_NO_LABEL );
