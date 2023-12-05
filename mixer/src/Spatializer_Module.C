@@ -373,12 +373,12 @@ public:
 
 
 
-Spatializer_Module::Spatializer_Module ( ) : JACK_Module ( false )
+Spatializer_Module::Spatializer_Module ( ) :
+    JACK_Module ( false ),
+    _panner(0),
+    _early_panner(0)
 {
     is_default( false );
-    
-    _panner = 0;
-    _early_panner = 0;
 
     {
         Port p( this, Port::INPUT, Port::CONTROL, "Azimuth" );
