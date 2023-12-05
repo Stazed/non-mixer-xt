@@ -28,7 +28,6 @@
 #include "clap/Clap_Discovery.H"
 
 #include "Chain.H"
-#include "XTUtils.H"
 #include "clap/Time.h"
 
 #include "../../nonlib/dsp.h"

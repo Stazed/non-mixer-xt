@@ -61,7 +61,7 @@ set (ProgSources
     src/SpectrumView.C
     src/Spatialization_Console.C
     src/lv2/lv2_evbuf.c
-    src/X11PluginUI.C
+    src/x11/X11PluginUI.C
 )
 
 set(ExternLibraries

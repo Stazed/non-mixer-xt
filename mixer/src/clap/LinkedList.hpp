@@ -20,7 +20,7 @@
 
 #ifdef CLAP_SUPPORT
 
-#include "../XTUtils.H"
+#include "../x11/XTUtils.H"
 
 // -----------------------------------------------------------------------
 // Define list_entry and list_entry_const

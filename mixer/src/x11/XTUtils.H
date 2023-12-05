@@ -19,7 +19,7 @@
 
 #if defined(LV2_SUPPORT) || defined(CLAP_SUPPORT)
 
-#include "../../nonlib/debug.h"
+#include "../../../nonlib/debug.h"
 #include <cstring>
 
 /* Define unlikely */

@@ -33,7 +33,7 @@
 #include "Mixer_Strip.H"
 #include "Plugin_Module.H"
 #include "clap/LinkedList.hpp"
-#include "X11PluginUI.H"
+#include "x11/X11PluginUI.H"
 
 extern std::string project_directory;
 extern std::string export_import_strip;
