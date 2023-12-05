@@ -34,8 +34,8 @@
 #include "Module.H"
 #include "Plugin_Module.H"
 #include "XTUtils.H"
-#include "LV2_RDF_Utils.hpp"
-#include "ImplementationData.H"
+#include "lv2/LV2_RDF_Utils.hpp"
+#include "lv2/ImplementationData.H"
 #include "lv2/atom-forge.h"
 #include "X11PluginUI.H"
 

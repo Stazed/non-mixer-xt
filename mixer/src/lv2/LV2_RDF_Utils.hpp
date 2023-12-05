@@ -48,10 +48,10 @@
 
 #include <algorithm>    // sort
 
-#include "lv2/lv2_external_ui.h"
-#include "lv2/lv2_kxstudio_properties.h"
+#include "lv2_external_ui.h"
+#include "lv2_kxstudio_properties.h"
 
-#include "lilv/lilvmm.hpp"
+#include "lilvmm.hpp"
 
 // enable -Wdocumentation again
 #if defined(__clang__) && (__clang_major__ * 100 + __clang_minor__) > 300

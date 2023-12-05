@@ -32,14 +32,14 @@
 
 #include <vector>
 
-#include "ImplementationData.H"
+#include "lv2/ImplementationData.H"
 #include <list>
 #include <algorithm>
 
 
 #ifdef LV2_SUPPORT
 #include "lv2/lv2_evbuf.h"
-#include "lilv/lilvmm.hpp"
+#include "lv2/lilvmm.hpp"
 #include <suil/suil.h>
 #endif
 
