@@ -116,9 +116,9 @@ class Module_Parameter_Editor : public Fl_Double_Window
     int _selected_control;
     bool _use_scroller;
 
-    int azimuth_port_number;
-    int elevation_port_number;
-    int radius_port_number;
+    int _azimuth_port_number;
+    int _elevation_port_number;
+    int _radius_port_number;
 
     std::list<callback_data> _callback_data;
     std::vector<Fl_Widget*> controls_by_port;

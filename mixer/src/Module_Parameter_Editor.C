@@ -72,13 +72,17 @@ Module_Parameter_Editor::is_probably_eq ( void )
         strcasestr( name, "band" );
 }
 
-Module_Parameter_Editor::Module_Parameter_Editor ( Module *module ) : Fl_Double_Window( 900,240)
+Module_Parameter_Editor::Module_Parameter_Editor ( Module *module ) :
+    Fl_Double_Window( 900, 240 ),
+    _module(module),
+    _resized(false),
+    _min_width(100),
+    _selected_control(0),
+    _use_scroller(false),
+    _azimuth_port_number(-1),
+    _elevation_port_number(-1),
+    _radius_port_number(-1)
 {
-    _module = module;
-    _resized = false;
-    _min_width = 100;
-    _use_scroller = false;
-
     char lab[256];
     if ( strcmp( module->name(), module->label() ) )
     {
@@ -241,11 +245,11 @@ Module_Parameter_Editor::make_controls ( void )
 
     /* these are for detecting related parameter groups which can be
        better represented by a single control */
-    azimuth_port_number = -1;
+    _azimuth_port_number = -1;
     float azimuth_value = 0.0f;
-    elevation_port_number = -1;
+    _elevation_port_number = -1;
     float elevation_value = 0.0f;
-    radius_port_number = -1;
+    _radius_port_number = -1;
     float radius_value = 0.0f;
     
     Fl_Color fc = fl_color_add_alpha( FL_CYAN, 200 );
@@ -288,7 +292,7 @@ Module_Parameter_Editor::make_controls ( void )
              180.0f == p->hints.maximum &&
              -180.0f == p->hints.minimum )
         {
-            azimuth_port_number = i;
+            _azimuth_port_number = i;
             azimuth_value = p->control_value();
             continue;
         }
@@ -296,13 +300,13 @@ Module_Parameter_Editor::make_controls ( void )
                   90.0f == p->hints.maximum &&
                   -90.0f == p->hints.minimum )
         {
-            elevation_port_number = i;
+            _elevation_port_number = i;
             elevation_value = p->control_value();
             continue;
         } 
         else if ( !strcasecmp( "Radius", p->name() ) )
         {
-            radius_port_number = i;
+            _radius_port_number = i;
             radius_value = p->control_value();
             continue;
         }
@@ -521,7 +525,7 @@ Module_Parameter_Editor::make_controls ( void )
     }
 #endif  // LV2_SUPPORT
 
-    if ( azimuth_port_number >= 0 && elevation_port_number >= 0 )
+    if ( _azimuth_port_number >= 0 && _elevation_port_number >= 0 )
     {
         Panner *o = new Panner( 0,0, 502,502 );
         o->box(FL_FLAT_BOX);
@@ -535,12 +539,12 @@ Module_Parameter_Editor::make_controls ( void )
         o->label( "Spatialization" );
         o->labelsize( 14 );
 
-        _callback_data.push_back( callback_data( this, azimuth_port_number, elevation_port_number, radius_port_number ) );
+        _callback_data.push_back( callback_data( this, _azimuth_port_number, _elevation_port_number, _radius_port_number ) );
         o->callback( cb_panner_value_handle, &_callback_data.back() );
 
         o->point( 0 )->azimuth( azimuth_value );
         o->point( 0 )->elevation( elevation_value );
-        if ( radius_port_number >= 0 )
+        if ( _radius_port_number >= 0 )
         {
             o->point( 0 )->radius_enabled = true;
             o->point( 0 )->radius( radius_value );
@@ -551,10 +555,10 @@ Module_Parameter_Editor::make_controls ( void )
         flg->resizable(o);
         control_pack->add( flg );
 
-        controls_by_port[azimuth_port_number] = o;
-        controls_by_port[elevation_port_number] = o;
-        if ( radius_port_number >= 0 )
-            controls_by_port[radius_port_number] = o;
+        controls_by_port[_azimuth_port_number] = o;
+        controls_by_port[_elevation_port_number] = o;
+        if ( _radius_port_number >= 0 )
+            controls_by_port[_radius_port_number] = o;
     }
 
     update_spectrum();
@@ -837,17 +841,17 @@ Module_Parameter_Editor::handle_control_changed ( Module::Port *p )
    
     Fl_Widget *w = controls_by_port[i];
 
-    if ( i == azimuth_port_number ||
-         i == elevation_port_number ||
-        i == radius_port_number )
+    if ( i == _azimuth_port_number ||
+         i == _elevation_port_number ||
+        i == _radius_port_number )
     {
         Panner *_panner = static_cast<Panner*>( w );
 
-        if ( i == azimuth_port_number )
+        if ( i == _azimuth_port_number )
             _panner->point(0)->azimuth( p->control_value() );
-        else if ( i == elevation_port_number )
+        else if ( i == _elevation_port_number )
             _panner->point(0)->elevation( p->control_value() );
-        else if ( i == radius_port_number )
+        else if ( i == _radius_port_number )
             _panner->point(0)->radius( p->control_value() );
 
         _panner->redraw();
