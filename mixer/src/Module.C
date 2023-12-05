@@ -42,7 +42,7 @@
 #include "CLAP_Plugin.H"
 #endif
 #ifdef LADSPA_SUPPORT
-#include "LADSPA_Plugin.H"
+#include "ladspa/LADSPA_Plugin.H"
 #endif
 
 #include "AUX_Module.H"

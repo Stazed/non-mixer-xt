@@ -26,13 +26,13 @@
 
 #include <math.h>
 
-#include "../../nonlib/dsp.h"
+#include "../../../nonlib/dsp.h"
 
-#include "Chain.H"
+#include "../Chain.H"
 #include "LADSPA_Plugin.H"
 
 #define HAVE_LIBLRDF 1
-#include "ladspa/LADSPAInfo.h"
+#include "LADSPAInfo.h"
 
 /* keep this out of the header to avoid spreading ladspa.h dependency */
 struct LADSPA_Plugin::ImplementationData

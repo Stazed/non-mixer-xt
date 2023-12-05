@@ -26,7 +26,7 @@
 
 #ifdef LADSPA_SUPPORT
 
-#include "Plugin_Module.H"
+#include "../Plugin_Module.H"
 
 
 class LADSPA_Plugin : public Plugin_Module {

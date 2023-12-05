@@ -47,7 +47,7 @@
 #include "Plugin_Module.H"
 
 #ifdef LADSPA_SUPPORT
-#include "LADSPA_Plugin.H"
+#include "ladspa/LADSPA_Plugin.H"
 #endif
 #ifdef LV2_SUPPORT
 #include "LV2_Plugin.H"
