@@ -68,19 +68,63 @@ Module *Module::_copied_module_empty = 0;
 char *Module::_copied_module_settings = 0;
 
 
-Module::Module ( int W, int H, const char *L ) : Fl_Group( 0, 0, W, H, L )
+Module::Module ( int W, int H, const char *L ) :
+    Fl_Group( 0, 0, W, H, L ),
+    _instances(1),
+    _chain(0),
+    _is_default(false),
+    _is_jack_module(false),
+    _is_zero_synth(false),
+    _has_name_change(false),
+    _base_label(NULL),
+    _nframes(0),
+    _number(-2),    /* magic number indicates old instance, before numbering */
+    _editor(0),
+    _plug_type(NONE),
+    _is_from_custom_ui(false),
+    _is_removed(false),
+    _use_custom_data(false)
 {
     Module::init();
 }
 
-Module::Module ( bool is_default, int W, int H, const char *L ) : Fl_Group( 0, 0, W, H, L ), Loggable( !is_default )
+Module::Module ( bool is_default, int W, int H, const char *L ) :
+    Fl_Group( 0, 0, W, H, L ),
+    Loggable( !is_default ),
+    _instances(1),
+    _chain(0),
+    _is_default(is_default),
+    _is_jack_module(false),
+    _is_zero_synth(false),
+    _has_name_change(false),
+    _base_label(NULL),
+    _nframes(0),
+    _number(-2),    /* magic number indicates old instance, before numbering */
+    _editor(0),
+    _plug_type(NONE),
+    _is_from_custom_ui(false),
+    _is_removed(false),
+    _use_custom_data(false)
 {
     Module::init();
-
-    this->is_default( is_default );
 }
 
-Module::Module ( ) : Fl_Group( 0, 0, 50, 50, "Unnamed" )
+Module::Module ( ) :
+    Fl_Group( 0, 0, 50, 50, "Unnamed" ),
+    _instances(1),
+    _chain(0),
+    _is_default(false),
+    _is_jack_module(false),
+    _is_zero_synth(false),
+    _has_name_change(false),
+    _base_label(NULL),
+    _nframes(0),
+    _number(-2),    /* magic number indicates old instance, before numbering */
+    _editor(0),
+    _plug_type(NONE),
+    _is_from_custom_ui(false),
+    _is_removed(false),
+    _use_custom_data(false)
 {
     Module::init();
 }
@@ -131,7 +175,6 @@ Module::~Module ( )
 void
 Module::init ( void )
 {
-
     /* we use pointers to these vector elements for port auto connection stuff and need to prevent reallocation from invalidating them. */
     audio_input.reserve(MAX_PORTS);
     audio_output.reserve(MAX_PORTS);
@@ -139,23 +182,8 @@ Module::init ( void )
     control_output.reserve(MAX_PORTS);
     aux_audio_input.reserve(MAX_PORTS);
     aux_audio_output.reserve(MAX_PORTS);
-
-//    _latency = 0;
-    _is_default = false;
-    _is_jack_module = false;
-    _is_zero_synth = false;
-    _has_name_change = false;
-    _editor = 0;
-    _chain = 0;
-    _instances = 1;
-    _bypass = new float(0);
-    _base_label = NULL;
-    _number = -2;	/* magic number indicates old instance, before numbering */
     
-    _plug_type = NONE;
-    _is_from_custom_ui = false;
-    _is_removed = false;
-    _use_custom_data = false;
+    _bypass = new float(0);
 
     box( FL_UP_BOX );
     labeltype( FL_NO_LABEL );

@@ -62,8 +62,6 @@ enum Plugin_Index
 
 class Module : public Fl_Group, public Loggable {
 
-    int _ins;
-    int _outs;
     int _instances;
     Chain *_chain;
     bool _is_default;
@@ -79,7 +77,6 @@ class Module : public Fl_Group, public Loggable {
     static char *_copied_module_settings;
 
     int _number;
-    bool _refresh_needed;
 
     virtual void init ( void );
 
@@ -100,6 +97,10 @@ protected:
 public:
 
     Module_Parameter_Editor *_editor;
+    unsigned int _plug_type;    // LADSPA, LV2, etc
+    bool _is_from_custom_ui;
+    bool _is_removed;
+    bool _use_custom_data;
 
     void deleteEditor();
     virtual int number ( void ) const { return _number; }
@@ -150,11 +151,6 @@ public:
         EnumeratorScalePoints() : Value(0.0) {}
     };
 #endif
-
-    unsigned int _plug_type;    // LADSPA, LV2, etc
-    bool _is_from_custom_ui;
-    bool _is_removed;
-    bool _use_custom_data;
 
     class Port
     {
