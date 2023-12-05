@@ -550,7 +550,10 @@ Mixer::load_project_settings ( void )
 }
 
 Mixer::Mixer ( int X, int Y, int W, int H, const char *L ) :
-    Fl_Group( X, Y, W, H, L )
+    Fl_Group( X, Y, W, H, L ),
+    _update_interval(0.0f),
+    _rows(1),
+    _strip_height(0)
 {
     Loggable::dirty_callback( &Mixer::handle_dirty, this );
     Loggable::progress_callback( progress_cb, NULL );
@@ -566,8 +569,6 @@ Mixer::Mixer ( int X, int Y, int W, int H, const char *L ) :
 
 //    _groups.resize(16);
 
-    _rows = 1;
-    _strip_height = 0;
     box( FL_FLAT_BOX );
     labelsize( 96 );
     { Fl_Group *o = new Fl_Group( X, Y, W, 24 );
