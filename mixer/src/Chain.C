@@ -65,7 +65,7 @@
 #endif
 
 #ifdef CLAP_SUPPORT
-#include "CLAP_Plugin.H"
+#include "clap/CLAP_Plugin.H"
 #endif
 
 #include <FL/Fl_Box.H>

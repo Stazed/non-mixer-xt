@@ -53,7 +53,7 @@
 #include "lv2/LV2_Plugin.H"
 #endif
 #ifdef CLAP_SUPPORT
-#include "CLAP_Plugin.H"
+#include "clap/CLAP_Plugin.H"
 #endif
 
 #include "JACK_Module.H"

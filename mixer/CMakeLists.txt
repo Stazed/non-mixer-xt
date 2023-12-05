@@ -42,7 +42,7 @@ set (ProgSources
     src/ladspa/LADSPAInfo.C
     src/ladspa/LADSPA_Plugin.C
     src/lv2/LV2_Plugin.C
-    src/CLAP_Plugin.C
+    src/clap/CLAP_Plugin.C
     src/clap/Clap_Discovery.C
     src/clap/Time.cpp
     src/Meter_Indicator_Module.C
