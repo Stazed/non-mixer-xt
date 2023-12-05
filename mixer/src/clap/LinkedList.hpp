@@ -18,6 +18,8 @@
 #ifndef LINKED_LIST_HPP_INCLUDED
 #define LINKED_LIST_HPP_INCLUDED
 
+#ifdef CLAP_SUPPORT
+
 #include "../XTUtils.H"
 
 // -----------------------------------------------------------------------
@@ -536,5 +538,7 @@ protected:
 };
 
 // -----------------------------------------------------------------------
+
+#endif  // CLAP_SUPPORT
 
 #endif // LINKED_LIST_HPP_INCLUDED

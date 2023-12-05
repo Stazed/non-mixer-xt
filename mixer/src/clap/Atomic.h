@@ -26,7 +26,7 @@
 #ifndef WATER_ATOMIC_H_INCLUDED
 #define WATER_ATOMIC_H_INCLUDED
 
-//#include "water.h"
+#ifdef CLAP_SUPPORT
 
 #ifdef CARLA_OS_64BIT
   /** A signed integer type that's guaranteed to be large enough to hold a pointer without truncating it. */
@@ -495,5 +495,7 @@ inline void Atomic<Type>::memoryBarrier() noexcept
 #endif
 
 }
+
+#endif  // CLAP_SUPPORT
 
 #endif // WATER_ATOMIC_H_INCLUDED
