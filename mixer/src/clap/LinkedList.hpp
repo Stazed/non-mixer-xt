@@ -18,7 +18,7 @@
 #ifndef LINKED_LIST_HPP_INCLUDED
 #define LINKED_LIST_HPP_INCLUDED
 
-#include "XTUtils.H"
+#include "../XTUtils.H"
 
 // -----------------------------------------------------------------------
 // Define list_entry and list_entry_const

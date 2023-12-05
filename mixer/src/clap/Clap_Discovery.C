@@ -29,7 +29,7 @@
 #include <cstring>      // strcmp
 
 #include "Clap_Discovery.H"
-#include "../../nonlib/debug.h"
+#include "../../../nonlib/debug.h"
 
 namespace clap_discovery
 {

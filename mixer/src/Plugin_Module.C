@@ -42,7 +42,7 @@ static LADSPAInfo *ladspainfo;
 #endif
 
 #ifdef CLAP_SUPPORT
-    #include "Clap_Discovery.H"
+    #include "clap/Clap_Discovery.H"
     static std::list<Plugin_Module::Plugin_Info> clap_PI_cache;
 #endif
 

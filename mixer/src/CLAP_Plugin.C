@@ -25,14 +25,14 @@
 #ifdef CLAP_SUPPORT
 
 #include "CLAP_Plugin.H"
-#include "Clap_Discovery.H"
+#include "clap/Clap_Discovery.H"
 
 #include "Chain.H"
 #include "XTUtils.H"
-#include "Time.h"
+#include "clap/Time.h"
 
 #include "../../nonlib/dsp.h"
-#include "CarlaClapUtils.H"
+#include "clap/CarlaClapUtils.H"
 
 #include <FL/fl_ask.H>  // fl_alert()
 #include <dlfcn.h>      // dlopen, dlerror, dlsym

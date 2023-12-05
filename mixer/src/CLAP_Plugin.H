@@ -29,10 +29,10 @@
 #include <clap/clap.h>
 #include <unordered_map>
 
-#include "EventList.H"
+#include "clap/EventList.H"
 #include "Mixer_Strip.H"
 #include "Plugin_Module.H"
-#include "LinkedList.hpp"
+#include "clap/LinkedList.hpp"
 #include "X11PluginUI.H"
 
 extern std::string project_directory;
