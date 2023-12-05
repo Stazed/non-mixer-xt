@@ -26,31 +26,23 @@
 #include <unistd.h>
 extern char *instance_name;
 
-Group::Group ( )
+Group::Group ( ) :
+    _single(false),
+    _name(NULL),
+    _buffers_dropped(0),
+    _dsp_load(0),
+    _load_coef(0)
 {
-    _single =false;
-    _name = NULL;
-    _dsp_load = _load_coef = 0;
-    _buffers_dropped = 0;
 }
 
-Group::Group ( const char *name, bool single ) : Loggable ( !single )
+Group::Group ( const char *name, bool single ) : 
+    Loggable ( !single ),
+    _single(false),
+    _name(strdup(name)),
+    _buffers_dropped(0),
+    _dsp_load(0),
+    _load_coef(0)
 {
-    _single = single;
-    _name = strdup(name);
-    _dsp_load = _load_coef = 0;
-
-    // this->name( name );
-    
-    /* FIXME: handle client creation error */
-/*     if ( ! jack_name ) */
-/*     { */
-/*         _engine = NULL; */
-        
-/* //            fl_alert( "Could not create JACK client. Perhaps the sound device already in use. In any event, now I'll die." ); */
-/*         exit( 1 ); */
-/* //            return false; */
-/*     } */       
 }
 
 Group::~Group ( )
