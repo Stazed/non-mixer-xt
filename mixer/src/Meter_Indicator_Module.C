@@ -42,16 +42,15 @@
 
 const int DX = 1;
 
-Meter_Indicator_Module::Meter_Indicator_Module ( bool is_default )
-    : Module ( is_default, 50, 100, name() )
+Meter_Indicator_Module::Meter_Indicator_Module ( bool is_default ) :
+    Module ( is_default, 50, 100, name() ),
+    _pad(true),
+    control_value(0),
+    _disable_context_menu(false)
 {
     box( FL_FLAT_BOX );
     /* color( fl_darker( fl_darker( FL_BACKGROUND_COLOR ))); */
     color( FL_BLACK );
-
-    _disable_context_menu = false;
-    _pad = true;
-    control_value = 0;
 
     add_port( Port( this, Port::INPUT, Port::CONTROL ) );
 
@@ -63,7 +62,7 @@ Meter_Indicator_Module::Meter_Indicator_Module ( bool is_default )
     /* dpm_pack->type( FL_HORIZONTAL ); */
     /* dpm_pack->spacing(1); */
 
-        dpm_pack = new Fl_Scalepack( x() + 20 + 2, y() + 2, w() - 20 - 4, h() - 4 );
+    dpm_pack = new Fl_Scalepack( x() + 20 + 2, y() + 2, w() - 20 - 4, h() - 4 );
     /* dpm_pack->color( FL_BACKGROUND_COLOR ); */
     dpm_pack->box( FL_NO_BOX );
     dpm_pack->type( FL_HORIZONTAL );
