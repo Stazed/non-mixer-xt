@@ -39,10 +39,10 @@
 #include <FL/Fl_Menu_Bar.H>
 
 
-Spatialization_Console::Spatialization_Console ( void ) : Fl_Double_Window( 850, 850 )
+Spatialization_Console::Spatialization_Console ( void ) :
+    Fl_Double_Window( 850, 850 ),
+    _resized(false)
 {
-    _resized = false;
-  
     label( "Spatialization Console" );
 
     labelfont( FL_HELVETICA );

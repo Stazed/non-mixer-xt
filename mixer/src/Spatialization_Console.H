@@ -44,9 +44,6 @@ class Spatialization_Console : public Loggable, public Fl_Double_Window
     static void cb_window ( Fl_Widget *w );
 
     bool _resized;
-
-    int azimuth_port_number;
-    int elevation_port_number;
   
     std::vector<Fl_Widget*> controls_by_port;  
 
