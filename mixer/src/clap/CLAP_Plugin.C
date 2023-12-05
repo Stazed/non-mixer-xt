@@ -28,9 +28,9 @@
 #include "Clap_Discovery.H"
 
 #include "../Chain.H"
-#include "Time.h"
-
 #include "../../../nonlib/dsp.h"
+
+#include "Time.h"
 #include "CarlaClapUtils.H"
 
 #include <FL/fl_ask.H>  // fl_alert()
