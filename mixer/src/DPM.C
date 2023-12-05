@@ -37,13 +37,12 @@ Fl_Color DPM::_dim_gradient[128];
 #include <stdio.h>
 
 DPM::DPM ( int X, int Y, int W, int H, const char *L ) :
-    Meter( X, Y, W, H, L )
+    Meter( X, Y, W, H, L ),
+    _segments(0),
+    _pixels_per_segment(0),
+    _last_drawn_hi_segment(0)
 {
     tooltip( peak_string );
-
-    _segments = 0;
-    _pixels_per_segment = 0;
-    _last_drawn_hi_segment = 0;
 
     pixels_per_segment( 5 );
 
