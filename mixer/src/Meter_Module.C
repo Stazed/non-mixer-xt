@@ -32,18 +32,17 @@
 #include "DPM.H"
 
 
-Meter_Module::Meter_Module ( )
-    : Module ( 50, 100, name() )
+Meter_Module::Meter_Module ( ) :
+    Module ( 50, 100, name() ),
+    control_value(0),
+    peaks(0),
+    meter_sample_periods(0),
+    meter_sample_period_count(0)
 {
     box( FL_FLAT_BOX );
     dpm_pack = new Fl_Scalepack( x() + 2, y() + 2, w() - 4, h() - 4 );
     dpm_pack->type( FL_HORIZONTAL );
     dpm_pack->spacing( 1 );
-
-    control_value = 0;
-    peaks = 0;
-    meter_sample_period_count = 0;
-    meter_sample_periods = 0;
 
     color( fl_darker( fl_darker( FL_BACKGROUND_COLOR )));
 
