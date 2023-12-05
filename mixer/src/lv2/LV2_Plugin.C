@@ -228,7 +228,7 @@ update_ui( void *data)
         void* const buf = plug_ui->_ui_event_buf;
 
         /* Read event body */
-        zix_ring_read( plug_ui->_plugin_to_ui, (char*)buf, ev.size);
+        zix_ring_read( plug_ui->_plugin_to_ui, static_cast<char*>( buf ), ev.size);
 
         if ( plug_ui->_ui_instance )   // Custom UI
         {
@@ -353,7 +353,7 @@ lv2_make_path(LV2_State_Make_Path_Handle handle, const char* path)
 
         unsigned int destlen = strlen(user_dir);
 
-        char * dst = (char *) malloc(sizeof(char) * ( destlen + 1 ) );
+        char * dst = static_cast<char *>( malloc(sizeof(char) * ( destlen + 1 )) );
 
         fl_utf8froma(dst, destlen, user_dir, strlen(user_dir) );
 
@@ -372,7 +372,7 @@ lv2_make_path(LV2_State_Make_Path_Handle handle, const char* path)
 
         unsigned int destlen = file.size();
 
-        char * dst = (char *) malloc(sizeof(char) * ( destlen + 1 ) );
+        char * dst = static_cast<char *>( malloc(sizeof(char) * ( destlen + 1 )) );
 
         fl_utf8froma(dst, destlen, file.c_str(), file.size());
 
@@ -540,7 +540,7 @@ LV2_Plugin::~LV2_Plugin ( )
         {
             Fl::remove_timeout(&LV2_Plugin::custom_update_ui, this);
             if (_lv2_ui_widget)
-                LV2_EXTERNAL_UI_HIDE((LV2_External_UI_Widget *) _lv2_ui_widget);
+                LV2_EXTERNAL_UI_HIDE( static_cast<LV2_External_UI_Widget *>( _lv2_ui_widget ));
         }
         else
             close_custom_ui();
@@ -675,7 +675,7 @@ LV2_Plugin::load_plugin ( Module::Picked picked )
         /* Not restoring state, load the plugin as a preset to get default files if any */
         if ( ! _loading_from_file )
         {
-            const LV2_URID_Map* const uridMap = (const LV2_URID_Map*)_idata->features[Plugin_Feature_URID_Map]->data;
+            const LV2_URID_Map* const uridMap = static_cast<const LV2_URID_Map*>( _idata->features[Plugin_Feature_URID_Map]->data );
             LilvState* const state = Lv2WorldClass::getInstance().getStateFromURI(uri.c_str(), (LV2_URID_Map*) uridMap);
 
             /* Set any files for the plugin - no need to update control parameters since they are already set */
@@ -741,13 +741,13 @@ LV2_Plugin::get_plugin_extensions()
         }
 
         if (hasOptions)
-            _idata->ext.options = (const LV2_Options_Interface*)_idata->descriptor->extension_data(LV2_OPTIONS__interface);
+            _idata->ext.options = static_cast<const LV2_Options_Interface*>( _idata->descriptor->extension_data(LV2_OPTIONS__interface) );
 
         if (hasState)
-            _idata->ext.state = (const LV2_State_Interface*)_idata->descriptor->extension_data(LV2_STATE__interface);
+            _idata->ext.state = static_cast<const LV2_State_Interface*>( _idata->descriptor->extension_data(LV2_STATE__interface) );
 
         if (hasWorker)
-            _idata->ext.worker = (const LV2_Worker_Interface*)_idata->descriptor->extension_data(LV2_WORKER__interface);
+            _idata->ext.worker = static_cast<const LV2_Worker_Interface*>( _idata->descriptor->extension_data(LV2_WORKER__interface) );
 
         // check if invalid
         if ( _idata->ext.options != NULL && _idata->ext.options->get == NULL && _idata->ext.options->set == NULL )
@@ -887,13 +887,13 @@ LV2_Plugin::create_control_ports()
 
                     if( rdfport.ScalePointCount )
                     {
-                        for( unsigned i = 0; i < rdfport.ScalePointCount; ++i )
+                        for( unsigned k = 0; k < rdfport.ScalePointCount; ++k )
                         {
                             EnumeratorScalePoints item;
-                            item.Label = std::to_string( (int) rdfport.ScalePoints[i].Value);
+                            item.Label = std::to_string( (int) rdfport.ScalePoints[k].Value);
                             item.Label += " - ";
 
-                            std::string temp = rdfport.ScalePoints[i].Label;
+                            std::string temp = rdfport.ScalePoints[k].Label;
 
                             /* FLTK assumes '/' to be sub-menu, so we have to search the Label and escape it */
                             for (unsigned ii = 0; ii < temp.size(); ++ii)
@@ -907,7 +907,7 @@ LV2_Plugin::create_control_ports()
                             }
 
                             item.Label += temp;
-                            item.Value = rdfport.ScalePoints[i].Value;
+                            item.Value = rdfport.ScalePoints[k].Value;
                             p.hints.ScalePoints.push_back(item);
                            // DMESSAGE("Label = %s: Value = %f", rdfport.ScalePoints[i].Label, rdfport.ScalePoints[i].Value);
                         }
@@ -1073,8 +1073,8 @@ LV2_Plugin::initialize_presets(const std::string &uri)
 {
 #ifdef PRESET_SUPPORT
     _PresetList = _idata->rdf_data->PresetListStructs;
-    _uridMapFt =  (LV2_URID_Map*) _idata->features[Plugin_Feature_URID_Map]->data;
-    _uridUnmapFt = (LV2_URID_Unmap*) _idata->features[Plugin_Feature_URID_Unmap]->data;
+    _uridMapFt =  static_cast<LV2_URID_Map*>( _idata->features[Plugin_Feature_URID_Map]->data );
+    _uridUnmapFt = static_cast<LV2_URID_Unmap*>( _idata->features[Plugin_Feature_URID_Unmap]->data );
     LilvNode* plugin_uri = lilv_new_uri(get_lilv_world(), uri.c_str());
     _lilv_plugin = lilv_plugins_get_by_uri(get_lilv_plugins(), plugin_uri);
     lilv_node_free(plugin_uri);
@@ -1915,11 +1915,11 @@ LV2_Plugin::ui_port_event( uint32_t port_index, uint32_t buffer_size, uint32_t p
         }
     }
 
-    const LV2_Atom* atom = (const LV2_Atom*)buffer;
+    const LV2_Atom* atom = static_cast<const LV2_Atom*>( buffer );
     if (lv2_atom_forge_is_object_type(&_atom_forge, atom->type))
     {
 //        updating = true;  // FIXME
-        const LV2_Atom_Object* obj = (const LV2_Atom_Object*)buffer;
+        const LV2_Atom_Object* obj = static_cast<const LV2_Atom_Object*>( buffer );
         if (obj->body.otype ==  Plugin_Module_URI_patch_Set)
         {
             const LV2_Atom_URID* property = NULL;
@@ -1955,7 +1955,7 @@ LV2_Plugin::send_atom_to_plugin( uint32_t port_index, uint32_t buffer_size, cons
     if(_exit_process)
         return;
 
-    const LV2_Atom* const atom = (const LV2_Atom*)buffer;
+    const LV2_Atom* const atom = static_cast<const LV2_Atom*>( buffer );
     if (buffer_size < sizeof(LV2_Atom))
     {
         WARNING("UI wrote impossible atom size");
@@ -2053,7 +2053,7 @@ LV2_Plugin::send_file_to_plugin( int port, const std::string &filename )
     lv2_atom_forge_urid(&forge, atom_input[port]._property_mapped);
     lv2_atom_forge_key(&forge, Plugin_Module_URI_patch_Value);
     lv2_atom_forge_atom(&forge, size, this->_atom_forge.Path);
-    lv2_atom_forge_write(&forge, (const void*)filename.c_str(), size);
+    lv2_atom_forge_write(&forge, static_cast<const void*>( filename.c_str() ), size);
 
     const LV2_Atom* atom = lv2_atom_forge_deref(&forge, frame.ref);
 
@@ -2229,7 +2229,7 @@ LV2_Plugin::process_atom_out_events( uint32_t nframes, unsigned int port )
         if (buf && type == Plugin_Module_URI_Midi_event)
         {
             DMESSAGE("Write MIDI event to Jack output");
-            jack_midi_event_write(buf, frames, (jack_midi_data_t*) body, size);
+            jack_midi_event_write(buf, frames, static_cast<jack_midi_data_t*>( body ), size);
         }
 
         if( (_ui_instance && _x_is_visible) || (_editor && _editor->visible()) )
@@ -2847,7 +2847,7 @@ LV2_Plugin::close_custom_ui()
     else if( _use_external_ui )
     {
         if (_lv2_ui_widget)
-            LV2_EXTERNAL_UI_HIDE((LV2_External_UI_Widget *) _lv2_ui_widget);
+            LV2_EXTERNAL_UI_HIDE( static_cast<LV2_External_UI_Widget *>( _lv2_ui_widget ));
 
         _x_is_visible = false;
 
@@ -2885,7 +2885,7 @@ LV2_Plugin::show_custom_ui()
     if( _use_external_ui )
     {
         if (_lv2_ui_widget)
-            LV2_EXTERNAL_UI_SHOW((LV2_External_UI_Widget *) _lv2_ui_widget);
+            LV2_EXTERNAL_UI_SHOW( static_cast<LV2_External_UI_Widget *>( _lv2_ui_widget ));
 
         _x_is_visible = true;
         Fl::add_timeout( 0.03f, &LV2_Plugin::custom_update_ui, this );
@@ -2957,7 +2957,9 @@ LV2_Plugin::process ( nframes_t nframes )
         /* There's not much we can do to automatically support other configurations. */
         if ( ninputs() == 1 && noutputs() == 2 )
         {
-            buffer_copy( (sample_t*)audio_output[1].buffer(), (sample_t*)audio_input[0].buffer(), nframes );
+            buffer_copy( static_cast<sample_t*>( audio_output[1].buffer() ),
+                    static_cast<sample_t*>( audio_input[0].buffer() ),
+                    nframes );
         }
 
         _latency = 0;
