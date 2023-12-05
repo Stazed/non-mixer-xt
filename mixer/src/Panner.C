@@ -36,12 +36,11 @@ int Panner::_range_mode = 1;
 int Panner::_projection_mode = 0;
 
 Panner::Panner ( int X, int Y, int W, int H, const char *L ) :
-    Fl_Group( X, Y, W, H, L )
+    Fl_Group( X, Y, W, H, L ),
+    _bg_image(0),
+    _bg_image_scaled(0),
+    _bg_image_projection(0)
 {
-    _bg_image = 0;
-    _bg_image_scaled = 0;
-    _bg_image_projection = 0;
-//    _projection = POLAR;
     _points.push_back( Point( 1, 0 ) );
     
     static float ranges[] = { 1,3,5,10,15 };
