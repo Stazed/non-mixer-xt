@@ -24,7 +24,7 @@
 #include "../../nonlib/Loggable.H"
 
 #ifdef LADSPA_SUPPORT
-#include "LADSPAInfo.h"
+#include "ladspa/LADSPAInfo.h"
 #endif
 
 class Fl_Menu_Button;

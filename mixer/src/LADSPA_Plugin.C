@@ -32,7 +32,7 @@
 #include "LADSPA_Plugin.H"
 
 #define HAVE_LIBLRDF 1
-#include "LADSPAInfo.h"
+#include "ladspa/LADSPAInfo.h"
 
 /* keep this out of the header to avoid spreading ladspa.h dependency */
 struct LADSPA_Plugin::ImplementationData
