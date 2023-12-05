@@ -1050,44 +1050,6 @@ CLAP_Plugin::process ( nframes_t nframes )
             process_params_out();
         }
     }
-#if 0
-    if (!m_plugin)
-        return;
-
-    if (!m_activated)
-        return;
-
-    if (!m_processing && !m_sleeping)
-    {
-        plugin_params_flush();
-        g_host.transportAddRef();
-        m_processing = m_plugin->start_processing(m_plugin);
-    }
-    else if (m_processing && (m_sleeping || m_restarting))
-    {
-        m_plugin->stop_processing(m_plugin);
-        m_processing = false;
-        g_host.transportReleaseRef();
-        if (m_plugin->reset && !m_restarting)
-            m_plugin->reset(m_plugin);
-    }
-
-    if (m_processing)
-    {
-        // Run main processing...
-        m_audio_ins.data32 = ins;
-        m_audio_outs.data32 = outs;
-        m_events_out.clear();
-        m_process.frames_count = nframes;
-        
-        m_plugin->process(m_plugin, &m_process);
-
-        m_process.steady_time += nframes;
-        m_events_in.clear();
-        // Transfer parameter changes...
-        process_params_out();
-    }
-#endif
 }
 
 const clap_plugin_entry_t*
