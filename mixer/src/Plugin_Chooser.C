@@ -482,14 +482,15 @@ Plugin_Chooser::load_categories ( void )
 }
 
 Plugin_Chooser::Plugin_Chooser ( int X,int Y,int W,int H, const char *L )
-    : Fl_Double_Window ( X,Y,W,H,L )
+    : Fl_Double_Window ( X,Y,W,H,L ),
+    _plugin_type(NONE),
+    _s_unique_id(""),
+    _value(0),
+    _clap_path("")
 {
     set_modal();
-    _s_unique_id = "";
-    _value = 0;
-   
-    _plugins = Plugin_Module::get_all_plugins();
 
+    _plugins = Plugin_Module::get_all_plugins();
 
     {
         Plugin_Chooser_UI *o = ui = new Plugin_Chooser_UI(X,Y,W,H);
