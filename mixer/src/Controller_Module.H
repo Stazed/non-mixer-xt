@@ -34,8 +34,8 @@ class Fl_Valuator;
 class Controller_Module : public Module
 {
 
-    bool _pad;
     bool _horizontal;
+    bool _pad;
 
     volatile float control_value;
 

@@ -67,27 +67,23 @@ Controller_Module::take_focus ( void )
         clear_visible_focus();
 }
 
-Controller_Module::Controller_Module ( bool is_default ) : Module( is_default, 50, 100, name() )
+Controller_Module::Controller_Module ( bool is_default ) :
+    Module( is_default, 50, 100, name() ),
+    _horizontal(true),
+    _pad(true),
+    control_value(0.0f),
+    _mode(GUI),
+    control(0)
 {
-//    label( "" );
     box( FL_NO_BOX );
 
-    _horizontal = true;
-    _pad = true;
-    control = 0;
-    control_value =0.0f;
-
     add_port( Port( this, Port::OUTPUT, Port::CONTROL ) );
-
-    _mode = GUI;
 
 //    mode( GUI );
 //    mode( CV );
 //    configure_inputs( 1 );
 
     end();
-
-//    clear_visible_focus();
     log_create();
 }
 
