@@ -26,12 +26,11 @@
 
 #include "CLAP_Plugin.H"
 #include "Clap_Discovery.H"
+#include "Time.h"
+#include "CarlaClapUtils.H"
 
 #include "../Chain.H"
 #include "../../../nonlib/dsp.h"
-
-#include "Time.h"
-#include "CarlaClapUtils.H"
 
 #include <FL/fl_ask.H>  // fl_alert()
 #include <dlfcn.h>      // dlopen, dlerror, dlsym
