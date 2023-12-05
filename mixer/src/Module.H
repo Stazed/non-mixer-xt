@@ -200,24 +200,21 @@ public:
             std::vector<EnumeratorScalePoints>ScalePoints;
 #endif
 
-            Hints ( )
-                {
-                    type = LINEAR;
-                    ranged = false;
-                    minimum = 0;
-                    maximum = 1;    /* FIXME: totally bogus, but some
-                                     * plugins (SWH delays) don't
-                                     * provide an upper bound. */
-                    default_value = 0.0f;
-                    current_value = 0.0f;
-                    dimensions = 1;
-                    visible = true;
-                    invisible_with_signals = false;
-                    plug_port_index = 0;
+            Hints ( ) :
+                type(LINEAR),
+                ranged(false),
+                minimum(0),
+                maximum(1),
+                default_value(0.0f),
+                current_value(0.0f),
+                dimensions(1),
+                visible(true),
+                invisible_with_signals(false),
+                plug_port_index(0)
 #ifdef CLAP_SUPPORT
-                    parameter_id = 0;
+                ,parameter_id(0)
 #endif
-                }
+                { }
         };
 
         static int osc_control_change_exact ( float v, void *user_data );
@@ -226,68 +223,68 @@ public:
 
         Hints hints;
 
-        Port ( Module *module, Direction direction, Type type, const char *name = 0 )
+        Port ( Module *module, Direction direction, Type type, const char *name = 0 ) :
+            _module(module),
+            _direction(direction),
+            _type(type),
+            _name(name),
+            _symbol(),
+            _buf(0),
+            _nframes(0),
+            _jack_port(0),
+            _scaled_signal(0),
+            _unscaled_signal(0),
+            _pending_feedback(false),
+            _feedback_milliseconds(0),
+            _by_number_number(-1),
+            _by_number_path(0)
+#ifdef LV2_SUPPORT
+            ,_evbuf(NULL),
+            _property(NULL),
+            _lilv_symbol(NULL),
+            _lilv_label(NULL),
+            _clear_input_buffer(false),
+            _need_file_update(false),
+            _supports_time_position(false)
+#endif
             {
-                _name = name;
                 /* On port creation, we set _symbol to name for internal/LADSPA plugins that don't 
                    have a symbol for OSC path. For LV2/CLAP we replace after creation with the actual symbol */
                 if(name)
                 {
                     _symbol = name;
                 }
-                _direction = direction;
-                _type = type;
-                _buf = 0;
-                _nframes = 0;
-                _module = module;
-                _scaled_signal = 0;
-                _unscaled_signal = 0;
-                _by_number_path = 0;
-                _by_number_number = -1;
-                _jack_port = 0;
-#ifdef LV2_SUPPORT
-                _evbuf = NULL;
-                _property = NULL;
-                _lilv_symbol = NULL;
-                _lilv_label = NULL;
-                _clear_input_buffer = false;
-                _need_file_update = false;
-                _supports_time_position = false;
-#endif
-		/* _feedback_value = -2; */
-		_pending_feedback = false;
-		_feedback_milliseconds = 0;
             }
 
-        Port ( const Port& p )
+        Port ( const Port& p ) :
+            hints(p.hints),
+            _module(p._module),
+            _direction(p._direction),
+            _type(p._type),
+            _name(p._name),
+            _symbol(p._symbol),
+            _buf(p._buf),
+            _nframes(p._nframes),
+            _jack_port(p._jack_port),
+            _scaled_signal(p._scaled_signal),
+            _unscaled_signal(p._unscaled_signal),
+            _pending_feedback(false),
+            _feedback_milliseconds(0),
+            _by_number_number(-1),
+            _by_number_path(0)
+#ifdef LV2_SUPPORT
+            ,_evbuf(p._evbuf),
+            _property(p._property),
+            _lilv_symbol(p._lilv_symbol),
+            _lilv_label(p._lilv_label),
+            _clear_input_buffer(false),
+            _need_file_update(false),
+            _supports_time_position(p._supports_time_position)
+#endif
             {
-                _name = p._name;
-                _symbol = p._symbol;
-                _direction = p._direction;
-                _type = p._type;
-                _buf = p._buf;
-                _nframes = p._nframes;
-                _module = p._module;
-                hints = p.hints;
 #ifdef LV2_SUPPORT
                 hints.ScalePoints = p.hints.ScalePoints;
 #endif
-                _scaled_signal = p._scaled_signal;
-                _unscaled_signal = p._unscaled_signal;
-                _by_number_path = 0;
-                _by_number_number = -1;
-                _jack_port = p._jack_port;
-                _feedback_milliseconds = 0;
-#ifdef LV2_SUPPORT
-                _evbuf = p._evbuf;
-                _property = p._property;
-                _lilv_symbol = p._lilv_symbol;
-                _lilv_label = p._lilv_label;
-                _clear_input_buffer = p._clear_input_buffer;
-                _need_file_update = p._need_file_update;
-                _supports_time_position = p._supports_time_position;
-#endif
-		/* _feedback_value = p._feedback_value; */
             }
 
         virtual ~Port ( )
@@ -323,9 +320,6 @@ public:
 #endif
         OSC::Signal *scaled_signal ( void ) { return _scaled_signal; }
         OSC::Signal *unscaled_signal ( void ) { return _unscaled_signal; }
-
-        int _by_number_number;
-        char *_by_number_path;
 
         const char *osc_path ( )
             {
@@ -486,15 +480,27 @@ public:
         void change_osc_path ( char *path );
 
         std::list <Port*> _connected;
-        Type _type;
+
+        Module *_module;
         Direction _direction;
+        Type _type;
         const char *_name;
         std::string _symbol;
         void *_buf;
         nframes_t _nframes;
-        Module *_module;
+
         /* used for auxilliary I/Os */
         JACK::Port *_jack_port;
+
+        OSC::Signal *_scaled_signal;
+        OSC::Signal *_unscaled_signal;
+
+	/* float _feedback_value; */
+	bool _pending_feedback;
+	unsigned long long _feedback_milliseconds;
+        
+        int _by_number_number;
+        char *_by_number_path;
         
 #ifdef LV2_SUPPORT
         LV2_Evbuf* _evbuf;
@@ -509,12 +515,6 @@ public:
         std::string _file;
     private:
 #endif
-        OSC::Signal *_scaled_signal;
-        OSC::Signal *_unscaled_signal;
-
-	/* float _feedback_value; */
-	bool _pending_feedback;
-	unsigned long long _feedback_milliseconds;
 	
         static void handle_signal_connection_state_changed ( OSC::Signal *, void *o );
     };
