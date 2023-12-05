@@ -43,8 +43,8 @@ set (ProgSources
     src/LADSPA_Plugin.C
     src/LV2_Plugin.C
     src/CLAP_Plugin.C
-    src/Clap_Discovery.C
-    src/Time.cpp
+    src/clap/Clap_Discovery.C
+    src/clap/Time.cpp
     src/Meter_Indicator_Module.C
     src/Meter_Module.C
     src/Mixer.C
