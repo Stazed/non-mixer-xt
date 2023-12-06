@@ -59,9 +59,8 @@ CLAP_Plugin::CLAP_Plugin() :
     _activated(false),
     _plug_needs_callback(false),
     _plug_request_restart(false),
-    m_bEditorCreated(false),
-    m_bEditorVisible(false),
-    m_X11_UI(nullptr),
+    _bEditorCreated(false),
+    _X11_UI(nullptr),
     _x_is_visible(false),
     _is_floating(false),
     _x_is_resizable(false),
@@ -70,18 +69,16 @@ CLAP_Plugin::CLAP_Plugin() :
     _audio_in_buffers(nullptr),
     _audio_out_buffers(nullptr),
     _plugin(nullptr),
-    m_params_flush(false),
-    m_params(nullptr),
-    m_timer_support(nullptr),
-    m_posix_fd_support(nullptr),
-    m_gui(nullptr),
-    m_state(nullptr),
+    _params_flush(false),
+    _params(nullptr),
+    _timer_support(nullptr),
+    _gui(nullptr),
+    _state(nullptr),
     _project_file(""),
-    m_note_names(nullptr),
     _midi_ins(0),
     _midi_outs(0),
-    m_iMidiDialectIns(0),
-    m_iMidiDialectOuts(0)
+    _iMidiDialectIns(0),
+    _iMidiDialectOuts(0)
 {
     _plug_type = CLAP;
 
@@ -103,12 +100,12 @@ CLAP_Plugin::~CLAP_Plugin()
     clearParamInfos();
     _plugin->deactivate(_plugin);
 
-    if ( m_gui )
+    if ( _gui )
     {
-        if ( m_bEditorCreated )
-            m_gui->destroy(_plugin);
+        if ( _bEditorCreated )
+            _gui->destroy(_plugin);
 
-        m_gui = nullptr;
+        _gui = nullptr;
     }
 
     if (_plugin) 
@@ -117,11 +114,9 @@ CLAP_Plugin::~CLAP_Plugin()
         _plugin = nullptr;
     }
     
-    m_params = nullptr;
-    m_timer_support = nullptr;
-    m_posix_fd_support = nullptr;
-    m_state = nullptr;
-    m_note_names = nullptr;
+    _params = nullptr;
+    _timer_support = nullptr;
+    _state = nullptr;
 
     if ( _audio_in_buffers )
     {
@@ -263,7 +258,7 @@ CLAP_Plugin::load_plugin ( Module::Picked picked )
     if(!_plugin_ins)
         is_zero_input_synth(true);
 
-    if( m_state )
+    if( _state )
         _use_custom_data = true;
 
     Fl::add_timeout( 0.06f, &CLAP_Plugin::parameter_update, this );
@@ -517,8 +512,8 @@ CLAP_Plugin::process_reset()
 {
     deactivate();
 
-    m_events_in.clear();
-    m_events_out.clear();
+    _events_in.clear();
+    _events_out.clear();
 
     _position = 0;
     _bpm = 120.0f;
@@ -539,7 +534,7 @@ CLAP_Plugin::process_reset()
     _audio_outs.latency = 0;
 
     ::memset(&_process, 0, sizeof(_process));
-    ::memset(&m_transport, 0, sizeof(m_transport));
+    ::memset(&_transport, 0, sizeof(_transport));
 
     if ( audio_input.size() )
     {
@@ -553,9 +548,9 @@ CLAP_Plugin::process_reset()
         _process.audio_outputs_count = 1;
     }
 
-    _process.in_events  = m_events_in.ins();
-    _process.out_events = m_events_out.outs();
-    _process.transport = &m_transport;
+    _process.in_events  = _events_in.ins();
+    _process.out_events = _events_out.outs();
+    _process.transport = &_transport;
     _process.frames_count = buffer_size();      // FIXME Check
     _process.steady_time = 0;
 
@@ -588,30 +583,30 @@ CLAP_Plugin::process_jack_transport ( uint32_t nframes )
                             / (sample_rate() * 60 / pos.beats_per_minute);
 
             // Bar/ Beats
-            m_transport.bar_start = std::round(CLAP_BEATTIME_FACTOR * pos.bar_start_tick);
-            m_transport.bar_number = pos.bar - 1;
-            m_transport.song_pos_beats = std::round(CLAP_BEATTIME_FACTOR * positionBeats);
-            m_transport.flags |= CLAP_TRANSPORT_HAS_BEATS_TIMELINE;
+            _transport.bar_start = std::round(CLAP_BEATTIME_FACTOR * pos.bar_start_tick);
+            _transport.bar_number = pos.bar - 1;
+            _transport.song_pos_beats = std::round(CLAP_BEATTIME_FACTOR * positionBeats);
+            _transport.flags |= CLAP_TRANSPORT_HAS_BEATS_TIMELINE;
 
             // Tempo
-            m_transport.tempo = pos.beats_per_minute;
-            m_transport.flags |= CLAP_TRANSPORT_HAS_TEMPO;
+            _transport.tempo = pos.beats_per_minute;
+            _transport.flags |= CLAP_TRANSPORT_HAS_TEMPO;
 
             // Time Signature
-            m_transport.tsig_num = static_cast<uint16_t>(pos.beats_per_bar + 0.5f);
-            m_transport.tsig_denom = static_cast<uint16_t>(pos.beat_type + 0.5f);
-            m_transport.flags |= CLAP_TRANSPORT_HAS_TIME_SIGNATURE;
+            _transport.tsig_num = static_cast<uint16_t>(pos.beats_per_bar + 0.5f);
+            _transport.tsig_denom = static_cast<uint16_t>(pos.beat_type + 0.5f);
+            _transport.flags |= CLAP_TRANSPORT_HAS_TIME_SIGNATURE;
         }
         else
         {
             // Tempo
-            m_transport.tempo = 120.0;
-            m_transport.flags |= CLAP_TRANSPORT_HAS_TEMPO;
+            _transport.tempo = 120.0;
+            _transport.flags |= CLAP_TRANSPORT_HAS_TEMPO;
 
             // Time Signature
-            m_transport.tsig_num = 4;
-            m_transport.tsig_denom = 4;
-            m_transport.flags |= CLAP_TRANSPORT_HAS_TIME_SIGNATURE;
+            _transport.tsig_num = 4;
+            _transport.tsig_denom = 4;
+            _transport.flags |= CLAP_TRANSPORT_HAS_TIME_SIGNATURE;
         }
     }
 
@@ -644,7 +639,7 @@ CLAP_Plugin::process_midi_in (
 	unsigned char *data, unsigned int size,
 	unsigned long offset, unsigned short port )
 {
-    const int midi_dialect_ins = m_iMidiDialectIns;
+    const int midi_dialect_ins = _iMidiDialectIns;
 
     for (unsigned int i = 0; i < size; ++i)
     {
@@ -678,7 +673,7 @@ CLAP_Plugin::process_midi_in (
             ev.data[0] = status | channel;
             ev.data[1] = key;
             ev.data[2] = 0;
-            m_events_in.push(&ev.header);
+            _events_in.push(&ev.header);
             continue;
         }
 
@@ -703,7 +698,7 @@ CLAP_Plugin::process_midi_in (
             ev.key = key;
             ev.channel = channel;
             ev.velocity = value / 127.0;
-            m_events_in.push(&ev.header);
+            _events_in.push(&ev.header);
         }
         else
         // note off
@@ -720,7 +715,7 @@ CLAP_Plugin::process_midi_in (
             ev.key = key;
             ev.channel = channel;
             ev.velocity = value / 127.0;
-            m_events_in.push(&ev.header);
+            _events_in.push(&ev.header);
         }
         else
         // key pressure/poly.aftertouch
@@ -739,7 +734,7 @@ CLAP_Plugin::process_midi_in (
             ev.data[0] = status | channel;
             ev.data[1] = key;
             ev.data[2] = value;
-            m_events_in.push(&ev.header);
+            _events_in.push(&ev.header);
         }
     }
 }
@@ -1038,13 +1033,13 @@ CLAP_Plugin::process ( nframes_t nframes )
                 process_jack_midi_out( nframes, i);
             }
 
-            m_events_out.clear();
+            _events_out.clear();
             _process.frames_count  = nframes;
 
             _plugin->process(_plugin, &_process);
 
             _process.steady_time += nframes;
-            m_events_in.clear();
+            _events_in.clear();
 
             // Transfer parameter changes...
             process_params_out();
@@ -1208,24 +1203,24 @@ CLAP_Plugin::plugin_request_callback()
 }
 
 /**
- Adds pair to unordered maps, m_param_infos >> (id, *clap_param_info)
+ Adds pair to unordered maps, _param_infos >> (id, *clap_param_info)
  The map is used to look up any parameter by id number which is saved
  by the parameter port when created.
  */
 void
 CLAP_Plugin::addParamInfos (void)
 {
-    if (m_params && m_params->count && m_params->get_info)
+    if (_params && _params->count && _params->get_info)
     {
-        const uint32_t nparams = m_params->count(_plugin);
+        const uint32_t nparams = _params->count(_plugin);
         for (uint32_t i = 0; i < nparams; ++i)
         {
             clap_param_info *param_info = new clap_param_info;
             ::memset(param_info, 0, sizeof(clap_param_info));
-            if (m_params->get_info(_plugin, i, param_info))
+            if (_params->get_info(_plugin, i, param_info))
             {
                 std::pair<clap_id, const clap_param_info *> infos ( param_info->id, param_info );
-                m_param_infos.insert(infos);
+                _param_infos.insert(infos);
             }
         }
     }
@@ -1234,13 +1229,13 @@ CLAP_Plugin::addParamInfos (void)
 void
 CLAP_Plugin::clearParamInfos (void)
 {
-    for (auto i : m_param_infos)
+    for (auto i : _param_infos)
     {
         delete i.second;
     }
 
-    m_param_infos.clear();
-    m_paramIds.clear();
+    _param_infos.clear();
+    _paramIds.clear();
 }
 
 // Instance parameters initializer.
@@ -1253,8 +1248,8 @@ CLAP_Plugin::addParams (void)
 void
 CLAP_Plugin::clearParams (void)
 {
-    m_paramIds.clear();
-    m_paramValues.clear();
+    _paramIds.clear();
+    _paramValues.clear();
 
     destroy_connected_controller_module();
 
@@ -1287,7 +1282,7 @@ CLAP_Plugin::rescan_parameters()
 }
 
 /**
- Adds a parameter value to m_events_in which is then processed by the plugin when
+ Adds a parameter value to _events_in which is then processed by the plugin when
  process is running on each cycle. Essentially sends a parameter value change
  to plugin from Module_Parameter_Editor, OSC, or other automation.
  */
@@ -1298,9 +1293,9 @@ CLAP_Plugin::setParameter (
     if (_plugin)
     {
         std::unordered_map<clap_id, const clap_param_info *>::const_iterator got
-            = m_param_infos.find (id);
+            = _param_infos.find (id);
 
-        if ( got == m_param_infos.end() )
+        if ( got == _param_infos.end() )
         {
             DMESSAGE("Parameter Id not found = %d", id);
             return;
@@ -1323,7 +1318,7 @@ CLAP_Plugin::setParameter (
             ev.key = -1;
             ev.channel = -1;
             ev.value = value;
-            m_events_in.push(&ev.header);
+            _events_in.push(&ev.header);
         }
     }
 }
@@ -1336,15 +1331,15 @@ CLAP_Plugin::getParameter ( clap_id id ) const
 {
     double value = 0.0;
 
-    if (_plugin && m_params && m_params->get_value)
+    if (_plugin && _params && _params->get_value)
     {
 #if 1
-        m_params->get_value(_plugin, id, &value);
+        _params->get_value(_plugin, id, &value);
 #else
         std::unordered_map<clap_id, const clap_param_info *>::const_iterator got
-            = m_param_infos.find (id);
+            = _param_infos.find (id);
 
-        if ( got == m_param_infos.end() )
+        if ( got == _param_infos.end() )
         {
             DMESSAGE("Parameter Id not found = %d", id);
             return 0.0;
@@ -1353,7 +1348,7 @@ CLAP_Plugin::getParameter ( clap_id id ) const
         const clap_param_info *param_info = got->second;
 
         if (param_info)
-            m_params->get_value(_plugin, param_info->id, &value);
+            _params->get_value(_plugin, param_info->id, &value);
 #endif
     }
     return value;
@@ -1377,20 +1372,20 @@ CLAP_Plugin::updateParamValues(bool update_custom_ui)
 void
 CLAP_Plugin::initialize_plugin()
 {
-    m_params = static_cast<const clap_plugin_params *> (
+    _params = static_cast<const clap_plugin_params *> (
         _plugin->get_extension(_plugin, CLAP_EXT_PARAMS));
 
-    m_timer_support = static_cast<const clap_plugin_timer_support *> (
+    _timer_support = static_cast<const clap_plugin_timer_support *> (
         _plugin->get_extension(_plugin, CLAP_EXT_TIMER_SUPPORT));
-    m_posix_fd_support = static_cast<const clap_plugin_posix_fd_support *> (
-        _plugin->get_extension(_plugin, CLAP_EXT_POSIX_FD_SUPPORT));
+//    m_posix_fd_support = static_cast<const clap_plugin_posix_fd_support *> (
+//        _plugin->get_extension(_plugin, CLAP_EXT_POSIX_FD_SUPPORT));
 
-    m_gui = static_cast<const clap_plugin_gui *> (
+    _gui = static_cast<const clap_plugin_gui *> (
         _plugin->get_extension(_plugin, CLAP_EXT_GUI));
-    m_state	= static_cast<const clap_plugin_state *> (
+    _state	= static_cast<const clap_plugin_state *> (
         _plugin->get_extension(_plugin, CLAP_EXT_STATE));
-    m_note_names = static_cast<const clap_plugin_note_name *> (
-        _plugin->get_extension(_plugin, CLAP_EXT_NOTE_NAME));
+//    m_note_names = static_cast<const clap_plugin_note_name *> (
+//        _plugin->get_extension(_plugin, CLAP_EXT_NOTE_NAME));
 
     addParamInfos();
 }
@@ -1534,7 +1529,7 @@ CLAP_Plugin::create_control_ports()
                 {
                    // DMESSAGE( "Control input port \"%s\" ID %u", param_info.name, p.hints.parameter_id );
                     std::pair<int, unsigned long> prm ( int(p.hints.parameter_id), control_ins - 1 );
-                    m_paramIds.insert(prm);
+                    _paramIds.insert(prm);
                 }
 
                // DMESSAGE( "Plugin has control port \"%s\" (default: %f)", param_info.name, p.hints.default_value );
@@ -1564,8 +1559,8 @@ CLAP_Plugin::create_note_ports()
     _midi_ins = 0;
     _midi_outs = 0;
 
-    m_iMidiDialectIns = 0;
-    m_iMidiDialectOuts = 0;
+    _iMidiDialectIns = 0;
+    _iMidiDialectOuts = 0;
     const clap_plugin_note_ports *note_ports
             = static_cast<const clap_plugin_note_ports *> (
                     _plugin->get_extension(_plugin, CLAP_EXT_NOTE_PORTS));
@@ -1579,7 +1574,7 @@ CLAP_Plugin::create_note_ports()
             if (note_ports->get(_plugin, i, true, &info))
             {
                 if (info.supported_dialects & CLAP_NOTE_DIALECT_MIDI)
-                        ++m_iMidiDialectIns;
+                        ++_iMidiDialectIns;
 
                 add_port( Port( this, Port::INPUT, Port::MIDI, strdup(info.name) ) );
                 note_input[_midi_ins].hints.plug_port_index = i;
@@ -1593,7 +1588,7 @@ CLAP_Plugin::create_note_ports()
             if (note_ports->get(_plugin, i, false, &info))
             {
                 if (info.supported_dialects & CLAP_NOTE_DIALECT_MIDI)
-                        ++m_iMidiDialectOuts;
+                        ++_iMidiDialectOuts;
 
                 add_port( Port( this, Port::OUTPUT, Port::MIDI, strdup(info.name) ) );
                 note_output[_midi_outs].hints.plug_port_index = i;
@@ -1698,19 +1693,19 @@ CLAP_Plugin::plugin_params_flush (void)
     if (!_plugin)
             return;
 
-    if (!m_params_flush || _is_processing)
+    if (!_params_flush || _is_processing)
             return;
 
-    m_params_flush = false;
+    _params_flush = false;
 
-    m_events_in.clear();
-    m_events_out.clear();
+    _events_in.clear();
+    _events_out.clear();
 
-    if (m_params && m_params->flush)
+    if (_params && _params->flush)
     {
-        m_params->flush(_plugin, m_events_in.ins(), m_events_out.outs());
+        _params->flush(_plugin, _events_in.ins(), _events_out.outs());
         process_params_out();
-        m_events_out.clear();
+        _events_out.clear();
     }
 }
 
@@ -1718,17 +1713,17 @@ CLAP_Plugin::plugin_params_flush (void)
 void
 CLAP_Plugin::process_params_out (void)
 {
-    const uint32_t nevents = m_events_out.size();
+    const uint32_t nevents = _events_out.size();
     for (uint32_t i = 0; i < nevents; ++i)
     {
-        const clap_event_header *eh = m_events_out.get(i);
+        const clap_event_header *eh = _events_out.get(i);
 
         if (eh && (
                 eh->type == CLAP_EVENT_PARAM_VALUE ||
                 eh->type == CLAP_EVENT_PARAM_GESTURE_BEGIN ||
                 eh->type == CLAP_EVENT_PARAM_GESTURE_END))
         {
-            m_params_out.push(eh);
+            _params_out.push(eh);
         }
     }
 }
@@ -1761,7 +1756,7 @@ CLAP_Plugin::update_parameters()
             if (ev && ev->param_id != CLAP_INVALID_ID)
             {
                 std::pair<int, double> prm ( int(ev->param_id), 0.0 );
-                m_paramValues.insert(prm);
+                _paramValues.insert(prm);
             }
         }
         else
@@ -1774,9 +1769,9 @@ CLAP_Plugin::update_parameters()
                 param_id = int(ev->param_id);
 
                 std::unordered_map<int, double>::const_iterator got
-                    = m_paramValues.find (param_id);
+                    = _paramValues.find (param_id);
 
-                if ( got == m_paramValues.end() )
+                if ( got == _paramValues.end() )
                 {
                     WARNING("GESTURE_END Id not found = %d", param_id);
                     param_id = CLAP_INVALID_ID;
@@ -1784,7 +1779,7 @@ CLAP_Plugin::update_parameters()
                 else
                 {
                     value = got->second;
-                    m_paramValues.erase(param_id);
+                    _paramValues.erase(param_id);
                 }
 
               //  DMESSAGE("Gesture End Value = %f", (float) value);
@@ -1801,15 +1796,15 @@ CLAP_Plugin::update_parameters()
                 value = ev->value;
 
                 std::unordered_map<int, double>::const_iterator got
-                    = m_paramValues.find (param_id);
+                    = _paramValues.find (param_id);
 
                 // If we found the item, then replace it with new pair
-                if ( !(got == m_paramValues.end()) )
+                if ( !(got == _paramValues.end()) )
                 {
                     std::pair<int, double> prm ( int(ev->param_id), value );
 
-                    m_paramValues.erase(param_id);
-                    m_paramValues.insert(prm);
+                    _paramValues.erase(param_id);
+                    _paramValues.insert(prm);
 
                     param_id = CLAP_INVALID_ID;
                 }
@@ -1819,9 +1814,9 @@ CLAP_Plugin::update_parameters()
         if (param_id != (int) CLAP_INVALID_ID)
         {
             std::unordered_map<int, unsigned long>::const_iterator got
-                    = m_paramIds.find (param_id);
+                    = _paramIds.find (param_id);
 
-            if ( got == m_paramIds.end() )
+            if ( got == _paramIds.end() )
             {
                 // probably a control out - we don't do anything with these
                 // DMESSAGE("Param Id not found = %d", param_id);
@@ -1876,11 +1871,11 @@ CLAP_Plugin::set_control_value(unsigned long port_index, float value, bool updat
 bool
 CLAP_Plugin::try_custom_ui()
 {
-    if (!m_gui)
+    if (!_gui)
         return false;
 
     /* Toggle show and hide */
-    if(m_bEditorCreated)
+    if(_bEditorCreated)
     {
         if (_x_is_visible)
         {
@@ -1894,45 +1889,45 @@ CLAP_Plugin::try_custom_ui()
         }
     }
 
-    if (!m_gui->is_api_supported(_plugin, CLAP_WINDOW_API_X11, false))
+    if (!_gui->is_api_supported(_plugin, CLAP_WINDOW_API_X11, false))
     {
-        _is_floating = m_gui->is_api_supported(_plugin, CLAP_WINDOW_API_X11, true);
+        _is_floating = _gui->is_api_supported(_plugin, CLAP_WINDOW_API_X11, true);
     }
 
-    if (!m_gui->create(_plugin, CLAP_WINDOW_API_X11, _is_floating))
+    if (!_gui->create(_plugin, CLAP_WINDOW_API_X11, _is_floating))
     {
         DMESSAGE("Could not create the plugin GUI.");
         return false;
     }
 
     /* We seem to have an accepted ui, so lets try to embed it in an X window */
-    _x_is_resizable = m_gui->can_resize(_plugin);
+    _x_is_resizable = _gui->can_resize(_plugin);
     
-    m_X11_UI = new X11PluginUI(this, _x_is_resizable, false);
-    m_X11_UI->setTitle(label());
+    _X11_UI = new X11PluginUI(this, _x_is_resizable, false);
+    _X11_UI->setTitle(label());
     clap_window_t win = { CLAP_WINDOW_API_X11, {} };
-    win.ptr = m_X11_UI->getPtr();
+    win.ptr = _X11_UI->getPtr();
 
     if (_is_floating)
     {
         DMESSAGE("Using Floating Window");
-        m_gui->set_transient(_plugin, &win);
-        m_gui->suggest_title(_plugin, base_label());
+        _gui->set_transient(_plugin, &win);
+        _gui->suggest_title(_plugin, base_label());
     } else
     {
-        if (!m_gui->set_parent(_plugin, &win))
+        if (!_gui->set_parent(_plugin, &win))
         {
             DMESSAGE("Could not embed the plugin GUI.");
-            m_gui->destroy(_plugin);
+            _gui->destroy(_plugin);
             return false;
         }
     }
 
     DMESSAGE("GOT A CREATE");
 
-    m_bEditorCreated = show_custom_ui();
+    _bEditorCreated = show_custom_ui();
 
-    return m_bEditorCreated;
+    return _bEditorCreated;
 }
 
 // Plugin GUI callbacks...
@@ -1990,7 +1985,7 @@ CLAP_Plugin::plugin_gui_request_resize (
     // Return true if the new size is accepted, false otherwise.
     // The host doesn't have to call set_size().
 
-    m_X11_UI->setSize(width, height, true, _x_is_resizable);
+    _X11_UI->setSize(width, height, true, _x_is_resizable);
 
     return true;
 }
@@ -2022,10 +2017,10 @@ CLAP_Plugin::plugin_gui_closed ( bool was_destroyed )
     
     if (was_destroyed)
     {
-        m_bEditorCreated = false;
+        _bEditorCreated = false;
 
-        if (m_gui)
-            m_gui->destroy(_plugin);
+        if (_gui)
+            _gui->destroy(_plugin);
     }
     // The floating window has been closed, or the connection to the gui has been lost.
     // If was_destroyed is true, then the host must call clap_plugin_gui->destroy() to acknowledge
@@ -2037,17 +2032,17 @@ CLAP_Plugin::show_custom_ui()
 {
     if (_is_floating)
     {
-        _x_is_visible = m_gui->show(_plugin);
+        _x_is_visible = _gui->show(_plugin);
         Fl::add_timeout( 0.03f, &CLAP_Plugin::custom_update_ui, this );
         return _x_is_visible;
     }
 
-    m_X11_UI->show();
-    m_X11_UI->focus();
+    _X11_UI->show();
+    _X11_UI->focus();
 
     _x_is_visible = true;
 
-    m_gui->show(_plugin);
+    _gui->show(_plugin);
 
     Fl::add_timeout( 0.03f, &CLAP_Plugin::custom_update_ui, this );
 
@@ -2072,10 +2067,10 @@ CLAP_Plugin::custom_update_ui_x()
     if (!_is_floating)
     {
         if(_x_is_visible)
-            m_X11_UI->idle();
+            _X11_UI->idle();
     }
 
-    for (LinkedList<HostTimerDetails>::Itenerator it = fTimers.begin2(); it.valid(); it.next())
+    for (LinkedList<HostTimerDetails>::Itenerator it = _fTimers.begin2(); it.valid(); it.next())
     {
         const uint32_t currentTimeInMs = water::Time::getMillisecondCounter();
         HostTimerDetails& timer(it.getValue(kTimerFallbackNC));
@@ -2083,7 +2078,7 @@ CLAP_Plugin::custom_update_ui_x()
         if (currentTimeInMs > timer.lastCallTimeInMs + timer.periodInMs)
         {
             timer.lastCallTimeInMs = currentTimeInMs;
-            m_timer_support->on_timer(_plugin, timer.clapId);
+            _timer_support->on_timer(_plugin, timer.clapId);
         }
     }
 
@@ -2106,26 +2101,26 @@ CLAP_Plugin::hide_custom_ui()
     {
         _x_is_visible = false;
         Fl::remove_timeout(&CLAP_Plugin::custom_update_ui, this);
-        return m_gui->hide(_plugin);
+        return _gui->hide(_plugin);
     }
 
     Fl::remove_timeout(&CLAP_Plugin::custom_update_ui, this);
 
     _x_is_visible = false;
 
-    if (m_X11_UI != nullptr)
-        m_X11_UI->hide();
+    if (_X11_UI != nullptr)
+        _X11_UI->hide();
 
-    if (m_bEditorCreated)
+    if (_bEditorCreated)
     {
-        m_gui->destroy(_plugin);
-        m_bEditorCreated = false;
+        _gui->destroy(_plugin);
+        _bEditorCreated = false;
     }
 
-    if(m_X11_UI != nullptr)
+    if(_X11_UI != nullptr)
     {
-        delete m_X11_UI;
-        m_X11_UI = nullptr;
+        delete _X11_UI;
+        _X11_UI = nullptr;
     }
 
     return true;
@@ -2146,17 +2141,17 @@ CLAP_Plugin::handlePluginUIResized(const uint width, const uint height)
         uint width2 = width;
         uint height2 = height;
 
-        if (m_gui->adjust_size(_plugin, &width2, &height2))
+        if (_gui->adjust_size(_plugin, &width2, &height2))
         {
             if (width2 != width || height2 != height)
             {
                 _x_width = width2;
                 _x_height = height2;
-                m_X11_UI->setSize(width2, height2, false, false);
+                _X11_UI->setSize(width2, height2, false, false);
             }
             else
             {
-                m_gui->set_size(_plugin, width2, height2);
+                _gui->set_size(_plugin, width2, height2);
             }
         }
     }
@@ -2184,28 +2179,28 @@ CLAP_Plugin::clapRegisterTimer(const uint32_t periodInMs, clap_id* const timerId
     DMESSAGE("ClapTimerRegister(%u, %p)", periodInMs, timerId);
 
     // NOTE some plugins wont have their timer extension ready when first loaded, so try again here
-    if (m_timer_support == nullptr)
+    if (_timer_support == nullptr)
     {
         const clap_plugin_timer_support_t* const timerExt = static_cast<const clap_plugin_timer_support_t*>(
             _plugin->get_extension(_plugin, CLAP_EXT_TIMER_SUPPORT));
 
         if (timerExt != nullptr && timerExt->on_timer != nullptr)
-            m_timer_support = timerExt;
+            _timer_support = timerExt;
     }
 
-    NON_SAFE_ASSERT_RETURN(m_timer_support != nullptr, false);
+    NON_SAFE_ASSERT_RETURN(_timer_support != nullptr, false);
 
     // FIXME events only driven as long as UI is open
     // CARLA_SAFE_ASSERT_RETURN(fUI.isCreated, false);
 
     const HostTimerDetails timer = 
     {
-        fTimers.isNotEmpty() ? fTimers.getLast(kTimerFallback).clapId + 1 : 1,
+        _fTimers.isNotEmpty() ? _fTimers.getLast(kTimerFallback).clapId + 1 : 1,
         periodInMs,
         0
     };
 
-    fTimers.append(timer);
+    _fTimers.append(timer);
 
     *timerId = timer.clapId;
     return true;
@@ -2216,13 +2211,13 @@ CLAP_Plugin::clapUnregisterTimer(const clap_id timerId)
 {
     DMESSAGE("ClapTimerUnregister(%u)", timerId);
 
-    for (LinkedList<HostTimerDetails>::Itenerator it = fTimers.begin2(); it.valid(); it.next())
+    for (LinkedList<HostTimerDetails>::Itenerator it = _fTimers.begin2(); it.valid(); it.next())
     {
         const HostTimerDetails& timer(it.getValue(kTimerFallback));
 
         if (timer.clapId == timerId)
         {
-            fTimers.remove(it);
+            _fTimers.remove(it);
             return true;
         }
     }
@@ -2315,7 +2310,7 @@ CLAP_Plugin::plugin_params_clear (
 void
 CLAP_Plugin::plugin_params_request_flush (void)
 {
-    m_params_flush = true;
+    _params_flush = true;
 }
 
 // Host Audio Ports support callbacks...
@@ -2491,7 +2486,7 @@ CLAP_Plugin::restore_CLAP_plugin_state(const std::string &filename)
     fclose(fp);
 
     const clap_istream_impl stream(data, size);
-    if (m_state->load(_plugin, &stream))
+    if (_state->load(_plugin, &stream))
     {
         updateParamValues(false);   // false means do not update the custom UI
     }
@@ -2512,7 +2507,7 @@ CLAP_Plugin::getState ( void** const dataPtr )
     std::free(_last_chunk);
 
     clap_ostream_impl stream;
-    if (m_state->save(_plugin, &stream))
+    if (_state->save(_plugin, &stream))
     {
         *dataPtr = _last_chunk = stream.buffer;
         return stream.size;

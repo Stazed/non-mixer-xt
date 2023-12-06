@@ -97,7 +97,7 @@ private:
     // Working state stream buffer.
     void* _last_chunk;
     
-    clap_event_transport m_transport;
+    clap_event_transport _transport;
     uint32_t  _position;        ///< Transport position in frames
     float     _bpm;             ///< Transport tempo in beats per minute
     bool      _rolling;         ///< Transport speed (0=stop, 1=play)
@@ -108,9 +108,8 @@ private:
     bool _plug_request_restart;
 
     // GUI Editor stuff...
-    bool m_bEditorCreated;
-    bool m_bEditorVisible;
-    X11PluginUI *m_X11_UI;
+    bool _bEditorCreated;
+    X11PluginUI *_X11_UI;
     bool     _x_is_visible;
     bool     _is_floating;
     bool     _x_is_resizable;
@@ -126,20 +125,19 @@ private:
 
     const clap_plugin_t *_plugin;
 
-    volatile bool m_params_flush;
-    const clap_plugin_params *m_params;
-    const clap_plugin_timer_support *m_timer_support;
-    const clap_plugin_posix_fd_support *m_posix_fd_support; // FIMXE
+    volatile bool _params_flush;
+    const clap_plugin_params *_params;
+    const clap_plugin_timer_support *_timer_support;
 
-    const clap_plugin_gui *m_gui;
-    const clap_plugin_state *m_state;
+    const clap_plugin_gui *_gui;
+    const clap_plugin_state *_state;
     std::string _project_file;
 
-    const clap_plugin_note_name *m_note_names;
+//    const clap_plugin_note_name *m_note_names;
 
-    std::unordered_map<clap_id, const clap_param_info *> m_param_infos;
-    std::unordered_map<int, double> m_paramValues;
-    std::unordered_map<int, unsigned long> m_paramIds;
+    std::unordered_map<clap_id, const clap_param_info *> _param_infos;
+    std::unordered_map<int, double> _paramValues;
+    std::unordered_map<int, unsigned long> _paramIds;
 
     bool show_custom_ui();
     bool hide_custom_ui();
@@ -150,8 +148,8 @@ private:
     int _midi_ins;
     int _midi_outs;
 
-    int m_iMidiDialectIns;
-    int m_iMidiDialectOuts;
+    int _iMidiDialectIns;
+    int _iMidiDialectOuts;
 
 public:
     const clap_plugin_entry_t *entry_from_CLAP_file(const char *f);
@@ -184,11 +182,11 @@ public:
     void rescan_parameters();
 
     // Events processor buffers.
-    EventList m_events_in;
-    EventList m_events_out;
+    EventList _events_in;
+    EventList _events_out;
 
     // Parameters processor queue.
-    EventList m_params_out;
+    EventList _params_out;
 
     // Save/Restore state
     void save_CLAP_plugin_state(const std::string &filename);
@@ -196,13 +194,13 @@ public:
 
     uint64_t getState (void** const dataPtr);
 
-    LinkedList<HostTimerDetails> fTimers;
+    LinkedList<HostTimerDetails> _fTimers;
 
     // Event buffer accessors.
-    EventList& events_in  () { return m_events_in;  }
-    EventList& events_out () { return m_events_out; }
+    EventList& events_in  () { return _events_in;  }
+    EventList& events_out () { return _events_out; }
 
-    EventList& params_out () { return m_params_out; }
+    EventList& params_out () { return _params_out; }
 
     // Plugin parameters flush.
     void plugin_params_flush ();
