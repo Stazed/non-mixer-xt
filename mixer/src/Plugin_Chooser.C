@@ -35,6 +35,9 @@
 static    std::vector <Plugin_Module::Plugin_Info*> _plugin_rows;
 static int previous_favorites = 1;
 static int plugin_type = 0;
+static std::string search_name;
+static std::string search_author;
+static int search_category = 0;
 
 Module::Picked
 Plugin_Chooser::plugin_chooser ( int ninputs )
@@ -47,8 +50,23 @@ Plugin_Chooser::plugin_chooser ( int ninputs )
     o->ui->all_button->value(previous_favorites ? 0 : 1);
     o->ui->type_choice->value(plugin_type);
     o->ui->inputs_input->value( ninputs );
+    o->ui->name_input->value(search_name.c_str());
+    o->ui->author_input->value(search_author.c_str());
+    o->ui->category_choice->value(search_category);
+    std::string cat = o->ui->category_choice->text(search_category);
 
-    o->search( "", "", "Any", ninputs, 0, o->ui->favorites_button->value(), o->ui->type_choice->text() );
+    o->search( o->ui->name_input->value(),
+            o->ui->author_input->value(),
+            cat.c_str(),
+            ninputs,
+            0,
+            o->ui->favorites_button->value(),
+            o->ui->type_choice->text() );
+
+    // Update the category menu selection when there was no change from previous search.
+    // I.e. the user closed the chooser then re-opened. The category never gets updated
+    // unless forced callback.
+    o->ui->category_choice->do_callback();
 
     o->show();
     
@@ -95,6 +113,9 @@ Plugin_Chooser::plugin_chooser ( int ninputs )
 
     previous_favorites = o->ui->favorites_button->value();
     plugin_type = o->ui->type_choice->value();
+    search_name = o->ui->name_input->value();
+    search_author = o->ui->author_input->value();
+    search_category = o->ui->category_choice->value();
 
     delete o;
 
