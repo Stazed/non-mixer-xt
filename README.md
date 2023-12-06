@@ -6,7 +6,7 @@ Screenshot
 
 ![screenshot](https://raw.github.com/Stazed/non-mixer-xt/main/mixer/doc/non-mixer-xt-1.0.0.png "Non-Mixer-XT Release 1.0.0")
 
-Non-Mixer-XT is a reboot of original Non-Mixer with eXTended LV2 support. LV2 support includes X11, ShowInterface and External custom UI support. In addition, MIDI support with JACK timebase support and much more. The generic parameter editor has been redesigned to accommodate larger LV2 plugins, preset support and state save and restore. With version 1.1.0, optional CLAP support was added.
+Non-Mixer-XT is a reboot of original Non-Mixer with eXTended LV2 support and CLAP support. LV2 support includes X11, ShowInterface and External custom UI support. In addition, MIDI support with JACK timebase support and much more. The generic parameter editor has been redesigned to accommodate larger LV2 plugins, preset support and state save and restore. With version 1.1.0, CLAP support was added.
 
 
 Non-Mixer-XT build instructions:
@@ -15,17 +15,17 @@ Non-Mixer-XT build instructions:
 Dependencies :
 
 * ntk
-* lilv
-* suil
+* lilv      (Optional LV2 support)
+* suil      (Optional LV2 support)
 * liblo
 * liblo-dev
-* lv2
-* lv2-dev
-* ladspa
-* liblrdf
+* lv2       (Optional LV2 support)
+* lv2-dev   (Optional LV2 support)
+* ladspa    (Optional LADSPA support)
+* liblrdf   (Optional LADSPA support)
 * jack2
-* zix-0
-* clap  (Optional CLAP support)
+* zix-0     (Optional LV2 support)
+* clap      (Optional CLAP support)
 
 Getting submodules (nonlib and FL):
 ---------------
@@ -91,6 +91,18 @@ To disable CLAP support:
 
 ```bash
     cmake -DEnableCLAPSupport=OFF ..
+```
+
+To disable LV2 support:
+
+```bash
+    cmake -DEnableLV2Support=OFF ..
+```
+
+To disable LADSPA support:
+
+```bash
+    cmake -DEnableLADSPASupport=OFF ..
 ```
 
 Controlling Non-Mixer-XT with OSC:
