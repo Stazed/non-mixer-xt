@@ -37,7 +37,7 @@ Group::Group ( ) :
 
 Group::Group ( const char *name, bool single ) : 
     Loggable ( !single ),
-    _single(false),
+    _single(single),
     _name(strdup(name)),
     _buffers_dropped(0),
     _dsp_load(0),
