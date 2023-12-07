@@ -132,6 +132,11 @@ Module::Module ( ) :
 Module::~Module ( )
 {
     /* we assume that the client for this chain is already locked */
+    if ( _bypass )
+    {
+        delete _bypass;
+        _bypass = NULL;
+    }
 
     if ( _editor )
     {
