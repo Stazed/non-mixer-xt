@@ -405,12 +405,12 @@ void Mixer::cb_menu(Fl_Widget* o) {
                              "Copyright (C) 2022-2023 Stazed" );
         ab.credits->label(
             "Legacy Non Mixer by Jonathan Moore Liles.\n"
-            "Filipe Coelho - initial LV2 implementation and\n"
-            "X11 embedded support from the Carla project.\n"
+            "Filipe Coelho - initial LV2 implementation, X11 embedded,\n"
+            "CLAP timer, stream read and write from the Carla project.\n"
             "David Robillard for LV2 atom ports and MIDI\n"
             "event support from the Jalv project.\n"
             "Rui Nuno Capela for LV2 showInterface, external\n"
-            "UI, and presets from the Qtractor project.\n"
+            "UI, presets and CLAP support from the Qtractor project.\n"
             "Jean-Emmanuel Doucet - Extended OSC support.\n"
             "Non Mixer XT modifications by Stazed.\n"
         );
