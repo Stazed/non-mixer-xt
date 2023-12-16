@@ -29,6 +29,7 @@ option (NativeOptimizations "Enable native CPU optimizations" ON)
 option (EnableLADSPASupport "Enable LADSPA plugin support" ON)
 option (EnableLV2Support "Enable LV2 plugin support" ON)
 option (EnableCLAPSupport "Enable CLAP plugin support" ON)
+option (EnableVST3Support "Enable VST3 plugin support" ON)
 
 
 set(CMAKE_BUILD_TYPE "Release")
@@ -104,6 +105,10 @@ if (EnableCLAPSupport)
     endif (CLAP_FOUND)
 endif (EnableCLAPSupport)
 
+if (EnableVST3Support)
+    add_definitions(-D'VST3_SUPPORT=1')
+endif (EnableVST3Support)
+
 #find_program(FLTK_FLUID_EXECUTABLE ntk-fluid)
 #(FLTK_FLUID_EXECUTABLE)
 #    message(STATUS "Found NTK fluid")
@@ -161,6 +166,12 @@ if (LIBM)
 else (LIBM)
     message(FATAL_ERROR "m required but not found")
 endif (LIBM)
+
+# Check for VST3 SDK.
+if (EnableVST3Support AND NOT CONFIG_VST3SDK)
+    set (CONFIG_VST3SDK ${CMAKE_CURRENT_SOURCE_DIR}/mixer/src/vst3/vst3sdk)
+    message(STATUS "CONFIG_VST3SDK = ${CONFIG_VST3SDK}")
+endif ()
 
 # uninstall target
 if(NOT TARGET uninstall)
@@ -261,6 +272,10 @@ if (EnableCLAPSupport)
     package_status(CLAP_FOUND      "CLAP support . . . . . . . . . . . . . . . . . . . . . .:"  )
 endif (EnableCLAPSupport)
 
+if (EnableVST3Support)
+    package_status(CONFIG_VST3SDK  "VST3 support . . . . . . . . . . . . . . . . . . . . . .:"  )
+endif (EnableVST3Support)
+
 package_status(LILV_FOUND          "LILV support . . . . . . . . . . . . . . . . . . . . . .:"  )
 package_status(SUIL_FOUND          "SUIL support . . . . . . . . . . . . . . . . . . . . . .:"  )
 package_status(LIBLO_FOUND         "Liblo support. . . . . . . . . . . . . . . . . . . . . .:"  )
@@ -273,6 +288,7 @@ message (STATUS                    "____________________ User Options___________
 package_status(EnableLADSPASupport "Build LADSPA support . . . . . . . . . . . . . . . . . .:"  )
 package_status(EnableLV2Support    "Build LV2 support. . . . . . . . . . . . . . . . . . . .:"  )
 package_status(EnableCLAPSupport   "Build CLAP support . . . . . . . . . . . . . . . . . . .:"  )
+package_status(EnableVST3Support   "Build VST3 support . . . . . . . . . . . . . . . . . . .:"  )
 package_status(EnableOptimizations "Use optimizations. . . . . . . . . . . . . . . . . . . .:"  )
 package_status(EnableSSE           "Use sse. . . . . . . . . . . . . . . . . . . . . . . . .:"  )
 package_status(EnableSSE2          "Use sse2 . . . . . . . . . . . . . . . . . . . . . . . .:"  )

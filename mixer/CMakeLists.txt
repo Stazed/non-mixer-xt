@@ -79,7 +79,27 @@ set(ExternLibraries
     lrdf
 )
 
-add_executable (non-mixer-xt ${ProgSources} src/main.C)
+if (CONFIG_VST3SDK)
+  add_definitions(-DRELEASE) # required by vstsdk
+  set (VST3SDK_SOURCES
+    ${CONFIG_VST3SDK}/base/source/baseiids.cpp
+    ${CONFIG_VST3SDK}/base/source/fobject.cpp
+    ${CONFIG_VST3SDK}/base/thread/source/flock.cpp
+    ${CONFIG_VST3SDK}/public.sdk/source/common/commoniids.cpp
+    ${CONFIG_VST3SDK}/public.sdk/source/vst/vstinitiids.cpp
+    ${CONFIG_VST3SDK}/pluginterfaces/base/coreiids.cpp
+    ${CONFIG_VST3SDK}/pluginterfaces/base/funknown.cpp
+  )
+endif ()
+
+add_executable (non-mixer-xt
+    ${ProgSources}
+    ${VST3SDK_SOURCES}
+    src/main.C)
+
+if (EnableVST3Support AND CONFIG_VST3SDK)
+    target_include_directories (non-mixer-xt PRIVATE ${CONFIG_VST3SDK})
+endif()
 
 target_include_directories (
     non-mixer-xt PRIVATE
