@@ -55,8 +55,8 @@ enum Plugin_Index
     NONE = 0,
     LADSPA,
     LV2,
-    CLAP
-    // VST3
+    CLAP,
+    VST3
     // VST2
 };
 

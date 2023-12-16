@@ -7,6 +7,7 @@ Fl_Menu_Item Plugin_Chooser_UI::menu_type_choice[] = {
  {"LADSPA", 0,  0, 0, 0, FL_NORMAL_LABEL, 0, 14, 0},
  {"LV2", 0,  0, 0, 0, FL_NORMAL_LABEL, 0, 14, 0},
  {"CLAP", 0,  0, 0, 0, FL_NORMAL_LABEL, 0, 14, 0},
+ {"VST3", 0,  0, 0, 0, FL_NORMAL_LABEL, 0, 14, 0},
  {0,0,0,0,0,0,0,0,0}
 };
 Plugin_Chooser_UI::Plugin_Chooser_UI(int X, int Y, int W, int H, const char *L)

@@ -106,6 +106,13 @@ Plugin_Chooser::plugin_chooser ( int ninputs )
             break;
         }
 #endif
+#ifdef VST3_SUPPORT
+        case VST3:
+        {
+            
+            break;
+        }
+#endif
         // TODO other types here
         default:
             break;
@@ -365,8 +372,14 @@ Plugin_Chooser::cb_table ( Fl_Widget *w )
                 _plugin_type = CLAP;
             }
 #endif
+#ifdef VST3_SUPPORT
+            if(::strcmp(_plugin_rows[R]->type.c_str(), "VST3") == 0)
+            {
+                // FIXME TODO
+                _plugin_type = VST3;
+            }
+#endif
             // TODO other types
-
             hide();
         }
     }
