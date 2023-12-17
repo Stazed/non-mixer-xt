@@ -28,6 +28,7 @@
 #include <iostream>     // cerr
 #include <dlfcn.h>      // dlopen, dlerror, dlsym
 #include <cstring>      // strcmp
+#include <algorithm>    // transform, toLower
 
 #include "Vst3_Discovery.H"
 #include "../../../nonlib/debug.h"
@@ -323,29 +324,29 @@ const char* getPluginCategoryAsString(const PluginCategory category) noexcept
     switch (category)
     {
     case PLUGIN_CATEGORY_NONE:
-        return "none";
+        return "Unclassified";
     case PLUGIN_CATEGORY_SYNTH:
-        return "synth";
+        return "Instrument Plugin";
     case PLUGIN_CATEGORY_DELAY:
-        return "delay";
+        return "Time/Delays";
     case PLUGIN_CATEGORY_EQ:
-        return "eq";
+        return "Frequency/EQs";
     case PLUGIN_CATEGORY_FILTER:
-        return "filter";
+        return "Frequency/Filters";
     case PLUGIN_CATEGORY_DISTORTION:
-        return "distortion";
+        return "Amplitude/Distortions";
     case PLUGIN_CATEGORY_DYNAMICS:
-        return "dynamics";
+        return "Amplitude/Dynamics";
     case PLUGIN_CATEGORY_MODULATOR:
-        return "modulator";
+        return "Amplitude/Modulators";
     case PLUGIN_CATEGORY_UTILITY:
-        return "utility";
+        return "Utilities";
     case PLUGIN_CATEGORY_OTHER:
-        return "other";
+        return "Unclassified";
     }
 
     WARNING("getPluginCategoryAsString(%i) - invalid category", category);
-    return "NONE";
+    return "Unclassified";
 }
 
 static inline
@@ -353,88 +354,88 @@ PluginCategory getPluginCategoryFromName(const char* const name) noexcept
 {
     CARLA_SAFE_ASSERT_RETURN(name != nullptr && name[0] != '\0', PLUGIN_CATEGORY_NONE);
     DMESSAGE("getPluginCategoryFromName(\"%s\")", name);
-#if 0
-    CarlaString sname(name);
 
-    if (sname.isEmpty())
+    std::string sname(name);
+
+    if (sname.empty())
         return PLUGIN_CATEGORY_NONE;
 
-    sname.toLower();
-
+    std::transform(sname.begin(), sname.end(), sname.begin(), [](unsigned char c){ return std::tolower(c); });
+    
     // generic tags first
-    if (sname.contains("delay"))
+    if (sname.find("delay") != std::string::npos)
         return PLUGIN_CATEGORY_DELAY;
-    if (sname.contains("reverb"))
+    if (sname.find("reverb") != std::string::npos)
         return PLUGIN_CATEGORY_DELAY;
 
     // filter
-    if (sname.contains("filter"))
+    if (sname.find("filter") != std::string::npos)
         return PLUGIN_CATEGORY_FILTER;
 
     // distortion
-    if (sname.contains("distortion"))
+    if (sname.find("distortion") != std::string::npos)
         return PLUGIN_CATEGORY_DISTORTION;
 
     // dynamics
-    if (sname.contains("dynamics"))
+    if (sname.find("dynamics") != std::string::npos)
         return PLUGIN_CATEGORY_DYNAMICS;
-    if (sname.contains("amplifier"))
+    if (sname.find("amplifier") != std::string::npos)
         return PLUGIN_CATEGORY_DYNAMICS;
-    if (sname.contains("compressor"))
+    if (sname.find("compressor") != std::string::npos)
         return PLUGIN_CATEGORY_DYNAMICS;
-    if (sname.contains("enhancer"))
+    if (sname.find("enhancer") != std::string::npos)
         return PLUGIN_CATEGORY_DYNAMICS;
-    if (sname.contains("exciter"))
+    if (sname.find("exciter") != std::string::npos)
         return PLUGIN_CATEGORY_DYNAMICS;
-    if (sname.contains("gate"))
+    if (sname.find("gate") != std::string::npos)
         return PLUGIN_CATEGORY_DYNAMICS;
-    if (sname.contains("limiter"))
+    if (sname.find("limiter") != std::string::npos)
         return PLUGIN_CATEGORY_DYNAMICS;
 
     // modulator
-    if (sname.contains("modulator"))
+    if (sname.find("modulator") != std::string::npos)
         return PLUGIN_CATEGORY_MODULATOR;
-    if (sname.contains("chorus"))
+    if (sname.find("chorus") != std::string::npos)
         return PLUGIN_CATEGORY_MODULATOR;
-    if (sname.contains("flanger"))
+    if (sname.find("flanger") != std::string::npos)
         return PLUGIN_CATEGORY_MODULATOR;
-    if (sname.contains("phaser"))
+    if (sname.find("phaser") != std::string::npos)
         return PLUGIN_CATEGORY_MODULATOR;
-    if (sname.contains("saturator"))
+    if (sname.find("saturator") != std::string::npos)
         return PLUGIN_CATEGORY_MODULATOR;
 
     // utility
-    if (sname.contains("utility"))
+    if (sname.find("utility") != std::string::npos)
         return PLUGIN_CATEGORY_UTILITY;
-    if (sname.contains("analyzer"))
+    if (sname.find("analyzer") != std::string::npos)
         return PLUGIN_CATEGORY_UTILITY;
-    if (sname.contains("converter"))
+    if (sname.find("converter") != std::string::npos)
         return PLUGIN_CATEGORY_UTILITY;
-    if (sname.contains("deesser"))
+    if (sname.find("deesser") != std::string::npos)
         return PLUGIN_CATEGORY_UTILITY;
-    if (sname.contains("mixer"))
+    if (sname.find("mixer") != std::string::npos)
         return PLUGIN_CATEGORY_UTILITY;
 
     // common tags
-    if (sname.contains("verb"))
+    if (sname.find("verb") != std::string::npos)
         return PLUGIN_CATEGORY_DELAY;
 
-    if (sname.contains("eq"))
+    if (sname.find("eq") != std::string::npos)
         return PLUGIN_CATEGORY_EQ;
 
-    if (sname.contains("tool"))
+    if (sname.find("tool") != std::string::npos)
         return PLUGIN_CATEGORY_UTILITY;
 
     // synth
-    if (sname.contains("synth"))
+    if (sname.find("synth") != std::string::npos)
         return PLUGIN_CATEGORY_SYNTH;
 
     // other
-    if (sname.contains("misc"))
+    if (sname.find("misc") != std::string::npos)
         return PLUGIN_CATEGORY_OTHER;
-    if (sname.contains("other"))
+    if (sname.find("other") != std::string::npos)
         return PLUGIN_CATEGORY_OTHER;
-#endif
+
     return PLUGIN_CATEGORY_NONE;
 }
 
@@ -871,7 +872,7 @@ bool do_vst3_check(lib_t& libHandle,
         
         pr.push_back(pi);
         
-        DMESSAGE("pi.name =%s: in = %d: out = %d", pi.name.c_str(), pi.audio_inputs, pi.audio_outputs);
+       // DMESSAGE("pi.name =%s: in = %d: out = %d", pi.name.c_str(), pi.audio_inputs, pi.audio_outputs);
 #if 0
         DISCOVERY_OUT("init", "------------");
         DISCOVERY_OUT("build", BINARY_NATIVE);
