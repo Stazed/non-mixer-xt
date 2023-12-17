@@ -45,6 +45,7 @@ set (ProgSources
     src/clap/CLAP_Plugin.C
     src/clap/Clap_Discovery.C
     src/clap/Time.cpp
+    src/vst3/Vst3_Discovery.C
     src/Meter_Indicator_Module.C
     src/Meter_Module.C
     src/Mixer.C
@@ -79,6 +80,7 @@ set(ExternLibraries
     lrdf
 )
 
+# FIXME using travesty lib makes this unnecessary
 if (CONFIG_VST3SDK)
   add_definitions(-DRELEASE) # required by vstsdk
   set (VST3SDK_SOURCES
@@ -94,9 +96,10 @@ endif ()
 
 add_executable (non-mixer-xt
     ${ProgSources}
-    ${VST3SDK_SOURCES}
+    ${VST3SDK_SOURCES}  # FIXME using travesty lib makes this unnecessary
     src/main.C)
 
+# FIXME using travesty lib makes this unnecessary
 if (EnableVST3Support AND CONFIG_VST3SDK)
     target_include_directories (non-mixer-xt PRIVATE ${CONFIG_VST3SDK})
 endif()

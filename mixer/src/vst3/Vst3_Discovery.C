@@ -1,0 +1,914 @@
+/*******************************************************************************/
+/*                                                                             */
+/* This program is free software; you can redistribute it and/or modify it     */
+/* under the terms of the GNU General Public License as published by the       */
+/* Free Software Foundation; either version 2 of the License, or (at your      */
+/* option) any later version.                                                  */
+/*                                                                             */
+/* This program is distributed in the hope that it will be useful, but WITHOUT */
+/* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       */
+/* FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for   */
+/* more details.                                                               */
+/*                                                                             */
+/* You should have received a copy of the GNU General Public License along     */
+/* with This program; see the file COPYING.  If not,write to the Free Software */
+/* Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+/*******************************************************************************/
+
+
+/* 
+ * File:   Vst3_Discovery.C
+ * Author: sspresto
+ * 
+ * Created on December 16, 2023, 5:44 AM
+ */
+
+#ifdef VST3_SUPPORT
+
+#include <iostream>     // cerr
+#include <dlfcn.h>      // dlopen, dlerror, dlsym
+#include <cstring>      // strcmp
+
+#include "Vst3_Discovery.H"
+#include "../../../nonlib/debug.h"
+#include "travesty/host.h"
+#include "utils/CarlaVst3Utils.hpp"
+
+namespace vst3_discovery
+{
+    
+#define MAX_DISCOVERY_AUDIO_IO 64
+#define MAX_DISCOVERY_CV_IO 32
+static constexpr const uint PLUGIN_HAS_CUSTOM_UI = 0x008;
+static constexpr const uint PLUGIN_HAS_CUSTOM_EMBED_UI = 0x1000;
+static constexpr const uint PLUGIN_IS_SYNTH = 0x004;
+static constexpr const uint32_t kBufferSize  = 512;
+static constexpr const double   kSampleRate  = 44100.0;
+
+std::vector<std::filesystem::path>
+installedVST3s()
+{
+    auto sp = validVST3SearchPaths();
+    std::vector<std::filesystem::path> vst3s;
+
+    for (const auto &p : sp)
+    {
+        DMESSAGE("VST3 PLUG PATHS %s", p.u8string().c_str());
+        try
+        {
+            for (auto const &dir_entry : std::filesystem::recursive_directory_iterator(p))
+            {
+                if (dir_entry.path().extension().u8string() == ".vst3")
+                {
+                    if (std::filesystem::is_directory(dir_entry.path()))
+                    {
+                        vst3s.emplace_back(dir_entry.path());
+                    }
+                }
+            }
+        }
+
+        catch (const std::filesystem::filesystem_error &)
+        {
+            MESSAGE("Vst3 path directory not found - %s", p.u8string().c_str());
+        }
+    }
+    return vst3s;
+}
+
+/**
+ * This returns all the search paths for VST3 plugin locations.
+ * @return 
+ *      vector of filesystem::path of vst3 locations.
+ */
+
+std::vector<std::filesystem::path>
+validVST3SearchPaths()
+{
+    std::vector<std::filesystem::path> res;
+
+    /* These are the standard locations for linux */
+    res.emplace_back("/usr/lib/vst3");
+
+    // some distros make /usr/lib64 a symlink to /usr/lib so don't include it
+    // or we get duplicates.
+    if(std::filesystem::is_symlink("/usr/lib64"))
+    {
+        if(!strcmp(std::filesystem::read_symlink("/usr/lib64").c_str(), "/usr/lib"))
+            res.emplace_back("/usr/lib64/vst3");
+    }
+    else
+    {
+        res.emplace_back("/usr/lib64/vst3");
+    }
+    
+    res.emplace_back("/usr/local/lib/vst3");
+
+    // some distros make /usr/local/lib64 a symlink to /usr/local/lib so don't include it
+    // or we get duplicates.
+    if(std::filesystem::is_symlink("/us/local/lib64"))
+    {
+        if(!strcmp(std::filesystem::read_symlink("/usr/local/lib64").c_str(), "/usr/local/lib"))
+            res.emplace_back("/usr/local/lib64/vst3");
+    }
+    else
+    {
+        res.emplace_back("/usr/local/lib64/vst3");
+    }
+
+    res.emplace_back(std::filesystem::path(getenv("HOME")) / std::filesystem::path(".vst3"));
+
+    return res;
+}
+
+using namespace CARLA_BACKEND_NAMESPACE;
+
+//#ifndef USING_JUCE_FOR_VST3
+struct carla_v3_host_application : v3_host_application_cpp {
+    carla_v3_host_application()
+    {
+        query_interface = v3_query_interface_static<v3_host_application_iid>;
+        ref = v3_ref_static;
+        unref = v3_unref_static;
+        app.get_name = carla_get_name;
+        app.create_instance = carla_create_instance;
+    }
+
+private:
+    static v3_result V3_API carla_get_name(void*, v3_str_128 name)
+    {
+        static const char hostname[] = "Carla-Discovery\0";
+
+        for (size_t i=0; i<sizeof(hostname); ++i)
+            name[i] = hostname[i];
+
+        return V3_OK;
+    }
+
+    static v3_result V3_API carla_create_instance(void*, v3_tuid, v3_tuid, void**) { return V3_NOT_IMPLEMENTED; }
+
+    CARLA_DECLARE_NON_COPYABLE(carla_v3_host_application)
+    CARLA_PREVENT_HEAP_ALLOCATION
+};
+
+struct carla_v3_param_value_queue : v3_param_value_queue_cpp {
+    carla_v3_param_value_queue()
+    {
+        query_interface = v3_query_interface_static<v3_param_value_queue_iid>;
+        ref = v3_ref_static;
+        unref = v3_unref_static;
+        queue.get_param_id = carla_get_param_id;
+        queue.get_point_count = carla_get_point_count;
+        queue.get_point = carla_get_point;
+        queue.add_point = carla_add_point;
+    }
+
+private:
+    static v3_param_id V3_API carla_get_param_id(void*) { return 0; }
+    static int32_t V3_API carla_get_point_count(void*) { return 0; }
+    static v3_result V3_API carla_get_point(void*, int32_t, int32_t*, double*) { return V3_NOT_IMPLEMENTED; }
+    static v3_result V3_API carla_add_point(void*, int32_t, double, int32_t*) { return V3_NOT_IMPLEMENTED; }
+
+    CARLA_DECLARE_NON_COPYABLE(carla_v3_param_value_queue)
+    CARLA_PREVENT_HEAP_ALLOCATION
+};
+
+struct carla_v3_param_changes : v3_param_changes_cpp {
+    carla_v3_param_changes()
+    {
+        query_interface = v3_query_interface_static<v3_param_changes_iid>;
+        ref = v3_ref_static;
+        unref = v3_unref_static;
+        changes.get_param_count = carla_get_param_count;
+        changes.get_param_data = carla_get_param_data;
+        changes.add_param_data = carla_add_param_data;
+    }
+
+private:
+    static int32_t V3_API carla_get_param_count(void*) { return 0; }
+    static v3_param_value_queue** V3_API carla_get_param_data(void*, int32_t) { return nullptr; }
+    static v3_param_value_queue** V3_API carla_add_param_data(void*, const v3_param_id*, int32_t*) { return nullptr; }
+
+    CARLA_DECLARE_NON_COPYABLE(carla_v3_param_changes)
+    CARLA_PREVENT_HEAP_ALLOCATION
+};
+
+struct carla_v3_event_list : v3_event_list_cpp {
+    carla_v3_event_list()
+    {
+        query_interface = v3_query_interface_static<v3_event_list_iid>;
+        ref = v3_ref_static;
+        unref = v3_unref_static;
+        list.get_event_count = carla_get_event_count;
+        list.get_event = carla_get_event;
+        list.add_event = carla_add_event;
+    }
+
+private:
+    static uint32_t V3_API carla_get_event_count(void*) { return 0; }
+    static v3_result V3_API carla_get_event(void*, int32_t, v3_event*) { return V3_NOT_IMPLEMENTED; }
+    static v3_result V3_API carla_add_event(void*, v3_event*) { return V3_NOT_IMPLEMENTED; }
+
+    CARLA_DECLARE_NON_COPYABLE(carla_v3_event_list)
+    CARLA_PREVENT_HEAP_ALLOCATION
+};
+
+static bool v3_exit_false(const V3_EXITFN v3_exit)
+{
+    v3_exit();
+    return false;
+}
+
+/*
+ * Open 'filename' library (must not be null).
+ * May return null, in which case "lib_error" has the error.
+ */
+static inline
+lib_t lib_open(const char* const filename, const bool global = false) noexcept
+{
+    CARLA_SAFE_ASSERT_RETURN(filename != nullptr && filename[0] != '\0', nullptr);
+
+    try {
+#ifdef CARLA_OS_WIN
+        return ::LoadLibraryA(filename);
+        // unused
+        (void)global;
+#else
+        return ::dlopen(filename, RTLD_NOW|(global ? RTLD_GLOBAL : RTLD_LOCAL));
+#endif
+    } CARLA_SAFE_EXCEPTION_RETURN("lib_open", nullptr);
+}
+
+/*
+ * Close a previously opened library (must not be null).
+ * If false is returned, "lib_error" has the error.
+ */
+bool lib_close(const lib_t lib)
+{
+    CARLA_SAFE_ASSERT_RETURN(lib != nullptr, false);
+
+    try {
+#ifdef CARLA_OS_WIN
+        return ::FreeLibrary(lib);
+#else
+        return (::dlclose(lib) == 0);
+#endif
+    } CARLA_SAFE_EXCEPTION_RETURN("lib_close", false);
+}
+
+
+/*
+ * Get a library symbol (must not be null) as a function.
+ * Returns null if the symbol is not found.
+ */
+template<typename Func>
+static inline
+Func lib_symbol(const lib_t lib, const char* const symbol) noexcept
+{
+    CARLA_SAFE_ASSERT_RETURN(lib != nullptr, nullptr);
+    CARLA_SAFE_ASSERT_RETURN(symbol != nullptr && symbol[0] != '\0', nullptr);
+
+    try {
+#ifdef CARLA_OS_WIN
+# if defined(__GNUC__) && (__GNUC__ >= 9)
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wcast-function-type"
+# endif
+        return reinterpret_cast<Func>(::GetProcAddress(lib, symbol));
+# if defined(__GNUC__) && (__GNUC__ >= 9)
+#  pragma GCC diagnostic pop
+# endif
+#else
+        return reinterpret_cast<Func>(::dlsym(lib, symbol));
+#endif
+    } CARLA_SAFE_EXCEPTION_RETURN("lib_symbol", nullptr);
+}
+
+static inline
+const char* PluginCategory2Str(const PluginCategory category) noexcept
+{
+    switch (category)
+    {
+    case PLUGIN_CATEGORY_NONE:
+        return "PLUGIN_CATEGORY_NONE";
+    case PLUGIN_CATEGORY_SYNTH:
+        return "PLUGIN_CATEGORY_SYNTH";
+    case PLUGIN_CATEGORY_DELAY:
+        return "PLUGIN_CATEGORY_DELAY";
+    case PLUGIN_CATEGORY_EQ:
+        return "PLUGIN_CATEGORY_EQ";
+    case PLUGIN_CATEGORY_FILTER:
+        return "PLUGIN_CATEGORY_FILTER";
+    case PLUGIN_CATEGORY_DISTORTION:
+        return "PLUGIN_CATEGORY_DISTORTION";
+    case PLUGIN_CATEGORY_DYNAMICS:
+        return "PLUGIN_CATEGORY_DYNAMICS";
+    case PLUGIN_CATEGORY_MODULATOR:
+        return "PLUGIN_CATEGORY_MODULATOR";
+    case PLUGIN_CATEGORY_UTILITY:
+        return "PLUGIN_CATEGORY_UTILITY";
+    case PLUGIN_CATEGORY_OTHER:
+        return "PLUGIN_CATEGORY_OTHER";
+    }
+
+    WARNING("PluginCategory2Str(%i) - invalid category", category);
+    return "";
+}
+
+static inline
+const char* getPluginCategoryAsString(const PluginCategory category) noexcept
+{
+    DMESSAGE("CarlaBackend::getPluginCategoryAsString(%i:%s)", category, PluginCategory2Str(category));
+
+    switch (category)
+    {
+    case PLUGIN_CATEGORY_NONE:
+        return "none";
+    case PLUGIN_CATEGORY_SYNTH:
+        return "synth";
+    case PLUGIN_CATEGORY_DELAY:
+        return "delay";
+    case PLUGIN_CATEGORY_EQ:
+        return "eq";
+    case PLUGIN_CATEGORY_FILTER:
+        return "filter";
+    case PLUGIN_CATEGORY_DISTORTION:
+        return "distortion";
+    case PLUGIN_CATEGORY_DYNAMICS:
+        return "dynamics";
+    case PLUGIN_CATEGORY_MODULATOR:
+        return "modulator";
+    case PLUGIN_CATEGORY_UTILITY:
+        return "utility";
+    case PLUGIN_CATEGORY_OTHER:
+        return "other";
+    }
+
+    WARNING("getPluginCategoryAsString(%i) - invalid category", category);
+    return "NONE";
+}
+
+static inline
+PluginCategory getPluginCategoryFromName(const char* const name) noexcept
+{
+    CARLA_SAFE_ASSERT_RETURN(name != nullptr && name[0] != '\0', PLUGIN_CATEGORY_NONE);
+    DMESSAGE("getPluginCategoryFromName(\"%s\")", name);
+#if 0
+    CarlaString sname(name);
+
+    if (sname.isEmpty())
+        return PLUGIN_CATEGORY_NONE;
+
+    sname.toLower();
+
+    // generic tags first
+    if (sname.contains("delay"))
+        return PLUGIN_CATEGORY_DELAY;
+    if (sname.contains("reverb"))
+        return PLUGIN_CATEGORY_DELAY;
+
+    // filter
+    if (sname.contains("filter"))
+        return PLUGIN_CATEGORY_FILTER;
+
+    // distortion
+    if (sname.contains("distortion"))
+        return PLUGIN_CATEGORY_DISTORTION;
+
+    // dynamics
+    if (sname.contains("dynamics"))
+        return PLUGIN_CATEGORY_DYNAMICS;
+    if (sname.contains("amplifier"))
+        return PLUGIN_CATEGORY_DYNAMICS;
+    if (sname.contains("compressor"))
+        return PLUGIN_CATEGORY_DYNAMICS;
+    if (sname.contains("enhancer"))
+        return PLUGIN_CATEGORY_DYNAMICS;
+    if (sname.contains("exciter"))
+        return PLUGIN_CATEGORY_DYNAMICS;
+    if (sname.contains("gate"))
+        return PLUGIN_CATEGORY_DYNAMICS;
+    if (sname.contains("limiter"))
+        return PLUGIN_CATEGORY_DYNAMICS;
+
+    // modulator
+    if (sname.contains("modulator"))
+        return PLUGIN_CATEGORY_MODULATOR;
+    if (sname.contains("chorus"))
+        return PLUGIN_CATEGORY_MODULATOR;
+    if (sname.contains("flanger"))
+        return PLUGIN_CATEGORY_MODULATOR;
+    if (sname.contains("phaser"))
+        return PLUGIN_CATEGORY_MODULATOR;
+    if (sname.contains("saturator"))
+        return PLUGIN_CATEGORY_MODULATOR;
+
+    // utility
+    if (sname.contains("utility"))
+        return PLUGIN_CATEGORY_UTILITY;
+    if (sname.contains("analyzer"))
+        return PLUGIN_CATEGORY_UTILITY;
+    if (sname.contains("converter"))
+        return PLUGIN_CATEGORY_UTILITY;
+    if (sname.contains("deesser"))
+        return PLUGIN_CATEGORY_UTILITY;
+    if (sname.contains("mixer"))
+        return PLUGIN_CATEGORY_UTILITY;
+
+    // common tags
+    if (sname.contains("verb"))
+        return PLUGIN_CATEGORY_DELAY;
+
+    if (sname.contains("eq"))
+        return PLUGIN_CATEGORY_EQ;
+
+    if (sname.contains("tool"))
+        return PLUGIN_CATEGORY_UTILITY;
+
+    // synth
+    if (sname.contains("synth"))
+        return PLUGIN_CATEGORY_SYNTH;
+
+    // other
+    if (sname.contains("misc"))
+        return PLUGIN_CATEGORY_OTHER;
+    if (sname.contains("other"))
+        return PLUGIN_CATEGORY_OTHER;
+#endif
+    return PLUGIN_CATEGORY_NONE;
+}
+
+
+bool do_vst3_check(lib_t& libHandle,
+        const char* const filename,
+        const bool doInit,
+        std::list<Plugin_Module::Plugin_Info> & pr)
+{
+    V3_ENTRYFN v3_entry = nullptr;
+    V3_EXITFN v3_exit = nullptr;
+    V3_GETFN v3_get = nullptr;
+
+    // if passed filename is not a plugin binary directly, inspect bundle and find one
+    if (libHandle == nullptr)
+    {
+
+       // water::String binaryfilename = filename;
+        std::filesystem::path binaryfilename = filename;
+        
+        std::filesystem::path p = filename;
+
+       // if ( !binaryfilename.preferred_separator )
+            binaryfilename += CARLA_OS_SEP_STR;
+     //   if (!binaryfilename.endsWithChar(CARLA_OS_SEP))
+     //       binaryfilename += CARLA_OS_SEP_STR;
+
+        binaryfilename += "Contents" CARLA_OS_SEP_STR V3_CONTENT_DIR CARLA_OS_SEP_STR;
+        binaryfilename += p.stem();
+     //   binaryfilename += water::File(filename).getFileNameWithoutExtension();
+
+        binaryfilename += ".so";
+
+        if ( ! std::filesystem::exists(binaryfilename) )
+       // if (! water::File(binaryfilename).existsAsFile())
+        {
+            WARNING("Failed to find a suitable VST3 bundle binary %s", binaryfilename.c_str());
+            return false;
+        }
+
+        libHandle = lib_open(binaryfilename.u8string().c_str());
+    //    libHandle = lib_open(binaryfilename.toRawUTF8());
+
+        if (libHandle == nullptr)
+        {
+            WARNING("Lib error %s", filename);
+           // print_lib_error(filename);
+            return false;
+        }
+    }
+
+    v3_entry = lib_symbol<V3_ENTRYFN>(libHandle, V3_ENTRYFNNAME);
+    v3_exit = lib_symbol<V3_EXITFN>(libHandle, V3_EXITFNNAME);
+    v3_get = lib_symbol<V3_GETFN>(libHandle, V3_GETFNNAME);
+
+    // ensure entry and exit points are available
+    if (v3_entry == nullptr || v3_exit == nullptr || v3_get == nullptr)
+    {
+        WARNING("ERROR, Not a VST3 plugin");
+        //DISCOVERY_OUT("error", "Not a VST3 plugin");
+        return false;
+    }
+
+    v3_entry(libHandle);
+
+    carla_v3_host_application hostApplication;
+    carla_v3_host_application* hostApplicationPtr = &hostApplication;
+    v3_funknown** const hostContext = (v3_funknown**)&hostApplicationPtr;
+
+    // fetch initial factory
+    v3_plugin_factory** factory1 = v3_get();
+    CARLA_SAFE_ASSERT_RETURN(factory1 != nullptr, v3_exit_false(v3_exit));
+
+    // get factory info
+    v3_factory_info factoryInfo = {};
+    CARLA_SAFE_ASSERT_RETURN(v3_cpp_obj(factory1)->get_factory_info(factory1, &factoryInfo) == V3_OK,
+                             v3_exit_false(v3_exit));
+
+    // get num classes
+    const int32_t numClasses = v3_cpp_obj(factory1)->num_classes(factory1);
+    CARLA_SAFE_ASSERT_RETURN(numClasses > 0, v3_exit_false(v3_exit));
+
+    // query 2nd factory
+    v3_plugin_factory_2** factory2 = nullptr;
+    if (v3_cpp_obj_query_interface(factory1, v3_plugin_factory_2_iid, &factory2) == V3_OK)
+    {
+        CARLA_SAFE_ASSERT_RETURN(factory2 != nullptr, v3_exit_false(v3_exit));
+    }
+    else
+    {
+        CARLA_SAFE_ASSERT(factory2 == nullptr);
+        factory2 = nullptr;
+    }
+
+    // query 3rd factory
+    v3_plugin_factory_3** factory3 = nullptr;
+    if (factory2 != nullptr && v3_cpp_obj_query_interface(factory2, v3_plugin_factory_3_iid, &factory3) == V3_OK)
+    {
+        CARLA_SAFE_ASSERT_RETURN(factory3 != nullptr, v3_exit_false(v3_exit));
+    }
+    else
+    {
+        CARLA_SAFE_ASSERT(factory3 == nullptr);
+        factory3 = nullptr;
+    }
+
+    // set host context (application) if 3rd factory provided
+    if (factory3 != nullptr)
+        v3_cpp_obj(factory3)->set_host_context(factory3, hostContext);
+
+    // go through all relevant classes
+    for (int32_t i=0; i<numClasses; ++i)
+    {
+        // v3_class_info_2 is ABI compatible with v3_class_info
+        union {
+            v3_class_info v1;
+            v3_class_info_2 v2;
+        } classInfo = {};
+
+        if (factory2 != nullptr)
+            v3_cpp_obj(factory2)->get_class_info_2(factory2, i, &classInfo.v2);
+        else
+            v3_cpp_obj(factory1)->get_class_info(factory1, i, &classInfo.v1);
+
+        // safety check
+        CARLA_SAFE_ASSERT_CONTINUE(classInfo.v1.cardinality == 0x7FFFFFFF);
+
+        // only check for audio plugins
+        if (std::strcmp(classInfo.v1.category, "Audio Module Class") != 0)
+            continue;
+
+        // create instance
+        void* instance = nullptr;
+        CARLA_SAFE_ASSERT_CONTINUE(v3_cpp_obj(factory1)->create_instance(factory1, classInfo.v1.class_id,
+                                                                         v3_component_iid, &instance) == V3_OK);
+        CARLA_SAFE_ASSERT_CONTINUE(instance != nullptr);
+
+        // initialize instance
+        v3_component** const component = static_cast<v3_component**>(instance);
+
+        CARLA_SAFE_ASSERT_CONTINUE(v3_cpp_obj_initialize(component, hostContext) == V3_OK);
+
+        // create edit controller
+        v3_edit_controller** controller = nullptr;
+        bool shouldTerminateController;
+        if (v3_cpp_obj_query_interface(component, v3_edit_controller_iid, &controller) != V3_OK)
+            controller = nullptr;
+
+        if (controller != nullptr)
+        {
+            // got edit controller from casting component, assume they belong to the same object
+            shouldTerminateController = false;
+        }
+        else
+        {
+            // try to create edit controller from factory
+            v3_tuid uid = {};
+            if (v3_cpp_obj(component)->get_controller_class_id(component, uid) == V3_OK)
+            {
+                instance = nullptr;
+                if (v3_cpp_obj(factory1)->create_instance(factory1, uid, v3_edit_controller_iid, &instance) == V3_OK)
+                    controller = static_cast<v3_edit_controller**>(instance);
+            }
+
+            if (controller == nullptr)
+            {
+                WARNING("Plugin %s does not have an edit controller", classInfo.v1.name);
+               // DISCOVERY_OUT("warning", "Plugin '" << classInfo.v1.name << "' does not have an edit controller");
+                v3_cpp_obj_terminate(component);
+                v3_cpp_obj_unref(component);
+                continue;
+            }
+
+            // component is separate from controller, needs its dedicated initialize and terminate
+            shouldTerminateController = true;
+            v3_cpp_obj_initialize(controller, hostContext);
+        }
+
+        // connect component to controller
+        v3_connection_point** connComponent = nullptr;
+        if (v3_cpp_obj_query_interface(component, v3_connection_point_iid, &connComponent) != V3_OK)
+            connComponent = nullptr;
+
+        v3_connection_point** connController = nullptr;
+        if (v3_cpp_obj_query_interface(controller, v3_connection_point_iid, &connController) != V3_OK)
+            connController = nullptr;
+
+        if (connComponent != nullptr && connController != nullptr)
+        {
+            v3_cpp_obj(connComponent)->connect(connComponent, connController);
+            v3_cpp_obj(connController)->connect(connController, connComponent);
+        }
+
+        // fill in all the details
+        uint hints = 0x0;
+        int audioIns = 0;
+        int audioOuts = 0;
+        int cvIns = 0;
+        int cvOuts = 0;
+        int parameterIns = 0;
+        int parameterOuts = 0;
+
+        const int32_t numAudioInputBuses = v3_cpp_obj(component)->get_bus_count(component, V3_AUDIO, V3_INPUT);
+        const int32_t numEventInputBuses = v3_cpp_obj(component)->get_bus_count(component, V3_EVENT, V3_INPUT);
+        const int32_t numAudioOutputBuses = v3_cpp_obj(component)->get_bus_count(component, V3_AUDIO, V3_OUTPUT);
+        const int32_t numEventOutputBuses = v3_cpp_obj(component)->get_bus_count(component, V3_EVENT, V3_OUTPUT);
+        const int32_t numParameters = v3_cpp_obj(controller)->get_parameter_count(controller);
+
+        CARLA_SAFE_ASSERT(numAudioInputBuses >= 0);
+        CARLA_SAFE_ASSERT(numEventInputBuses >= 0);
+        CARLA_SAFE_ASSERT(numAudioOutputBuses >= 0);
+        CARLA_SAFE_ASSERT(numEventOutputBuses >= 0);
+        CARLA_SAFE_ASSERT(numParameters >= 0);
+
+        for (int32_t b=0; b<numAudioInputBuses; ++b)
+        {
+            v3_bus_info busInfo = {};
+            CARLA_SAFE_ASSERT_BREAK(v3_cpp_obj(component)->get_bus_info(component,
+                                                                        V3_AUDIO, V3_INPUT, b, &busInfo) == V3_OK);
+
+            if (busInfo.flags & V3_IS_CONTROL_VOLTAGE)
+                cvIns += busInfo.channel_count;
+            else
+                audioIns += busInfo.channel_count;
+        }
+
+        for (int32_t b=0; b<numAudioOutputBuses; ++b)
+        {
+            v3_bus_info busInfo = {};
+            CARLA_SAFE_ASSERT_BREAK(v3_cpp_obj(component)->get_bus_info(component,
+                                                                        V3_AUDIO, V3_OUTPUT, b, &busInfo) == V3_OK);
+
+            if (busInfo.flags & V3_IS_CONTROL_VOLTAGE)
+            {
+                //DMESSAGE("Have V3_IS_CONTROL_VOLTAGE");
+                cvOuts += busInfo.channel_count;
+            }
+            else
+                audioOuts += busInfo.channel_count;
+        }
+
+        for (int32_t p=0; p<numParameters; ++p)
+        {
+            v3_param_info paramInfo = {};
+            CARLA_SAFE_ASSERT_BREAK(v3_cpp_obj(controller)->get_parameter_info(controller, p, &paramInfo) == V3_OK);
+
+            if (paramInfo.flags & (V3_PARAM_IS_BYPASS|V3_PARAM_IS_HIDDEN|V3_PARAM_PROGRAM_CHANGE))
+                continue;
+
+            if (paramInfo.flags & V3_PARAM_READ_ONLY)
+                ++parameterOuts;
+            else
+                ++parameterIns;
+        }
+
+        CARLA_SAFE_ASSERT_CONTINUE(audioIns <= MAX_DISCOVERY_AUDIO_IO);
+        CARLA_SAFE_ASSERT_CONTINUE(audioOuts <= MAX_DISCOVERY_AUDIO_IO);
+        CARLA_SAFE_ASSERT_CONTINUE(cvIns <= MAX_DISCOVERY_CV_IO);
+        CARLA_SAFE_ASSERT_CONTINUE(cvOuts <= MAX_DISCOVERY_CV_IO);
+
+       #ifdef V3_VIEW_PLATFORM_TYPE_NATIVE
+        if (v3_plugin_view** const view = v3_cpp_obj(controller)->create_view(controller, "editor"))
+        {
+            if (v3_cpp_obj(view)->is_platform_type_supported(view, V3_VIEW_PLATFORM_TYPE_NATIVE) == V3_TRUE)
+            {
+                hints |= PLUGIN_HAS_CUSTOM_UI;
+               #ifndef BUILD_BRIDGE
+                hints |= PLUGIN_HAS_CUSTOM_EMBED_UI;
+               #endif
+            }
+
+            v3_cpp_obj_unref(view);
+        }
+       #endif
+
+        if (factory2 != nullptr && std::strstr(classInfo.v2.sub_categories, "Instrument") != nullptr)
+            hints |= PLUGIN_IS_SYNTH;
+
+        if (doInit)
+        {
+            v3_audio_processor** processor = nullptr;
+            CARLA_SAFE_ASSERT_BREAK(v3_cpp_obj_query_interface(component, v3_audio_processor_iid, &processor) == V3_OK);
+            CARLA_SAFE_ASSERT_BREAK(processor != nullptr);
+
+            CARLA_SAFE_ASSERT_BREAK(v3_cpp_obj(processor)->can_process_sample_size(processor, V3_SAMPLE_32) == V3_OK);
+
+            CARLA_SAFE_ASSERT_BREAK(v3_cpp_obj(component)->set_active(component, true) == V3_OK);
+
+            v3_process_setup setup = { V3_REALTIME, V3_SAMPLE_32, kBufferSize, kSampleRate };
+            CARLA_SAFE_ASSERT_BREAK(v3_cpp_obj(processor)->setup_processing(processor, &setup) == V3_OK);
+
+            CARLA_SAFE_ASSERT_BREAK(v3_cpp_obj(component)->set_active(component, false) == V3_OK);
+
+            v3_audio_bus_buffers* const inputsBuffers = numAudioInputBuses > 0
+                                                      ? new v3_audio_bus_buffers[numAudioInputBuses]
+                                                      : nullptr;
+
+            v3_audio_bus_buffers* const outputsBuffers = numAudioOutputBuses > 0
+                                                       ? new v3_audio_bus_buffers[numAudioOutputBuses]
+                                                       : nullptr;
+
+            for (int32_t b=0; b<numAudioInputBuses; ++b)
+            {
+                v3_bus_info busInfo = {};
+                carla_zeroStruct(inputsBuffers[b]);
+                CARLA_SAFE_ASSERT_BREAK(v3_cpp_obj(component)->get_bus_info(component,
+                                                                            V3_AUDIO, V3_INPUT, b, &busInfo) == V3_OK);
+
+                if ((busInfo.flags & V3_DEFAULT_ACTIVE) == 0x0) {
+                    CARLA_SAFE_ASSERT_BREAK(v3_cpp_obj(component)->activate_bus(component,
+                                                                                V3_AUDIO, V3_INPUT, b, true) == V3_OK);
+                }
+
+                inputsBuffers[b].num_channels = busInfo.channel_count;
+            }
+
+            for (int32_t b=0; b<numAudioOutputBuses; ++b)
+            {
+                v3_bus_info busInfo = {};
+                carla_zeroStruct(outputsBuffers[b]);
+                CARLA_SAFE_ASSERT_BREAK(v3_cpp_obj(component)->get_bus_info(component,
+                                                                            V3_AUDIO, V3_OUTPUT, b, &busInfo) == V3_OK);
+
+                if ((busInfo.flags & V3_DEFAULT_ACTIVE) == 0x0) {
+                    CARLA_SAFE_ASSERT_BREAK(v3_cpp_obj(component)->activate_bus(component,
+                                                                                V3_AUDIO, V3_OUTPUT, b, true) == V3_OK);
+                }
+
+                outputsBuffers[b].num_channels = busInfo.channel_count;
+            }
+
+            CARLA_SAFE_ASSERT_BREAK(v3_cpp_obj(component)->set_active(component, true) == V3_OK);
+            CARLA_SAFE_ASSERT_BREAK(v3_cpp_obj(processor)->set_processing(processor, true) == V3_OK);
+
+            float* bufferAudioIn[MAX_DISCOVERY_AUDIO_IO + MAX_DISCOVERY_CV_IO];
+            float* bufferAudioOut[MAX_DISCOVERY_AUDIO_IO + MAX_DISCOVERY_CV_IO];
+          //  float* bufferAudioIn[MAX_DISCOVERY_AUDIO_IO];
+         //   float* bufferAudioOut[MAX_DISCOVERY_AUDIO_IO];
+
+            for (int j=0; j < audioIns + cvIns; ++j)
+            {
+                bufferAudioIn[j] = new float[kBufferSize];
+                carla_zeroFloats(bufferAudioIn[j], kBufferSize);
+            }
+
+            for (int j=0; j < audioOuts + cvOuts; ++j)
+            {
+                bufferAudioOut[j] = new float[kBufferSize];
+                carla_zeroFloats(bufferAudioOut[j], kBufferSize);
+            }
+
+            for (int32_t b = 0, j = 0; b < numAudioInputBuses; ++b)
+            {
+                inputsBuffers[b].channel_buffers_32 = bufferAudioIn + j;
+                j += inputsBuffers[b].num_channels;
+            }
+
+            for (int32_t b = 0, j = 0; b < numAudioOutputBuses; ++b)
+            {
+                outputsBuffers[b].channel_buffers_32 = bufferAudioOut + j;
+                j += outputsBuffers[b].num_channels;
+            }
+
+            carla_v3_event_list eventList;
+            carla_v3_event_list* eventListPtr = &eventList;
+
+            carla_v3_param_changes paramChanges;
+            carla_v3_param_changes* paramChangesPtr = &paramChanges;
+
+            v3_process_context processContext = {};
+            processContext.sample_rate = kSampleRate;
+
+            v3_process_data processData = {
+                V3_REALTIME,
+                V3_SAMPLE_32,
+                kBufferSize,
+                numAudioInputBuses,
+                numAudioOutputBuses,
+                inputsBuffers,
+                outputsBuffers,
+                (v3_param_changes**)&paramChangesPtr,
+                (v3_param_changes**)&paramChangesPtr,
+                (v3_event_list**)&eventListPtr,
+                (v3_event_list**)&eventListPtr,
+                &processContext
+            };
+            CARLA_SAFE_ASSERT_BREAK(v3_cpp_obj(processor)->process(processor, &processData) == V3_OK);
+
+            delete[] inputsBuffers;
+            delete[] outputsBuffers;
+
+            for (int j=0; j < audioIns + cvIns; ++j)
+                delete[] bufferAudioIn[j];
+            for (int j=0; j < audioOuts + cvOuts; ++j)
+                delete[] bufferAudioOut[j];
+
+            CARLA_SAFE_ASSERT_BREAK(v3_cpp_obj(processor)->set_processing(processor, false) == V3_OK);
+            CARLA_SAFE_ASSERT_BREAK(v3_cpp_obj(component)->set_active(component, false) == V3_OK);
+
+            v3_cpp_obj_unref(processor);
+        }
+
+        // disconnect and unref connection points
+        if (connComponent != nullptr && connController != nullptr)
+        {
+            v3_cpp_obj(connComponent)->disconnect(connComponent, connController);
+            v3_cpp_obj(connController)->disconnect(connController, connComponent);
+        }
+
+        if (connComponent != nullptr)
+            v3_cpp_obj_unref(connComponent);
+
+        if (connController != nullptr)
+            v3_cpp_obj_unref(connController);
+
+        if (shouldTerminateController)
+            v3_cpp_obj_terminate(controller);
+
+        v3_cpp_obj_unref(controller);
+
+        v3_cpp_obj_terminate(component);
+        v3_cpp_obj_unref(component);
+        
+        Plugin_Module::Plugin_Info pi("VST3");
+        
+        pi.name = classInfo.v1.name;
+        pi.author = (factory2 != nullptr ? classInfo.v2.vendor : factoryInfo.vendor);
+        pi.category = getPluginCategoryAsString(factory2 != nullptr ? getPluginCategoryFromV3SubCategories(classInfo.v2.sub_categories)
+                                                                                : getPluginCategoryFromName(classInfo.v1.name));
+        pi.audio_inputs = audioIns;
+        pi.audio_outputs = audioOuts;
+        pi.s_unique_id = tuid2str(classInfo.v1.class_id);
+        pi.id = 0;
+        
+        pr.push_back(pi);
+        
+        DMESSAGE("pi.name =%s: in = %d: out = %d", pi.name.c_str(), pi.audio_inputs, pi.audio_outputs);
+#if 0
+        DISCOVERY_OUT("init", "------------");
+        DISCOVERY_OUT("build", BINARY_NATIVE);
+        DISCOVERY_OUT("hints", hints);
+        DISCOVERY_OUT("category", getPluginCategoryAsString(factory2 != nullptr ? getPluginCategoryFromV3SubCategories(classInfo.v2.sub_categories)
+                                                                                : getPluginCategoryFromName(classInfo.v1.name)));
+        DISCOVERY_OUT("name", classInfo.v1.name);
+        DISCOVERY_OUT("label", tuid2str(classInfo.v1.class_id));
+        DISCOVERY_OUT("maker", (factory2 != nullptr ? classInfo.v2.vendor : factoryInfo.vendor));
+        DISCOVERY_OUT("audio.ins", audioIns);
+        DISCOVERY_OUT("audio.outs", audioOuts);
+        DISCOVERY_OUT("cv.ins", cvIns);
+        DISCOVERY_OUT("cv.outs", cvOuts);
+        DISCOVERY_OUT("midi.ins", numEventInputBuses);
+        DISCOVERY_OUT("midi.outs", numEventOutputBuses);
+        DISCOVERY_OUT("parameters.ins", parameterIns);
+        DISCOVERY_OUT("parameters.outs", parameterOuts);
+        DISCOVERY_OUT("end", "------------");
+#endif
+    }
+
+    // unref interfaces
+    if (factory3 != nullptr)
+        v3_cpp_obj_unref(factory3);
+
+    if (factory2 != nullptr)
+        v3_cpp_obj_unref(factory2);
+
+    v3_cpp_obj_unref(factory1);
+
+    v3_exit();
+    return false;
+}
+//#endif // ! USING_JUCE_FOR_VST3
+
+
+
+}   // namespace vst3_discovery
+
+#endif  // VST3_SUPPORT

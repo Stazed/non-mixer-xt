@@ -109,7 +109,10 @@ Plugin_Chooser::plugin_chooser ( int ninputs )
 #ifdef VST3_SUPPORT
         case VST3:
         {
-            
+            if (!o->s_unique_id().empty())
+            {
+                picked.s_unique_id = o->s_unique_id();
+            }
             break;
         }
 #endif
@@ -375,7 +378,7 @@ Plugin_Chooser::cb_table ( Fl_Widget *w )
 #ifdef VST3_SUPPORT
             if(::strcmp(_plugin_rows[R]->type.c_str(), "VST3") == 0)
             {
-                // FIXME TODO
+                _s_unique_id   = _plugin_rows[R]->s_unique_id;
                 _plugin_type = VST3;
             }
 #endif

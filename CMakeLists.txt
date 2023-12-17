@@ -169,6 +169,7 @@ endif (LIBM)
 
 # Check for VST3 SDK.
 if (EnableVST3Support AND NOT CONFIG_VST3SDK)
+# FIXME using travesty lib makes CONFIG_VST3SDK unnecessary
     set (CONFIG_VST3SDK ${CMAKE_CURRENT_SOURCE_DIR}/mixer/src/vst3/vst3sdk)
     message(STATUS "CONFIG_VST3SDK = ${CONFIG_VST3SDK}")
 endif ()

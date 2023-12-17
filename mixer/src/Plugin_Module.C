@@ -46,6 +46,11 @@ static LADSPAInfo *ladspainfo;
     static std::list<Plugin_Module::Plugin_Info> clap_PI_cache;
 #endif
 
+#ifdef VST3_SUPPORT
+    #include "vst3/Vst3_Discovery.H"
+    static std::list<Plugin_Module::Plugin_Info> vst3_PI_cache;
+#endif
+
 Thread* Plugin_Module::plugin_discover_thread;
 
 static bool warn_legacy_once = false;
@@ -208,6 +213,9 @@ Plugin_Module::get_all_plugins ( void )
 #endif
 #ifdef CLAP_SUPPORT
     pm.scan_CLAP_plugins( pr );     // Scan CLAP
+#endif
+#ifdef VST3_SUPPORT
+    pm.scan_VST3_plugins( pr );
 #endif
     // TODO Additional plugin types here
 
@@ -562,6 +570,34 @@ Plugin_Module::scan_CLAP_plugins( std::list<Plugin_Info> & pr )
     }
 }
 #endif  // CLAP_SUPPORT
+
+#ifdef VST3_SUPPORT
+void
+Plugin_Module::scan_VST3_plugins( std::list<Plugin_Info> & pr )
+{
+    if ( !vst3_PI_cache.empty() )
+    {
+        pr.insert(std::end(pr), std::begin(vst3_PI_cache), std::end(vst3_PI_cache));
+        return;
+    }
+
+    auto sp = vst3_discovery::installedVST3s();   // This to get paths
+
+    for (const auto &q : sp)
+    {
+        lib_t handle = nullptr;
+        
+      //  DMESSAGE("VST3 PLUG PATHS %s", q.u8string().c_str());
+        vst3_discovery::do_vst3_check(handle, q.u8string().c_str(), true, pr);
+    }
+
+    if ( vst3_PI_cache.empty() )
+    {
+        vst3_PI_cache.insert(std::end(vst3_PI_cache), std::begin(pr), std::end(pr));
+        return;
+    }
+}
+#endif  // VST3_SUPPORT
 
 void
 Plugin_Module::resize_buffers ( nframes_t buffer_size )
