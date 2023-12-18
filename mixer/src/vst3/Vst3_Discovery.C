@@ -35,9 +35,18 @@
 #include "travesty/host.h"
 #include "utils/CarlaVst3Utils.hpp"
 
+#ifdef CONFIG_VST3
+#include "pluginterfaces/vst/ivsthostapplication.h"
+
+#include "pluginterfaces/vst/ivstaudioprocessor.h"
+#include "pluginterfaces/vst/ivsteditcontroller.h"
+
+#include "pluginterfaces/gui/iplugview.h"
+#endif
+
 namespace vst3_discovery
 {
-    
+#ifndef CONFIG_VST3
 #define MAX_DISCOVERY_AUDIO_IO 64
 #define MAX_DISCOVERY_CV_IO 32
 static constexpr const uint PLUGIN_HAS_CUSTOM_UI = 0x008;
@@ -45,6 +54,7 @@ static constexpr const uint PLUGIN_HAS_CUSTOM_EMBED_UI = 0x1000;
 static constexpr const uint PLUGIN_IS_SYNTH = 0x004;
 static constexpr const uint32_t kBufferSize  = 512;
 static constexpr const double   kSampleRate  = 44100.0;
+#endif
 
 std::vector<std::filesystem::path>
 installedVST3s()
@@ -122,9 +132,524 @@ validVST3SearchPaths()
     return res;
 }
 
+
+#ifdef CONFIG_VST3
+
+//-----------------------------------------------------------------------------
+
+using namespace Steinberg;
+
+//-----------------------------------------------------------------------------
+
+class qtractor_vst3_scan_host : public Vst::IHostApplication
+{
+public:
+
+	qtractor_vst3_scan_host ()
+	{
+		FUNKNOWN_CTOR
+	}
+
+	virtual ~qtractor_vst3_scan_host ()
+	{
+		FUNKNOWN_DTOR
+	}
+
+	DECLARE_FUNKNOWN_METHODS
+
+	//--- IHostApplication ----
+	//
+	tresult PLUGIN_API getName (Vst::String128 name) override
+	{
+		//const QString str("qtractor_plugin_scan");
+                const std::string str("qtractor_plugin_scan");
+		//const int nsize = qMin(str.length(), 127);
+                const int nsize = str.length() < 127 ? str.length() : 127;
+		::memcpy(name, str.c_str(), nsize * sizeof(Vst::TChar));
+		name[nsize] = 0;
+		return kResultOk;
+	}
+
+	tresult PLUGIN_API createInstance (TUID /*cid*/, TUID /*_iid*/, void **obj) override
+	{
+		*obj = nullptr;
+		return kResultFalse;
+	}
+
+	FUnknown *get() { return static_cast<Vst::IHostApplication *> (this); }
+};
+
+
+tresult PLUGIN_API qtractor_vst3_scan_host::queryInterface (
+	const char *_iid, void **obj )
+{
+	QUERY_INTERFACE(_iid, obj, FUnknown::iid, IHostApplication)
+	QUERY_INTERFACE(_iid, obj, IHostApplication::iid, IHostApplication)
+
+	*obj = nullptr;
+	return kNoInterface;
+}
+
+
+uint32 PLUGIN_API qtractor_vst3_scan_host::addRef (void)
+	{ return 1;	}
+
+uint32 PLUGIN_API qtractor_vst3_scan_host::release (void)
+	{ return 1; }
+
+
+static qtractor_vst3_scan_host g_vst3HostContext;
+
+
+//----------------------------------------------------------------------
+// class qtractor_vst3_scan::Impl -- VST3 plugin interface impl.
+//
+
+class qtractor_vst3_scan::Impl
+{
+public:
+
+	// Constructor.
+	Impl() : m_module(nullptr), m_component(nullptr), m_controller(nullptr) {}
+
+	// destructor.
+	~Impl() { close_descriptor(); close(); }
+
+	// File loader.
+	bool open ( const std::string& sFilename )
+	{
+		close();
+                
+                DMESSAGE("Open %s", sFilename.c_str());
+
+		m_module = ::dlopen(sFilename.c_str(), RTLD_LOCAL | RTLD_LAZY);
+		if (!m_module)
+                    return false;
+
+		typedef bool (*VST3_ModuleEntry)(void *);
+		const VST3_ModuleEntry module_entry
+			= VST3_ModuleEntry(::dlsym(m_module, "ModuleEntry"));
+		if (module_entry)
+			module_entry(m_module);
+
+		return true;
+	}
+
+	bool open_descriptor ( unsigned long iIndex )
+	{
+		if (!m_module)
+			return false;
+
+		close_descriptor();
+
+		typedef IPluginFactory *(*VST3_GetFactory)();
+		const VST3_GetFactory get_plugin_factory
+			= VST3_GetFactory(::dlsym(m_module, "GetPluginFactory"));
+		if (!get_plugin_factory)
+                {
+
+                    DMESSAGE("qtractor_vst3_scan::Impl[%p]::open_descriptor(%lu)"
+                            " *** Failed to resolve plug-in factory.", this, iIndex);
+
+                    return false;
+		}
+
+		IPluginFactory *factory = get_plugin_factory();
+		if (!factory)
+                {
+                    DMESSAGE("qtractor_vst3_scan::Impl[%p]::open_descriptor(%lu)"
+                            " *** Failed to retrieve plug-in factory.", this, iIndex);
+
+                    return false;
+		}
+
+                PFactoryInfo FI;
+                factory->getFactoryInfo(&FI);
+                
+                m_factoryInfo = FI;
+
+		const int32 nclasses = factory->countClasses();
+
+		unsigned long i = 0;
+
+		for (int32 n = 0; n < nclasses; ++n) {
+
+			PClassInfo classInfo;
+			if (factory->getClassInfo(n, &classInfo) != kResultOk)
+				continue;
+
+			if (::strcmp(classInfo.category, kVstAudioEffectClass))
+				continue;
+
+			if (iIndex == i) {
+
+				m_classInfo = classInfo;
+
+				Vst::IComponent *component = nullptr;
+				if (factory->createInstance(
+						classInfo.cid, Vst::IComponent::iid,
+						(void **) &component) != kResultOk) {
+				#ifdef CONFIG_DEBUG
+					qDebug("qtractor_vst3_scan::Impl[%p]::open_descriptor(%lu)"
+						" *** Failed to create plug-in component.", this, iIndex);
+				#endif
+					return false;
+				}
+
+				m_component = owned(component);
+
+				if (m_component->initialize(g_vst3HostContext.get()) != kResultOk) {
+				#ifdef CONFIG_DEBUG
+					qDebug("qtractor_vst3_scan::Impl[%p]::open_descriptor(%lu)"
+						" *** Failed to initialize plug-in component.", this, iIndex);
+				#endif
+					close_descriptor();
+					return false;
+				}
+
+				Vst::IEditController *controller = nullptr;
+				if (m_component->queryInterface(
+						Vst::IEditController::iid,
+						(void **) &controller) != kResultOk) {
+					TUID controller_cid;
+					if (m_component->getControllerClassId(controller_cid) == kResultOk) {
+						if (factory->createInstance(
+								controller_cid, Vst::IEditController::iid,
+								(void **) &controller) != kResultOk) {
+						#ifdef CONFIG_DEBUG
+							qDebug("qtractor_vst3_scan::Impl[%p]::open_descriptor(%lu)"
+								" *** Failed to create plug-in controller.", this, iIndex);
+						#endif
+						}
+						if (controller &&
+							controller->initialize(g_vst3HostContext.get()) != kResultOk) {
+						#ifdef CONFIG_DEBUG
+							qDebug("qtractor_vst3_scan::Impl[%p]::open_descriptor(%lu)"
+								" *** Failed to initialize plug-in controller.", this, iIndex);
+							controller = nullptr;
+						#endif
+						}
+					}
+				}
+
+				if (controller) m_controller = owned(controller);
+
+				// Connect components...
+				if (m_component && m_controller) {
+					FUnknownPtr<Vst::IConnectionPoint> component_cp(m_component);
+					FUnknownPtr<Vst::IConnectionPoint> controller_cp(m_controller);
+					if (component_cp && controller_cp) {
+						component_cp->connect(controller_cp);
+						controller_cp->connect(component_cp);
+					}
+				}
+
+				return true;
+			}
+
+			++i;
+		}
+
+		return false;
+	}
+
+	void close_descriptor ()
+	{
+		if (m_component && m_controller) {
+			FUnknownPtr<Vst::IConnectionPoint> component_cp(m_component);
+			FUnknownPtr<Vst::IConnectionPoint> controller_cp(m_controller);
+			if (component_cp && controller_cp) {
+				component_cp->disconnect(controller_cp);
+				controller_cp->disconnect(component_cp);
+			}
+		}
+
+		if (m_component && m_controller &&
+			FUnknownPtr<Vst::IEditController> (m_component).getInterface()) {
+			m_controller->terminate();
+		}
+
+		m_controller = nullptr;
+
+		if (m_component) {
+			m_component->terminate();
+			m_component = nullptr;
+		}
+	}
+
+	void close ()
+	{
+		if (!m_module)
+			return;
+
+		typedef void (*VST3_ModuleExit)();
+		const VST3_ModuleExit module_exit
+			= VST3_ModuleExit(::dlsym(m_module, "ModuleExit"));
+		if (module_exit)
+			module_exit();
+
+		::dlclose(m_module);
+		m_module = nullptr;
+	}
+
+	// Accessors.
+	Vst::IComponent *component() const
+		{ return m_component; }
+	Vst::IEditController *controller() const
+		{ return m_controller; }
+
+	const PClassInfo& classInfo() const
+		{ return m_classInfo; }
+        
+        const PFactoryInfo& factoryInfo() const
+		{ return m_factoryInfo; }
+
+	int numChannels ( Vst::MediaType type, Vst::BusDirection direction ) const
+	{
+		if (!m_component)
+			return -1;
+
+		int nchannels = 0;
+
+		const int32 nbuses = m_component->getBusCount(type, direction);
+		for (int32 i = 0; i < nbuses; ++i) {
+			Vst::BusInfo busInfo;
+			if (m_component->getBusInfo(type, direction, i, busInfo) == kResultOk) {
+				if ((busInfo.busType == Vst::kMain) ||
+					(busInfo.flags & Vst::BusInfo::kDefaultActive))
+					nchannels += busInfo.channelCount;
+			}
+		}
+
+		return nchannels;
+	}
+
+private:
+
+	// Instance variables.
+	void *m_module;
+
+	PClassInfo m_classInfo;
+        
+        PFactoryInfo m_factoryInfo;
+
+	IPtr<Vst::IComponent> m_component;
+	IPtr<Vst::IEditController> m_controller;
+};
+
+
+//----------------------------------------------------------------------
+// class qtractor_vst3_scan -- VST3 plugin interface
+//
+
+// Constructor.
+qtractor_vst3_scan::qtractor_vst3_scan (void) : m_pImpl(new Impl())
+{
+	clear();
+}
+
+
+// destructor.
+qtractor_vst3_scan::~qtractor_vst3_scan (void)
+{
+	close_descriptor();
+	close();
+
+	delete m_pImpl;
+}
+
+
+// File loader.
+bool qtractor_vst3_scan::open ( const std::string& sFilename )
+{
+	close();
+
+	DMESSAGE("qtractor_vst3_scan[%p]::open(\"%s\")", this, sFilename.c_str());
+
+	return m_pImpl->open(sFilename);
+}
+
+
+bool qtractor_vst3_scan::open_descriptor ( unsigned long iIndex )
+{
+	close_descriptor();
+
+	DMESSAGE("qtractor_vst3_scan[%p]::open_descriptor( %lu)", this, iIndex);
+
+	if (!m_pImpl->open_descriptor(iIndex))
+		return false;
+
+	const PClassInfo& classInfo = m_pImpl->classInfo();
+        m_sName = classInfo.name;
+        
+        const PFactoryInfo& factoryInfo = m_pImpl->factoryInfo();
+        m_sVendor = factoryInfo.vendor;
+
+//	m_iUniqueID = qHash(QByteArray(classInfo.cid, sizeof(TUID)));
+        m_iUniqueID = atoi(classInfo.cid);
+
+	m_iAudioIns  = m_pImpl->numChannels(Vst::kAudio, Vst::kInput);
+	m_iAudioOuts = m_pImpl->numChannels(Vst::kAudio, Vst::kOutput);
+	m_iMidiIns   = m_pImpl->numChannels(Vst::kEvent, Vst::kInput);
+	m_iMidiOuts  = m_pImpl->numChannels(Vst::kEvent, Vst::kOutput);
+
+	Vst::IEditController *controller = m_pImpl->controller();
+	if (controller) {
+		IPtr<IPlugView> editor
+			= owned(controller->createView(Vst::ViewType::kEditor));
+		m_bEditor = (editor != nullptr);
+	}
+
+	m_iControlIns  = 0;
+	m_iControlOuts = 0;
+
+	if (controller) {
+		const int32 nparams = controller->getParameterCount();
+		for (int32 i = 0; i < nparams; ++i) {
+			Vst::ParameterInfo paramInfo;
+			if (controller->getParameterInfo(i, paramInfo) == kResultOk) {
+				if (paramInfo.flags & Vst::ParameterInfo::kIsReadOnly)
+					++m_iControlOuts;
+				else
+				if (paramInfo.flags & Vst::ParameterInfo::kCanAutomate)
+					++m_iControlIns;
+			}
+		}
+	}
+
+	return true;
+}
+
+// Convert filesystem paths for vst3 to binary file name of vst3
+std::string qtractor_vst3_scan::get_vst3_object_file(std::string filename)
+{
+    std::filesystem::path binaryfilename = filename;
+
+    std::filesystem::path p = filename;
+
+    binaryfilename += CARLA_OS_SEP_STR;
+
+    binaryfilename += "Contents" CARLA_OS_SEP_STR V3_CONTENT_DIR CARLA_OS_SEP_STR;
+    binaryfilename += p.stem();
+
+    binaryfilename += ".so";
+
+    if ( ! std::filesystem::exists(binaryfilename) )
+    {
+        WARNING("Failed to find a suitable VST3 bundle binary %s", binaryfilename.c_str());
+        return "";
+    }
+
+    return binaryfilename.c_str();
+}
+
+
+// File unloader.
+void qtractor_vst3_scan::close_descriptor (void)
+{
+    m_pImpl->close_descriptor();
+
+    clear();
+}
+
+
+void qtractor_vst3_scan::close (void)
+{
+    DMESSAGE("qtractor_vst3_scan[%p]::close()", this);
+
+    m_pImpl->close();
+}
+
+
+// Properties.
+bool qtractor_vst3_scan::isOpen (void) const
+{
+    return (m_pImpl->controller() != nullptr);
+}
+
+
+// Cleaner/wiper.
+void qtractor_vst3_scan::clear (void)
+{
+	m_sName.clear();
+        m_sVendor.clear();
+
+	m_iUniqueID    = 0;
+	m_iControlIns  = 0;
+	m_iControlOuts = 0;
+	m_iAudioIns    = 0;
+	m_iAudioOuts   = 0;
+	m_iMidiIns     = 0;
+	m_iMidiOuts    = 0;
+	m_bEditor      = false;
+}
+
+
+//-------------------------------------------------------------------------
+// qtractor_vst3_scan_file - The main scan procedure.
+//
+
+void qtractor_vst3_scan_file ( const std::string& sFilename, std::list<Plugin_Module::Plugin_Info> & pr )
+{
+	qtractor_vst3_scan plugin;
+        
+        std::string sVst3Object = plugin.get_vst3_object_file(sFilename);
+
+	if (!plugin.open(sVst3Object))
+        {
+            DMESSAGE("Could not open %s", sVst3Object.c_str());
+            return;
+        }
+        
+        unsigned long i = 0;
+	while (plugin.open_descriptor(i))
+        {
+            Plugin_Module::Plugin_Info pi("VST3");
+        
+            pi.name = plugin.name();
+            pi.author = plugin.vendor();
+            pi.category = "Unclassified";   // FIXME
+            pi.audio_inputs = plugin.audioIns();
+            pi.audio_outputs = plugin.audioOuts();
+          //  pi.s_unique_id = plugin.uniqueID();
+            pi.id = plugin.uniqueID();
+
+            pr.push_back(pi);
+
+            plugin.close_descriptor();
+            ++i;
+	}
+#if 0
+	QTextStream sout(stdout);
+	unsigned long i = 0;
+	while (plugin.open_descriptor(i)) {
+		sout << "VST3|";
+		sout << plugin.name() << '|';
+		sout << plugin.audioIns()   << ':' << plugin.audioOuts()   << '|';
+		sout << plugin.midiIns()    << ':' << plugin.midiOuts()    << '|';
+		sout << plugin.controlIns() << ':' << plugin.controlOuts() << '|';
+		QStringList flags;
+		if (plugin.hasEditor())
+			flags.append("GUI");
+		flags.append("EXT");
+		flags.append("RT");
+		sout << flags.join(",") << '|';
+		sout << sFilename << '|' << i << '|';
+		sout << "0x" << QString::number(plugin.uniqueID(), 16) << '\n';
+		plugin.close_descriptor();
+		++i;
+	}
+#endif
+	plugin.close();
+
+	if (i == 0)
+            WARNING("%s plugin file error");
+}
+
+#else   // travesty
+
 using namespace CARLA_BACKEND_NAMESPACE;
 
-//#ifndef USING_JUCE_FOR_VST3
 struct carla_v3_host_application : v3_host_application_cpp {
     carla_v3_host_application()
     {
@@ -319,7 +844,7 @@ const char* PluginCategory2Str(const PluginCategory category) noexcept
 static inline
 const char* getPluginCategoryAsString(const PluginCategory category) noexcept
 {
-    DMESSAGE("CarlaBackend::getPluginCategoryAsString(%i:%s)", category, PluginCategory2Str(category));
+  //  DMESSAGE("CarlaBackend::getPluginCategoryAsString(%i:%s)", category, PluginCategory2Str(category));
 
     switch (category)
     {
@@ -906,9 +1431,8 @@ bool do_vst3_check(lib_t& libHandle,
     v3_exit();
     return false;
 }
-//#endif // ! USING_JUCE_FOR_VST3
 
-
+#endif	// CONFIG_VST3 - travesty
 
 }   // namespace vst3_discovery
 
