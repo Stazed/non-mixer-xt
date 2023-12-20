@@ -135,6 +135,94 @@ validVST3SearchPaths()
 
 #ifdef CONFIG_VST3
 
+static inline
+std::string getCategoryFromName(const std::string &name) noexcept
+{
+    if ( name.empty() )
+        return "Unclassified";
+
+    std::string sname(name);
+
+    std::transform(sname.begin(), sname.end(), sname.begin(), [](unsigned char c){ return std::tolower(c); });
+    
+    // generic tags first
+    if (sname.find("delay") != std::string::npos)
+        return "Time/Delays";
+    if (sname.find("reverb") != std::string::npos)
+        return "Simulators/Reverbs";
+
+    // filter
+    if (sname.find("filter") != std::string::npos)
+        return "Frequency/Filters";
+
+    // distortion
+    if (sname.find("distortion") != std::string::npos)
+        return "Amplitude/Distortions";
+
+    // dynamics
+    if (sname.find("dynamics") != std::string::npos)
+        return "Amplitude/Dynamics";
+    if (sname.find("amplifier") != std::string::npos)
+        return "Amplitude/Dynamics";
+    if (sname.find("compressor") != std::string::npos)
+        return "Amplitude/Dynamics/Compressors";
+    if (sname.find("enhancer") != std::string::npos)
+        return "Amplitude/Dynamics";
+    if (sname.find("exciter") != std::string::npos)
+        return "Amplitude/Dynamics";
+    if (sname.find("gate") != std::string::npos)
+        return "Amplitude/Dynamics";
+    if (sname.find("limiter") != std::string::npos)
+        return "Amplitude/Dynamics/Limiters";
+
+    // modulator
+    if (sname.find("modulator") != std::string::npos)
+        return "Amplitude/Modulators";
+    if (sname.find("chorus") != std::string::npos)
+        return "Amplitude/Modulators";
+    if (sname.find("flanger") != std::string::npos)
+        return "Time/Flangers" ;
+    if (sname.find("phaser") != std::string::npos)
+        return "Time/Phasers";
+    if (sname.find("saturator") != std::string::npos)
+        return "Amplitude/Modulators";
+
+    // utility
+    if (sname.find("utility") != std::string::npos)
+        return "Utilities";
+    if (sname.find("analyzer") != std::string::npos)
+        return "Analyser Plugin";
+    if (sname.find("converter") != std::string::npos)
+        return "Utilities";
+    if (sname.find("deesser") != std::string::npos)
+        return "Utilities";
+    if (sname.find("mixer") != std::string::npos)
+        return "Utilities";
+
+    // common tags
+    if (sname.find("verb") != std::string::npos)
+        return "Simulators/Reverbs";
+
+    if (sname.find("eq") != std::string::npos)
+        return "Frequency/EQs";
+
+    if (sname.find("tool") != std::string::npos)
+        return "Utilities";
+
+    // synth
+    if (sname.find("synth") != std::string::npos)
+        return "Instrument Plugin";
+
+    // other
+    if (sname.find("misc") != std::string::npos)
+        return "Unclassified";
+    if (sname.find("other") != std::string::npos)
+        return "Unclassified";
+
+    return "Unclassified";
+}
+
+
 //-----------------------------------------------------------------------------
 
 using namespace Steinberg;
@@ -599,7 +687,6 @@ void qtractor_vst3_scan::clear (void)
 {
     m_sName.clear();
     m_sVendor.clear();
-    m_sCategory.clear();
     m_sSubCategories.clear();
 
     m_iUniqueID    = 0;
@@ -636,15 +723,16 @@ void qtractor_vst3_scan_file ( const std::string& sFilename, std::list<Plugin_Mo
         
             pi.name = plugin.name();
             pi.author = plugin.vendor();
-            
+
             if (std::strstr(plugin.subCategory().c_str(), "Instrument") != nullptr)
             {
                 pi.category =  "Instrument Plugin";
             }
             else
             {
-                pi.category = "Unclassified";
+                 pi.category = getCategoryFromName(pi.name);
             }
+
             pi.audio_inputs = plugin.audioIns();
             pi.audio_outputs = plugin.audioOuts();
           
@@ -652,7 +740,7 @@ void qtractor_vst3_scan_file ( const std::string& sFilename, std::list<Plugin_Mo
             pi.id = plugin.uniqueID();          // FIXME garbage
 
             pr.push_back(pi);
-            
+
             DMESSAGE("name = %s: category = %s: path = %s: ID = %ul",
                     pi.name.c_str(), pi.category.c_str(), pi.s_unique_id.c_str(), pi.id);
 

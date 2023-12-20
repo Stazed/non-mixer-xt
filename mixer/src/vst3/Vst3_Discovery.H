@@ -83,11 +83,8 @@ public:
         const std::string& vendor() const
                 { return m_sVendor; }
 
-        const std::string& category() const
-                { return m_sCategory; }     // FIXME TODO
-
         const std::string& subCategory() const
-                { return m_sSubCategories; }     // FIXME TODO
+                { return m_sSubCategories; }
 
         unsigned int uniqueID() const
 		{ return m_iUniqueID; }
@@ -125,7 +122,6 @@ private:
 
         std::string   m_sName;
         std::string   m_sVendor;
-        std::string   m_sCategory;
         std::string   m_sSubCategories;
 
 	unsigned long m_iIndex;
