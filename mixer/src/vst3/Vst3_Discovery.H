@@ -27,7 +27,7 @@
 
 #ifdef VST3_SUPPORT
 
-#define CONFIG_VST3 
+#define CONFIG_VST3
 
 #include <filesystem>
 #include <vector>
@@ -81,9 +81,15 @@ public:
 		{ return m_sName; }
 
         const std::string& vendor() const
-                { return m_sVendor;}
+                { return m_sVendor; }
 
-	unsigned int uniqueID() const
+        const std::string& category() const
+                { return m_sCategory; }     // FIXME TODO
+
+        const std::string& subcategory() const
+                { return m_sSubCategories; }     // FIXME TODO
+
+        unsigned int uniqueID() const
 		{ return m_iUniqueID; }
 
 	int controlIns() const
@@ -119,6 +125,8 @@ private:
 
         std::string   m_sName;
         std::string   m_sVendor;
+        std::string   m_sCategory;
+        std::string   m_sSubCategories;
 
 	unsigned long m_iIndex;
 	unsigned int  m_iUniqueID;

@@ -274,9 +274,9 @@ public:
 
 		for (int32 n = 0; n < nclasses; ++n) {
 
-			PClassInfo classInfo;
+                        PClassInfo classInfo;
 			if (factory->getClassInfo(n, &classInfo) != kResultOk)
-				continue;
+                            continue;
 
 			if (::strcmp(classInfo.category, kVstAudioEffectClass))
 				continue;
@@ -398,8 +398,8 @@ public:
 	Vst::IEditController *controller() const
 		{ return m_controller; }
 
-	const PClassInfo& classInfo() const
-		{ return m_classInfo; }
+        const PClassInfo& classInfo() const
+                { return m_classInfo; }
         
         const PFactoryInfo& factoryInfo() const
 		{ return m_factoryInfo; }
@@ -429,7 +429,7 @@ private:
 	// Instance variables.
 	void *m_module;
 
-	PClassInfo m_classInfo;
+        PClassInfo m_classInfo;
         
         PFactoryInfo m_factoryInfo;
 
@@ -464,7 +464,7 @@ bool qtractor_vst3_scan::open ( const std::string& sFilename )
 {
 	close();
 
-	DMESSAGE("qtractor_vst3_scan[%p]::open(\"%s\")", this, sFilename.c_str());
+    //    DMESSAGE("qtractor_vst3_scan[%p]::open(\"%s\")", this, sFilename.c_str());
 
 	return m_pImpl->open(sFilename);
 }
@@ -474,19 +474,19 @@ bool qtractor_vst3_scan::open_descriptor ( unsigned long iIndex )
 {
 	close_descriptor();
 
-	DMESSAGE("qtractor_vst3_scan[%p]::open_descriptor( %lu)", this, iIndex);
+//	DMESSAGE("qtractor_vst3_scan[%p]::open_descriptor( %lu)", this, iIndex);
 
 	if (!m_pImpl->open_descriptor(iIndex))
 		return false;
 
-	const PClassInfo& classInfo = m_pImpl->classInfo();
+        const PClassInfo& classInfo = m_pImpl->classInfo();
         m_sName = classInfo.name;
-        
+
         const PFactoryInfo& factoryInfo = m_pImpl->factoryInfo();
         m_sVendor = factoryInfo.vendor;
 
 //	m_iUniqueID = qHash(QByteArray(classInfo.cid, sizeof(TUID)));
-        m_iUniqueID = atoi(classInfo.cid);
+        m_iUniqueID = atoi(classInfo.cid);  // FIXME 
 
 	m_iAudioIns  = m_pImpl->numChannels(Vst::kAudio, Vst::kInput);
 	m_iAudioOuts = m_pImpl->numChannels(Vst::kAudio, Vst::kOutput);
@@ -555,7 +555,7 @@ void qtractor_vst3_scan::close_descriptor (void)
 
 void qtractor_vst3_scan::close (void)
 {
-    DMESSAGE("qtractor_vst3_scan[%p]::close()", this);
+  //  DMESSAGE("qtractor_vst3_scan[%p]::close()", this);
 
     m_pImpl->close();
 }
@@ -571,17 +571,19 @@ bool qtractor_vst3_scan::isOpen (void) const
 // Cleaner/wiper.
 void qtractor_vst3_scan::clear (void)
 {
-	m_sName.clear();
-        m_sVendor.clear();
+    m_sName.clear();
+    m_sVendor.clear();
+    m_sCategory.clear();
+    m_sSubCategories.clear();
 
-	m_iUniqueID    = 0;
-	m_iControlIns  = 0;
-	m_iControlOuts = 0;
-	m_iAudioIns    = 0;
-	m_iAudioOuts   = 0;
-	m_iMidiIns     = 0;
-	m_iMidiOuts    = 0;
-	m_bEditor      = false;
+    m_iUniqueID    = 0;
+    m_iControlIns  = 0;
+    m_iControlOuts = 0;
+    m_iAudioIns    = 0;
+    m_iAudioOuts   = 0;
+    m_iMidiIns     = 0;
+    m_iMidiOuts    = 0;
+    m_bEditor      = false;
 }
 
 
@@ -608,13 +610,17 @@ void qtractor_vst3_scan_file ( const std::string& sFilename, std::list<Plugin_Mo
         
             pi.name = plugin.name();
             pi.author = plugin.vendor();
-            pi.category = "Unclassified";   // FIXME
+            pi.category = "Unclassified";    // plugin.category();    // FIXME
             pi.audio_inputs = plugin.audioIns();
             pi.audio_outputs = plugin.audioOuts();
-          //  pi.s_unique_id = plugin.uniqueID();
-            pi.id = plugin.uniqueID();
+          
+            pi.s_unique_id = sVst3Object;
+            pi.id = plugin.uniqueID();          // FIXME garbage
 
             pr.push_back(pi);
+            
+            DMESSAGE("name = %s: category = %s: path = %s: ID = %ul",
+                    pi.name.c_str(), pi.category.c_str(), pi.s_unique_id.c_str(), pi.id);
 
             plugin.close_descriptor();
             ++i;
