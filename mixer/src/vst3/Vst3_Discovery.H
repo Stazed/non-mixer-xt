@@ -59,80 +59,80 @@ class qtractor_vst3_scan
 {
 public:
 
-	// Constructor.
-	qtractor_vst3_scan();
+    // Constructor.
+    qtractor_vst3_scan();
 
-	// destructor.
-	~qtractor_vst3_scan();
+    // destructor.
+    ~qtractor_vst3_scan();
 
-	// File loader.
-        bool open(const std::string& sFilename);
-	bool open_descriptor(unsigned long iIndex);
-        std::string get_vst3_object_file(std::string filename);
-        
-	void close_descriptor();
-	void close();
+    // File loader.
+    bool open(const std::string& sFilename);
+    bool open_descriptor(unsigned long iIndex);
+    std::string get_vst3_object_file(std::string filename);
 
-	// Properties.
-	bool isOpen() const;
+    void close_descriptor();
+    void close();
 
-	// Properties.
-        const std::string& name() const
-		{ return m_sName; }
+    // Properties.
+    bool isOpen() const;
 
-        const std::string& vendor() const
-                { return m_sVendor; }
+    // Properties.
+    const std::string& name() const
+        { return m_sName; }
 
-        const std::string& subCategory() const
-                { return m_sSubCategories; }
+    const std::string& vendor() const
+        { return m_sVendor; }
 
-        unsigned int uniqueID() const
-		{ return m_iUniqueID; }
+    const std::string& subCategory() const
+        { return m_sSubCategories; }
 
-	int controlIns() const
-		{ return m_iControlIns; }
-	int controlOuts() const
-		{ return m_iControlOuts; }
+    unsigned int uniqueID() const
+        { return m_iUniqueID; }
 
-	int audioIns() const
-		{ return m_iAudioIns; }
-	int audioOuts() const
-		{ return m_iAudioOuts; }
+    int controlIns() const
+        { return m_iControlIns; }
+    int controlOuts() const
+        { return m_iControlOuts; }
 
-	int midiIns() const
-		{ return m_iMidiIns; }
-	int midiOuts() const
-		{ return m_iMidiOuts; }
+    int audioIns() const
+        { return m_iAudioIns; }
+    int audioOuts() const
+        { return m_iAudioOuts; }
 
-	bool hasEditor() const
-		{ return m_bEditor; }
+    int midiIns() const
+        { return m_iMidiIns; }
+    int midiOuts() const
+        { return m_iMidiOuts; }
+
+    bool hasEditor() const
+        { return m_bEditor; }
 
 protected:
 
-	// Forward decls.
-	class Impl;
+    // Forward decls.
+    class Impl;
 
-	// Cleaner/wiper.
-	void clear();
+    // Cleaner/wiper.
+    void clear();
 
 private:
 
-	// Instance variables.
-	Impl         *m_pImpl;
+    // Instance variables.
+    Impl         *m_pImpl;
 
-        std::string   m_sName;
-        std::string   m_sVendor;
-        std::string   m_sSubCategories;
+    std::string   m_sName;
+    std::string   m_sVendor;
+    std::string   m_sSubCategories;
 
-	unsigned long m_iIndex;
-	unsigned int  m_iUniqueID;
-	int           m_iControlIns;
-	int           m_iControlOuts;
-	int           m_iAudioIns;
-	int           m_iAudioOuts;
-	int           m_iMidiIns;
-	int           m_iMidiOuts;
-	bool          m_bEditor;
+    unsigned long m_iIndex;
+    unsigned int  m_iUniqueID;
+    int           m_iControlIns;
+    int           m_iControlOuts;
+    int           m_iAudioIns;
+    int           m_iAudioOuts;
+    int           m_iMidiIns;
+    int           m_iMidiOuts;
+    bool          m_bEditor;
 };
 
 void qtractor_vst3_scan_file ( const std::string& sFilename, std::list<Plugin_Module::Plugin_Info> & pr );
