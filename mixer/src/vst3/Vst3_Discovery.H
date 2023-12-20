@@ -86,7 +86,7 @@ public:
         const std::string& category() const
                 { return m_sCategory; }     // FIXME TODO
 
-        const std::string& subcategory() const
+        const std::string& subCategory() const
                 { return m_sSubCategories; }     // FIXME TODO
 
         unsigned int uniqueID() const

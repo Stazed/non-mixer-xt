@@ -267,6 +267,9 @@ public:
                 factory->getFactoryInfo(&FI);
                 
                 m_factoryInfo = FI;
+                
+                IPluginFactory2 *factory2 = FUnknownPtr<IPluginFactory2> (factory);
+                IPluginFactory3 *factory3 = FUnknownPtr<IPluginFactory3> (factory);
 
 		const int32 nclasses = factory->countClasses();
 
@@ -275,13 +278,29 @@ public:
 		for (int32 n = 0; n < nclasses; ++n) {
 
                         PClassInfo classInfo;
-			if (factory->getClassInfo(n, &classInfo) != kResultOk)
+                        if (factory->getClassInfo(n, &classInfo) != kResultOk)
                             continue;
 
-			if (::strcmp(classInfo.category, kVstAudioEffectClass))
-				continue;
+                        if (::strcmp(classInfo.category, kVstAudioEffectClass))
+                                continue;
 
-			if (iIndex == i) {
+                        if (iIndex == i)
+                        {
+                                PClassInfoW classInfoW;
+                                if (factory3 && factory3->getClassInfoUnicode(n, &classInfoW) == kResultOk)
+                                {
+                                    m_sSubCategories = classInfoW.subCategories;
+                                } else 
+                                {
+                                    PClassInfo2 classInfo2;
+                                    if (factory2 && factory2->getClassInfo2(n, &classInfo2) == kResultOk)
+                                    {
+                                        m_sSubCategories = classInfo2.subCategories;
+                                    } else
+                                    {
+                                        m_sSubCategories = "Unclassified";
+                                    }
+                                }
 
 				m_classInfo = classInfo;
 
@@ -404,6 +423,9 @@ public:
         const PFactoryInfo& factoryInfo() const
 		{ return m_factoryInfo; }
 
+        std::string subCategory() 
+            { return m_sSubCategories; }
+
 	int numChannels ( Vst::MediaType type, Vst::BusDirection direction ) const
 	{
 		if (!m_component)
@@ -425,6 +447,8 @@ public:
 	}
 
 private:
+
+        std::string   m_sSubCategories;
 
 	// Instance variables.
 	void *m_module;
@@ -484,6 +508,8 @@ bool qtractor_vst3_scan::open_descriptor ( unsigned long iIndex )
 
         const PFactoryInfo& factoryInfo = m_pImpl->factoryInfo();
         m_sVendor = factoryInfo.vendor;
+
+        m_sSubCategories = m_pImpl->subCategory();
 
 //	m_iUniqueID = qHash(QByteArray(classInfo.cid, sizeof(TUID)));
         m_iUniqueID = atoi(classInfo.cid);  // FIXME 
@@ -610,7 +636,15 @@ void qtractor_vst3_scan_file ( const std::string& sFilename, std::list<Plugin_Mo
         
             pi.name = plugin.name();
             pi.author = plugin.vendor();
-            pi.category = "Unclassified";    // plugin.category();    // FIXME
+            
+            if (std::strstr(plugin.subCategory().c_str(), "Instrument") != nullptr)
+            {
+                pi.category =  "Instrument Plugin";
+            }
+            else
+            {
+                pi.category = "Unclassified";
+            }
             pi.audio_inputs = plugin.audioIns();
             pi.audio_outputs = plugin.audioOuts();
           
