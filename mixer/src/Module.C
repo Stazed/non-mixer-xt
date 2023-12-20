@@ -44,6 +44,9 @@
 #ifdef LADSPA_SUPPORT
 #include "ladspa/LADSPA_Plugin.H"
 #endif
+#ifdef VST3_SUPPORT
+#include "vst3/VST3_Plugin.H"
+#endif
 
 #include "AUX_Module.H"
 #include "Spatializer_Module.H"
@@ -1187,7 +1190,21 @@ Module::insert_menu_cb ( const Fl_Menu_ *menu )
                 break;
             }
 #endif  // CLAP_SUPPORT
-            // TODO other types here
+#ifdef VST3_SUPPORT
+            case VST3:
+            {
+                VST3_Plugin *m = new VST3_Plugin();
+                if(!m->load_plugin( picked ))
+                {
+                    fl_alert( "%s could not be loaded", m->base_label() );
+                    delete m;
+                    return;
+                }
+
+                mod = m;
+                break;
+            }
+#endif  // VST3_SUPPORT
             default:
             {
                 return;

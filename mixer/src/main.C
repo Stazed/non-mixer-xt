@@ -55,6 +55,9 @@
 #ifdef CLAP_SUPPORT
 #include "clap/CLAP_Plugin.H"
 #endif
+#ifdef VST3_SUPPORT
+#include "vst3/VST3_Plugin.H"
+#endif
 
 #include "JACK_Module.H"
 #include "Meter_Module.H"
@@ -189,6 +192,9 @@ main ( int argc, char **argv )
 #endif
 #ifdef LADSPA_SUPPORT
     LOG_REGISTER_CREATE( LADSPA_Plugin );
+#endif
+#ifdef VST3_SUPPORT
+    LOG_REGISTER_CREATE( VST3_Plugin );
 #endif
     LOG_REGISTER_CREATE( Gain_Module );
     LOG_REGISTER_CREATE( Spatializer_Module );
