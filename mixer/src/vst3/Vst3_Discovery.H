@@ -89,15 +89,15 @@ public:
     unsigned int uniqueID() const
         { return m_iUniqueID; }
 
-    int controlIns() const
-        { return m_iControlIns; }
-    int controlOuts() const
-        { return m_iControlOuts; }
-
     int audioIns() const
         { return m_iAudioIns; }
     int audioOuts() const
         { return m_iAudioOuts; }
+#if 0
+    int controlIns() const
+        { return m_iControlIns; }
+    int controlOuts() const
+        { return m_iControlOuts; }
 
     int midiIns() const
         { return m_iMidiIns; }
@@ -106,6 +106,7 @@ public:
 
     bool hasEditor() const
         { return m_bEditor; }
+#endif
 
 protected:
 
@@ -126,13 +127,15 @@ private:
 
     unsigned long m_iIndex;
     unsigned int  m_iUniqueID;
-    int           m_iControlIns;
-    int           m_iControlOuts;
     int           m_iAudioIns;
     int           m_iAudioOuts;
+#if 0
+    int           m_iControlIns;
+    int           m_iControlOuts;
     int           m_iMidiIns;
     int           m_iMidiOuts;
     bool          m_bEditor;
+#endif
 };
 
 void qtractor_vst3_scan_file ( const std::string& sFilename, std::list<Plugin_Module::Plugin_Info> & pr );

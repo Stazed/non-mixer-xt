@@ -250,7 +250,7 @@ public:
     tresult PLUGIN_API getName (Vst::String128 name) override
     {
         //const QString str("qtractor_plugin_scan");
-        const std::string str("qtractor_plugin_scan");
+        const std::string str("non-mixer-xt");
         //const int nsize = qMin(str.length(), 127);
         const int nsize = str.length() < 127 ? str.length() : 127;
         ::memcpy(name, str.c_str(), nsize * sizeof(Vst::TChar));
@@ -327,7 +327,7 @@ public:
     bool open_descriptor ( unsigned long iIndex )
     {
         if (!m_module)
-                return false;
+            return false;
 
         close_descriptor();
 
@@ -563,7 +563,6 @@ private:
     IPtr<Vst::IEditController> m_controller;
 };
 
-
 //----------------------------------------------------------------------
 // class qtractor_vst3_scan -- VST3 plugin interface
 //
@@ -573,7 +572,6 @@ qtractor_vst3_scan::qtractor_vst3_scan (void) : m_pImpl(new Impl())
 {
     clear();
 }
-
 
 // destructor.
 qtractor_vst3_scan::~qtractor_vst3_scan (void)
@@ -593,7 +591,6 @@ bool qtractor_vst3_scan::open ( const std::string& sFilename )
 
     return m_pImpl->open(sFilename);
 }
-
 
 bool qtractor_vst3_scan::open_descriptor ( unsigned long iIndex )
 {
@@ -617,6 +614,8 @@ bool qtractor_vst3_scan::open_descriptor ( unsigned long iIndex )
 
     m_iAudioIns  = m_pImpl->numChannels(Vst::kAudio, Vst::kInput);
     m_iAudioOuts = m_pImpl->numChannels(Vst::kAudio, Vst::kOutput);
+
+#if 0
     m_iMidiIns   = m_pImpl->numChannels(Vst::kEvent, Vst::kInput);
     m_iMidiOuts  = m_pImpl->numChannels(Vst::kEvent, Vst::kOutput);
 
@@ -647,7 +646,7 @@ bool qtractor_vst3_scan::open_descriptor ( unsigned long iIndex )
             }
         }
     }
-
+#endif
     return true;
 }
 
@@ -707,13 +706,15 @@ void qtractor_vst3_scan::clear (void)
     m_sSubCategories.clear();
 
     m_iUniqueID    = 0;
-    m_iControlIns  = 0;
-    m_iControlOuts = 0;
     m_iAudioIns    = 0;
     m_iAudioOuts   = 0;
+#if 0
+    m_iControlIns  = 0;
+    m_iControlOuts = 0;
     m_iMidiIns     = 0;
     m_iMidiOuts    = 0;
     m_bEditor      = false;
+#endif
 }
 
 
