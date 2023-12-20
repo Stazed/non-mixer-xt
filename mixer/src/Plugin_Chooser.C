@@ -454,6 +454,16 @@ Plugin_Chooser::load_favorites ( void )
                     }
                 }
 #endif
+#ifdef VST3_SUPPORT
+                if( !strcmp(type, "VST3") )
+                {
+                    if( !strcmp(c_unique_id, (*i).s_unique_id.c_str()) )
+                    {
+                        (*i).favorite = 1;
+                        favorites++;
+                    }
+                }
+#endif
                 // TODO other types
             }
         }
