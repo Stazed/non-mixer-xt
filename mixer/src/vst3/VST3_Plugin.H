@@ -31,6 +31,25 @@
 #include "../Plugin_Module.H"
 #include "../x11/X11PluginUI.H"
 
+#include "pluginterfaces/vst/ivsthostapplication.h"
+//#include "pluginterfaces/vst/ivstpluginterfacesupport.h"
+
+#include "pluginterfaces/vst/ivstaudioprocessor.h"
+#include "pluginterfaces/vst/ivsteditcontroller.h"
+
+//#include "pluginterfaces/vst/ivstprocesscontext.h"
+//#include "pluginterfaces/vst/ivstparameterchanges.h"
+//#include "pluginterfaces/vst/ivstmidicontrollers.h"
+//#include "pluginterfaces/vst/ivstevents.h"
+#include "pluginterfaces/vst/ivstunits.h"
+
+//#include "pluginterfaces/gui/iplugview.h"
+
+//#include "pluginterfaces/base/ibstream.h"
+//#include "pluginterfaces/base/ipluginbase.h"
+
+using namespace Steinberg;
+
 class VST3_Plugin : public Plugin_Module,
         private X11PluginUI::Callback
 {
@@ -62,6 +81,21 @@ public:
     VST3_Plugin();
     virtual ~VST3_Plugin();
 private:
+
+    // Instance variables.
+    void *m_module;
+    
+    IPtr<Vst::IComponent> m_component;
+    IPtr<Vst::IEditController> m_controller;
+
+    IPtr<Vst::IUnitInfo> m_unitInfos;
+    std::string _plugin_filename;
+
+    // File loader.
+    bool open(const std::string& sFilename);
+    bool open_descriptor(unsigned long iIndex);
+
+    void close_descriptor();
     
     
 protected:
