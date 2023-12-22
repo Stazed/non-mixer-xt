@@ -29,6 +29,7 @@
 #include <dlfcn.h>      // dlopen, dlerror, dlsym
 #include <unordered_map>
 
+#include "../../../nonlib/dsp.h"
 #include "VST3_Plugin.H"
 #include "../Chain.H"
 
@@ -1037,21 +1038,97 @@ VST3_Plugin::load_plugin ( Module::Picked picked )
 }
 
 bool
-VST3_Plugin::configure_inputs ( int )
+VST3_Plugin::configure_inputs ( int n )
 {
-    return false;
+    /* The synth case - no inputs and JACK module has one */
+    if( ninputs() == 0 && n == 1)
+    {
+        _crosswire = false;
+    }
+    else if ( ninputs() != n )
+    {
+        _crosswire = false;
+
+        if ( 1 == n && plugin_ins() > 1 )
+        {
+            DMESSAGE( "Cross-wiring plugin inputs" );
+            _crosswire = true;
+
+            audio_input.clear();
+
+            for ( int i = n; i--; )
+                audio_input.push_back( Port( this, Port::INPUT, Port::AUDIO ) );
+        }
+
+        else if ( n == plugin_ins() )
+        {
+            DMESSAGE( "Plugin input configuration is a perfect match" );
+        }
+        else
+        {
+            DMESSAGE( "Unsupported input configuration" );
+            return false;
+        }
+    }
+
+    return true;
+
 }
 
 void
 VST3_Plugin::handle_port_connection_change ( void )
 {
-    
+    if ( loaded() )
+    {
+//        _audio_ins.channel_count = plugin_ins();
+//        _audio_outs.channel_count = plugin_outs();
+
+        if ( _crosswire )
+        {
+            for ( int i = 0; i < plugin_ins(); ++i )
+                set_input_buffer( i, audio_input[0].buffer() );
+        }
+        else
+        {
+            for ( unsigned int i = 0; i < audio_input.size(); ++i )
+                set_input_buffer( i, audio_input[i].buffer() );
+        }
+
+        for ( unsigned int i = 0; i < audio_output.size(); ++i )
+            set_output_buffer( i, audio_output[i].buffer() );
+    }
 }
 
 void
 VST3_Plugin::handle_chain_name_changed ( void )
 {
-    
+    Module::handle_chain_name_changed();
+
+    if ( ! chain()->strip()->group()->single() )
+    {
+        for ( unsigned int i = 0; i < midi_input.size(); i++ )
+        {
+            if(!(midi_input[i].type() == Port::MIDI))
+                continue;
+
+            if(midi_input[i].jack_port())
+            {
+                midi_input[i].jack_port()->trackname( chain()->name() );
+                midi_input[i].jack_port()->rename();
+            }
+        }
+        for ( unsigned int i = 0; i < midi_output.size(); i++ )
+        {
+            if(!(midi_output[i].type() == Port::MIDI))
+                continue;
+
+            if(midi_output[i].jack_port())
+            {
+                midi_output[i].jack_port()->trackname( chain()->name() );
+                midi_output[i].jack_port()->rename();
+            }
+        }
+    }
 }
 
 void
@@ -1075,13 +1152,69 @@ VST3_Plugin::bypass ( bool v )
 void
 VST3_Plugin::freeze_ports ( void )
 {
-    
+    Module::freeze_ports();
+
+    for ( unsigned int i = 0; i < midi_input.size(); ++i )
+    {
+        if(!(midi_input[i].type() == Port::MIDI))
+            continue;
+
+        if(midi_input[i].jack_port())
+        {
+            midi_input[i].jack_port()->freeze();
+            midi_input[i].jack_port()->shutdown();
+        }
+    }
+
+    for ( unsigned int i = 0; i < midi_output.size(); ++i )
+    {
+        if(!(midi_output[i].type() == Port::MIDI))
+            continue;
+
+        if(midi_output[i].jack_port())
+        {
+            midi_output[i].jack_port()->freeze();
+            midi_output[i].jack_port()->shutdown();
+        }
+    } 
 }
 
 void
 VST3_Plugin::thaw_ports ( void )
 {
-    
+    Module::thaw_ports();
+
+    const char *trackname = chain()->strip()->group()->single() ? NULL : chain()->name();
+
+    for ( unsigned int i = 0; i < midi_input.size(); ++i )
+    {   
+        /* if we're entering a group we need to add the chain name
+         * prefix and if we're leaving one, we need to remove it */
+        if(!(midi_input[i].type() == Port::MIDI))
+            continue;
+
+        if(midi_input[i].jack_port())
+        {
+            midi_input[i].jack_port()->client( chain()->client() );
+            midi_input[i].jack_port()->trackname( trackname );
+            midi_input[i].jack_port()->thaw();
+        }
+    }
+
+    for ( unsigned int i = 0; i < midi_output.size(); ++i )
+    {
+        /* if we're entering a group we won't actually be using our
+         * JACK output ports anymore, just mixing into the group outputs */
+        if(!(midi_output[i].type() == Port::MIDI))
+            continue;
+
+        if(midi_output[i].jack_port())
+        {
+            midi_output[i].jack_port()->client( chain()->client() );
+            midi_output[i].jack_port()->trackname( trackname );
+            midi_output[i].jack_port()->thaw();
+        }
+    }
 }
 
 void
@@ -1155,9 +1288,26 @@ VST3_Plugin::get_module_latency ( void ) const
 }
 
 void
-VST3_Plugin::process ( nframes_t )
+VST3_Plugin::process ( nframes_t nframes )
 {
-    
+    handle_port_connection_change();
+
+    if ( unlikely( bypass() ) )
+    {
+        /* If this is a mono to stereo plugin, then duplicate the input channel... */
+        /* There's not much we can do to automatically support other configurations. */
+        if ( ninputs() == 1 && noutputs() == 2 )
+        {
+            buffer_copy( static_cast<sample_t*>( audio_output[1].buffer() ),
+                    static_cast<sample_t*>( audio_input[0].buffer() ), nframes );
+        }
+
+        _latency = 0;
+    }
+    else
+    {
+        
+    }
 }
 
 void
@@ -1440,6 +1590,27 @@ VST3_Plugin::close_descriptor()
         if (module_exit)
             module_exit();
     }
+}
+
+void
+VST3_Plugin::set_input_buffer ( int n, void *buf )
+{
+    _audio_in_buffers[n] = static_cast<float*>( buf );
+}
+
+void
+VST3_Plugin::set_output_buffer ( int n, void *buf )
+{
+    _audio_out_buffers[n] = static_cast<float*>( buf );
+}
+
+bool
+VST3_Plugin::loaded ( void ) const
+{
+    if ( m_module )
+        return true;
+
+    return false;
 }
 
 int

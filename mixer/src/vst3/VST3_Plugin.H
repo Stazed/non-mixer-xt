@@ -112,6 +112,12 @@ private:
     bool open_descriptor(unsigned long iIndex);
 
     void close_descriptor();
+    
+    // Process functions
+    void set_input_buffer ( int n, void *buf );
+    void set_output_buffer ( int n, void *buf );
+    bool loaded ( void ) const;
+    bool process_reset();
 
     // Initialize create
     void initialize_plugin();
