@@ -90,8 +90,24 @@ private:
     
     IPtr<Vst::IComponent> m_component;
     IPtr<Vst::IEditController> m_controller;
-
     IPtr<Vst::IUnitInfo> m_unitInfos;
+    
+    Vst::IAudioProcessor *m_processor;
+
+    volatile bool m_processing;
+
+//    ParamChanges m_params_in;
+
+//    EventList m_events_in;
+//    EventList m_events_out;
+
+    // Processor buffers.
+    Vst::AudioBusBuffers m_buffers_in;
+    Vst::AudioBusBuffers m_buffers_out;
+
+    // Processor data.
+    Vst::ProcessData m_process_data;
+
     std::string _plugin_filename;
     std::string m_sName;
 
@@ -102,7 +118,8 @@ private:
     
     float ** _audio_in_buffers;
     float ** _audio_out_buffers;
-    
+
+    bool _activated;
     bool m_bRealtime;
     bool m_bConfigure;
     bool m_bEditor;
@@ -121,11 +138,16 @@ private:
 
     // Initialize create
     void initialize_plugin();
+    void clear_plugin();
     int numChannels (Vst::MediaType type, Vst::BusDirection direction ) const;
     
     void create_audio_ports();
     void create_midi_ports();
     void create_control_ports();
+    void activate ( void );
+    void deactivate ( void );
+    void vst3_activate ( Vst::IComponent *component,
+	Vst::MediaType type, Vst::BusDirection direction, bool state );
     void add_port ( const Port &p ) override;
     
     

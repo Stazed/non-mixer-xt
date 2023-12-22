@@ -963,6 +963,8 @@ VST3_Plugin::VST3_Plugin() :
     m_component(nullptr),
     m_controller(nullptr),
     m_unitInfos(nullptr),
+    m_processor(nullptr),
+    m_processing(false),
     _plugin_filename(),
     m_iAudioIns(0),
     m_iAudioOuts(0),
@@ -970,6 +972,7 @@ VST3_Plugin::VST3_Plugin() :
     m_iMidiOuts(0),
     _audio_in_buffers(nullptr),
     _audio_out_buffers(nullptr),
+    _activated(false),
     m_bRealtime(false),
     m_bConfigure(false),
     m_bEditor(false)
@@ -1004,6 +1007,8 @@ VST3_Plugin::load_plugin ( Module::Picked picked )
     
     base_label(m_sName.c_str());
     
+    initialize_plugin();
+    
 //    close();
 
 //    if (!m_pImpl->open(index()))
@@ -1021,10 +1026,11 @@ VST3_Plugin::load_plugin ( Module::Picked picked )
 
 //    Vst::IEditController *controller = m_pImpl->controller();
     Vst::IEditController *controller = m_controller;
-    if (controller) {
-            IPtr<IPlugView> editor =
-                    owned(controller->createView(Vst::ViewType::kEditor));
-            m_bEditor = (editor != nullptr);
+    if (controller)
+    {
+        IPtr<IPlugView> editor =
+                owned(controller->createView(Vst::ViewType::kEditor));
+        m_bEditor = (editor != nullptr);
     }
 
     m_bRealtime  = true;
@@ -1033,6 +1039,12 @@ VST3_Plugin::load_plugin ( Module::Picked picked )
     create_audio_ports();
     create_midi_ports();
     create_control_ports();
+    
+    if ( !process_reset() )
+    {
+        DMESSAGE("Process reset failed!");
+        return false;
+    }
 
     return true;
 }
@@ -1146,7 +1158,13 @@ VST3_Plugin::resize_buffers ( nframes_t buffer_size )
 void
 VST3_Plugin::bypass ( bool v )
 {
-    
+    if ( v != bypass() )
+    {
+        if ( v )
+            deactivate();
+        else
+            activate();
+    }
 }
 
 void
@@ -1306,7 +1324,27 @@ VST3_Plugin::process ( nframes_t nframes )
     }
     else
     {
-        
+        if (!m_processor)
+            return;
+
+        if (!m_processing)
+            return;
+
+    //	m_params_out.clear();
+
+//        m_events_out.clear();
+
+//        m_buffers_in.channelBuffers32 = ins;
+//        m_buffers_out.channelBuffers32 = outs;
+        m_process_data.numSamples = nframes;
+
+        if (m_processor->process(m_process_data) != kResultOk)
+        {
+            DMESSAGE("[%p]::process() FAILED!", this);
+        }
+
+//        m_events_in.clear();
+//        m_params_in.clear();
     }
 }
 
@@ -1596,12 +1634,14 @@ void
 VST3_Plugin::set_input_buffer ( int n, void *buf )
 {
     _audio_in_buffers[n] = static_cast<float*>( buf );
+    m_buffers_in.channelBuffers32 = _audio_in_buffers;
 }
 
 void
 VST3_Plugin::set_output_buffer ( int n, void *buf )
 {
     _audio_out_buffers[n] = static_cast<float*>( buf );
+    m_buffers_out.channelBuffers32 = _audio_out_buffers;
 }
 
 bool
@@ -1611,6 +1651,186 @@ VST3_Plugin::loaded ( void ) const
         return true;
 
     return false;
+}
+
+bool
+VST3_Plugin::process_reset()
+{
+    if (!m_processor)
+        return false;
+
+    deactivate();
+
+    // Initialize running state...
+//    m_params_in.clear();
+
+//    m_events_in.clear();
+//    m_events_out.clear();
+
+    Vst::ProcessSetup setup;
+//    const bool bFreewheel    = pAudioEngine->isFreewheel();
+//    setup.processMode        = (bFreewheel ? Vst::kOffline :Vst::kRealtime);
+    setup.processMode        = Vst::kRealtime;
+    setup.symbolicSampleSize = Vst::kSample32;
+    setup.maxSamplesPerBlock = buffer_size();      // FIXME Check
+    setup.sampleRate         = float(sample_rate());
+//    setup.maxSamplesPerBlock = pAudioEngine->bufferSizeEx();
+//    setup.sampleRate         = float(pAudioEngine->sampleRate());
+
+    if (m_processor->setupProcessing(setup) != kResultOk)
+        return false;
+
+    // Setup processor audio I/O buffers...
+    m_buffers_in.silenceFlags      = 0;
+    m_buffers_in.numChannels       = m_iAudioIns;
+    m_buffers_in.channelBuffers32  = nullptr;
+
+    m_buffers_out.silenceFlags     = 0;
+    m_buffers_out.numChannels      = m_iAudioOuts;
+    m_buffers_out.channelBuffers32 = nullptr;
+
+    // Setup processor data struct...
+    m_process_data.numSamples             = buffer_size();
+    //m_process_data.numSamples             = pAudioEngine->blockSize();
+    m_process_data.symbolicSampleSize     = Vst::kSample32;
+
+    if (m_iAudioIns > 0) {
+            m_process_data.numInputs          = 1;
+            m_process_data.inputs             = &m_buffers_in;
+    } else {
+            m_process_data.numInputs          = 0;
+            m_process_data.inputs             = nullptr;
+    }
+
+    if (m_iAudioOuts > 0) {
+            m_process_data.numOutputs         = 1;
+            m_process_data.outputs            = &m_buffers_out;
+    } else {
+            m_process_data.numOutputs         = 0;
+            m_process_data.outputs            = nullptr;
+    }
+
+    m_process_data.processContext         = g_hostContext.processContext();
+//    m_process_data.inputEvents            = &m_events_in;
+//    m_process_data.outputEvents           = &m_events_out;
+//    m_process_data.inputParameterChanges  = &m_params_in;
+    m_process_data.outputParameterChanges = nullptr; //&m_params_out;
+
+    activate();
+
+    return true;
+}
+
+void
+VST3_Plugin::initialize_plugin()
+{
+    clear_plugin();
+
+#if 0//HACK: Plugin-type might be already open via plugin-factory...
+    if (!pType->open())
+            return;
+#endif
+    Vst::IComponent *component = m_component;
+    if (!component)
+            return;
+
+    Vst::IEditController *controller = m_controller;
+    if (controller)
+    {
+//        m_handler = owned(NEW Handler(m_pPlugin));
+//        controller->setComponentHandler(m_handler);
+    }
+
+    m_processor = FUnknownPtr<Vst::IAudioProcessor> (component);
+#if 0
+    if (controller)
+    {
+            const int32 nparams = controller->getParameterCount();
+            for (int32 i = 0; i < nparams; ++i) {
+                    Vst::ParameterInfo paramInfo;
+                    ::memset(&paramInfo, 0, sizeof(Vst::ParameterInfo));
+                    if (controller->getParameterInfo(i, paramInfo) == kResultOk) {
+                            if (m_programParamInfo.unitId != Vst::UnitID(-1))
+                                    continue;
+                            if (paramInfo.flags & Vst::ParameterInfo::kIsProgramChange)
+                                    m_programParamInfo = paramInfo;
+                    }
+            }
+            if (m_programParamInfo.unitId != Vst::UnitID(-1)) {
+                    Vst::IUnitInfo *unitInfos = pType->impl()->unitInfos();
+                    if (unitInfos) {
+                            const int32 nunits = unitInfos->getUnitCount();
+                            for (int32 i = 0; i < nunits; ++i) {
+                                    Vst::UnitInfo unitInfo;
+                                    if (unitInfos->getUnitInfo(i, unitInfo) != kResultOk)
+                                            continue;
+                                    if (unitInfo.id != m_programParamInfo.unitId)
+                                            continue;
+                                    const int32 nlists = unitInfos->getProgramListCount();
+                                    for (int32 j = 0; j < nlists; ++j) {
+                                            Vst::ProgramListInfo programListInfo;
+                                            if (unitInfos->getProgramListInfo(j, programListInfo) != kResultOk)
+                                                    continue;
+                                            if (programListInfo.id != unitInfo.programListId)
+                                                    continue;
+                                            const int32 nprograms = programListInfo.programCount;
+                                            for (int32 k = 0; k < nprograms; ++k) {
+                                                    Vst::String128 name;
+                                                    if (unitInfos->getProgramName(
+                                                                    programListInfo.id, k, name) == kResultOk)
+                                                            m_programs.append(fromTChar(name));
+                                            }
+                                            break;
+                                    }
+                            }
+                    }
+            }
+            if (m_programs.isEmpty() && m_programParamInfo.stepCount > 0) {
+                    const int32 nprograms = m_programParamInfo.stepCount + 1;
+                    for (int32 k = 0; k < nprograms; ++k) {
+                            const Vst::ParamValue value
+                                    = Vst::ParamValue(k)
+                                    / Vst::ParamValue(m_programParamInfo.stepCount);
+                            Vst::String128 name;
+                            if (controller->getParamStringByValue(
+                                            m_programParamInfo.id, value, name) == kResultOk)
+                                    m_programs.append(fromTChar(name));
+                    }
+            }
+    }
+
+    if (controller)
+    {
+            const int32 nports = pType->midiIns();
+            FUnknownPtr<Vst::IMidiMapping> midiMapping(controller);
+            if (midiMapping && nports > 0) {
+                    for (int16 i = 0; i < Vst::kCountCtrlNumber; ++i) { // controllers...
+                            for (int32 j = 0; j < nports; ++j) { // ports...
+                                    for (int16 k = 0; k < 16; ++k) { // channels...
+                                            Vst::ParamID id = Vst::kNoParamId;
+                                            if (midiMapping->getMidiControllerAssignment(
+                                                            j, k, Vst::CtrlNumber(i), id) == kResultOk) {
+                                                    m_midiMap.insert(MidiMapKey(j, k, i), id);
+                                            }
+                                    }
+                            }
+                    }
+            }
+    }
+#endif
+}
+
+void
+VST3_Plugin::clear_plugin()
+{
+#if 0
+    ::memset(&m_programParamInfo, 0, sizeof(Vst::ParameterInfo));
+    m_programParamInfo.id = Vst::kNoParamId;
+    m_programParamInfo.unitId = Vst::UnitID(-1);
+    m_programs.clear();
+
+    m_midiMap.clear();
+#endif
 }
 
 int
@@ -1796,6 +2016,102 @@ VST3_Plugin::create_control_ports()
 }
 
 void
+VST3_Plugin::activate ( void )
+{
+    if ( !loaded() )
+        return;
+    
+    if (m_processing)
+        return;
+
+    DMESSAGE( "Activating plugin \"%s\"", label() );
+
+    if ( !bypass() )
+        FATAL( "Attempt to activate already active plugin" );
+
+    if ( chain() )
+        chain()->client()->lock();
+
+    *_bypass = 0.0f;
+
+    if ( ! _activated )
+    {
+        _activated = true;
+
+	Vst::IComponent *component = m_component;
+	if (component && m_processor)
+        {
+            vst3_activate(component, Vst::kAudio, Vst::kInput,  true);
+            vst3_activate(component, Vst::kAudio, Vst::kOutput, true);
+            vst3_activate(component, Vst::kEvent, Vst::kInput,  true);
+            vst3_activate(component, Vst::kEvent, Vst::kOutput, true);
+            component->setActive(true);
+            m_processor->setProcessing(true);
+            g_hostContext.processAddRef();
+            m_processing = true;
+        }
+    }
+
+    if ( chain() )
+        chain()->client()->unlock();
+}
+
+void
+VST3_Plugin::deactivate ( void )
+{
+    if ( !loaded() )
+        return;
+    
+    if (!m_processing)
+        return;
+
+    DMESSAGE( "Deactivating plugin \"%s\"", label() );
+
+    if ( chain() )
+        chain()->client()->lock();
+
+    *_bypass = 1.0f;
+
+   if ( _activated )
+   {
+        _activated = false;
+        Vst::IComponent *component = m_component;
+        if (component && m_processor)
+        {
+            g_hostContext.processReleaseRef();
+            m_processor->setProcessing(false);
+            component->setActive(false);
+            m_processing = false;
+            vst3_activate(component, Vst::kEvent, Vst::kOutput, false);
+            vst3_activate(component, Vst::kEvent, Vst::kInput,  false);
+            vst3_activate(component, Vst::kAudio, Vst::kOutput, false);
+            vst3_activate(component, Vst::kAudio, Vst::kInput,  false);
+        }
+   }
+
+    if ( chain() )
+        chain()->client()->unlock();
+}
+
+void
+VST3_Plugin::vst3_activate ( Vst::IComponent *component,
+	Vst::MediaType type, Vst::BusDirection direction, bool state )
+{
+    const int32 nbuses = component->getBusCount(type, direction);
+    for (int32 i = 0; i < nbuses; ++i)
+    {
+        Vst::BusInfo busInfo;
+        if (component->getBusInfo(type, direction, i, busInfo) == kResultOk)
+        {
+            if (busInfo.flags & Vst::BusInfo::kDefaultActive)
+            {
+                component->activateBus(type, direction, i, state);
+            }
+        }
+    }
+}
+
+void
 VST3_Plugin::add_port ( const Port &p )
 {
     Module::add_port(p);
@@ -1805,125 +2121,6 @@ VST3_Plugin::add_port ( const Port &p )
     else if ( p.type() == Port::MIDI && p.direction() == Port::OUTPUT )
         midi_output.push_back( p );
 }
-
-#if 0
-// Plugin module initializer.
-void
-VST3_Plugin::initialize ()
-{
-    clear();
-
-    qtractorVst3PluginType *pType
-            = static_cast<qtractorVst3PluginType *> (m_pPlugin->type());
-    if (pType == nullptr)
-            return;
-#if 0//HACK: Plugin-type might be already open via plugin-factory...
-    if (!pType->open())
-            return;
-#endif
-    Vst::IComponent *component = pType->impl()->component();
-    if (!component)
-        return;
-
-    Vst::IEditController *controller = pType->impl()->controller();
-    if (controller)
-    {
-        m_handler = owned(NEW Handler(m_pPlugin));
-        controller->setComponentHandler(m_handler);
-    }
-
-    m_processor = FUnknownPtr<Vst::IAudioProcessor> (component);
-
-    if (controller)
-    {
-        const int32 nparams = controller->getParameterCount();
-        for (int32 i = 0; i < nparams; ++i)
-        {
-            Vst::ParameterInfo paramInfo;
-            ::memset(&paramInfo, 0, sizeof(Vst::ParameterInfo));
-            if (controller->getParameterInfo(i, paramInfo) == kResultOk)
-            {
-                if (m_programParamInfo.unitId != Vst::UnitID(-1))
-                    continue;
-                if (paramInfo.flags & Vst::ParameterInfo::kIsProgramChange)
-                    m_programParamInfo = paramInfo;
-            }
-        }
-        if (m_programParamInfo.unitId != Vst::UnitID(-1))
-        {
-            Vst::IUnitInfo *unitInfos = pType->impl()->unitInfos();
-            if (unitInfos)
-            {
-                const int32 nunits = unitInfos->getUnitCount();
-                for (int32 i = 0; i < nunits; ++i)
-                {
-                    Vst::UnitInfo unitInfo;
-                    if (unitInfos->getUnitInfo(i, unitInfo) != kResultOk)
-                            continue;
-                    if (unitInfo.id != m_programParamInfo.unitId)
-                            continue;
-                    const int32 nlists = unitInfos->getProgramListCount();
-                    for (int32 j = 0; j < nlists; ++j)
-                    {
-                        Vst::ProgramListInfo programListInfo;
-                        if (unitInfos->getProgramListInfo(j, programListInfo) != kResultOk)
-                                continue;
-                        if (programListInfo.id != unitInfo.programListId)
-                                continue;
-                        const int32 nprograms = programListInfo.programCount;
-                        for (int32 k = 0; k < nprograms; ++k)
-                        {
-                            Vst::String128 name;
-                            if (unitInfos->getProgramName(
-                                            programListInfo.id, k, name) == kResultOk)
-                                m_programs.append(fromTChar(name));
-                        }
-                        break;
-                    }
-                }
-            }
-        }
-        if (m_programs.isEmpty() && m_programParamInfo.stepCount > 0)
-        {
-            const int32 nprograms = m_programParamInfo.stepCount + 1;
-            for (int32 k = 0; k < nprograms; ++k)
-            {
-                const Vst::ParamValue value
-                        = Vst::ParamValue(k)
-                        / Vst::ParamValue(m_programParamInfo.stepCount);
-                Vst::String128 name;
-                if (controller->getParamStringByValue(
-                                m_programParamInfo.id, value, name) == kResultOk)
-                    m_programs.append(fromTChar(name));
-            }
-        }
-    }
-
-    if (controller)
-    {
-        const int32 nports = pType->midiIns();
-        FUnknownPtr<Vst::IMidiMapping> midiMapping(controller);
-        if (midiMapping && nports > 0)
-        {
-            for (int16 i = 0; i < Vst::kCountCtrlNumber; ++i)
-            { // controllers...
-                for (int32 j = 0; j < nports; ++j)
-                { // ports...
-                    for (int16 k = 0; k < 16; ++k)
-                    { // channels...
-                        Vst::ParamID id = Vst::kNoParamId;
-                        if (midiMapping->getMidiControllerAssignment(
-                                        j, k, Vst::CtrlNumber(i), id) == kResultOk)
-                        {
-                            m_midiMap.insert(MidiMapKey(j, k, i), id);
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-#endif  // 0
 
 void
 VST3_Plugin::get ( Log_Entry &e ) const
