@@ -962,7 +962,16 @@ VST3_Plugin::VST3_Plugin() :
     m_component(nullptr),
     m_controller(nullptr),
     m_unitInfos(nullptr),
-    _plugin_filename()
+    _plugin_filename(),
+    m_iAudioIns(0),
+    m_iAudioOuts(0),
+    m_iMidiIns(0),
+    m_iMidiOuts(0),
+    _audio_in_buffers(nullptr),
+    _audio_out_buffers(nullptr),
+    m_bRealtime(false),
+    m_bConfigure(false),
+    m_bEditor(false)
 {
     _plug_type = VST3;
 
@@ -1165,7 +1174,7 @@ VST3_Plugin::handlePluginUIResized(const uint width, const uint height)
 
 // File loader.
 bool
-VST3_Plugin::open ( const std::string& sFilename )
+VST3_Plugin::open_file ( const std::string& sFilename )
 {
     DMESSAGE("Open %s", sFilename.c_str());
 
@@ -1188,7 +1197,7 @@ VST3_Plugin::open_descriptor(unsigned long iIndex)
 {
     close_descriptor();
     
-    if (!open(_plugin_filename))
+    if (!open_file(_plugin_filename))
     {
         DMESSAGE("Could not open %s", _plugin_filename.c_str());
         return false;

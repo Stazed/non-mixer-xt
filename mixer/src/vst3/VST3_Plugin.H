@@ -108,7 +108,7 @@ private:
     bool m_bEditor;
 
     // File loader.
-    bool open(const std::string& sFilename);
+    bool open_file(const std::string& sFilename);
     bool open_descriptor(unsigned long iIndex);
 
     void close_descriptor();
