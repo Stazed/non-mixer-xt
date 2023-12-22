@@ -30,6 +30,7 @@
 #include <unordered_map>
 
 #include "VST3_Plugin.H"
+#include "../Chain.H"
 
 #include "pluginterfaces/vst/ivstpluginterfacesupport.h"
 #include "pluginterfaces/vst/ivstprocesscontext.h"
@@ -54,6 +55,13 @@
 using namespace Steinberg;
 using namespace Linux;
 
+
+std::string utf16_to_utf8(const u16string& utf16)
+{
+    wstring_convert<codecvt_utf8_utf16<char16_t>,char16_t> convert; 
+    string utf8 = convert.to_bytes(utf16);
+    return utf8;
+}
 
 //-----------------------------------------------------------------------------
 // class qtractorVst3PluginHost -- VST3 plugin host context decl.
@@ -983,8 +991,40 @@ VST3_Plugin::load_plugin ( Module::Picked picked )
         DMESSAGE("Could not open descriptor %s", _plugin_filename.c_str());
         return false;
     }
+    
+    base_label(m_sName.c_str());
+    
+//    close();
 
-    return false;
+//    if (!m_pImpl->open(index()))
+//            return false;
+
+    // Properties...
+//    m_sName = m_pImpl->name();
+//    m_sLabel = m_sName.simplified().replace(QRegularExpression("[\\s|\\.|\\-]+"), "_");
+//    m_iUniqueID = m_pImpl->uniqueID();
+
+    m_iAudioIns  = numChannels(Vst::kAudio, Vst::kInput);
+    m_iAudioOuts = numChannels(Vst::kAudio, Vst::kOutput);
+    m_iMidiIns   = numChannels(Vst::kEvent, Vst::kInput);
+    m_iMidiOuts  = numChannels(Vst::kEvent, Vst::kOutput);
+
+//    Vst::IEditController *controller = m_pImpl->controller();
+    Vst::IEditController *controller = m_controller;
+    if (controller) {
+            IPtr<IPlugView> editor =
+                    owned(controller->createView(Vst::ViewType::kEditor));
+            m_bEditor = (editor != nullptr);
+    }
+
+    m_bRealtime  = true;
+    m_bConfigure = true;
+
+    create_audio_ports();
+    create_midi_ports();
+    create_control_ports();
+
+    return true;
 }
 
 bool
@@ -1038,13 +1078,65 @@ VST3_Plugin::thaw_ports ( void )
 void
 VST3_Plugin::configure_midi_inputs ()
 {
-    
+    if(!midi_input.size())
+        return;
+
+    const char *trackname = chain()->strip()->group()->single() ? NULL : chain()->name();
+
+    for( unsigned int i = 0; i < midi_input.size(); ++i )
+    {
+        if(!(midi_input[i].type() == Port::MIDI))
+            continue;
+
+        std::string port_name = label();
+
+        port_name += " ";
+        port_name += midi_input[i].name();
+
+        DMESSAGE("CONFIGURE MIDI INPUTS = %s", port_name.c_str());
+        JACK::Port *jack_port = new JACK::Port( chain()->client(), trackname, port_name.c_str(), JACK::Port::Input, JACK::Port::MIDI );
+        midi_input[i].jack_port(jack_port);
+
+        if( !midi_input[i].jack_port()->activate() )
+        {
+            delete midi_input[i].jack_port();
+            midi_input[i].jack_port(NULL);
+          //  WARNING( "Failed to activate JACK MIDI IN port" );
+            return;
+        }
+    }
 }
 
 void
 VST3_Plugin::configure_midi_outputs ()
 {
-    
+    if(!midi_output.size())
+        return;
+
+    const char *trackname = chain()->strip()->group()->single() ? NULL : chain()->name();
+
+    for( unsigned int i = 0; i < midi_output.size(); ++i )
+    {
+        if(!(midi_output[i].type() == Port::MIDI))
+            continue;
+
+        std::string port_name = label();
+
+        port_name += " ";
+        port_name += midi_output[i].name();
+
+        DMESSAGE("CONFIGURE MIDI OUTPUTS = %s", port_name.c_str());
+        JACK::Port *jack_port = new JACK::Port( chain()->client(), trackname, port_name.c_str(), JACK::Port::Output, JACK::Port::MIDI );
+        midi_output[i].jack_port(jack_port);
+
+        if( !midi_output[i].jack_port()->activate() )
+        {
+            delete midi_output[i].jack_port();
+            midi_output[i].jack_port(NULL);
+           // WARNING( "Failed to activate JACK MIDI OUT port" );
+            return;
+        }
+    }
 }
 
 nframes_t
@@ -1141,7 +1233,7 @@ VST3_Plugin::open_descriptor(unsigned long iIndex)
         return false;
     }
 
-//    IPluginFactory2 *factory2 = FUnknownPtr<IPluginFactory2> (factory);
+    IPluginFactory2 *factory2 = FUnknownPtr<IPluginFactory2> (factory);
     IPluginFactory3 *factory3 = FUnknownPtr<IPluginFactory3> (factory);
 
     if (factory3)
@@ -1164,34 +1256,40 @@ VST3_Plugin::open_descriptor(unsigned long iIndex)
 
         if (iIndex == i)
         {
-#if 0
+#if 1
             PClassInfoW classInfoW;
-            if (factory3 && factory3->getClassInfoUnicode(n, &classInfoW) == kResultOk) {
-                    m_sName = fromTChar(classInfoW.name);
-                    m_sCategory = QString::fromLocal8Bit(classInfoW.category);
-                    m_sSubCategories = QString::fromLocal8Bit(classInfoW.subCategories);
-                    m_sVendor = fromTChar(classInfoW.vendor);
-                    m_sVersion = fromTChar(classInfoW.version);
-                    m_sSdkVersion = fromTChar(classInfoW.sdkVersion);
+            if (factory3 && factory3->getClassInfoUnicode(n, &classInfoW) == kResultOk)
+            {
+                    m_sName = utf16_to_utf8(classInfoW.name);
+                 //   m_sName = fromTChar(classInfoW.name);
+                 //   m_sCategory = QString::fromLocal8Bit(classInfoW.category);
+                 //   m_sSubCategories = QString::fromLocal8Bit(classInfoW.subCategories);
+                 //   m_sVendor = fromTChar(classInfoW.vendor);
+                 //   m_sVersion = fromTChar(classInfoW.version);
+                 //   m_sSdkVersion = fromTChar(classInfoW.sdkVersion);
             } else {
                     PClassInfo2 classInfo2;
-                    if (factory2 && factory2->getClassInfo2(n, &classInfo2) == kResultOk) {
-                            m_sName = QString::fromLocal8Bit(classInfo2.name);
-                            m_sCategory = QString::fromLocal8Bit(classInfo2.category);
-                            m_sSubCategories = QString::fromLocal8Bit(classInfo2.subCategories);
-                            m_sVendor = QString::fromLocal8Bit(classInfo2.vendor);
-                            m_sVersion = QString::fromLocal8Bit(classInfo2.version);
-                            m_sSdkVersion = QString::fromLocal8Bit(classInfo2.sdkVersion);
-                    } else {
-                            m_sName = QString::fromLocal8Bit(classInfo.name);
-                            m_sCategory = QString::fromLocal8Bit(classInfo.category);
-                            m_sSubCategories.clear();
-                            m_sVendor.clear();
-                            m_sVersion.clear();
-                            m_sSdkVersion.clear();
+                    if (factory2 && factory2->getClassInfo2(n, &classInfo2) == kResultOk)
+                    {
+                        m_sName = classInfo2.name;
+                         //   m_sName = QString::fromLocal8Bit(classInfo2.name);
+                         //   m_sCategory = QString::fromLocal8Bit(classInfo2.category);
+                         //   m_sSubCategories = QString::fromLocal8Bit(classInfo2.subCategories);
+                         //   m_sVendor = QString::fromLocal8Bit(classInfo2.vendor);
+                         //   m_sVersion = QString::fromLocal8Bit(classInfo2.version);
+                         //   m_sSdkVersion = QString::fromLocal8Bit(classInfo2.sdkVersion);
+                    } else 
+                    {
+                        m_sName = classInfo.name;
+                         //   m_sName = QString::fromLocal8Bit(classInfo.name);
+                         //   m_sCategory = QString::fromLocal8Bit(classInfo.category);
+                         //   m_sSubCategories.clear();
+                         //   m_sVendor.clear();
+                         //   m_sVersion.clear();
+                         //   m_sSdkVersion.clear();
                     }
             }
-
+#if 0
             if (m_sVendor.isEmpty())
                     m_sVendor = QString::fromLocal8Bit(factoryInfo.vendor);
             if (m_sEmail.isEmpty())
@@ -1201,6 +1299,7 @@ VST3_Plugin::open_descriptor(unsigned long iIndex)
 
             m_iUniqueID = qHash(QByteArray(classInfo.cid, sizeof(TUID)));
 #endif
+#endif  // 1
             Vst::IComponent *component = nullptr;
             if (factory->createInstance(
                     classInfo.cid, Vst::IComponent::iid,
@@ -1333,6 +1432,318 @@ VST3_Plugin::close_descriptor()
             module_exit();
     }
 }
+
+int
+VST3_Plugin::numChannels (
+	Vst::MediaType type, Vst::BusDirection direction ) const
+{
+    if (!m_component)
+            return -1;
+
+    int nchannels = 0;
+
+    const int32 nbuses = m_component->getBusCount(type, direction);
+    for (int32 i = 0; i < nbuses; ++i)
+    {
+        Vst::BusInfo busInfo;
+        if (m_component->getBusInfo(type, direction, i, busInfo) == kResultOk)
+        {
+            if ((busInfo.busType == Vst::kMain) ||
+                    (busInfo.flags & Vst::BusInfo::kDefaultActive))
+            {
+                nchannels += busInfo.channelCount;
+            }
+        }
+    }
+
+    return nchannels;
+}
+
+void
+VST3_Plugin::create_audio_ports()
+{
+    _plugin_ins = 0;
+    _plugin_outs = 0;
+    
+    for (uint32_t i = 0; i < m_iAudioIns; ++i)
+    {
+        add_port( Port( this, Port::INPUT, Port::AUDIO, "input" ) );
+        audio_input[_plugin_ins].hints.plug_port_index = i;
+        _plugin_ins++;
+    }
+
+    for (uint32_t i = 0; i < m_iAudioOuts; ++i)
+    {
+        add_port( Port( this, Port::OUTPUT, Port::AUDIO, "output" ) );
+        audio_output[_plugin_outs].hints.plug_port_index = i;
+        _plugin_outs++;
+    }
+
+    _audio_in_buffers = new float * [_plugin_ins];
+    _audio_out_buffers = new float * [_plugin_outs];
+
+    MESSAGE( "Plugin has %i inputs and %i outputs", _plugin_ins, _plugin_outs);
+}
+
+void
+VST3_Plugin::create_midi_ports()
+{
+    for (uint32_t i = 0; i < m_iMidiIns; ++i)
+    {
+        add_port( Port( this, Port::INPUT, Port::MIDI, "midi_in" ) );
+    }
+    
+    for (uint32_t i = 0; i < m_iMidiOuts; ++i)
+    {
+        add_port( Port( this, Port::OUTPUT, Port::MIDI, "midi_out" ) );
+    }
+}
+
+void
+VST3_Plugin::create_control_ports()
+{
+    unsigned long control_ins = 0;
+    unsigned long control_outs = 0;
+    
+    Vst::IEditController *controller = m_controller;
+
+    if (controller)
+    {
+        const int32 nparams = controller->getParameterCount();
+
+        for (int32 i = 0; i < nparams; ++i)
+        {
+            Port::Direction d = Port::INPUT;
+
+            Vst::ParameterInfo paramInfo;
+            ::memset(&paramInfo, 0, sizeof(Vst::ParameterInfo));
+            if (controller->getParameterInfo(i, paramInfo) == kResultOk)
+            {
+                if (paramInfo.flags & Vst::ParameterInfo::kIsHidden)
+                    continue;
+
+                if ( !(paramInfo.flags & Vst::ParameterInfo::kIsReadOnly) &&
+                        !(paramInfo.flags & Vst::ParameterInfo::kCanAutomate) )
+                {
+                    continue;
+                }
+
+                bool have_control_in = false;
+
+                if (paramInfo.flags & Vst::ParameterInfo::kIsReadOnly)
+                {
+                    d = Port::OUTPUT;
+                    ++control_outs;
+                }
+                else
+                if (paramInfo.flags & Vst::ParameterInfo::kCanAutomate)
+                {
+                    d = Port::INPUT;
+                    ++control_ins;
+                    have_control_in = true;
+                }
+
+                std::string description = utf16_to_utf8(paramInfo.title);
+                description += " ";
+                description += utf16_to_utf8 (paramInfo.units);
+
+                Port p( this, d, Port::CONTROL, strdup( description.c_str() ) );
+
+                /* Used for OSC path creation unique symbol */
+                std::string osc_symbol = strdup( utf16_to_utf8(paramInfo.shortTitle).c_str() );
+                osc_symbol.erase(std::remove(osc_symbol.begin(), osc_symbol.end(), ' '), osc_symbol.end());
+                osc_symbol += std::to_string( paramInfo.id );
+
+                p.set_symbol(osc_symbol.c_str());
+
+                p.hints.ranged = true;
+
+                if ( paramInfo.stepCount  == 1)
+                {
+                    p.hints.type = Port::Hints::BOOLEAN;
+                }
+                else if ( paramInfo.stepCount  == 0 )
+                {
+                    // p.hints.ranged = false;
+                    //paramInfo.
+                    // continuous ??? WTF
+                    p.hints.minimum = (float) 0.0;
+                    p.hints.maximum = (float) 1.0;
+                }
+                else
+                {
+                    p.hints.minimum = (float) 0.0;
+                    p.hints.maximum = (float) paramInfo.stepCount;
+                    p.hints.type = Port::Hints::INTEGER;
+                }
+
+                p.hints.default_value = (float) paramInfo.defaultNormalizedValue;
+
+                p.hints.parameter_id = paramInfo.id;
+
+                if (paramInfo.flags & Vst::ParameterInfo::kIsBypass)
+                {
+                    p.hints.type = Port::Hints::BOOLEAN;
+                }
+
+                if (paramInfo.flags & Vst::ParameterInfo::kIsHidden)
+                {
+                    p.hints.visible = false;
+                }
+
+                float *control_value = new float;
+
+                *control_value = p.hints.default_value;
+
+                p.connect_to( control_value );
+
+                p.hints.plug_port_index = i;
+
+                add_port( p );
+
+                // Cache the port ID and index for easy lookup - only _control_ins
+                if (have_control_in)
+                {
+                   // DMESSAGE( "Control input port \"%s\" ID %u", param_info.name, p.hints.parameter_id );
+                   // std::pair<int, unsigned long> prm ( int(p.hints.parameter_id), control_ins - 1 );
+                   // _paramIds.insert(prm);
+                }
+            }
+        }
+    }
+    
+    DMESSAGE ("Control INS = %d: Control OUTS = %d", control_ins, control_outs);
+}
+
+void
+VST3_Plugin::add_port ( const Port &p )
+{
+    Module::add_port(p);
+
+    if ( p.type() == Port::MIDI && p.direction() == Port::INPUT )
+        midi_input.push_back( p );
+    else if ( p.type() == Port::MIDI && p.direction() == Port::OUTPUT )
+        midi_output.push_back( p );
+}
+
+#if 0
+// Plugin module initializer.
+void
+VST3_Plugin::initialize ()
+{
+    clear();
+
+    qtractorVst3PluginType *pType
+            = static_cast<qtractorVst3PluginType *> (m_pPlugin->type());
+    if (pType == nullptr)
+            return;
+#if 0//HACK: Plugin-type might be already open via plugin-factory...
+    if (!pType->open())
+            return;
+#endif
+    Vst::IComponent *component = pType->impl()->component();
+    if (!component)
+        return;
+
+    Vst::IEditController *controller = pType->impl()->controller();
+    if (controller)
+    {
+        m_handler = owned(NEW Handler(m_pPlugin));
+        controller->setComponentHandler(m_handler);
+    }
+
+    m_processor = FUnknownPtr<Vst::IAudioProcessor> (component);
+
+    if (controller)
+    {
+        const int32 nparams = controller->getParameterCount();
+        for (int32 i = 0; i < nparams; ++i)
+        {
+            Vst::ParameterInfo paramInfo;
+            ::memset(&paramInfo, 0, sizeof(Vst::ParameterInfo));
+            if (controller->getParameterInfo(i, paramInfo) == kResultOk)
+            {
+                if (m_programParamInfo.unitId != Vst::UnitID(-1))
+                    continue;
+                if (paramInfo.flags & Vst::ParameterInfo::kIsProgramChange)
+                    m_programParamInfo = paramInfo;
+            }
+        }
+        if (m_programParamInfo.unitId != Vst::UnitID(-1))
+        {
+            Vst::IUnitInfo *unitInfos = pType->impl()->unitInfos();
+            if (unitInfos)
+            {
+                const int32 nunits = unitInfos->getUnitCount();
+                for (int32 i = 0; i < nunits; ++i)
+                {
+                    Vst::UnitInfo unitInfo;
+                    if (unitInfos->getUnitInfo(i, unitInfo) != kResultOk)
+                            continue;
+                    if (unitInfo.id != m_programParamInfo.unitId)
+                            continue;
+                    const int32 nlists = unitInfos->getProgramListCount();
+                    for (int32 j = 0; j < nlists; ++j)
+                    {
+                        Vst::ProgramListInfo programListInfo;
+                        if (unitInfos->getProgramListInfo(j, programListInfo) != kResultOk)
+                                continue;
+                        if (programListInfo.id != unitInfo.programListId)
+                                continue;
+                        const int32 nprograms = programListInfo.programCount;
+                        for (int32 k = 0; k < nprograms; ++k)
+                        {
+                            Vst::String128 name;
+                            if (unitInfos->getProgramName(
+                                            programListInfo.id, k, name) == kResultOk)
+                                m_programs.append(fromTChar(name));
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+        if (m_programs.isEmpty() && m_programParamInfo.stepCount > 0)
+        {
+            const int32 nprograms = m_programParamInfo.stepCount + 1;
+            for (int32 k = 0; k < nprograms; ++k)
+            {
+                const Vst::ParamValue value
+                        = Vst::ParamValue(k)
+                        / Vst::ParamValue(m_programParamInfo.stepCount);
+                Vst::String128 name;
+                if (controller->getParamStringByValue(
+                                m_programParamInfo.id, value, name) == kResultOk)
+                    m_programs.append(fromTChar(name));
+            }
+        }
+    }
+
+    if (controller)
+    {
+        const int32 nports = pType->midiIns();
+        FUnknownPtr<Vst::IMidiMapping> midiMapping(controller);
+        if (midiMapping && nports > 0)
+        {
+            for (int16 i = 0; i < Vst::kCountCtrlNumber; ++i)
+            { // controllers...
+                for (int32 j = 0; j < nports; ++j)
+                { // ports...
+                    for (int16 k = 0; k < 16; ++k)
+                    { // channels...
+                        Vst::ParamID id = Vst::kNoParamId;
+                        if (midiMapping->getMidiControllerAssignment(
+                                        j, k, Vst::CtrlNumber(i), id) == kResultOk)
+                        {
+                            m_midiMap.insert(MidiMapKey(j, k, i), id);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+#endif  // 0
 
 void
 VST3_Plugin::get ( Log_Entry &e ) const

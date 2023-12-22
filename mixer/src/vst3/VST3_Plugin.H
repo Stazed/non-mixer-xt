@@ -77,6 +77,9 @@ public:
 
     LOG_CREATE_FUNC( VST3_Plugin );
     MODULE_CLONE_FUNC( VST3_Plugin );
+    
+    std::vector<Port> midi_input;
+    std::vector<Port> midi_output;
 
     VST3_Plugin();
     virtual ~VST3_Plugin();
@@ -90,12 +93,34 @@ private:
 
     IPtr<Vst::IUnitInfo> m_unitInfos;
     std::string _plugin_filename;
+    std::string m_sName;
+
+    unsigned short m_iAudioIns;
+    unsigned short m_iAudioOuts;
+    unsigned short m_iMidiIns;
+    unsigned short m_iMidiOuts;
+    
+    float ** _audio_in_buffers;
+    float ** _audio_out_buffers;
+    
+    bool m_bRealtime;
+    bool m_bConfigure;
+    bool m_bEditor;
 
     // File loader.
     bool open(const std::string& sFilename);
     bool open_descriptor(unsigned long iIndex);
 
     void close_descriptor();
+
+    // Initialize create
+    void initialize_plugin();
+    int numChannels (Vst::MediaType type, Vst::BusDirection direction ) const;
+    
+    void create_audio_ports();
+    void create_midi_ports();
+    void create_control_ports();
+    void add_port ( const Port &p ) override;
     
     
 protected:
