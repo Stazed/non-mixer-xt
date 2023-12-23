@@ -53,6 +53,9 @@
 #define ASSERT ASRT_TMP
 #define WARNING( fmt, args... ) warnf( W_WARNING, __MODULE__, __FILE__, __FUNCTION__, __LINE__, fmt, ## args )
 
+const unsigned char  EVENT_NOTE_OFF         = 0x80;
+const unsigned char  EVENT_NOTE_ON          = 0x90;
+const unsigned char  EVENT_CHANNEL_PRESSURE = 0xa0;
 
 using namespace Steinberg;
 using namespace Linux;
@@ -1382,13 +1385,13 @@ VST3_Plugin::process ( nframes_t nframes )
             /* JACK MIDI in to plugin MIDI in */
             process_jack_midi_in( nframes, i );
         }
-#if 0
+
         for ( unsigned int i = 0; i < midi_output.size(); ++i)
         {
             /* Plugin to JACK MIDI out */
             process_jack_midi_out( nframes, i);
         }
-#endif
+
         m_events_out.clear();
 
 //        m_buffers_in.channelBuffers32 = ins;
@@ -2013,53 +2016,71 @@ VST3_Plugin::process_jack_midi_out ( uint32_t nframes, unsigned int port )
     {
         buf = midi_output[port].jack_port()->buffer( nframes );
         jack_midi_clear_buffer(buf);
-        
-#if 0
+
         // Process MIDI output stream, if any...
-        if (pMidiManager)
+        VST3IMPL::EventList& events_out = m_events_out;
+        const int32 nevents = events_out.getEventCount();
+        for (int32 i = 0; i < nevents; ++i)
         {
-            if (iMidiOuts > 0)
+            Vst::Event event;
+            if (events_out.getEvent(i, event) == kResultOk)
             {
-                qtractorMidiBuffer *pMidiBuffer = pMidiManager->buffer_out();
-                EventList& events_out = m_pImpl->events_out();
-                const int32 nevents = events_out.getEventCount();
-                for (int32 i = 0; i < nevents; ++i)
+                switch (event.type)
                 {
-                    Vst::Event event;
-                    if (events_out.getEvent(i, event) == kResultOk)
-                    {
-                        snd_seq_event_t ev;
-                        snd_seq_ev_clear(&ev);
-                        switch (event.type) {
-                        case Vst::Event::kNoteOnEvent:
-                                ev.type = SND_SEQ_EVENT_NOTEON;
-                                ev.data.note.channel  = event.noteOn.channel;
-                                ev.data.note.note     = event.noteOn.pitch;
-                                ev.data.note.velocity = event.noteOn.velocity;
-                                break;
-                        case Vst::Event::kNoteOffEvent:
-                                ev.type = SND_SEQ_EVENT_NOTEOFF;
-                                ev.data.note.channel  = event.noteOff.channel;
-                                ev.data.note.note     = event.noteOff.pitch;
-                                ev.data.note.velocity = event.noteOff.velocity;
-                                break;
-                        case Vst::Event::kPolyPressureEvent:
-                                ev.type = SND_SEQ_EVENT_KEYPRESS;
-                                ev.data.note.channel  = event.polyPressure.channel;
-                                ev.data.note.note     = event.polyPressure.pitch;
-                                ev.data.note.velocity = event.polyPressure.pressure;
-                                break;
-                        }
-                        if (ev.type != SND_SEQ_EVENT_NONE)
-                                pMidiBuffer->push(&ev, event.sampleOffset);
-                    }
+                case Vst::Event::kNoteOnEvent:
+                {
+                    unsigned char  midi_note[3];
+                    midi_note[0] = EVENT_NOTE_ON + event.noteOn.channel;
+                    midi_note[1] = event.noteOn.pitch;
+                    midi_note[2] = (unsigned char)(event.noteOn.velocity * 127);
+
+                    size_t size = 3;
+                    int nBytes = static_cast<int> (size);
+                    int ret =  jack_midi_event_write(buf, event.sampleOffset,
+                            static_cast<jack_midi_data_t*>( &midi_note[0] ), nBytes);
+
+                    if ( ret )
+                        WARNING("Jack MIDI note on error = %d", ret);
+
+                    break;
                 }
-                pMidiManager->swapOutputBuffers();
-            } else {
-                    pMidiManager->resetOutputBuffers();
+                case Vst::Event::kNoteOffEvent:
+                {
+                    unsigned char  midi_note[3];
+                    midi_note[0] = EVENT_NOTE_OFF + event.noteOff.channel;
+                    midi_note[1] = event.noteOff.pitch;
+                    midi_note[2] = (unsigned char)(event.noteOff.velocity * 127);
+
+                    size_t size = 3;
+                    int nBytes = static_cast<int> (size);
+                    int ret =  jack_midi_event_write(buf, event.sampleOffset,
+                            static_cast<jack_midi_data_t*>( &midi_note[0] ), nBytes);
+
+                    if ( ret )
+                        WARNING("Jack MIDI note off error = %d", ret);
+
+                    break;
+                }
+                case Vst::Event::kPolyPressureEvent:
+                {
+                    unsigned char  midi_note[3];
+                    midi_note[0] = EVENT_CHANNEL_PRESSURE + event.polyPressure.channel;
+                    midi_note[1] = event.polyPressure.pitch;
+                    midi_note[2] = (unsigned char)(event.polyPressure.pressure * 127);
+
+                    size_t size = 3;
+                    int nBytes = static_cast<int> (size);
+                    int ret =  jack_midi_event_write(buf, event.sampleOffset,
+                            static_cast<jack_midi_data_t*>( &midi_note[0] ), nBytes);
+
+                    if ( ret )
+                        WARNING("Jack MIDI polyPressure error = %d", ret);
+
+                    break;
+                }
+                }
             }
         }
-#endif
     }
 }
 
