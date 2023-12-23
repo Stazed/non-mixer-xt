@@ -1033,7 +1033,7 @@ bool
 VST3_Plugin::load_plugin ( Module::Picked picked )
 {
     _plugin_filename = picked.s_unique_id;
-    
+
     if ( ! std::filesystem::exists(_plugin_filename) )
     {
         // FIXME check different location
@@ -1046,15 +1046,10 @@ VST3_Plugin::load_plugin ( Module::Picked picked )
         DMESSAGE("Could not open descriptor %s", _plugin_filename.c_str());
         return false;
     }
-    
-    base_label(m_sName.c_str());
-    
-    initialize_plugin();
-    
-//    close();
 
-//    if (!m_pImpl->open(index()))
-//            return false;
+    base_label(m_sName.c_str());
+
+    initialize_plugin();
 
     // Properties...
 //    m_sName = m_pImpl->name();
@@ -1066,7 +1061,6 @@ VST3_Plugin::load_plugin ( Module::Picked picked )
     m_iMidiIns   = numChannels(Vst::kEvent, Vst::kInput);
     m_iMidiOuts  = numChannels(Vst::kEvent, Vst::kOutput);
 
-//    Vst::IEditController *controller = m_pImpl->controller();
     Vst::IEditController *controller = m_controller;
     if (controller)
     {
@@ -1075,19 +1069,20 @@ VST3_Plugin::load_plugin ( Module::Picked picked )
         m_bEditor = (editor != nullptr);
     }
 
+    // FIXME
     m_bRealtime  = true;
     m_bConfigure = true;
 
     create_audio_ports();
     create_midi_ports();
     create_control_ports();
-    
+
     if ( !process_reset() )
     {
         DMESSAGE("Process reset failed!");
         return false;
     }
-    
+
     if(!_plugin_ins)
         is_zero_input_synth(true);
 
@@ -1137,9 +1132,6 @@ VST3_Plugin::handle_port_connection_change ( void )
 {
     if ( loaded() )
     {
-//        _audio_ins.channel_count = plugin_ins();
-//        _audio_outs.channel_count = plugin_outs();
-
         if ( _crosswire )
         {
             for ( int i = 0; i < plugin_ins(); ++i )
@@ -1771,10 +1763,6 @@ VST3_Plugin::initialize_plugin()
 {
     clear_plugin();
 
-#if 0//HACK: Plugin-type might be already open via plugin-factory...
-    if (!pType->open())
-            return;
-#endif
     Vst::IComponent *component = m_component;
     if (!component)
             return;
