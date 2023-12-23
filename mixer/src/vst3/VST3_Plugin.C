@@ -38,6 +38,7 @@
 #include "pluginterfaces/vst/ivstparameterchanges.h"
 #include "pluginterfaces/vst/ivstmidicontrollers.h"
 #include "pluginterfaces/vst/ivstevents.h"
+#include "pluginterfaces/vst/ivsteditcontroller.h"
 #include "pluginterfaces/gui/iplugview.h"
 
 #include "pluginterfaces/base/ibstream.h"
@@ -963,6 +964,103 @@ IMPLEMENT_FUNKNOWN_METHODS (VST3IMPL::ParamQueue, Vst::IParamValueQueue, Vst::IP
 IMPLEMENT_FUNKNOWN_METHODS (VST3IMPL::ParamChanges, Vst::IParameterChanges, Vst::IParameterChanges::iid)
 
 IMPLEMENT_FUNKNOWN_METHODS (VST3IMPL::EventList, IEventList, IEventList::iid)
+
+//----------------------------------------------------------------------
+// class VST3_Plugin::Handler -- VST3 plugin interface handler.
+// Plugin uses this to send messages, update to the host. Plugin to host.
+
+class VST3_Plugin::Handler
+    : public Vst::IComponentHandler
+    , public Vst::IConnectionPoint
+{
+public:
+
+    // Constructor.
+    Handler (VST3_Plugin *pPlugin)
+            : m_pPlugin(pPlugin) { FUNKNOWN_CTOR }
+
+    // Destructor.
+    virtual ~Handler () { FUNKNOWN_DTOR }
+
+    DECLARE_FUNKNOWN_METHODS
+
+    //--- IComponentHandler ---
+    //
+    tresult PLUGIN_API beginEdit (Vst::ParamID /*id*/) override
+    {
+        DMESSAGE("Handler[%p]::beginEdit(%d)", this, int(id));
+        return kResultOk;
+    }
+
+    tresult PLUGIN_API performEdit (Vst::ParamID id, Vst::ParamValue value) override
+    {
+        DMESSAGE("Handler[%p]::performEdit(%d, %g)", this, int(id), float(value));
+
+        m_pPlugin->impl()->setParameter(id, value, 0);
+        qtractorPlugin::Param *pParam = m_pPlugin->findParamId(int(id));
+        if (pParam)
+            pParam->updateValue(float(value), false);
+
+        return kResultOk;
+    }
+
+    tresult PLUGIN_API endEdit (Vst::ParamID /*id*/) override
+    {
+        DMESSAGE("Handler[%p]::endEdit(%d)", this, int(id));
+        return kResultOk;
+    }
+
+    tresult PLUGIN_API restartComponent (int32 flags) override
+    {
+        DMESSAGE("Handler[%p]::restartComponent(0x%08x)", this, flags);
+
+        if (flags & Vst::kParamValuesChanged)
+            m_pPlugin->updateParamValues(false);
+        else
+        if (flags & Vst::kReloadComponent)
+        {
+            m_pPlugin->impl()->deactivate();
+            m_pPlugin->impl()->activate();
+        }
+
+        return kResultOk;
+    }
+
+    //--- IConnectionPoint ---
+    //
+    tresult PLUGIN_API connect (Vst::IConnectionPoint *other) override
+            { return (other ? kResultOk : kInvalidArgument); }
+
+    tresult PLUGIN_API disconnect (Vst::IConnectionPoint *other) override
+            { return (other ? kResultOk : kInvalidArgument); }
+
+    tresult PLUGIN_API notify (Vst::IMessage *message) override
+    {
+        return m_pPlugin->impl()->notify(message);
+    }
+
+private:
+
+    // Instance client.
+    VST3_Plugin *m_pPlugin;
+};
+
+tresult PLUGIN_API VST3_Plugin::Handler::queryInterface (
+	const char *_iid, void **obj )
+{
+    QUERY_INTERFACE(_iid, obj, FUnknown::iid, IComponentHandler)
+    QUERY_INTERFACE(_iid, obj, IComponentHandler::iid, IComponentHandler)
+    QUERY_INTERFACE(_iid, obj, IConnectionPoint::iid, IConnectionPoint)
+
+    *obj = nullptr;
+    return kNoInterface;
+}
+
+uint32 PLUGIN_API VST3_Plugin::Handler::addRef (void)
+    { return 1000; }
+
+uint32 PLUGIN_API VST3_Plugin::Handler::release (void)
+    { return 1000; }
 
 
 VST3_Plugin::VST3_Plugin() :

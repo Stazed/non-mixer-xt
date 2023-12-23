@@ -194,9 +194,15 @@ private:
     std::map<MidiMapKey, Vst::ParamID> m_midiMap;
 
 protected:
+
+    // Forward declarations
+    class Handler;
+
+    // Gui callbacks
     void handlePluginUIClosed() override;
     void handlePluginUIResized(const uint width, const uint height) override;
 
+    // Save and restore
     void get ( Log_Entry &e ) const override;
     void set ( Log_Entry &e ) override;
 
