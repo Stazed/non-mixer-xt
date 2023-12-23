@@ -985,6 +985,48 @@ VST3_Plugin::VST3_Plugin() :
 VST3_Plugin::~VST3_Plugin()
 {
     log_destroy();
+    
+    deactivate();
+    
+    if ( _audio_in_buffers )
+    {
+        delete []_audio_in_buffers;
+        _audio_in_buffers = nullptr;
+    }
+
+    if ( _audio_out_buffers )
+    {
+        delete []_audio_out_buffers;
+        _audio_out_buffers = nullptr;
+    }
+    
+    for ( unsigned int i = 0; i < midi_input.size(); ++i )
+    {
+        if(!(midi_input[i].type() == Port::MIDI))
+            continue;
+
+        if(midi_input[i].jack_port())
+        {
+            midi_input[i].disconnect();
+            midi_input[i].jack_port()->shutdown();
+            delete midi_input[i].jack_port();
+        }
+    } 
+    for ( unsigned int i = 0; i < midi_output.size(); ++i )
+    {
+        if(!(midi_output[i].type() == Port::MIDI))
+            continue;
+
+        if(midi_output[i].jack_port())
+        {
+            midi_output[i].disconnect();
+            midi_output[i].jack_port()->shutdown();
+            delete midi_output[i].jack_port();
+        }
+    }
+
+    midi_output.clear();
+    midi_input.clear();
 }
 
 bool
@@ -1045,6 +1087,9 @@ VST3_Plugin::load_plugin ( Module::Picked picked )
         DMESSAGE("Process reset failed!");
         return false;
     }
+    
+    if(!_plugin_ins)
+        is_zero_input_synth(true);
 
     return true;
 }

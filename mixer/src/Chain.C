@@ -628,7 +628,7 @@ Chain::insert ( Module *m, Module *n )
             n->configure_inputs( 0 );
             modules_pack->add( n );
 
-#if defined(LV2_SUPPORT) || defined(CLAP_SUPPORT)
+#if defined(LV2_SUPPORT) || defined(CLAP_SUPPORT) || defined(VST3_SUPPORT)
             n->configure_midi_inputs();
             n->configure_midi_outputs();
 #endif
@@ -640,7 +640,7 @@ Chain::insert ( Module *m, Module *n )
             n->configure_inputs( module( modules() - 1 )->noutputs() );
             modules_pack->add( n );
     
-#if defined(LV2_SUPPORT) || defined(CLAP_SUPPORT)
+#if defined(LV2_SUPPORT) || defined(CLAP_SUPPORT) || defined(VST3_SUPPORT)
             n->configure_midi_inputs();
             n->configure_midi_outputs();
 
@@ -720,7 +720,7 @@ Chain::insert ( Module *m, Module *n )
                 goto err;
             }
 
-#if defined(LV2_SUPPORT) || defined(CLAP_SUPPORT)
+#if defined(LV2_SUPPORT) || defined(CLAP_SUPPORT) || defined(VST3_SUPPORT)
             n->configure_midi_inputs();
             n->configure_midi_outputs();
 
