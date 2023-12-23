@@ -27,6 +27,8 @@
 
 #ifdef VST3_SUPPORT
 
+#include <unordered_map>
+
 #include "../Mixer_Strip.H"
 #include "../Plugin_Module.H"
 #include "../x11/X11PluginUI.H"
@@ -160,8 +162,33 @@ private:
     void vst3_activate ( Vst::IComponent *component,
 	Vst::MediaType type, Vst::BusDirection direction, bool state );
     void add_port ( const Port &p ) override;
-    
-    
+
+    // MIDI controller assignment hash key/map.
+    struct MidiMapKey
+    {
+        MidiMapKey (int16 po = 0, int16 ch = 0, int16 co = 0)
+                : port(po), channel(ch), controller(co) {}
+        MidiMapKey (const MidiMapKey& key)
+                : port(key.port), channel(key.channel), controller(key.controller) {}
+
+        bool operator< (const MidiMapKey& key) const
+        {
+            if (port != key.port)
+                    return (port < key.port);
+            else
+            if (channel != key.channel)
+                    return (channel < key.channel);
+            else
+                    return (controller < key.controller);
+        }
+
+        int16 port;
+        int16 channel;
+        int16 controller;
+    };
+
+    std::map<MidiMapKey, Vst::ParamID> m_midiMap;
+
 protected:
     void handlePluginUIClosed() override;
     void handlePluginUIResized(const uint width, const uint height) override;

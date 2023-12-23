@@ -1874,11 +1874,19 @@ VST3_Plugin::process_midi_in (
         if (status == 0xd0)
         {
             const MidiMapKey mkey(port, channel, Vst::kAfterTouch);
-            const Vst::ParamID id = m_midiMap.value(mkey, Vst::kNoParamId);
+            //const Vst::ParamID id = m_midiMap.value(mkey, Vst::kNoParamId);
+            std::map<MidiMapKey, Vst::ParamID>::const_iterator got
+                    = m_midiMap.find (mkey);
+
+            if (got == m_midiMap.end())
+                continue;
+
+            const Vst::ParamID id = got->second;
+
             if (id != Vst::kNoParamId)
             {
-                    const float pre = float(key) / 127.0f;
-                    setParameter(id, Vst::ParamValue(pre), offset);
+                const float pre = float(key) / 127.0f;
+                setParameter(id, Vst::ParamValue(pre), offset);
             }
             continue;
         }
@@ -1929,7 +1937,15 @@ VST3_Plugin::process_midi_in (
         else if (status == 0xb0)
         {
             const MidiMapKey mkey(port, channel, key);
-            const Vst::ParamID id = m_midiMap.value(mkey, Vst::kNoParamId);
+            //  const Vst::ParamID id = m_midiMap.value(mkey, Vst::kNoParamId);
+            std::map<MidiMapKey, Vst::ParamID>::const_iterator got
+                    = m_midiMap.find (mkey);
+
+            if (got == m_midiMap.end())
+                continue;
+
+            const Vst::ParamID id = got->second;
+
             if (id != Vst::kNoParamId)
             {
                 const float val = float(value) / 127.0f;
@@ -1940,7 +1956,15 @@ VST3_Plugin::process_midi_in (
         else if (status == 0xe0)
         {
             const MidiMapKey mkey(port, channel, Vst::kPitchBend);
-            const Vst::ParamID id = m_midiMap.value(mkey, Vst::kNoParamId);
+            //  const Vst::ParamID id = m_midiMap.value(mkey, Vst::kNoParamId);
+            std::map<MidiMapKey, Vst::ParamID>::const_iterator got
+                    = m_midiMap.find (mkey);
+
+            if (got == m_midiMap.end())
+                continue;
+
+            const Vst::ParamID id = got->second;
+
             if (id != Vst::kNoParamId)
             {
                 const float pitchbend
@@ -2085,26 +2109,31 @@ VST3_Plugin::initialize_plugin()
                     }
             }
     }
-
+#endif
     if (controller)
     {
-            const int32 nports = pType->midiIns();
-            FUnknownPtr<Vst::IMidiMapping> midiMapping(controller);
-            if (midiMapping && nports > 0) {
-                    for (int16 i = 0; i < Vst::kCountCtrlNumber; ++i) { // controllers...
-                            for (int32 j = 0; j < nports; ++j) { // ports...
-                                    for (int16 k = 0; k < 16; ++k) { // channels...
-                                            Vst::ParamID id = Vst::kNoParamId;
-                                            if (midiMapping->getMidiControllerAssignment(
-                                                            j, k, Vst::CtrlNumber(i), id) == kResultOk) {
-                                                    m_midiMap.insert(MidiMapKey(j, k, i), id);
-                                            }
-                                    }
-                            }
+        const int32 nports = m_iMidiIns;
+        FUnknownPtr<Vst::IMidiMapping> midiMapping(controller);
+        if (midiMapping && nports > 0)
+        {
+            for (int16 i = 0; i < Vst::kCountCtrlNumber; ++i)
+            { // controllers...
+                for (int32 j = 0; j < nports; ++j)
+                { // ports...
+                    for (int16 k = 0; k < 16; ++k)
+                    { // channels...
+                        Vst::ParamID id = Vst::kNoParamId;
+                        if (midiMapping->getMidiControllerAssignment(
+                                        j, k, Vst::CtrlNumber(i), id) == kResultOk)
+                        {
+                            std::pair<MidiMapKey, Vst::ParamID> prm ( MidiMapKey(j, k, i), id );
+                            m_midiMap.insert(prm);
+                        }
                     }
+                }
             }
+        }
     }
-#endif
 }
 
 void
@@ -2115,9 +2144,8 @@ VST3_Plugin::clear_plugin()
     m_programParamInfo.id = Vst::kNoParamId;
     m_programParamInfo.unitId = Vst::UnitID(-1);
     m_programs.clear();
-
-    m_midiMap.clear();
 #endif
+    m_midiMap.clear();
 }
 
 int
