@@ -975,7 +975,10 @@ VST3_Plugin::VST3_Plugin() :
     _activated(false),
     m_bRealtime(false),
     m_bConfigure(false),
-    m_bEditor(false)
+    m_bEditor(false),
+    _position(0),
+    _bpm(120.0f),
+    _rolling(false)
 {
     _plug_type = VST3;
 
@@ -1697,6 +1700,10 @@ VST3_Plugin::process_reset()
         return false;
 
     deactivate();
+    
+    _position = 0;
+    _bpm = 120.0f;
+    _rolling = false;
 
     // Initialize running state...
 //    m_params_in.clear();
@@ -1757,6 +1764,253 @@ VST3_Plugin::process_reset()
 
     return true;
 }
+
+void
+VST3_Plugin::process_jack_transport ( uint32_t nframes )
+{
+    // Get Jack transport position
+    jack_position_t pos;
+    const bool rolling =
+        (chain()->client()->transport_query(&pos) == JackTransportRolling);
+
+    // If transport state is not as expected, then something has changed
+    const bool has_bbt = (pos.valid & JackPositionBBT);
+    const bool xport_changed =
+      (rolling != _rolling || pos.frame != _position ||
+       (has_bbt && pos.beats_per_minute != _bpm));
+
+    if ( xport_changed )
+    {
+        if ( has_bbt )
+        {
+            const double positionBeats = static_cast<double>(pos.frame)
+                            / (sample_rate() * 60 / pos.beats_per_minute);
+#if 0
+            // Bar/ Beats
+            _transport.bar_start = std::round(CLAP_BEATTIME_FACTOR * pos.bar_start_tick);
+            _transport.bar_number = pos.bar - 1;
+            _transport.song_pos_beats = std::round(CLAP_BEATTIME_FACTOR * positionBeats);
+            _transport.flags |= CLAP_TRANSPORT_HAS_BEATS_TIMELINE;
+
+            // Tempo
+            _transport.tempo = pos.beats_per_minute;
+            _transport.flags |= CLAP_TRANSPORT_HAS_TEMPO;
+
+            // Time Signature
+            _transport.tsig_num = static_cast<uint16_t>(pos.beats_per_bar + 0.5f);
+            _transport.tsig_denom = static_cast<uint16_t>(pos.beat_type + 0.5f);
+            _transport.flags |= CLAP_TRANSPORT_HAS_TIME_SIGNATURE;
+#endif
+        }
+        else
+        {
+#if 0
+            // Tempo
+            _transport.tempo = 120.0;
+            _transport.flags |= CLAP_TRANSPORT_HAS_TEMPO;
+
+            // Time Signature
+            _transport.tsig_num = 4;
+            _transport.tsig_denom = 4;
+            _transport.flags |= CLAP_TRANSPORT_HAS_TIME_SIGNATURE;
+#endif
+        }
+    }
+
+    // Update transport state to expected values for next cycle
+    _position = rolling ? pos.frame + nframes : pos.frame;
+    _bpm      = has_bbt ? pos.beats_per_minute : _bpm;
+    _rolling  = rolling;
+}
+
+void
+VST3_Plugin::process_jack_midi_in ( uint32_t nframes, unsigned int port )
+{
+    /* Process any MIDI events from jack */
+    if ( midi_input[port].jack_port() )
+    {
+        void *buf = midi_input[port].jack_port()->buffer( nframes );
+
+        for (uint32_t i = 0; i < jack_midi_get_event_count(buf); ++i)
+        {
+            jack_midi_event_t ev;
+            jack_midi_event_get(&ev, buf, i);
+
+            process_midi_in(ev.buffer, ev.size, ev.time, 0);
+        }
+    }
+}
+
+void
+VST3_Plugin::process_midi_in (
+	unsigned char *data, unsigned int size,
+	unsigned long offset, unsigned short port )
+{
+#if 0
+    for (uint32_t i = 0; i < size; ++i)
+    {
+        // channel status
+        const int channel = (data[i] & 0x0f);// + 1;
+        const int status  = (data[i] & 0xf0);
+
+        // all system common/real-time ignored
+        if (status == 0xf0)
+                continue;
+
+        // check data size (#1)
+        if (++i >= size)
+                break;
+
+        // channel key
+        const int key = (data[i] & 0x7f);
+
+        // program change
+        if (status == 0xc0) {
+                // TODO: program-change...
+                continue;
+        }
+
+        // after-touch
+        if (status == 0xd0)
+        {
+            const MidiMapKey mkey(port, channel, Vst::kAfterTouch);
+            const Vst::ParamID id = m_midiMap.value(mkey, Vst::kNoParamId);
+            if (id != Vst::kNoParamId)
+            {
+                    const float pre = float(key) / 127.0f;
+                    setParameter(id, Vst::ParamValue(pre), offset);
+            }
+            continue;
+        }
+
+        // check data size (#2)
+        if (++i >= size)
+                break;
+
+        // channel value (normalized)
+        const int value = (data[i] & 0x7f);
+
+        Vst::Event event;
+        ::memset(&event, 0, sizeof(Vst::Event));
+        event.busIndex = port;
+        event.sampleOffset = offset;
+        event.flags = Vst::Event::kIsLive;
+
+        // note on
+        if (status == 0x90)
+        {
+            event.type = Vst::Event::kNoteOnEvent;
+            event.noteOn.noteId = -1;
+            event.noteOn.channel = channel;
+            event.noteOn.pitch = key;
+            event.noteOn.velocity = float(value) / 127.0f;
+            m_events_in.addEvent(event);
+        }
+        // note off
+        else if (status == 0x80)
+        {
+            event.type = Vst::Event::kNoteOffEvent;
+            event.noteOff.noteId = -1;
+            event.noteOff.channel = channel;
+            event.noteOff.pitch = key;
+            event.noteOff.velocity = float(value) / 127.0f;
+            m_events_in.addEvent(event);
+        }
+        // key pressure/poly.aftertouch
+        else if (status == 0xa0)
+        {
+            event.type = Vst::Event::kPolyPressureEvent;
+            event.polyPressure.channel = channel;
+            event.polyPressure.pitch = key;
+            event.polyPressure.pressure = float(value) / 127.0f;
+            m_events_in.addEvent(event);
+        }
+        // control-change
+        else if (status == 0xb0)
+        {
+            const MidiMapKey mkey(port, channel, key);
+            const Vst::ParamID id = m_midiMap.value(mkey, Vst::kNoParamId);
+            if (id != Vst::kNoParamId)
+            {
+                const float val = float(value) / 127.0f;
+                setParameter(id, Vst::ParamValue(val), offset);
+            }
+        }
+        // pitch-bend
+        else if (status == 0xe0)
+        {
+            const MidiMapKey mkey(port, channel, Vst::kPitchBend);
+            const Vst::ParamID id = m_midiMap.value(mkey, Vst::kNoParamId);
+            if (id != Vst::kNoParamId)
+            {
+                const float pitchbend
+                        = float(key + (value << 7)) / float(0x3fff);
+                setParameter(id, Vst::ParamValue(pitchbend), offset);
+            }
+        }
+    }
+#endif
+}
+
+void
+VST3_Plugin::process_jack_midi_out ( uint32_t nframes, unsigned int port )
+{
+    void* buf = NULL;
+
+    if ( midi_output[port].jack_port() )
+    {
+        buf = midi_output[port].jack_port()->buffer( nframes );
+        jack_midi_clear_buffer(buf);
+        
+#if 0
+        // Process MIDI output stream, if any...
+        if (pMidiManager)
+        {
+            if (iMidiOuts > 0)
+            {
+                qtractorMidiBuffer *pMidiBuffer = pMidiManager->buffer_out();
+                EventList& events_out = m_pImpl->events_out();
+                const int32 nevents = events_out.getEventCount();
+                for (int32 i = 0; i < nevents; ++i)
+                {
+                    Vst::Event event;
+                    if (events_out.getEvent(i, event) == kResultOk)
+                    {
+                        snd_seq_event_t ev;
+                        snd_seq_ev_clear(&ev);
+                        switch (event.type) {
+                        case Vst::Event::kNoteOnEvent:
+                                ev.type = SND_SEQ_EVENT_NOTEON;
+                                ev.data.note.channel  = event.noteOn.channel;
+                                ev.data.note.note     = event.noteOn.pitch;
+                                ev.data.note.velocity = event.noteOn.velocity;
+                                break;
+                        case Vst::Event::kNoteOffEvent:
+                                ev.type = SND_SEQ_EVENT_NOTEOFF;
+                                ev.data.note.channel  = event.noteOff.channel;
+                                ev.data.note.note     = event.noteOff.pitch;
+                                ev.data.note.velocity = event.noteOff.velocity;
+                                break;
+                        case Vst::Event::kPolyPressureEvent:
+                                ev.type = SND_SEQ_EVENT_KEYPRESS;
+                                ev.data.note.channel  = event.polyPressure.channel;
+                                ev.data.note.note     = event.polyPressure.pitch;
+                                ev.data.note.velocity = event.polyPressure.pressure;
+                                break;
+                        }
+                        if (ev.type != SND_SEQ_EVENT_NONE)
+                                pMidiBuffer->push(&ev, event.sampleOffset);
+                    }
+                }
+                pMidiManager->swapOutputBuffers();
+            } else {
+                    pMidiManager->resetOutputBuffers();
+            }
+        }
+#endif
+    }
+}
+
 
 void
 VST3_Plugin::initialize_plugin()
