@@ -32,6 +32,7 @@
 #include "../Mixer_Strip.H"
 #include "../Plugin_Module.H"
 #include "../x11/X11PluginUI.H"
+#include "Vst3_Impl.H"
 
 #include "pluginterfaces/vst/ivsthostapplication.h"
 //#include "pluginterfaces/vst/ivstpluginterfacesupport.h"
@@ -82,6 +83,9 @@ public:
     
     std::vector<Port> midi_input;
     std::vector<Port> midi_output;
+    
+    // Set/add a parameter value/point.
+    void setParameter (Vst::ParamID id, Vst::ParamValue value, uint32 offset);
 
     VST3_Plugin();
     virtual ~VST3_Plugin();
@@ -98,10 +102,10 @@ private:
 
     volatile bool m_processing;
 
-//    ParamChanges m_params_in;
+    VST3IMPL::ParamChanges m_params_in;
 
-//    EventList m_events_in;
-//    EventList m_events_out;
+    VST3IMPL::EventList m_events_in;
+    VST3IMPL::EventList m_events_out;
 
     // Processor buffers.
     Vst::AudioBusBuffers m_buffers_in;

@@ -51,6 +51,7 @@
 #undef WARNING      // Fix redefinition with /nonlib/debug.h"
 
 #define ASSERT ASRT_TMP
+#define WARNING( fmt, args... ) warnf( W_WARNING, __MODULE__, __FILE__, __FUNCTION__, __LINE__, fmt, ## args )
 
 
 using namespace Steinberg;
@@ -954,7 +955,11 @@ void qtractorVst3PluginHost::clear (void)
 // Host singleton.
 static qtractorVst3PluginHost g_hostContext;
 
+IMPLEMENT_FUNKNOWN_METHODS (VST3IMPL::ParamQueue, Vst::IParamValueQueue, Vst::IParamValueQueue::iid)
 
+IMPLEMENT_FUNKNOWN_METHODS (VST3IMPL::ParamChanges, Vst::IParameterChanges, Vst::IParameterChanges::iid)
+
+IMPLEMENT_FUNKNOWN_METHODS (VST3IMPL::EventList, IEventList, IEventList::iid)
 
 
 VST3_Plugin::VST3_Plugin() :
@@ -1301,7 +1306,7 @@ VST3_Plugin::configure_midi_inputs ()
         {
             delete midi_input[i].jack_port();
             midi_input[i].jack_port(NULL);
-          //  WARNING( "Failed to activate JACK MIDI IN port" );
+            WARNING( "Failed to activate JACK MIDI IN port" );
             return;
         }
     }
@@ -1333,7 +1338,7 @@ VST3_Plugin::configure_midi_outputs ()
         {
             delete midi_output[i].jack_port();
             midi_output[i].jack_port(NULL);
-           // WARNING( "Failed to activate JACK MIDI OUT port" );
+            WARNING( "Failed to activate JACK MIDI OUT port" );
             return;
         }
     }
@@ -1370,9 +1375,21 @@ VST3_Plugin::process ( nframes_t nframes )
         if (!m_processing)
             return;
 
-    //	m_params_out.clear();
+//        process_jack_transport( nframes );
 
-//        m_events_out.clear();
+        for( unsigned int i = 0; i < midi_input.size(); ++i )
+        {
+            /* JACK MIDI in to plugin MIDI in */
+            process_jack_midi_in( nframes, i );
+        }
+#if 0
+        for ( unsigned int i = 0; i < midi_output.size(); ++i)
+        {
+            /* Plugin to JACK MIDI out */
+            process_jack_midi_out( nframes, i);
+        }
+#endif
+        m_events_out.clear();
 
 //        m_buffers_in.channelBuffers32 = ins;
 //        m_buffers_out.channelBuffers32 = outs;
@@ -1380,11 +1397,24 @@ VST3_Plugin::process ( nframes_t nframes )
 
         if (m_processor->process(m_process_data) != kResultOk)
         {
-            DMESSAGE("[%p]::process() FAILED!", this);
+            WARNING("[%p]::process() FAILED!", this);
         }
 
-//        m_events_in.clear();
-//        m_params_in.clear();
+        m_events_in.clear();
+        m_params_in.clear();
+    }
+}
+
+// Set/add a parameter value/point.
+void
+VST3_Plugin::setParameter (
+	Vst::ParamID id, Vst::ParamValue value, uint32 offset )
+{
+    int32 index = 0;
+    Vst::IParamValueQueue *queue = m_params_in.addParameterData(id, index);
+    if (queue && (queue->addPoint(offset, value, index) != kResultOk))
+    {
+        WARNING("setParameter(%u, %g, %u) FAILED!", this, id, value, offset);
     }
 }
 
@@ -1706,10 +1736,10 @@ VST3_Plugin::process_reset()
     _rolling = false;
 
     // Initialize running state...
-//    m_params_in.clear();
+    m_params_in.clear();
 
-//    m_events_in.clear();
-//    m_events_out.clear();
+    m_events_in.clear();
+    m_events_out.clear();
 
     Vst::ProcessSetup setup;
 //    const bool bFreewheel    = pAudioEngine->isFreewheel();
@@ -1755,9 +1785,9 @@ VST3_Plugin::process_reset()
     }
 
     m_process_data.processContext         = g_hostContext.processContext();
-//    m_process_data.inputEvents            = &m_events_in;
-//    m_process_data.outputEvents           = &m_events_out;
-//    m_process_data.inputParameterChanges  = &m_params_in;
+    m_process_data.inputEvents            = &m_events_in;
+    m_process_data.outputEvents           = &m_events_out;
+    m_process_data.inputParameterChanges  = &m_params_in;
     m_process_data.outputParameterChanges = nullptr; //&m_params_out;
 
     activate();
@@ -1846,7 +1876,6 @@ VST3_Plugin::process_midi_in (
 	unsigned char *data, unsigned int size,
 	unsigned long offset, unsigned short port )
 {
-#if 0
     for (uint32_t i = 0; i < size; ++i)
     {
         // channel status
@@ -1973,7 +2002,6 @@ VST3_Plugin::process_midi_in (
             }
         }
     }
-#endif
 }
 
 void
