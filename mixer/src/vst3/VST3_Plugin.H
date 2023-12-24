@@ -86,6 +86,16 @@ public:
     
     // Set/add a parameter value/point.
     void setParameter (Vst::ParamID id, Vst::ParamValue value, uint32 offset);
+    void set_control_value(unsigned long port_index, float value, bool update_custom_ui);
+    
+    // Parameter update methods - host to plugin from Module
+    void updateParam(Vst::ParamID id, float fValue);
+    
+    // Parameters update methods - plugin to host
+    void updateParamValues(bool update_custom_ui);
+    // Get current parameter value.
+    Vst::ParamValue getParameter (Vst::ParamID id) const;
+    tresult notify (Vst::IMessage *message);
 
     VST3_Plugin();
     virtual ~VST3_Plugin();
@@ -93,7 +103,10 @@ private:
 
     // Instance variables.
     void *m_module;
-    
+
+    class Handler;  // Forward declaration
+    IPtr<Handler> m_handler;
+
     IPtr<Vst::IComponent> m_component;
     IPtr<Vst::IEditController> m_controller;
     IPtr<Vst::IUnitInfo> m_unitInfos;
@@ -133,6 +146,11 @@ private:
     uint32_t  _position;        ///< Transport position in frames
     float     _bpm;             ///< Transport tempo in beats per minute
     bool      _rolling;         ///< Transport speed (0=stop, 1=play)
+    
+    // Identififier-parameter map.
+    std::unordered_map<int, unsigned long> m_paramIds;
+    // Parameter finder (by id).
+    unsigned long findParamId ( int id ) const;
 
     // File loader.
     bool open_file(const std::string& sFilename);
@@ -194,9 +212,6 @@ private:
     std::map<MidiMapKey, Vst::ParamID> m_midiMap;
 
 protected:
-
-    // Forward declarations
-    class Handler;
 
     // Gui callbacks
     void handlePluginUIClosed() override;

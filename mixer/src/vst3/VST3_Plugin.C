@@ -986,7 +986,7 @@ public:
 
     //--- IComponentHandler ---
     //
-    tresult PLUGIN_API beginEdit (Vst::ParamID /*id*/) override
+    tresult PLUGIN_API beginEdit (Vst::ParamID id) override
     {
         DMESSAGE("Handler[%p]::beginEdit(%d)", this, int(id));
         return kResultOk;
@@ -996,15 +996,23 @@ public:
     {
         DMESSAGE("Handler[%p]::performEdit(%d, %g)", this, int(id), float(value));
 
-        m_pPlugin->impl()->setParameter(id, value, 0);
+        m_pPlugin->setParameter(id, value, 0);
+
+#if 1
+        unsigned long index = m_pPlugin->findParamId(int(id));
+
+        // false means don't update custom UI cause that is were it came from
+        m_pPlugin->set_control_value( index, value, false );
+        
+#else
         qtractorPlugin::Param *pParam = m_pPlugin->findParamId(int(id));
         if (pParam)
             pParam->updateValue(float(value), false);
-
+#endif
         return kResultOk;
     }
 
-    tresult PLUGIN_API endEdit (Vst::ParamID /*id*/) override
+    tresult PLUGIN_API endEdit (Vst::ParamID id) override
     {
         DMESSAGE("Handler[%p]::endEdit(%d)", this, int(id));
         return kResultOk;
@@ -1019,8 +1027,8 @@ public:
         else
         if (flags & Vst::kReloadComponent)
         {
-            m_pPlugin->impl()->deactivate();
-            m_pPlugin->impl()->activate();
+            m_pPlugin->deactivate();
+            m_pPlugin->activate();
         }
 
         return kResultOk;
@@ -1036,7 +1044,7 @@ public:
 
     tresult PLUGIN_API notify (Vst::IMessage *message) override
     {
-        return m_pPlugin->impl()->notify(message);
+        return m_pPlugin->notify(message);
     }
 
 private:
@@ -1066,6 +1074,7 @@ uint32 PLUGIN_API VST3_Plugin::Handler::release (void)
 VST3_Plugin::VST3_Plugin() :
     Plugin_Module(),
     m_module(nullptr),
+    m_handler(nullptr),
     m_component(nullptr),
     m_controller(nullptr),
     m_unitInfos(nullptr),
@@ -1094,9 +1103,12 @@ VST3_Plugin::VST3_Plugin() :
 VST3_Plugin::~VST3_Plugin()
 {
     log_destroy();
-    
+
     deactivate();
-    
+
+    m_processor = nullptr;
+    m_handler = nullptr;
+
     if ( _audio_in_buffers )
     {
         delete []_audio_in_buffers;
@@ -1108,7 +1120,7 @@ VST3_Plugin::~VST3_Plugin()
         delete []_audio_out_buffers;
         _audio_out_buffers = nullptr;
     }
-    
+
     for ( unsigned int i = 0; i < midi_input.size(); ++i )
     {
         if(!(midi_input[i].type() == Port::MIDI))
@@ -1520,6 +1532,87 @@ VST3_Plugin::setParameter (
 }
 
 void
+VST3_Plugin::set_control_value(unsigned long port_index, float value, bool update_custom_ui)
+{
+    if( port_index >= control_input.size())
+    {
+        WARNING("Invalid Port Index = %d: Value = %f", port_index, value);
+        return;
+    }
+
+    _is_from_custom_ui = !update_custom_ui;
+
+    control_input[port_index].control_value(value);
+
+    if (!dirty())
+        set_dirty();
+}
+
+/**
+ From Host to plugin - set parameter values.
+ */
+void
+VST3_Plugin::updateParam(Vst::ParamID id, float fValue)
+{
+    Vst::IEditController *controller = m_controller;
+    if (!controller)
+        return;
+
+    DMESSAGE("UpdateParam ID = %u: Value = %f", id, fValue);
+
+    const Vst::ParamValue value = Vst::ParamValue(fValue);
+
+    setParameter(id, value, 0); // sends to plugin
+    controller->setParamNormalized(id, value);  // For gui ???
+}
+
+// Parameters update methods.
+void
+VST3_Plugin::updateParamValues(bool update_custom_ui)
+{
+    for ( unsigned int i = 0; i < control_input.size(); ++i)
+    {
+        float value = (float) getParameter(control_input[i].hints.parameter_id);
+
+        if( control_input[i].control_value() != value)
+        {
+            set_control_value(i, value, update_custom_ui);
+        }
+    }
+}
+
+// Get current parameter value.
+Vst::ParamValue
+VST3_Plugin::getParameter ( Vst::ParamID id ) const
+{
+    Vst::IEditController *controller = m_controller;
+    if (controller)
+        return controller->getParamNormalized(id);
+    else
+        return 0.0;
+}
+
+tresult
+VST3_Plugin::notify ( Vst::IMessage *message )
+{
+    DMESSAGE("[%p]::notify(%p)", this, message);
+
+    Vst::IComponent *component = m_component;
+    FUnknownPtr<Vst::IConnectionPoint> component_cp(component);
+    if (component_cp)
+        component_cp->notify(message);
+
+    Vst::IEditController *controller = m_controller;
+    FUnknownPtr<Vst::IConnectionPoint> controller_cp(controller);
+    if (controller_cp)
+        controller_cp->notify(message);
+
+    return kResultOk;
+}
+
+
+
+void
 VST3_Plugin::handlePluginUIClosed()
 {
 
@@ -1530,6 +1623,25 @@ VST3_Plugin::handlePluginUIResized(const uint width, const uint height)
 {
     
 }
+
+// Parameter finder (by id).
+unsigned long 
+VST3_Plugin::findParamId ( int id ) const
+{
+    std::unordered_map<int, unsigned long>::const_iterator got
+        = m_paramIds.find (int(id));
+
+     if ( got == m_paramIds.end() )
+     {
+         // probably a control out - we don't do anything with these
+         // DMESSAGE("Param Id not found = %d", param_id);
+         return 0;
+     }
+
+    unsigned long index = got->second;
+    return index;
+}
+
 
 // File loader.
 bool
@@ -2195,8 +2307,8 @@ VST3_Plugin::initialize_plugin()
     Vst::IEditController *controller = m_controller;
     if (controller)
     {
-//        m_handler = owned(NEW Handler(m_pPlugin));
-//        controller->setComponentHandler(m_handler);
+        m_handler = owned(NEW VST3_Plugin::Handler(this));
+        controller->setComponentHandler(m_handler);
     }
 
     m_processor = FUnknownPtr<Vst::IAudioProcessor> (component);
@@ -2466,9 +2578,11 @@ VST3_Plugin::create_control_ports()
                 // Cache the port ID and index for easy lookup - only _control_ins
                 if (have_control_in)
                 {
-                   // DMESSAGE( "Control input port \"%s\" ID %u", param_info.name, p.hints.parameter_id );
-                   // std::pair<int, unsigned long> prm ( int(p.hints.parameter_id), control_ins - 1 );
-                   // _paramIds.insert(prm);
+                    DMESSAGE( "Control input port \"%s\" ID %u",
+                            utf16_to_utf8(paramInfo.title).c_str(), p.hints.parameter_id );
+
+                    std::pair<int, unsigned long> prm ( int(p.hints.parameter_id), control_ins - 1 );
+                    m_paramIds.insert(prm);
                 }
             }
         }
