@@ -2462,15 +2462,20 @@ VST3_Plugin::create_audio_ports()
 void
 VST3_Plugin::create_midi_ports()
 {
-    for (uint32_t i = 0; i < m_iMidiIns; ++i)
+    const int32 inbuses = m_component->getBusCount(Vst::kEvent, Vst::kInput);
+    const int32 outbuses = m_component->getBusCount(Vst::kEvent, Vst::kOutput);
+    
+    for (uint32_t i = 0; i < inbuses; ++i)
     {
         add_port( Port( this, Port::INPUT, Port::MIDI, "midi_in" ) );
     }
     
-    for (uint32_t i = 0; i < m_iMidiOuts; ++i)
+    for (uint32_t i = 0; i < outbuses; ++i)
     {
         add_port( Port( this, Port::OUTPUT, Port::MIDI, "midi_out" ) );
     }
+
+    MESSAGE( "Plugin has %i MIDI ins and %i MIDI outs", inbuses, outbuses);
 }
 
 void
@@ -2578,8 +2583,8 @@ VST3_Plugin::create_control_ports()
                 // Cache the port ID and index for easy lookup - only _control_ins
                 if (have_control_in)
                 {
-                    DMESSAGE( "Control input port \"%s\" ID %u",
-                            utf16_to_utf8(paramInfo.title).c_str(), p.hints.parameter_id );
+                   // DMESSAGE( "Control input port \"%s\" ID %u",
+                   //         utf16_to_utf8(paramInfo.title).c_str(), p.hints.parameter_id );
 
                     std::pair<int, unsigned long> prm ( int(p.hints.parameter_id), control_ins - 1 );
                     m_paramIds.insert(prm);
