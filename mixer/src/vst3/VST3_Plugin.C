@@ -124,7 +124,7 @@ public:
 	void processReleaseRef();
 
 	// Common host time-keeper process context.
-//	void updateProcessContext(qtractorAudioEngine *pAudioEngine);
+	void updateProcessContext(jack_position_t &pos, const bool &xport_changed, const bool &has_bbt);
 
 	// Cleanup.
 	void clear();
@@ -899,37 +899,45 @@ void qtractorVst3PluginHost::processReleaseRef (void)
 	if (m_processRefCount > 0) --m_processRefCount;
 }
 
-#if 0
 // Common host time-keeper process context.
 void qtractorVst3PluginHost::updateProcessContext (
-	qtractorAudioEngine *pAudioEngine )
+	jack_position_t &pos, const bool &xport_changed, const bool &has_bbt )
 {
-	if (m_processRefCount < 1)
-		return;
+    if (m_processRefCount < 1)
+        return;
 
-	const qtractorAudioEngine::TimeInfo& timeInfo
-		= pAudioEngine->timeInfo();
+    if (xport_changed)
+        m_processContext.state |=  Vst::ProcessContext::kPlaying;
+    else
+        m_processContext.state &= ~Vst::ProcessContext::kPlaying;
+    
+    if(has_bbt)
+    {
+        m_processContext.sampleRate = pos.frame_rate;
+        m_processContext.projectTimeSamples = pos.frame;
 
-	if (timeInfo.playing)
-		m_processContext.state |=  Vst::ProcessContext::kPlaying;
-	else
-		m_processContext.state &= ~Vst::ProcessContext::kPlaying;
+        m_processContext.state |= Vst::ProcessContext::kProjectTimeMusicValid;
+        m_processContext.projectTimeMusic = pos.beat;
+        m_processContext.state |= Vst::ProcessContext::kBarPositionValid;
+        m_processContext.barPositionMusic = pos.bar;
 
-	m_processContext.sampleRate = timeInfo.sampleRate;
-	m_processContext.projectTimeSamples = timeInfo.frame;
-
-	m_processContext.state |= Vst::ProcessContext::kProjectTimeMusicValid;
-	m_processContext.projectTimeMusic = timeInfo.beats;
-	m_processContext.state |= Vst::ProcessContext::kBarPositionValid;
-	m_processContext.barPositionMusic = timeInfo.beats;
-
-	m_processContext.state |= Vst::ProcessContext::kTempoValid;
-	m_processContext.tempo  = timeInfo.tempo;
-	m_processContext.state |= Vst::ProcessContext::kTimeSigValid;
-	m_processContext.timeSigNumerator = timeInfo.beatsPerBar;
-	m_processContext.timeSigDenominator = timeInfo.beatType;
+        m_processContext.state |= Vst::ProcessContext::kTempoValid;
+        m_processContext.tempo  = pos.beats_per_minute;
+        m_processContext.state |= Vst::ProcessContext::kTimeSigValid;
+        m_processContext.timeSigNumerator = pos.beats_per_bar;
+        m_processContext.timeSigDenominator = pos.beat_type;
+    }
+    else
+    {
+        m_processContext.sampleRate = pos.frame_rate;
+        m_processContext.projectTimeSamples = pos.frame;
+        m_processContext.state |= Vst::ProcessContext::kTempoValid;
+        m_processContext.tempo  = 120.0;
+        m_processContext.state |= Vst::ProcessContext::kTimeSigValid;
+        m_processContext.timeSigNumerator = 4;
+        m_processContext.timeSigDenominator = 4;
+    }
 }
-#endif
 
 // Cleanup.
 void qtractorVst3PluginHost::clear (void)
@@ -1488,7 +1496,7 @@ VST3_Plugin::process ( nframes_t nframes )
         if (!m_processing)
             return;
 
-//        process_jack_transport( nframes );
+        process_jack_transport( nframes );
 
         for( unsigned int i = 0; i < midi_input.size(); ++i )
         {
@@ -2021,44 +2029,8 @@ VST3_Plugin::process_jack_transport ( uint32_t nframes )
     const bool xport_changed =
       (rolling != _rolling || pos.frame != _position ||
        (has_bbt && pos.beats_per_minute != _bpm));
-
-    if ( xport_changed )
-    {
-        if ( has_bbt )
-        {
-            const double positionBeats = static_cast<double>(pos.frame)
-                            / (sample_rate() * 60 / pos.beats_per_minute);
-#if 0
-            // Bar/ Beats
-            _transport.bar_start = std::round(CLAP_BEATTIME_FACTOR * pos.bar_start_tick);
-            _transport.bar_number = pos.bar - 1;
-            _transport.song_pos_beats = std::round(CLAP_BEATTIME_FACTOR * positionBeats);
-            _transport.flags |= CLAP_TRANSPORT_HAS_BEATS_TIMELINE;
-
-            // Tempo
-            _transport.tempo = pos.beats_per_minute;
-            _transport.flags |= CLAP_TRANSPORT_HAS_TEMPO;
-
-            // Time Signature
-            _transport.tsig_num = static_cast<uint16_t>(pos.beats_per_bar + 0.5f);
-            _transport.tsig_denom = static_cast<uint16_t>(pos.beat_type + 0.5f);
-            _transport.flags |= CLAP_TRANSPORT_HAS_TIME_SIGNATURE;
-#endif
-        }
-        else
-        {
-#if 0
-            // Tempo
-            _transport.tempo = 120.0;
-            _transport.flags |= CLAP_TRANSPORT_HAS_TEMPO;
-
-            // Time Signature
-            _transport.tsig_num = 4;
-            _transport.tsig_denom = 4;
-            _transport.flags |= CLAP_TRANSPORT_HAS_TIME_SIGNATURE;
-#endif
-        }
-    }
+    
+    g_hostContext.updateProcessContext(pos, xport_changed, has_bbt);
 
     // Update transport state to expected values for next cycle
     _position = rolling ? pos.frame + nframes : pos.frame;
