@@ -493,7 +493,7 @@ Module::handle_control_changed ( Module::Port *p )
         }
     }
 
-#if defined(LV2_SUPPORT) || defined(CLAP_SUPPORT)
+#if defined(LV2_SUPPORT) || defined(CLAP_SUPPORT) || defined(VST3_SUPPORT)
     Module *m = p->module();
 #endif
 
@@ -534,6 +534,26 @@ Module::handle_control_changed ( Module::Port *p )
             pm->setParameter(param_id, value);
         }
     }
+#endif
+#ifdef VST3_SUPPORT
+    if (m->_plug_type == VST3)
+    {
+        if(m->_is_from_custom_ui)
+        {
+          //  DMESSAGE("Received control from custom UI");
+            m->_is_from_custom_ui = false;
+        }
+        else
+        {
+            VST3_Plugin *pm = static_cast<VST3_Plugin *> (m);
+
+            uint32_t param_id = p->hints.parameter_id;
+            float value = p->control_value();
+            DMESSAGE("VST3 Param ID = %d: Value = %f", param_id, value);
+            pm->updateParam(param_id, value);
+        }
+    }
+    
 #endif
     p->schedule_feedback();
     
