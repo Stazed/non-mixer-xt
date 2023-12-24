@@ -548,8 +548,20 @@ Module::handle_control_changed ( Module::Port *p )
             VST3_Plugin *pm = static_cast<VST3_Plugin *> (m);
 
             uint32_t param_id = p->hints.parameter_id;
-            float value = p->control_value();
-            DMESSAGE("VST3 Param ID = %d: Value = %f", param_id, value);
+            float value = 0.0f;
+
+            // VST3 only receives integer in float normalized ranges 0.0 to 1.0.
+            // So do the conversion to float normalized here.
+            if(p->hints.type == Port::Hints::INTEGER)
+            {
+                float tmp = p->control_value();
+                value = tmp / float(p->hints.maximum);
+            }
+            else
+            {
+                value = p->control_value();
+            }
+
             pm->updateParam(param_id, value);
         }
     }
