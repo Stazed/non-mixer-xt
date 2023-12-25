@@ -1089,6 +1089,7 @@ VST3_Plugin::VST3_Plugin() :
     m_processor(nullptr),
     m_processing(false),
     _plugin_filename(),
+    m_sName(),
     m_iAudioIns(0),
     m_iAudioOuts(0),
     m_iMidiIns(0),
@@ -1101,7 +1102,10 @@ VST3_Plugin::VST3_Plugin() :
     m_bEditor(false),
     _position(0),
     _bpm(120.0f),
-    _rolling(false)
+    _rolling(false),
+    _bEditorCreated(false),
+    _X11_UI(nullptr),
+    m_plugView(nullptr)
 {
     _plug_type = VST3;
 
@@ -1618,7 +1622,99 @@ VST3_Plugin::notify ( Vst::IMessage *message )
     return kResultOk;
 }
 
+bool
+VST3_Plugin::try_custom_ui()
+{
+#if 0
+    // Is it already there?
+    if (m_pEditorWidget)
+    {
+        if (!m_pEditorWidget->isVisible())
+        {
+                moveWidgetPos(m_pEditorWidget, editorPos());
+                m_pEditorWidget->show();
+        }
+        m_pEditorWidget->raise();
+        m_pEditorWidget->activateWindow();
+        return;
+    }
+#endif
 
+    if (!openEditor())
+        return false;
+
+    IPlugView *plugView = m_plugView;
+    if (!plugView)
+        return false;
+
+    if (plugView->isPlatformTypeSupported(kPlatformTypeX11EmbedWindowID) != kResultOk)
+    {
+        DMESSAGE("[%p]::openEditor"
+                " *** X11 Window platform is not supported (%s).", this,
+                kPlatformTypeX11EmbedWindowID);
+        return false;
+    }
+#if 0
+    m_pEditorWidget = new EditorWidget(pParent, wflags);
+    m_pEditorWidget->setAttribute(Qt::WA_QuitOnClose, false);
+    m_pEditorWidget->setWindowTitle(pType->name());
+    m_pEditorWidget->setWindowIcon(QIcon(":/images/qtractorPlugin.svg"));
+    m_pEditorWidget->setPlugin(this);
+
+    m_pEditorFrame = new EditorFrame(plugView, m_pEditorWidget);
+
+    void *wid = (void *) m_pEditorWidget->parentWinId();
+
+
+    if (plugView->attached(wid, kPlatformTypeX11EmbedWindowID) != kResultOk)
+    {
+#ifdef CONFIG_DEBUG
+        qDebug("qtractorVst3Plugin::[%p]::openEditor(%p)"
+                " *** Failed to create/attach editor window.", this, pParent);
+#endif
+        closeEditor();
+        return false;
+    }
+
+    // Final stabilization...
+    updateEditorTitle();
+    moveWidgetPos(m_pEditorWidget, editorPos());
+    setEditorVisible(true);
+
+#endif
+    return false;
+}
+
+// Editor controller methods.
+bool
+VST3_Plugin::openEditor (void)
+{
+    closeEditor();
+
+#ifdef CONFIG_VST3_XCB
+    g_hostContext.openXcbConnection();
+#endif
+
+//    g_hostContext.startTimer(200);
+
+    Vst::IEditController *controller = m_controller;
+    if (controller)
+        m_plugView = owned(controller->createView(Vst::ViewType::kEditor));
+
+    return (m_plugView != nullptr);
+}
+
+void
+VST3_Plugin::closeEditor (void)
+{
+    m_plugView = nullptr;
+
+//    g_hostContext.stopTimer();
+
+#ifdef CONFIG_VST3_XCB
+    g_hostContext.closeXcbConnection();
+#endif
+}
 
 void
 VST3_Plugin::handlePluginUIClosed()

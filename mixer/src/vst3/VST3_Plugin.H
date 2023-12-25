@@ -96,6 +96,12 @@ public:
     // Get current parameter value.
     Vst::ParamValue getParameter (Vst::ParamID id) const;
     tresult notify (Vst::IMessage *message);
+    
+    // Open/close editor widget.
+    bool try_custom_ui();
+    // Editor controller methods.
+    bool openEditor (void);
+    void closeEditor (void);
 
     VST3_Plugin();
     virtual ~VST3_Plugin();
@@ -146,6 +152,11 @@ private:
     uint32_t  _position;        ///< Transport position in frames
     float     _bpm;             ///< Transport tempo in beats per minute
     bool      _rolling;         ///< Transport speed (0=stop, 1=play)
+    
+    // GUI Editor stuff...
+    bool _bEditorCreated;
+    X11PluginUI *_X11_UI;
+    IPtr<IPlugView> m_plugView;
     
     // Identififier-parameter map.
     std::unordered_map<int, unsigned long> m_paramIds;
