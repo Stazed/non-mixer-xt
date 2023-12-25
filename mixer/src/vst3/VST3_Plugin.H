@@ -166,6 +166,10 @@ private:
     X11PluginUI *_X11_UI;
     IPtr<IPlugView> m_plugView;
     
+    class EditorFrame;
+    class RunLoop;
+    EditorFrame  *m_pEditorFrame;
+    
     // Identififier-parameter map.
     std::unordered_map<int, unsigned long> m_paramIds;
     // Parameter finder (by id).

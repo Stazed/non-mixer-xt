@@ -104,12 +104,12 @@ public:
 	tresult registerEventHandler (IEventHandler *handler, FileDescriptor fd);
 	tresult unregisterEventHandler (IEventHandler *handler);
 
-//	tresult registerTimer (ITimerHandler *handler, TimerInterval msecs);
-//	tresult unregisterTimer (ITimerHandler *handler);
+	tresult registerTimer (ITimerHandler *handler, TimerInterval msecs);
+	tresult unregisterTimer (ITimerHandler *handler);
 
 	// Executive methods.
 	//
-//	void processTimers();
+	void processTimers();
 	void processEventHandlers();
 
 #ifdef CONFIG_VST3_XCB
@@ -739,51 +739,55 @@ tresult qtractorVst3PluginHost::unregisterEventHandler ( IEventHandler *handler 
     return kResultOk;
 }
 
-#if 0
+#if 1
 tresult qtractorVst3PluginHost::registerTimer (
 	ITimerHandler *handler, TimerInterval msecs )
 {
-#ifdef CONFIG_DEBUG
-	qDebug("qtractorVst3PluginHost::registerTimer(%p, %u)", handler, uint(msecs));
+    DMESSAGE("registerTimer(%p, %u)", handler, uint(msecs));
+#if 0
+    TimerHandlerItem *timer_handler = m_timerHandlers.value(handler, nullptr);
+    if (timer_handler) {
+            timer_handler->reset(msecs);
+    } else {
+            timer_handler = new TimerHandlerItem(handler, msecs);
+            m_timerHandlers.insert(handler, timer_handler);
+    }
+
+    m_pTimer->start(int(msecs));
 #endif
-	TimerHandlerItem *timer_handler = m_timerHandlers.value(handler, nullptr);
-	if (timer_handler) {
-		timer_handler->reset(msecs);
-	} else {
-		timer_handler = new TimerHandlerItem(handler, msecs);
-		m_timerHandlers.insert(handler, timer_handler);
-	}
-	m_pTimer->start(int(msecs));
-	return kResultOk;
+    return kResultOk;
 }
 
 
 tresult qtractorVst3PluginHost::unregisterTimer ( ITimerHandler *handler )
 {
-#ifdef CONFIG_DEBUG
-	qDebug("qtractorVst3PluginHost::unregisterTimer(%p)", handler);
+    DMESSAGE("unregisterTimer(%p)", handler);
+#if 0
+    TimerHandlerItem *timer_handler = m_timerHandlers.value(handler, nullptr);
+    if (timer_handler) {
+            m_timerHandlers.remove(handler);
+            m_timerHandlerItems.append(timer_handler);
+    }
+    if (m_timerHandlers.isEmpty())
+            m_pTimer->stop();
+
 #endif
-	TimerHandlerItem *timer_handler = m_timerHandlers.value(handler, nullptr);
-	if (timer_handler) {
-		m_timerHandlers.remove(handler);
-		m_timerHandlerItems.append(timer_handler);
-	}
-	if (m_timerHandlers.isEmpty())
-		m_pTimer->stop();
-	return kResultOk;
+    return kResultOk;
 }
 
 // Executive methods.
 //
 void qtractorVst3PluginHost::processTimers (void)
 {
-	foreach (TimerHandlerItem *timer_handler, m_timerHandlers) {
-		timer_handler->counter += timerInterval();
-		if (timer_handler->counter >= timer_handler->interval) {
-			timer_handler->handler->onTimer();
-			timer_handler->counter = 0;
-		}
-	}
+#if 0
+    foreach (TimerHandlerItem *timer_handler, m_timerHandlers) {
+            timer_handler->counter += timerInterval();
+            if (timer_handler->counter >= timer_handler->interval) {
+                    timer_handler->handler->onTimer();
+                    timer_handler->counter = 0;
+            }
+    }
+#endif
 }
 #endif
 
@@ -1077,6 +1081,149 @@ uint32 PLUGIN_API VST3_Plugin::Handler::addRef (void)
 
 uint32 PLUGIN_API VST3_Plugin::Handler::release (void)
     { return 1000; }
+
+//----------------------------------------------------------------------
+// class VST3_Plugin::RunLoop -- VST3 plugin editor run-loop impl.
+//
+
+class VST3_Plugin::RunLoop : public IRunLoop
+{
+public:
+
+	//--- IRunLoop ---
+	//
+	tresult PLUGIN_API registerEventHandler (IEventHandler *handler, FileDescriptor fd) override
+		{ return g_hostContext.registerEventHandler(handler, fd); }
+
+	tresult PLUGIN_API unregisterEventHandler (IEventHandler *handler) override
+		{ return g_hostContext.unregisterEventHandler(handler); }
+
+	tresult PLUGIN_API registerTimer (ITimerHandler *handler, TimerInterval msecs) override
+		{ return g_hostContext.registerTimer(handler, msecs); }
+
+	tresult PLUGIN_API unregisterTimer (ITimerHandler *handler) override
+		{ return g_hostContext.unregisterTimer(handler); }
+
+	tresult PLUGIN_API queryInterface (const TUID _iid, void **obj) override
+	{
+		if (FUnknownPrivate::iidEqual(_iid, FUnknown::iid) ||
+			FUnknownPrivate::iidEqual(_iid, IRunLoop::iid)) {
+			addRef();
+			*obj = this;
+			return kResultOk;
+		}
+
+		*obj = nullptr;
+		return kNoInterface;
+	}
+
+	uint32 PLUGIN_API addRef  () override { return 1001; }
+	uint32 PLUGIN_API release () override { return 1001; }
+};
+
+
+//----------------------------------------------------------------------
+// class qtractorVst3Plugin::EditorFrame -- VST3 plugin editor frame interface impl.
+//
+
+class VST3_Plugin::EditorFrame : public IPlugFrame
+{
+public:
+
+	// Constructor.
+	EditorFrame (IPlugView *plugView, QWidget *widget)
+		: m_plugView(plugView), m_widget(widget),
+			m_runLoop(nullptr), m_resizing(false)
+	{
+		m_runLoop = owned(NEW RunLoop());
+		m_plugView->setFrame(this);
+
+		ViewRect rect;
+		if (m_plugView->getSize(&rect) == kResultOk) {
+			m_resizing = true;
+			const QSize size(
+				rect.right  - rect.left,
+				rect.bottom - rect.top);
+			m_widget->resize(size);
+			m_resizing = false;
+		}
+	}
+
+	// Destructor.
+	virtual ~EditorFrame ()
+	{
+		m_plugView->setFrame(nullptr);
+		m_runLoop = nullptr;
+	}
+
+	// Accessors.
+	IPlugView *plugView () const
+		{ return m_plugView; }
+	RunLoop *runLoop () const
+		{ return m_runLoop; }
+
+	//--- IPlugFrame ---
+	//
+	tresult PLUGIN_API resizeView (IPlugView *plugView, ViewRect *rect) override
+	{
+		if (!rect || !plugView || plugView != m_plugView)
+			return kInvalidArgument;
+
+		if (!m_widget)
+			return kInternalError;
+		if (m_resizing)
+			return kResultFalse;
+
+		m_resizing = true;
+		const QSize size(
+			rect->right  - rect->left,
+			rect->bottom - rect->top);
+	#ifdef CONFIG_DEBUG
+		qDebug("qtractorVst3Plugin::EditorFrame[%p]::resizeView(%p, %p) size=(%d, %d)",
+			this, plugView, rect, size.width(), size.height());
+	#endif
+		if (m_plugView->canResize() == kResultOk)
+			m_widget->resize(size);
+		else
+			m_widget->setFixedSize(size);
+		m_resizing = false;
+
+		ViewRect rect0;
+		if (m_plugView->getSize(&rect0) != kResultOk)
+			return kInternalError;
+
+		const QSize size0(
+			rect0.right  - rect0.left,
+			rect0.bottom - rect0.top);
+		if (size != size0)
+			m_plugView->onSize(&rect0);
+
+		return kResultOk;
+	}
+
+	tresult PLUGIN_API queryInterface (const TUID _iid, void **obj) override
+	{
+		if (FUnknownPrivate::iidEqual(_iid, FUnknown::iid) ||
+			FUnknownPrivate::iidEqual(_iid, IPlugFrame::iid)) {
+			addRef();
+			*obj = this;
+			return kResultOk;
+		}
+
+		return m_runLoop->queryInterface(_iid, obj);
+	}
+
+	uint32 PLUGIN_API addRef  () override { return 1002; }
+	uint32 PLUGIN_API release () override { return 1002; }
+
+private:
+
+	// Instance members.
+	IPlugView *m_plugView;
+	QWidget *m_widget;
+	IPtr<RunLoop> m_runLoop;
+	bool m_resizing;
+};
 
 
 VST3_Plugin::VST3_Plugin() :
@@ -1678,6 +1825,8 @@ VST3_Plugin::try_custom_ui()
     _X11_UI = new X11PluginUI(this, _x_is_resizable, false);
     _X11_UI->setTitle(label());
     
+    m_pEditorFrame = new EditorFrame(plugView, m_pEditorWidget);
+    
     void *wid = _X11_UI->getPtr();
     
     if (plugView->attached(wid, kPlatformTypeX11EmbedWindowID) != kResultOk)
@@ -1856,13 +2005,13 @@ VST3_Plugin::hide_custom_ui()
 void
 VST3_Plugin::handlePluginUIClosed()
 {
-
+    _x_is_visible = false;
 }
 
 void
 VST3_Plugin::handlePluginUIResized(const uint width, const uint height)
 {
-    
+
 }
 
 // Parameter finder (by id).
