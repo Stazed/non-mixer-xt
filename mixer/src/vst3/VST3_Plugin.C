@@ -1104,6 +1104,8 @@ VST3_Plugin::VST3_Plugin() :
     _bpm(120.0f),
     _rolling(false),
     _bEditorCreated(false),
+    _x_is_resizable(false),
+    _x_is_visible(false),
     _X11_UI(nullptr),
     m_plugView(nullptr)
 {
@@ -1625,6 +1627,21 @@ VST3_Plugin::notify ( Vst::IMessage *message )
 bool
 VST3_Plugin::try_custom_ui()
 {
+    /* Toggle show and hide */
+    if(_bEditorCreated)
+    {
+        if (_x_is_visible)
+        {
+            hide_custom_ui();
+            return true;
+        }
+        else
+        {
+            show_custom_ui();
+            return true;
+        }
+    }
+    
 #if 0
     // Is it already there?
     if (m_pEditorWidget)
@@ -1652,6 +1669,21 @@ VST3_Plugin::try_custom_ui()
         DMESSAGE("[%p]::openEditor"
                 " *** X11 Window platform is not supported (%s).", this,
                 kPlatformTypeX11EmbedWindowID);
+        return false;
+    }
+    
+    if (m_plugView->canResize() == kResultOk)
+        _x_is_resizable = true;
+    
+    _X11_UI = new X11PluginUI(this, _x_is_resizable, false);
+    _X11_UI->setTitle(label());
+    
+    void *wid = _X11_UI->getPtr();
+    
+    if (plugView->attached(wid, kPlatformTypeX11EmbedWindowID) != kResultOk)
+    {
+        DMESSAGE(" *** Failed to create/attach editor window - %s.", label());
+        closeEditor();
         return false;
     }
 #if 0
@@ -1682,7 +1714,9 @@ VST3_Plugin::try_custom_ui()
     setEditorVisible(true);
 
 #endif
-    return false;
+    _bEditorCreated = show_custom_ui();
+
+    return _bEditorCreated;
 }
 
 // Editor controller methods.
@@ -1715,6 +1749,109 @@ VST3_Plugin::closeEditor (void)
     g_hostContext.closeXcbConnection();
 #endif
 }
+
+bool
+VST3_Plugin::show_custom_ui()
+{
+#if 0
+    if (_is_floating)
+    {
+        _x_is_visible = _gui->show(_plugin);
+        Fl::add_timeout( 0.03f, &CLAP_Plugin::custom_update_ui, this );
+        return _x_is_visible;
+    }
+#endif
+    _X11_UI->show();
+    _X11_UI->focus();
+
+    _x_is_visible = true;
+
+    Fl::add_timeout( 0.03f, &VST3_Plugin::custom_update_ui, this );
+
+    return true;
+}
+
+/**
+ Callback for custom ui idle interface
+ */
+void 
+VST3_Plugin::custom_update_ui ( void *v )
+{
+    ((VST3_Plugin*)v)->custom_update_ui_x();
+}
+
+/**
+ The idle callback to update_custom_ui()
+ */
+void
+VST3_Plugin::custom_update_ui_x()
+{
+#if 0
+    if (!_is_floating)
+    {
+        if(_x_is_visible)
+            _X11_UI->idle();
+    }
+#endif
+    _X11_UI->idle();
+#if 0
+    for (LinkedList<HostTimerDetails>::Itenerator it = _fTimers.begin2(); it.valid(); it.next())
+    {
+        const uint32_t currentTimeInMs = water::Time::getMillisecondCounter();
+        HostTimerDetails& timer(it.getValue(kTimerFallbackNC));
+
+        if (currentTimeInMs > timer.lastCallTimeInMs + timer.periodInMs)
+        {
+            timer.lastCallTimeInMs = currentTimeInMs;
+            _timer_support->on_timer(_plugin, timer.clapId);
+        }
+    }
+#endif
+    if(_x_is_visible)
+    {
+        Fl::repeat_timeout( 0.03f, &VST3_Plugin::custom_update_ui, this );
+    }
+    else
+    {
+        hide_custom_ui();
+    }
+}
+
+bool
+VST3_Plugin::hide_custom_ui()
+{
+    DMESSAGE("Closing Custom Interface");
+    closeEditor();
+#if 0
+    if (_is_floating)
+    {
+        _x_is_visible = false;
+        Fl::remove_timeout(&CLAP_Plugin::custom_update_ui, this);
+        return _gui->hide(_plugin);
+    }
+#endif
+    Fl::remove_timeout(&VST3_Plugin::custom_update_ui, this);
+
+    _x_is_visible = false;
+
+    if (_X11_UI != nullptr)
+        _X11_UI->hide();
+
+    if (_bEditorCreated)
+    {
+      //  _gui->destroy(_plugin);
+        _bEditorCreated = false;
+    }
+
+    if(_X11_UI != nullptr)
+    {
+        delete _X11_UI;
+        _X11_UI = nullptr;
+    }
+
+    return true;
+}
+
 
 void
 VST3_Plugin::handlePluginUIClosed()

@@ -1466,6 +1466,17 @@ Module::handle ( int m )
                 }
                 else
 #endif
+#ifdef VST3_SUPPORT
+                if(_plug_type == VST3)
+                {
+                    VST3_Plugin *pm = static_cast<VST3_Plugin *> (this);
+                    if(!pm->try_custom_ui())
+                    {
+                        command_open_parameter_editor();
+                    }
+                }
+                else
+#endif
                 // LADSPA and internal
                 {
                     command_open_parameter_editor();
@@ -1524,6 +1535,17 @@ Module::handle ( int m )
                 if(_plug_type == CLAP)
                 {
                     CLAP_Plugin *pm = static_cast<CLAP_Plugin *> (this);
+                    if(!pm->try_custom_ui())
+                    {
+                        command_open_parameter_editor();
+                    }
+                }
+                else
+#endif
+#ifdef VST3_SUPPORT
+                if(_plug_type == VST3)
+                {
+                    VST3_Plugin *pm = static_cast<VST3_Plugin *> (this);
                     if(!pm->try_custom_ui())
                     {
                         command_open_parameter_editor();

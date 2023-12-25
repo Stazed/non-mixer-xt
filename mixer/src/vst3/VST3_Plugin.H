@@ -103,6 +103,12 @@ public:
     bool openEditor (void);
     void closeEditor (void);
 
+    bool show_custom_ui();
+    bool hide_custom_ui();
+
+    void custom_update_ui_x();
+    static void custom_update_ui ( void * );
+
     VST3_Plugin();
     virtual ~VST3_Plugin();
 private:
@@ -155,6 +161,8 @@ private:
     
     // GUI Editor stuff...
     bool _bEditorCreated;
+    bool _x_is_resizable;
+    bool _x_is_visible;
     X11PluginUI *_X11_UI;
     IPtr<IPlugView> m_plugView;
     
