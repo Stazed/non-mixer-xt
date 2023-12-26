@@ -1130,99 +1130,114 @@ class VST3_Plugin::EditorFrame : public IPlugFrame
 {
 public:
 
-	// Constructor.
-	EditorFrame (IPlugView *plugView, QWidget *widget)
-		: m_plugView(plugView), m_widget(widget),
-			m_runLoop(nullptr), m_resizing(false)
-	{
-		m_runLoop = owned(NEW RunLoop());
-		m_plugView->setFrame(this);
+    // Constructor.
+    EditorFrame (IPlugView *plugView, X11PluginUI *widget)
+            : m_plugView(plugView), m_widget(widget),
+                    m_runLoop(nullptr), m_resizing(false)
+    {
+        m_runLoop = owned(NEW RunLoop());
+        m_plugView->setFrame(this);
 
-		ViewRect rect;
-		if (m_plugView->getSize(&rect) == kResultOk) {
-			m_resizing = true;
-			const QSize size(
-				rect.right  - rect.left,
-				rect.bottom - rect.top);
-			m_widget->resize(size);
-			m_resizing = false;
-		}
-	}
+        ViewRect rect;
+        if (m_plugView->getSize(&rect) == kResultOk)
+        {
+            m_resizing = true;
+          //  const QSize size( rect.right  - rect.left, rect.bottom - rect.top);
+          //  m_widget->resize(size);
+            m_widget->setSize(rect.right - rect.left, rect.bottom - rect.top, false, false);
+            m_resizing = false;
+        }
+    }
 
-	// Destructor.
-	virtual ~EditorFrame ()
-	{
-		m_plugView->setFrame(nullptr);
-		m_runLoop = nullptr;
-	}
+    // Destructor.
+    virtual ~EditorFrame ()
+    {
+        m_plugView->setFrame(nullptr);
+        m_runLoop = nullptr;
+    }
 
-	// Accessors.
-	IPlugView *plugView () const
-		{ return m_plugView; }
-	RunLoop *runLoop () const
-		{ return m_runLoop; }
+    // Accessors.
+    IPlugView *plugView () const
+            { return m_plugView; }
+    RunLoop *runLoop () const
+            { return m_runLoop; }
 
-	//--- IPlugFrame ---
-	//
-	tresult PLUGIN_API resizeView (IPlugView *plugView, ViewRect *rect) override
-	{
-		if (!rect || !plugView || plugView != m_plugView)
-			return kInvalidArgument;
+    //--- IPlugFrame ---
+    //
+    tresult PLUGIN_API resizeView (IPlugView *plugView, ViewRect *rect) override
+    {
+        if (!rect || !plugView || plugView != m_plugView)
+                return kInvalidArgument;
 
-		if (!m_widget)
-			return kInternalError;
-		if (m_resizing)
-			return kResultFalse;
+        if (!m_widget)
+            return kInternalError;
+        if (m_resizing)
+            return kResultFalse;
 
-		m_resizing = true;
-		const QSize size(
-			rect->right  - rect->left,
-			rect->bottom - rect->top);
-	#ifdef CONFIG_DEBUG
-		qDebug("qtractorVst3Plugin::EditorFrame[%p]::resizeView(%p, %p) size=(%d, %d)",
-			this, plugView, rect, size.width(), size.height());
-	#endif
-		if (m_plugView->canResize() == kResultOk)
-			m_widget->resize(size);
-		else
-			m_widget->setFixedSize(size);
-		m_resizing = false;
+        m_resizing = true;
+#if 1
+        int width = rect->right  - rect->left;
+        int height = rect->bottom - rect->top;
+        DMESSAGE("EditorFrame[%p]::resizeView(%p, %p) size=(%d, %d)",
+                this, plugView, rect, width, height);
+        
+        if (m_plugView->canResize() == kResultOk)
+            m_widget->setSize(width, height, false, false);
 
-		ViewRect rect0;
-		if (m_plugView->getSize(&rect0) != kResultOk)
-			return kInternalError;
+#else
+        const QSize size(rect->right  - rect->left, rect->bottom - rect->top);
+        DMESSAGE("EditorFrame[%p]::resizeView(%p, %p) size=(%d, %d)",
+                this, plugView, rect, size.width(), size.height());
 
-		const QSize size0(
-			rect0.right  - rect0.left,
-			rect0.bottom - rect0.top);
-		if (size != size0)
-			m_plugView->onSize(&rect0);
+        if (m_plugView->canResize() == kResultOk)
+            m_widget->resize(size);
+        else
+            m_widget->setFixedSize(size);
+#endif
+        m_resizing = false;
 
-		return kResultOk;
-	}
+        ViewRect rect0;
+        if (m_plugView->getSize(&rect0) != kResultOk)
+            return kInternalError;
+#if 1
+        int width0 = rect0.right  - rect0.left;
+        int height0 = rect0.bottom - rect0.top;
+        
+        if ( (width0 != width) && (height0 != height) )
+            m_plugView->onSize(&rect0);
+#else
+        const QSize size0(
+                rect0.right  - rect0.left,
+                rect0.bottom - rect0.top);
+        if (size != size0)
+                m_plugView->onSize(&rect0);
+#endif
+        return kResultOk;
+    }
 
-	tresult PLUGIN_API queryInterface (const TUID _iid, void **obj) override
-	{
-		if (FUnknownPrivate::iidEqual(_iid, FUnknown::iid) ||
-			FUnknownPrivate::iidEqual(_iid, IPlugFrame::iid)) {
-			addRef();
-			*obj = this;
-			return kResultOk;
-		}
+    tresult PLUGIN_API queryInterface (const TUID _iid, void **obj) override
+    {
+        if (FUnknownPrivate::iidEqual(_iid, FUnknown::iid) ||
+                FUnknownPrivate::iidEqual(_iid, IPlugFrame::iid))
+        {
+            addRef();
+            *obj = this;
+            return kResultOk;
+        }
 
-		return m_runLoop->queryInterface(_iid, obj);
-	}
+        return m_runLoop->queryInterface(_iid, obj);
+    }
 
-	uint32 PLUGIN_API addRef  () override { return 1002; }
-	uint32 PLUGIN_API release () override { return 1002; }
+    uint32 PLUGIN_API addRef  () override { return 1002; }
+    uint32 PLUGIN_API release () override { return 1002; }
 
 private:
 
-	// Instance members.
-	IPlugView *m_plugView;
-	QWidget *m_widget;
-	IPtr<RunLoop> m_runLoop;
-	bool m_resizing;
+    // Instance members.
+    IPlugView *m_plugView;
+    X11PluginUI *m_widget;
+    IPtr<RunLoop> m_runLoop;
+    bool m_resizing;
 };
 
 
@@ -1825,7 +1840,7 @@ VST3_Plugin::try_custom_ui()
     _X11_UI = new X11PluginUI(this, _x_is_resizable, false);
     _X11_UI->setTitle(label());
     
-    m_pEditorFrame = new EditorFrame(plugView, m_pEditorWidget);
+    m_pEditorFrame = new EditorFrame(plugView, _X11_UI);
     
     void *wid = _X11_UI->getPtr();
     
