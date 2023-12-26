@@ -58,9 +58,13 @@ const unsigned char  EVENT_NOTE_OFF         = 0x80;
 const unsigned char  EVENT_NOTE_ON          = 0x90;
 const unsigned char  EVENT_CHANNEL_PRESSURE = 0xa0;
 
+const int DEFAULT_MSECS = 30;
+float f_miliseconds = DEFAULT_MSECS * .001;
+
 using namespace Steinberg;
 using namespace Linux;
 
+VST3_Plugin *g_VST3_Plugin;
 
 std::string utf16_to_utf8(const u16string& utf16)
 {
@@ -137,14 +141,14 @@ protected:
     class AttributeList;
     class Message;
 
- //   class Timer;  // FIXME
+    class Timer;
 
 private:
 
     // Instance members.
     IPtr<PlugInterfaceSupport> m_plugInterfaceSupport;
 
-//	Timer *m_pTimer;    // FIXME
+    Timer *m_pTimer;
 
     unsigned int m_timerRefCount;
 
@@ -161,7 +165,7 @@ private:
             TimerInterval  counter;
     };
 
-    std::unordered_map<int, double> m_timerHandlers;
+    std::unordered_map<ITimerHandler *, TimerHandlerItem *> m_timerHandlers;
     //QHash<ITimerHandler *, TimerHandlerItem *> m_timerHandlers;
 
     std::list<TimerHandlerItem *> m_timerHandlerItems;
@@ -410,16 +414,39 @@ public:
 
 	tresult PLUGIN_API setString (AttrID aid, const Vst::TChar *string) override
 	{
+            removeAttrID(aid);
+
+            std::pair<std::string, Attribute *> prm ( aid, new Attribute( string, utf16_to_utf8(string).length() ) );
+                m_list.insert(prm);
+    
+            return kResultTrue;
 #if 0
             removeAttrID(aid);
             m_list.insert(aid, new Attribute(string, fromTChar(string).length()));
             return kResultTrue;
 #endif
-            return kResultFalse;    // FIXME
+
 	}
 
 	tresult PLUGIN_API getString (AttrID aid, Vst::TChar *string, uint32 size) override
 	{
+            std::unordered_map<std::string, Attribute *>::const_iterator got
+                = m_list.find (aid);
+            
+            if ( got == m_list.end() )
+            {
+                return kResultFalse;
+            }
+            
+            Attribute *attr = got->second;
+            if (attr)
+            {
+                uint32 size2 = 0;
+                const Vst::TChar *string2 = attr->stringValue(size2);
+                ::memcpy(string, string2, (size < size2 ? size: size2) * sizeof(Vst::TChar));
+                return kResultTrue;
+            }
+            return kResultFalse;
 #if 0
             Attribute *attr = m_list.value(aid, nullptr);
             if (attr) {
@@ -429,7 +456,6 @@ public:
                     return kResultTrue;
             }
 #endif
-            return kResultFalse;    // FIXME
 	}
 
 	tresult PLUGIN_API setBinary (AttrID aid, const void* data, uint32 size) override
@@ -455,9 +481,10 @@ public:
             
             Attribute *attr = got->second;
            // Attribute *attr = m_list.value(aid, nullptr);
-            if (attr) {
-                    data = attr->binaryValue(size);
-                    return kResultTrue;
+            if (attr)
+            {
+                data = attr->binaryValue(size);
+                return kResultTrue;
             }
             size = 0;
             return kResultFalse;
@@ -562,37 +589,57 @@ IMPLEMENT_FUNKNOWN_METHODS (qtractorVst3PluginHost::Message, IMessage, IMessage:
 // class qtractorVst3PluginHost::Timer -- VST3 plugin host timer impl.
 //
 
-#if 0
-class qtractorVst3PluginHost::Timer : public QTimer
+#if 1
+class qtractorVst3PluginHost::Timer
 {
 public:
 
 	// Constructor.
-	Timer (qtractorVst3PluginHost *pHost) : QTimer(), m_pHost(pHost) {}
+	Timer (qtractorVst3PluginHost *pHost) : m_pHost(pHost) {}
 
 	// Main method.
 	void start (int msecs)
 	{
-		const int DEFAULT_MSECS = 30;
+        //    const int DEFAULT_MSECS = 30;
+            f_miliseconds = float(msecs) *.001;
+            
+        //    DMESSAGE("Miliseconds = %f", f_miliseconds);
 
-		int iInterval = QTimer::interval();
-		if (iInterval == 0)
-			iInterval = DEFAULT_MSECS;
-		if (iInterval > msecs)
-			iInterval = msecs;
+            Fl::add_timeout( f_miliseconds, &VST3_Plugin::custom_update_ui, g_VST3_Plugin );
 
-		QTimer::start(iInterval);
+#if 0
+            int iInterval = QTimer::interval();
+            if (iInterval == 0)
+                    iInterval = DEFAULT_MSECS;
+            if (iInterval > msecs)
+                    iInterval = msecs;
+
+            QTimer::start(iInterval);
+#endif
 	}
+        
+        void stop()
+        {
+            Fl::remove_timeout(&VST3_Plugin::custom_update_ui, g_VST3_Plugin);
+        }
+        
+        int interval()
+        {
+           // DMESSAGE("Interval = %d", int(f_miliseconds * 1000) );
+            return int(f_miliseconds * 1000);
+        }
 
 protected:
 
+#if 0
 	void timerEvent (QTimerEvent *pTimerEvent)
 	{
-		if (pTimerEvent->timerId() == QTimer::timerId()) {
-			m_pHost->processTimers();
-			m_pHost->processEventHandlers();
-		}
+            if (pTimerEvent->timerId() == QTimer::timerId()) {
+                    m_pHost->processTimers();
+                    m_pHost->processEventHandlers();
+            }
 	}
+#endif
 
 private:
 
@@ -612,7 +659,7 @@ qtractorVst3PluginHost::qtractorVst3PluginHost (void)
 
     m_plugInterfaceSupport = owned(NEW PlugInterfaceSupport());
 
-//	m_pTimer = new Timer(this); // FIXME
+    m_pTimer = new Timer(this);
 
     m_timerRefCount = 0;
 
@@ -630,7 +677,7 @@ qtractorVst3PluginHost::~qtractorVst3PluginHost (void)
 {
     clear();
 
-//    delete m_pTimer;  // FIXME
+    delete m_pTimer;
 
     m_plugInterfaceSupport = nullptr;
 
@@ -700,7 +747,6 @@ uint32 PLUGIN_API qtractorVst3PluginHost::release (void)
 
 // QTimer stuff...
 //
-#if 0
 void qtractorVst3PluginHost::startTimer ( int msecs )
 	{ if (++m_timerRefCount == 1) m_pTimer->start(msecs); }
 
@@ -709,16 +755,14 @@ void qtractorVst3PluginHost::stopTimer (void)
 
 int qtractorVst3PluginHost::timerInterval (void) const
 	{ return m_pTimer->interval(); }
-#endif
 
 // IRunLoop stuff...
 //
 tresult qtractorVst3PluginHost::registerEventHandler (
 	IEventHandler *handler, FileDescriptor fd )
 {
-#ifdef CONFIG_DEBUG
-    qDebug("qtractorVst3PluginHost::registerEventHandler(%p, %d)", handler, int(fd));
-#endif
+    DMESSAGE("registerEventHandler(%p, %d)", handler, int(fd));
+
     std::pair<IEventHandler *, int> Attr ( handler, int(fd) );
     m_eventHandlers.insert(Attr);
 
@@ -729,9 +773,7 @@ tresult qtractorVst3PluginHost::registerEventHandler (
 
 tresult qtractorVst3PluginHost::unregisterEventHandler ( IEventHandler *handler )
 {
-#ifdef CONFIG_DEBUG
-    qDebug("qtractorVst3PluginHost::unregisterEventHandler(%p)", handler);
-#endif
+    DMESSAGE("unregisterEventHandler(%p)", handler);
 
     m_eventHandlers.erase(handler);
     
@@ -744,6 +786,23 @@ tresult qtractorVst3PluginHost::registerTimer (
 	ITimerHandler *handler, TimerInterval msecs )
 {
     DMESSAGE("registerTimer(%p, %u)", handler, uint(msecs));
+
+    std::unordered_map<ITimerHandler *, TimerHandlerItem *>::const_iterator got
+            = m_timerHandlers.find(handler);
+
+    TimerHandlerItem *timer_handler = nullptr;
+    if ( got == m_timerHandlers.end() )
+    {
+        timer_handler = new TimerHandlerItem(handler, msecs);
+
+        std::pair<ITimerHandler *, TimerHandlerItem *> infos ( handler, timer_handler );
+        m_timerHandlers.insert(infos);
+    }
+    else
+    {
+        timer_handler->reset(msecs);
+    }
+    
 #if 0
     TimerHandlerItem *timer_handler = m_timerHandlers.value(handler, nullptr);
     if (timer_handler) {
@@ -755,6 +814,7 @@ tresult qtractorVst3PluginHost::registerTimer (
 
     m_pTimer->start(int(msecs));
 #endif
+    m_pTimer->start(int(msecs));
     return kResultOk;
 }
 
@@ -762,6 +822,19 @@ tresult qtractorVst3PluginHost::registerTimer (
 tresult qtractorVst3PluginHost::unregisterTimer ( ITimerHandler *handler )
 {
     DMESSAGE("unregisterTimer(%p)", handler);
+
+    std::unordered_map<ITimerHandler *, TimerHandlerItem *>::const_iterator got
+            = m_timerHandlers.find(handler);
+
+    if ( got != m_timerHandlers.end() )
+    {
+        m_timerHandlers.erase(handler);
+    }
+
+    if (m_timerHandlers.empty())
+        m_pTimer->stop();
+    
+    
 #if 0
     TimerHandlerItem *timer_handler = m_timerHandlers.value(handler, nullptr);
     if (timer_handler) {
@@ -779,6 +852,16 @@ tresult qtractorVst3PluginHost::unregisterTimer ( ITimerHandler *handler )
 //
 void qtractorVst3PluginHost::processTimers (void)
 {
+    for (auto const& pair : m_timerHandlers)
+    {
+        TimerHandlerItem *timer_handler = pair.second;
+        timer_handler->counter += timerInterval();
+        if (timer_handler->counter >= timer_handler->interval)
+        {
+            timer_handler->handler->onTimer();
+            timer_handler->counter = 0;
+        }
+    }
 #if 0
     foreach (TimerHandlerItem *timer_handler, m_timerHandlers) {
             timer_handler->counter += timerInterval();
@@ -811,8 +894,6 @@ void qtractorVst3PluginHost::processEventHandlers (void)
             nfds = qMax(nfds, m_iXcbFileDescriptor);
     }
 #endif
-
-  //  std::unordered_map<IEventHandler *, int> m_eventHandlers;
     
     for (auto const& pair : m_eventHandlers)
     {
@@ -821,6 +902,26 @@ void qtractorVst3PluginHost::processEventHandlers (void)
         FD_SET(fd, &wfds);
         FD_SET(fd, &efds);
         nfds = nfds > fd ? nfds : fd;
+    }
+    
+    timeval timeout;
+    timeout.tv_sec  = 0;
+    timeout.tv_usec = 1000 * timerInterval();
+
+    const int result = ::select(nfds, &rfds, &wfds, nullptr, &timeout);
+    if (result > 0)
+    {
+        for (auto const& pair : m_eventHandlers)
+        {
+            auto fd = pair.second;
+            if (FD_ISSET(fd, &rfds) ||
+                    FD_ISSET(fd, &wfds) ||
+                    FD_ISSET(fd, &efds))
+            {
+                IEventHandler *handler = pair.first;
+                handler->onFDIsSet(fd);
+            }
+        }
     }
 
 #if 0
@@ -888,19 +989,19 @@ void qtractorVst3PluginHost::closeXcbConnection (void)
 // Common host time-keeper context accessor.
 Vst::ProcessContext *qtractorVst3PluginHost::processContext (void)
 {
-	return &m_processContext;
+    return &m_processContext;
 }
 
 
 void qtractorVst3PluginHost::processAddRef (void)
 {
-	++m_processRefCount;
+    ++m_processRefCount;
 }
 
 
 void qtractorVst3PluginHost::processReleaseRef (void)
 {
-	if (m_processRefCount > 0) --m_processRefCount;
+    if (m_processRefCount > 0) --m_processRefCount;
 }
 
 // Common host time-keeper process context.
@@ -1173,7 +1274,7 @@ public:
             return kInternalError;
         if (m_resizing)
             return kResultFalse;
-
+        
         m_resizing = true;
 #if 1
         int width = rect->right  - rect->left;
@@ -1181,8 +1282,8 @@ public:
         DMESSAGE("EditorFrame[%p]::resizeView(%p, %p) size=(%d, %d)",
                 this, plugView, rect, width, height);
         
-        if (m_plugView->canResize() == kResultOk)
-            m_widget->setSize(width, height, false, false);
+      //  if (m_plugView->canResize() == kResultOk)
+        m_widget->setSize(width, height, false, false);
 
 #else
         const QSize size(rect->right  - rect->left, rect->bottom - rect->top);
@@ -1269,11 +1370,14 @@ VST3_Plugin::VST3_Plugin() :
     _x_is_resizable(false),
     _x_is_visible(false),
     _X11_UI(nullptr),
-    m_plugView(nullptr)
+    m_plugView(nullptr),
+    m_pEditorFrame(nullptr)
 {
     _plug_type = VST3;
 
     log_create();
+    
+    g_VST3_Plugin = this;
 }
 
 VST3_Plugin::~VST3_Plugin()
@@ -1281,6 +1385,9 @@ VST3_Plugin::~VST3_Plugin()
     log_destroy();
 
     deactivate();
+    
+    if(_x_is_visible)
+        _x_is_visible = false;
 
     m_processor = nullptr;
     m_handler = nullptr;
@@ -1797,11 +1904,6 @@ VST3_Plugin::try_custom_ui()
             hide_custom_ui();
             return true;
         }
-        else
-        {
-            show_custom_ui();
-            return true;
-        }
     }
     
 #if 0
@@ -1893,7 +1995,7 @@ VST3_Plugin::openEditor (void)
     g_hostContext.openXcbConnection();
 #endif
 
-//    g_hostContext.startTimer(200);
+    g_hostContext.startTimer(33);
 
     Vst::IEditController *controller = m_controller;
     if (controller)
@@ -1905,9 +2007,34 @@ VST3_Plugin::openEditor (void)
 void
 VST3_Plugin::closeEditor (void)
 {
+ //   g_hostContext.stopTimer();
+ //   if (m_pEditorWidget == nullptr)
+//            return;
+
+#ifdef CONFIG_DEBUG
+    qDebug("qtractorVst3Plugin[%p]::closeEditor()", this);
+#endif
+
+//    setEditorVisible(false);
+
+    IPlugView *plugView = m_plugView;
+    if (plugView && plugView->removed() != kResultOk)
+    {
+        DMESSAGE(" *** Failed to remove/detach window.");
+    }
+
+//    delete m_pEditorWidget;
+//    m_pEditorWidget = nullptr;
+
+    if (m_pEditorFrame)
+    {
+        delete m_pEditorFrame;
+        m_pEditorFrame = nullptr;
+    }
+    
     m_plugView = nullptr;
 
-//    g_hostContext.stopTimer();
+    g_hostContext.stopTimer();
 
 #ifdef CONFIG_VST3_XCB
     g_hostContext.closeXcbConnection();
@@ -1921,7 +2048,7 @@ VST3_Plugin::show_custom_ui()
     if (_is_floating)
     {
         _x_is_visible = _gui->show(_plugin);
-        Fl::add_timeout( 0.03f, &CLAP_Plugin::custom_update_ui, this );
+        Fl::add_timeout( 0.03f, &VST3_Plugin::custom_update_ui, this );
         return _x_is_visible;
     }
 #endif
@@ -1930,7 +2057,8 @@ VST3_Plugin::show_custom_ui()
 
     _x_is_visible = true;
 
-    Fl::add_timeout( 0.03f, &VST3_Plugin::custom_update_ui, this );
+
+ //   Fl::add_timeout( 0.03f, &VST3_Plugin::custom_update_ui, this );
 
     return true;
 }
@@ -1958,6 +2086,9 @@ VST3_Plugin::custom_update_ui_x()
     }
 #endif
     _X11_UI->idle();
+
+    g_hostContext.processTimers();
+    g_hostContext.processEventHandlers();
 #if 0
     for (LinkedList<HostTimerDetails>::Itenerator it = _fTimers.begin2(); it.valid(); it.next())
     {
@@ -1973,7 +2104,7 @@ VST3_Plugin::custom_update_ui_x()
 #endif
     if(_x_is_visible)
     {
-        Fl::repeat_timeout( 0.03f, &VST3_Plugin::custom_update_ui, this );
+        Fl::repeat_timeout( f_miliseconds, &VST3_Plugin::custom_update_ui, this );
     }
     else
     {
@@ -1990,11 +2121,11 @@ VST3_Plugin::hide_custom_ui()
     if (_is_floating)
     {
         _x_is_visible = false;
-        Fl::remove_timeout(&CLAP_Plugin::custom_update_ui, this);
+        Fl::remove_timeout(&VST3_Plugin::custom_update_ui, this);
         return _gui->hide(_plugin);
     }
 #endif
-    Fl::remove_timeout(&VST3_Plugin::custom_update_ui, this);
+//    Fl::remove_timeout(&VST3_Plugin::custom_update_ui, this);
 
     _x_is_visible = false;
 
