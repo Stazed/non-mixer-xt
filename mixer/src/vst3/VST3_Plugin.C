@@ -1785,6 +1785,7 @@ VST3_Plugin::process ( nframes_t nframes )
             process_jack_midi_out( nframes, i);
         }
 
+        m_params_out.clear();
         m_events_out.clear();
 
 //        m_buffers_in.channelBuffers32 = ins;
@@ -1941,7 +1942,7 @@ VST3_Plugin::try_custom_ui()
     
     _X11_UI = new X11PluginUI(this, _x_is_resizable, false);
     _X11_UI->setTitle(label());
-    
+
     m_pEditorFrame = new EditorFrame(plugView, _X11_UI);
     
     void *wid = _X11_UI->getPtr();
@@ -2486,6 +2487,7 @@ VST3_Plugin::process_reset()
 
     // Initialize running state...
     m_params_in.clear();
+    m_params_out.clear();
 
     m_events_in.clear();
     m_events_out.clear();
@@ -2537,7 +2539,7 @@ VST3_Plugin::process_reset()
     m_process_data.inputEvents            = &m_events_in;
     m_process_data.outputEvents           = &m_events_out;
     m_process_data.inputParameterChanges  = &m_params_in;
-    m_process_data.outputParameterChanges = nullptr; //&m_params_out;
+    m_process_data.outputParameterChanges = &m_params_out;
 
     activate();
 

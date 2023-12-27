@@ -128,6 +128,7 @@ private:
     volatile bool m_processing;
 
     VST3IMPL::ParamChanges m_params_in;
+    VST3IMPL::ParamChanges m_params_out;
 
     VST3IMPL::EventList m_events_in;
     VST3IMPL::EventList m_events_out;
