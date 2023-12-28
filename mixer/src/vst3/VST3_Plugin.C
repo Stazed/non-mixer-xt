@@ -96,7 +96,7 @@ public:
 
     FUnknown *get() { return static_cast<Vst::IHostApplication *> (this); }
 
-    // QTimer stuff...
+    // Timer stuff...
     //
     void startTimer (int msecs);
     void stopTimer ();
@@ -328,7 +328,7 @@ public:
     // Constructor.
     AttributeList ()
     {
-            FUNKNOWN_CTOR
+        FUNKNOWN_CTOR
     }
 
     // Destructor.
@@ -601,7 +601,6 @@ public:
     // Main method.
     void start (int msecs)
     {
-    //    const int DEFAULT_MSECS = 30;
         f_miliseconds = float(msecs) *.001;
 
     //    DMESSAGE("Miliseconds = %f", f_miliseconds);
@@ -750,7 +749,7 @@ uint32 PLUGIN_API VST3PluginHost::release (void)
     { return 1; }
 
 
-// QTimer stuff...
+// Timer stuff...
 //
 void VST3PluginHost::startTimer ( int msecs )
     { if (++m_timerRefCount == 1) m_pTimer->start(msecs); }
@@ -822,7 +821,7 @@ tresult VST3PluginHost::registerTimer (
 
     m_pTimer->start(int(msecs));
 #endif
- //   m_pTimer->start(int(msecs));
+
     return kResultOk;
 }
 
