@@ -189,7 +189,7 @@ public:
             bool visible;
             bool invisible_with_signals;
             uint32_t plug_port_index;     ///< plugin Index of port control
-#ifdef CLAP_SUPPORT
+#if defined(CLAP_SUPPORT) || defined(VST3_SUPPORT)
             uint32_t parameter_id;
 #endif
 #ifdef LV2_SUPPORT
