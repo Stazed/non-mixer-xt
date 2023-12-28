@@ -1813,8 +1813,9 @@ VST3_Plugin::process ( nframes_t nframes )
         m_params_out.clear();
         m_events_out.clear();
 
-//        m_buffers_in.channelBuffers32 = ins;
-//        m_buffers_out.channelBuffers32 = outs;
+        m_buffers_in.channelBuffers32 = _audio_in_buffers;
+        m_buffers_out.channelBuffers32 = _audio_out_buffers;
+
         m_process_data.numSamples = nframes;
 
         if (m_processor->process(m_process_data) != kResultOk)
@@ -2395,14 +2396,12 @@ void
 VST3_Plugin::set_input_buffer ( int n, void *buf )
 {
     _audio_in_buffers[n] = static_cast<float*>( buf );
-    m_buffers_in.channelBuffers32 = _audio_in_buffers;
 }
 
 void
 VST3_Plugin::set_output_buffer ( int n, void *buf )
 {
     _audio_out_buffers[n] = static_cast<float*>( buf );
-    m_buffers_out.channelBuffers32 = _audio_out_buffers;
 }
 
 bool
