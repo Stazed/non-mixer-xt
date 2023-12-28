@@ -53,8 +53,7 @@
 
 using namespace Steinberg;
 
-class VST3_Plugin : public Plugin_Module,
-        private X11PluginUI::Callback
+class VST3_Plugin : public Plugin_Module
 {
 public:
 
@@ -108,6 +107,9 @@ public:
 
     void custom_update_ui_x();
     static void custom_update_ui ( void * );
+    
+    void timer_registered(bool reg) {_timer_registered = reg;}
+    void event_handlers_registered(bool reg) {_event_handlers_registered = reg; }
 
     VST3_Plugin();
     virtual ~VST3_Plugin();
@@ -164,9 +166,10 @@ private:
     bool _bEditorCreated;
     bool _x_is_resizable;
     bool _x_is_visible;
-    X11PluginUI *_X11_UI;
+    bool _timer_registered;
+    bool _event_handlers_registered;
     IPtr<IPlugView> m_plugView;
-    
+
     class EditorFrame;
     class RunLoop;
     EditorFrame  *m_pEditorFrame;
@@ -236,10 +239,6 @@ private:
     std::map<MidiMapKey, Vst::ParamID> m_midiMap;
 
 protected:
-
-    // Gui callbacks
-    void handlePluginUIClosed() override;
-    void handlePluginUIResized(const uint width, const uint height) override;
 
     // Save and restore
     void get ( Log_Entry &e ) const override;

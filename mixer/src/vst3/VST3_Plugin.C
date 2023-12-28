@@ -58,7 +58,7 @@ const unsigned char  EVENT_NOTE_OFF         = 0x80;
 const unsigned char  EVENT_NOTE_ON          = 0x90;
 const unsigned char  EVENT_CHANNEL_PRESSURE = 0xa0;
 
-const int DEFAULT_MSECS = 30;
+const int DEFAULT_MSECS = 33;
 float f_miliseconds = DEFAULT_MSECS * .001;
 
 using namespace Steinberg;
@@ -617,7 +617,7 @@ public:
             QTimer::start(iInterval);
 #endif
 	}
-        
+
         void stop()
         {
             Fl::remove_timeout(&VST3_Plugin::custom_update_ui, g_VST3_Plugin);
@@ -766,6 +766,7 @@ tresult qtractorVst3PluginHost::registerEventHandler (
     std::pair<IEventHandler *, int> Attr ( handler, int(fd) );
     m_eventHandlers.insert(Attr);
 
+    g_VST3_Plugin->event_handlers_registered(true);
     //m_eventHandlers.insert(handler, int(fd));
     return kResultOk;
 }
@@ -803,6 +804,8 @@ tresult qtractorVst3PluginHost::registerTimer (
         timer_handler->reset(msecs);
     }
     
+    g_VST3_Plugin->timer_registered(true);
+    
 #if 0
     TimerHandlerItem *timer_handler = m_timerHandlers.value(handler, nullptr);
     if (timer_handler) {
@@ -814,7 +817,7 @@ tresult qtractorVst3PluginHost::registerTimer (
 
     m_pTimer->start(int(msecs));
 #endif
-    m_pTimer->start(int(msecs));
+ //   m_pTimer->start(int(msecs));
     return kResultOk;
 }
 
@@ -1227,25 +1230,25 @@ public:
 // class qtractorVst3Plugin::EditorFrame -- VST3 plugin editor frame interface impl.
 //
 
-class VST3_Plugin::EditorFrame : public IPlugFrame
+class VST3_Plugin::EditorFrame : public X11PluginUI, public IPlugFrame,
+        private X11PluginUI::Callback
 {
 public:
 
     // Constructor.
-    EditorFrame (IPlugView *plugView, X11PluginUI *widget)
-            : m_plugView(plugView), m_widget(widget),
+    EditorFrame (IPlugView *plugView, bool resizeable) 
+            : X11PluginUI(this, resizeable, false), m_plugView(plugView),
                     m_runLoop(nullptr), m_resizing(false)
     {
         m_runLoop = owned(NEW RunLoop());
+
         m_plugView->setFrame(this);
 
         ViewRect rect;
         if (m_plugView->getSize(&rect) == kResultOk)
         {
             m_resizing = true;
-          //  const QSize size( rect.right  - rect.left, rect.bottom - rect.top);
-          //  m_widget->resize(size);
-            m_widget->setSize(rect.right - rect.left, rect.bottom - rect.top, false, false);
+            setSize(rect.right - rect.left, rect.bottom - rect.top, false, false);
             m_resizing = false;
         }
     }
@@ -1256,7 +1259,7 @@ public:
         m_plugView->setFrame(nullptr);
         m_runLoop = nullptr;
     }
-
+    
     // Accessors.
     IPlugView *plugView () const
             { return m_plugView; }
@@ -1270,8 +1273,6 @@ public:
         if (!rect || !plugView || plugView != m_plugView)
                 return kInvalidArgument;
 
-        if (!m_widget)
-            return kInternalError;
         if (m_resizing)
             return kResultFalse;
         
@@ -1283,7 +1284,7 @@ public:
                 this, plugView, rect, width, height);
         
       //  if (m_plugView->canResize() == kResultOk)
-        m_widget->setSize(width, height, false, false);
+        setSize(width, height, false, false);
 
 #else
         const QSize size(rect->right  - rect->left, rect->bottom - rect->top);
@@ -1336,10 +1337,29 @@ private:
 
     // Instance members.
     IPlugView *m_plugView;
-    X11PluginUI *m_widget;
     IPtr<RunLoop> m_runLoop;
     bool m_resizing;
+    
+protected:
+    void handlePluginUIClosed() override;
+    void handlePluginUIResized(const uint width, const uint height) override;
 };
+
+void VST3_Plugin::EditorFrame::handlePluginUIClosed()
+{
+    g_VST3_Plugin->_x_is_visible = false;
+}
+
+void VST3_Plugin::EditorFrame::handlePluginUIResized(const uint width, const uint height)
+{
+    DMESSAGE("Handle Resized W = %d: H = %d", width, height);
+
+    ViewRect rect0;
+    if (m_plugView->getSize(&rect0) != kResultOk)
+        return;
+
+    m_plugView->onSize(&rect0);
+}
 
 
 VST3_Plugin::VST3_Plugin() :
@@ -1369,7 +1389,8 @@ VST3_Plugin::VST3_Plugin() :
     _bEditorCreated(false),
     _x_is_resizable(false),
     _x_is_visible(false),
-    _X11_UI(nullptr),
+    _timer_registered(false),
+    _event_handlers_registered(false),
     m_plugView(nullptr),
     m_pEditorFrame(nullptr)
 {
@@ -1906,24 +1927,12 @@ VST3_Plugin::try_custom_ui()
             return true;
         }
     }
-    
-#if 0
-    // Is it already there?
-    if (m_pEditorWidget)
-    {
-        if (!m_pEditorWidget->isVisible())
-        {
-                moveWidgetPos(m_pEditorWidget, editorPos());
-                m_pEditorWidget->show();
-        }
-        m_pEditorWidget->raise();
-        m_pEditorWidget->activateWindow();
-        return;
-    }
-#endif
 
     if (!openEditor())
+    {
+        DMESSAGE("No custom UI is available for %s", label());
         return false;
+    }
 
     IPlugView *plugView = m_plugView;
     if (!plugView)
@@ -1939,13 +1948,11 @@ VST3_Plugin::try_custom_ui()
     
     if (m_plugView->canResize() == kResultOk)
         _x_is_resizable = true;
-    
-    _X11_UI = new X11PluginUI(this, _x_is_resizable, false);
-    _X11_UI->setTitle(label());
 
-    m_pEditorFrame = new EditorFrame(plugView, _X11_UI);
-    
-    void *wid = _X11_UI->getPtr();
+    m_pEditorFrame = new EditorFrame(plugView, _x_is_resizable);
+    m_pEditorFrame->setTitle(label());
+
+    void *wid = m_pEditorFrame->getPtr();
     
     if (plugView->attached(wid, kPlatformTypeX11EmbedWindowID) != kResultOk)
     {
@@ -1953,33 +1960,46 @@ VST3_Plugin::try_custom_ui()
         closeEditor();
         return false;
     }
-#if 0
-    m_pEditorWidget = new EditorWidget(pParent, wflags);
-    m_pEditorWidget->setAttribute(Qt::WA_QuitOnClose, false);
-    m_pEditorWidget->setWindowTitle(pType->name());
-    m_pEditorWidget->setWindowIcon(QIcon(":/images/qtractorPlugin.svg"));
-    m_pEditorWidget->setPlugin(this);
-
-    m_pEditorFrame = new EditorFrame(plugView, m_pEditorWidget);
-
-    void *wid = (void *) m_pEditorWidget->parentWinId();
-
-
-    if (plugView->attached(wid, kPlatformTypeX11EmbedWindowID) != kResultOk)
+#if 1
+    // UUUUGGGLY HACK - for some reason plugins that do not register timers,
+    // do not show properly if setFrame is set. So, we can't seem to check for
+    // timer registration unless we attached above. If no timers are registered
+    // then close everything and restart, only this time nullptr the setFrame.
+    // There is a 100% chance that this is not the way it should be done, but
+    // until we find the correct way, this seems to work!
+    if(!_timer_registered)
     {
-#ifdef CONFIG_DEBUG
-        qDebug("qtractorVst3Plugin::[%p]::openEditor(%p)"
-                " *** Failed to create/attach editor window.", this, pParent);
-#endif
-        closeEditor();
-        return false;
+        openEditor();
+        
+        IPlugView *plugView = m_plugView;
+        if (!plugView)
+            return false;
+
+        if (plugView->isPlatformTypeSupported(kPlatformTypeX11EmbedWindowID) != kResultOk)
+        {
+            DMESSAGE("[%p]::openEditor"
+                    " *** X11 Window platform is not supported (%s).", this,
+                    kPlatformTypeX11EmbedWindowID);
+            return false;
+        }
+
+        if (m_plugView->canResize() == kResultOk)
+            _x_is_resizable = true;
+        
+        m_pEditorFrame = new EditorFrame(plugView, _x_is_resizable);
+        m_pEditorFrame->setTitle(label());
+
+        void *wid = m_pEditorFrame->getPtr();
+        
+        m_plugView->setFrame(nullptr);  // The UUUGGLY HACK
+    
+        if (plugView->attached(wid, kPlatformTypeX11EmbedWindowID) != kResultOk)
+        {
+            DMESSAGE(" *** Failed to create/attach editor window - %s.", label());
+            closeEditor();
+            return false;
+        }
     }
-
-    // Final stabilization...
-    updateEditorTitle();
-    moveWidgetPos(m_pEditorWidget, editorPos());
-    setEditorVisible(true);
-
 #endif
     _bEditorCreated = show_custom_ui();
 
@@ -1996,8 +2016,6 @@ VST3_Plugin::openEditor (void)
     g_hostContext.openXcbConnection();
 #endif
 
-    g_hostContext.startTimer(33);
-
     Vst::IEditController *controller = m_controller;
     if (controller)
         m_plugView = owned(controller->createView(Vst::ViewType::kEditor));
@@ -2008,15 +2026,8 @@ VST3_Plugin::openEditor (void)
 void
 VST3_Plugin::closeEditor (void)
 {
- //   g_hostContext.stopTimer();
- //   if (m_pEditorWidget == nullptr)
-//            return;
-
-#ifdef CONFIG_DEBUG
-    qDebug("qtractorVst3Plugin[%p]::closeEditor()", this);
-#endif
-
-//    setEditorVisible(false);
+    if (m_pEditorFrame != nullptr)
+        m_pEditorFrame->hide();
 
     IPlugView *plugView = m_plugView;
     if (plugView && plugView->removed() != kResultOk)
@@ -2024,15 +2035,12 @@ VST3_Plugin::closeEditor (void)
         DMESSAGE(" *** Failed to remove/detach window.");
     }
 
-//    delete m_pEditorWidget;
-//    m_pEditorWidget = nullptr;
-
     if (m_pEditorFrame)
     {
         delete m_pEditorFrame;
         m_pEditorFrame = nullptr;
     }
-    
+
     m_plugView = nullptr;
 
     g_hostContext.stopTimer();
@@ -2045,21 +2053,12 @@ VST3_Plugin::closeEditor (void)
 bool
 VST3_Plugin::show_custom_ui()
 {
-#if 0
-    if (_is_floating)
-    {
-        _x_is_visible = _gui->show(_plugin);
-        Fl::add_timeout( 0.03f, &VST3_Plugin::custom_update_ui, this );
-        return _x_is_visible;
-    }
-#endif
-    _X11_UI->show();
-    _X11_UI->focus();
+    m_pEditorFrame->show();
+    m_pEditorFrame->focus();
 
     _x_is_visible = true;
 
-
- //   Fl::add_timeout( 0.03f, &VST3_Plugin::custom_update_ui, this );
+    g_hostContext.startTimer(DEFAULT_MSECS);
 
     return true;
 }
@@ -2078,31 +2077,16 @@ VST3_Plugin::custom_update_ui ( void *v )
  */
 void
 VST3_Plugin::custom_update_ui_x()
-{
-#if 0
-    if (!_is_floating)
-    {
-        if(_x_is_visible)
-            _X11_UI->idle();
-    }
-#endif
-    _X11_UI->idle();
+{   
+    m_pEditorFrame->idle();
 
-    g_hostContext.processTimers();
-    g_hostContext.processEventHandlers();
-#if 0
-    for (LinkedList<HostTimerDetails>::Itenerator it = _fTimers.begin2(); it.valid(); it.next())
-    {
-        const uint32_t currentTimeInMs = water::Time::getMillisecondCounter();
-        HostTimerDetails& timer(it.getValue(kTimerFallbackNC));
+    if (_timer_registered)
+        g_hostContext.processTimers();
 
-        if (currentTimeInMs > timer.lastCallTimeInMs + timer.periodInMs)
-        {
-            timer.lastCallTimeInMs = currentTimeInMs;
-            _timer_support->on_timer(_plugin, timer.clapId);
-        }
-    }
-#endif
+    // FIXME
+//    if (_event_handlers_registered)
+//        g_hostContext.processEventHandlers();
+
     if(_x_is_visible)
     {
         Fl::repeat_timeout( f_miliseconds, &VST3_Plugin::custom_update_ui, this );
@@ -2117,48 +2101,17 @@ bool
 VST3_Plugin::hide_custom_ui()
 {
     DMESSAGE("Closing Custom Interface");
+
     closeEditor();
-#if 0
-    if (_is_floating)
-    {
-        _x_is_visible = false;
-        Fl::remove_timeout(&VST3_Plugin::custom_update_ui, this);
-        return _gui->hide(_plugin);
-    }
-#endif
-//    Fl::remove_timeout(&VST3_Plugin::custom_update_ui, this);
 
     _x_is_visible = false;
-
-    if (_X11_UI != nullptr)
-        _X11_UI->hide();
 
     if (_bEditorCreated)
     {
-      //  _gui->destroy(_plugin);
         _bEditorCreated = false;
     }
 
-    if(_X11_UI != nullptr)
-    {
-        delete _X11_UI;
-        _X11_UI = nullptr;
-    }
-
     return true;
-}
-
-
-void
-VST3_Plugin::handlePluginUIClosed()
-{
-    _x_is_visible = false;
-}
-
-void
-VST3_Plugin::handlePluginUIResized(const uint width, const uint height)
-{
-
 }
 
 // Parameter finder (by id).
