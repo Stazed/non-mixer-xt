@@ -74,18 +74,18 @@ std::string utf16_to_utf8(const u16string& utf16)
 }
 
 //-----------------------------------------------------------------------------
-// class qtractorVst3PluginHost -- VST3 plugin host context decl.
+// class VST3PluginHost -- VST3 plugin host context decl.
 //
 
-class qtractorVst3PluginHost : public Vst::IHostApplication
+class VST3PluginHost : public Vst::IHostApplication
 {
 public:
 
     // Constructor.
-    qtractorVst3PluginHost ();
+    VST3PluginHost ();
 
     // Destructor.
-    virtual ~qtractorVst3PluginHost ();
+    virtual ~VST3PluginHost ();
 
     DECLARE_FUNKNOWN_METHODS
 
@@ -186,7 +186,7 @@ private:
 
 //-----------------------------------------------------------------------------
 //
-class qtractorVst3PluginHost::PlugInterfaceSupport
+class VST3PluginHost::PlugInterfaceSupport
 	: public FObject, public Vst::IPlugInterfaceSupport
 {
 public:
@@ -240,7 +240,7 @@ private:
 
 //-----------------------------------------------------------------------------
 //
-class qtractorVst3PluginHost::Attribute
+class VST3PluginHost::Attribute
 {
 public:
 
@@ -321,7 +321,7 @@ protected:
 
 //-----------------------------------------------------------------------------
 //
-class qtractorVst3PluginHost::AttributeList : public Vst::IAttributeList
+class VST3PluginHost::AttributeList : public Vst::IAttributeList
 {
 public:
 
@@ -519,12 +519,12 @@ private:
     //QHash<QString, Attribute *> m_list;
 };
 
-IMPLEMENT_FUNKNOWN_METHODS (qtractorVst3PluginHost::AttributeList, IAttributeList, IAttributeList::iid)
+IMPLEMENT_FUNKNOWN_METHODS (VST3PluginHost::AttributeList, IAttributeList, IAttributeList::iid)
 
 
 //-----------------------------------------------------------------------------
 //
-class qtractorVst3PluginHost::Message : public Vst::IMessage
+class VST3PluginHost::Message : public Vst::IMessage
 {
 public:
 
@@ -583,20 +583,20 @@ protected:
     AttributeList *m_attributeList;
 };
 
-IMPLEMENT_FUNKNOWN_METHODS (qtractorVst3PluginHost::Message, IMessage, IMessage::iid)
+IMPLEMENT_FUNKNOWN_METHODS (VST3PluginHost::Message, IMessage, IMessage::iid)
 
 
 //-----------------------------------------------------------------------------
-// class qtractorVst3PluginHost::Timer -- VST3 plugin host timer impl.
+// class VST3PluginHost::Timer -- VST3 plugin host timer impl.
 //
 
 #if 1
-class qtractorVst3PluginHost::Timer
+class VST3PluginHost::Timer
 {
 public:
 
     // Constructor.
-    Timer (qtractorVst3PluginHost *pHost) : m_pHost(pHost) {}
+    Timer (VST3PluginHost *pHost) : m_pHost(pHost) {}
 
     // Main method.
     void start (int msecs)
@@ -645,16 +645,16 @@ protected:
 private:
 
     // Instance members.
-    qtractorVst3PluginHost *m_pHost;
+    VST3PluginHost *m_pHost;
 };
 #endif
 
 //-----------------------------------------------------------------------------
-// class qtractorVst3PluginHost -- VST3 plugin host context impl.
+// class VST3PluginHost -- VST3 plugin host context impl.
 //
 
 // Constructor.
-qtractorVst3PluginHost::qtractorVst3PluginHost (void)
+VST3PluginHost::VST3PluginHost (void)
 {
     FUNKNOWN_CTOR
 
@@ -674,7 +674,7 @@ qtractorVst3PluginHost::qtractorVst3PluginHost (void)
 
 
 // Destructor.
-qtractorVst3PluginHost::~qtractorVst3PluginHost (void)
+VST3PluginHost::~VST3PluginHost (void)
 {
     clear();
 
@@ -689,9 +689,9 @@ qtractorVst3PluginHost::~qtractorVst3PluginHost (void)
 
 //--- IHostApplication ---
 //
-tresult PLUGIN_API qtractorVst3PluginHost::getName ( Vst::String128 name )
+tresult PLUGIN_API VST3PluginHost::getName ( Vst::String128 name )
 {
-    const std::string str("qtractorVst3PluginHost");
+    const std::string str("VST3PluginHost");
     const int nsize = str.length() < 127 ? str.length() : 127;
 //    const QString str("qtractorVst3PluginHost");
 //    const int nsize = qMin(str.length(), 127);
@@ -701,7 +701,7 @@ tresult PLUGIN_API qtractorVst3PluginHost::getName ( Vst::String128 name )
 }
 
 
-tresult PLUGIN_API qtractorVst3PluginHost::createInstance (
+tresult PLUGIN_API VST3PluginHost::createInstance (
 	TUID cid, TUID _iid, void **obj )
 {
     const FUID classID (FUID::fromTUID(cid));
@@ -726,7 +726,7 @@ tresult PLUGIN_API qtractorVst3PluginHost::createInstance (
 }
 
 
-tresult PLUGIN_API qtractorVst3PluginHost::queryInterface (
+tresult PLUGIN_API VST3PluginHost::queryInterface (
 	const char *_iid, void **obj )
 {
     QUERY_INTERFACE(_iid, obj, FUnknown::iid, IHostApplication)
@@ -743,27 +743,27 @@ tresult PLUGIN_API qtractorVst3PluginHost::queryInterface (
 }
 
 
-uint32 PLUGIN_API qtractorVst3PluginHost::addRef (void)
+uint32 PLUGIN_API VST3PluginHost::addRef (void)
     { return 1; }
 
-uint32 PLUGIN_API qtractorVst3PluginHost::release (void)
+uint32 PLUGIN_API VST3PluginHost::release (void)
     { return 1; }
 
 
 // QTimer stuff...
 //
-void qtractorVst3PluginHost::startTimer ( int msecs )
+void VST3PluginHost::startTimer ( int msecs )
     { if (++m_timerRefCount == 1) m_pTimer->start(msecs); }
 
-void qtractorVst3PluginHost::stopTimer (void)
+void VST3PluginHost::stopTimer (void)
     { if (m_timerRefCount > 0 && --m_timerRefCount == 0) m_pTimer->stop(); }
 
-int qtractorVst3PluginHost::timerInterval (void) const
+int VST3PluginHost::timerInterval (void) const
     { return m_pTimer->interval(); }
 
 // IRunLoop stuff...
 //
-tresult qtractorVst3PluginHost::registerEventHandler (
+tresult VST3PluginHost::registerEventHandler (
 	IEventHandler *handler, FileDescriptor fd )
 {
     DMESSAGE("registerEventHandler(%p, %d)", handler, int(fd));
@@ -777,7 +777,7 @@ tresult qtractorVst3PluginHost::registerEventHandler (
 }
 
 
-tresult qtractorVst3PluginHost::unregisterEventHandler ( IEventHandler *handler )
+tresult VST3PluginHost::unregisterEventHandler ( IEventHandler *handler )
 {
     DMESSAGE("unregisterEventHandler(%p)", handler);
 
@@ -788,7 +788,7 @@ tresult qtractorVst3PluginHost::unregisterEventHandler ( IEventHandler *handler 
 }
 
 #if 1
-tresult qtractorVst3PluginHost::registerTimer (
+tresult VST3PluginHost::registerTimer (
 	ITimerHandler *handler, TimerInterval msecs )
 {
     DMESSAGE("registerTimer(%p, %u)", handler, uint(msecs));
@@ -827,7 +827,7 @@ tresult qtractorVst3PluginHost::registerTimer (
 }
 
 
-tresult qtractorVst3PluginHost::unregisterTimer ( ITimerHandler *handler )
+tresult VST3PluginHost::unregisterTimer ( ITimerHandler *handler )
 {
     DMESSAGE("unregisterTimer(%p)", handler);
 
@@ -858,7 +858,7 @@ tresult qtractorVst3PluginHost::unregisterTimer ( ITimerHandler *handler )
 
 // Executive methods.
 //
-void qtractorVst3PluginHost::processTimers (void)
+void VST3PluginHost::processTimers (void)
 {
     for (auto const& pair : m_timerHandlers)
     {
@@ -882,7 +882,7 @@ void qtractorVst3PluginHost::processTimers (void)
 }
 #endif
 
-void qtractorVst3PluginHost::processEventHandlers (void)
+void VST3PluginHost::processEventHandlers (void)
 {
     int nfds = 0;
 
@@ -968,7 +968,7 @@ void qtractorVst3PluginHost::processEventHandlers (void)
 
 #ifdef CONFIG_VST3_XCB
 
-void qtractorVst3PluginHost::openXcbConnection (void)
+void VST3PluginHost::openXcbConnection (void)
 {
 	if (m_pXcbConnection == nullptr) {
 	#ifdef CONFIG_DEBUG
@@ -979,7 +979,7 @@ void qtractorVst3PluginHost::openXcbConnection (void)
 	}
 }
 
-void qtractorVst3PluginHost::closeXcbConnection (void)
+void VST3PluginHost::closeXcbConnection (void)
 {
 	if (m_pXcbConnection) {
 		::xcb_disconnect(m_pXcbConnection);
@@ -995,25 +995,25 @@ void qtractorVst3PluginHost::closeXcbConnection (void)
 
 
 // Common host time-keeper context accessor.
-Vst::ProcessContext *qtractorVst3PluginHost::processContext (void)
+Vst::ProcessContext *VST3PluginHost::processContext (void)
 {
     return &m_processContext;
 }
 
 
-void qtractorVst3PluginHost::processAddRef (void)
+void VST3PluginHost::processAddRef (void)
 {
     ++m_processRefCount;
 }
 
 
-void qtractorVst3PluginHost::processReleaseRef (void)
+void VST3PluginHost::processReleaseRef (void)
 {
     if (m_processRefCount > 0) --m_processRefCount;
 }
 
 // Common host time-keeper process context.
-void qtractorVst3PluginHost::updateProcessContext (
+void VST3PluginHost::updateProcessContext (
 	jack_position_t &pos, const bool &xport_changed, const bool &has_bbt )
 {
     if (m_processRefCount < 1)
@@ -1053,7 +1053,7 @@ void qtractorVst3PluginHost::updateProcessContext (
 }
 
 // Cleanup.
-void qtractorVst3PluginHost::clear (void)
+void VST3PluginHost::clear (void)
 {
 #ifdef CONFIG_VST3_XCB
     closeXcbConnection();
@@ -1078,7 +1078,7 @@ void qtractorVst3PluginHost::clear (void)
 
 
 // Host singleton.
-static qtractorVst3PluginHost g_hostContext;
+static VST3PluginHost g_hostContext;
 
 IMPLEMENT_FUNKNOWN_METHODS (VST3IMPL::ParamQueue, Vst::IParamValueQueue, Vst::IParamValueQueue::iid)
 
