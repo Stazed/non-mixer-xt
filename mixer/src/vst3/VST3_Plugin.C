@@ -1120,7 +1120,7 @@ public:
         m_pPlugin->setParameter(id, value, 0);
 
 #if 1
-        unsigned long index = m_pPlugin->findParamId(int(id));
+        unsigned long index = m_pPlugin->findParamId(id);
 
         // false means don't update custom UI cause that is were it came from
         m_pPlugin->set_control_value( index, value, false );
@@ -1144,7 +1144,9 @@ public:
         DMESSAGE("Handler[%p]::restartComponent(0x%08x)", this, flags);
 
         if (flags & Vst::kParamValuesChanged)
+        {
             m_pPlugin->updateParamValues(false);
+        }
         else
         if (flags & Vst::kReloadComponent)
         {
@@ -1852,7 +1854,14 @@ VST3_Plugin::set_control_value(unsigned long port_index, float value, bool updat
 
     _is_from_custom_ui = !update_custom_ui;
 
-    control_input[port_index].control_value(value);
+    float normalized_value = value;
+
+    if (control_input[port_index].hints.type == Port::Hints::INTEGER)
+    {
+        normalized_value = value * control_input[port_index].hints.maximum;
+    }
+
+    control_input[port_index].control_value(normalized_value);
 
     if (!dirty())
         set_dirty();
@@ -1897,7 +1906,9 @@ VST3_Plugin::getParameter ( Vst::ParamID id ) const
 {
     Vst::IEditController *controller = m_controller;
     if (controller)
+    {
         return controller->getParamNormalized(id);
+    }
     else
         return 0.0;
 }
@@ -2105,17 +2116,17 @@ VST3_Plugin::hide_custom_ui()
 
 // Parameter finder (by id).
 unsigned long 
-VST3_Plugin::findParamId ( int id ) const
+VST3_Plugin::findParamId ( uint32_t id ) const
 {
-    std::unordered_map<int, unsigned long>::const_iterator got
-        = m_paramIds.find (int(id));
+    std::unordered_map<uint32_t, unsigned long>::const_iterator got
+        = m_paramIds.find (id);
 
-     if ( got == m_paramIds.end() )
-     {
-         // probably a control out - we don't do anything with these
-         // DMESSAGE("Param Id not found = %d", param_id);
-         return 0;
-     }
+    if ( got == m_paramIds.end() )
+    {
+        // probably a control out - we don't do anything with these
+         // DMESSAGE("Param Id not found = %d", id);
+        return 0;
+    }
 
     unsigned long index = got->second;
     return index;
@@ -3028,7 +3039,7 @@ VST3_Plugin::create_control_ports()
                    // DMESSAGE( "Control input port \"%s\" ID %u",
                    //         utf16_to_utf8(paramInfo.title).c_str(), p.hints.parameter_id );
 
-                    std::pair<int, unsigned long> prm ( int(p.hints.parameter_id), control_ins - 1 );
+                    std::pair<uint32_t, unsigned long> prm ( p.hints.parameter_id, control_ins - 1 );
                     m_paramIds.insert(prm);
                 }
             }

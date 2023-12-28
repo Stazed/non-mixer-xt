@@ -176,9 +176,9 @@ private:
     EditorFrame  *m_pEditorFrame;
     
     // Identififier-parameter map.
-    std::unordered_map<int, unsigned long> m_paramIds;
+    std::unordered_map<uint32_t, unsigned long> m_paramIds;
     // Parameter finder (by id).
-    unsigned long findParamId ( int id ) const;
+    unsigned long findParamId ( uint32_t id ) const;
 
     // File loader.
     bool open_file(const std::string& sFilename);
