@@ -2278,7 +2278,7 @@ VST3_Plugin::open_descriptor(unsigned long iIndex)
                         " *** Failed to initialize plug-in component.", this,
                         _plugin_filename.c_str(), iIndex);
 
-                close();
+                close_descriptor();
                 return false;
             }
 
