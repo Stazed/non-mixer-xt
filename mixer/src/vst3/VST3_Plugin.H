@@ -112,6 +112,12 @@ public:
     void timer_registered(bool reg) {_timer_registered = reg;}
     void event_handlers_registered(bool reg) {_event_handlers_registered = reg; }
 
+    // Save/Restore state
+    void save_VST3_plugin_state(const std::string &filename);
+    void restore_VST3_plugin_state(const std::string &filename);
+
+    uint64_t getState (void** const dataPtr);
+
     VST3_Plugin();
     virtual ~VST3_Plugin();
 private:

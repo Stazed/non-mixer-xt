@@ -28,6 +28,7 @@
 #include <filesystem>
 #include <dlfcn.h>      // dlopen, dlerror, dlsym
 #include <unordered_map>
+#include <FL/fl_ask.H>  // fl_alert()
 
 #include "../../../nonlib/dsp.h"
 #include "VST3_Plugin.H"
@@ -3153,6 +3154,92 @@ VST3_Plugin::add_port ( const Port &p )
         midi_input.push_back( p );
     else if ( p.type() == Port::MIDI && p.direction() == Port::OUTPUT )
         midi_output.push_back( p );
+}
+
+void
+VST3_Plugin::save_VST3_plugin_state(const std::string &filename)
+{
+    void* data = nullptr;
+    if (const std::size_t dataSize = getState(&data))
+    {
+        if ( data == nullptr )
+        {
+            fl_alert( "%s could not complete state save of %s", base_label(), filename.c_str() );
+            return;
+        }
+
+        FILE *fp;
+        fp = fopen(filename.c_str(), "w");
+
+        if(fp == NULL)
+        {
+            fl_alert( "Cannot open file %s", filename.c_str() );
+            return;
+        }
+        else
+        {
+            fwrite(data, dataSize, 1, fp);
+        }
+        fclose(fp);
+    }
+}
+
+void
+VST3_Plugin::restore_VST3_plugin_state(const std::string &filename)
+{
+    FILE *fp = NULL;
+    fp = fopen(filename.c_str(), "r");
+
+    if (fp == NULL)
+    {
+        fl_alert( "Cannot open file %s", filename.c_str());
+        return;
+    }
+
+    fseek(fp, 0, SEEK_END);
+    uint64_t size = ftell(fp);
+    rewind(fp);
+
+    void *data = malloc(size);
+
+    fread(data, size, 1, fp);
+    fclose(fp);
+#if 0
+    const clap_istream_impl stream(data, size);
+    if (_state->load(_plugin, &stream))
+    {
+        updateParamValues(false);   // false means do not update the custom UI
+    }
+    else
+    {
+        fl_alert( "%s could not complete state restore of %s", base_label(), filename.c_str() );
+    }
+#endif
+    free(data);
+}
+
+uint64_t
+VST3_Plugin::getState ( void** const dataPtr )
+{
+#if 0
+    if (!_plugin)
+        return false;
+    
+    std::free(_last_chunk);
+
+    clap_ostream_impl stream;
+    if (_state->save(_plugin, &stream))
+    {
+        *dataPtr = _last_chunk = stream.buffer;
+        return stream.size;
+    }
+    else
+    {
+        *dataPtr = _last_chunk = nullptr;
+        return 0;
+    }
+#endif
+    return 0;
 }
 
 void

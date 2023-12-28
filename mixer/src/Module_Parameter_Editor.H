@@ -37,6 +37,10 @@ class SpectrumView;
 #include "lv2/LV2_Plugin.H"
 #endif
 
+#ifdef VST3_SUPPORT
+#include "vst3/VST3_Plugin.H"
+#endif
+
 class Module_Parameter_Editor : public Fl_Double_Window
 {
     Module *_module;
@@ -83,7 +87,7 @@ class Module_Parameter_Editor : public Fl_Double_Window
     static void cb_preset_handle ( Fl_Widget *w, void *v );
     void set_preset_controls(int choice);
 #endif
-#if defined(LV2_SUPPORT) || defined(CLAP_SUPPORT)
+#if defined(LV2_SUPPORT) || defined(CLAP_SUPPORT) || defined(VST3_SUPPORT)
     static void cb_save_state_handle ( Fl_Widget *, void *v );
     void save_plugin_state(const std::string &filename);
     static void cb_restore_state_handle ( Fl_Widget *, void *v );

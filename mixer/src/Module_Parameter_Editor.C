@@ -54,7 +54,7 @@
 #include "SpectrumView.H"
 #include "string.h"
 
-#if defined(LV2_SUPPORT) || defined(CLAP_SUPPORT)
+#if defined(LV2_SUPPORT) || defined(CLAP_SUPPORT) || defined(VST3_SUPPORT)
 #include <FL/Fl_File_Chooser.H>
 #endif
 
@@ -138,8 +138,9 @@ Module_Parameter_Editor::Module_Parameter_Editor ( Module *module ) :
             }
         }
 #endif  // LV2_SUPPORT
-#if defined(LV2_SUPPORT) || defined(CLAP_SUPPORT)
-        if ((_module->_plug_type == LV2) || (_module->_plug_type == CLAP))
+#if defined(LV2_SUPPORT) || defined(CLAP_SUPPORT) || defined(VST3_SUPPORT)
+        if ((_module->_plug_type == LV2) || (_module->_plug_type == CLAP) 
+                || _module->_plug_type == VST3)
         {
             Fl_Color fc = fl_color_add_alpha( FL_CYAN, 200 );
 
@@ -159,7 +160,7 @@ Module_Parameter_Editor::Module_Parameter_Editor ( Module *module ) :
                 o->callback( cb_restore_state_handle, this );
             }
         }
-#endif  // defined(LV2_SUPPORT) || defined(CLAP_SUPPORT)
+#endif  // defined(LV2_SUPPORT) || defined(CLAP_SUPPORT) || defined(VST3_SUPPORT)
 
         g->resizable(0);
         g->end();
@@ -703,7 +704,7 @@ Module_Parameter_Editor::cb_preset_handle ( Fl_Widget *w, void *v )
 }
 #endif
 
-#if defined(LV2_SUPPORT) || defined(CLAP_SUPPORT)
+#if defined(LV2_SUPPORT) || defined(CLAP_SUPPORT) || defined(VST3_SUPPORT)
 void
 Module_Parameter_Editor::cb_save_state_handle ( Fl_Widget *, void *v )
 {
@@ -730,6 +731,12 @@ Module_Parameter_Editor::cb_save_state_handle ( Fl_Widget *, void *v )
 #endif  // CLAP_SUPPORT
 #ifdef LV2_SUPPORT
     if ( ((Module_Parameter_Editor*)v)->_module->_plug_type == LV2 )
+    {
+        filename = fl_file_chooser(title.c_str(), "", file_chooser_location.c_str(), 0);
+    }
+#endif
+#ifdef VST3_SUPPORT
+    if ( ((Module_Parameter_Editor*)v)->_module->_plug_type == VST3 )
     {
         filename = fl_file_chooser(title.c_str(), "", file_chooser_location.c_str(), 0);
     }
@@ -762,6 +769,13 @@ Module_Parameter_Editor::save_plugin_state(const std::string &filename)
         pm->save_LV2_plugin_state(directory);
     }
 #endif
+#ifdef VST3_SUPPORT
+    if (_module->_plug_type == VST3)
+    {
+        VST3_Plugin *pm = static_cast<VST3_Plugin *> (_module);
+        pm->save_VST3_plugin_state(directory);
+    }
+#endif
 }
 
 void
@@ -783,6 +797,12 @@ Module_Parameter_Editor::cb_restore_state_handle ( Fl_Widget *, void *v )
 #endif
 #ifdef LV2_SUPPORT
     if (((Module_Parameter_Editor*)v)->_module->_plug_type == LV2 )
+    {
+        directory = fl_dir_chooser(title.c_str(), file_chooser_location.c_str(), 0);
+    }
+#endif
+#ifdef VST3_SUPPORT
+    if (((Module_Parameter_Editor*)v)->_module->_plug_type == VST3 )
     {
         directory = fl_dir_chooser(title.c_str(), file_chooser_location.c_str(), 0);
     }
@@ -811,8 +831,15 @@ Module_Parameter_Editor::restore_plugin_state(const std::string &directory)
         pm->restore_LV2_plugin_state(directory);
     }
 #endif
+#ifdef VST3_SUPPORT
+    if (_module->_plug_type == VST3)
+    {
+        VST3_Plugin *pm = static_cast<VST3_Plugin *> (_module);
+        pm->restore_VST3_plugin_state(directory);
+    }
+#endif
 }
-#endif  // #if defined(LV2_SUPPORT) || defined(CLAP_SUPPORT)
+#endif  // #if defined(LV2_SUPPORT) || defined(CLAP_SUPPORT) || defined(VST3_SUPPORT)
 
 void
 Module_Parameter_Editor::bind_control ( int i )
