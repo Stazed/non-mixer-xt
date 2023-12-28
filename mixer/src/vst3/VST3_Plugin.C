@@ -81,57 +81,57 @@ class qtractorVst3PluginHost : public Vst::IHostApplication
 {
 public:
 
-	// Constructor.
-	qtractorVst3PluginHost ();
+    // Constructor.
+    qtractorVst3PluginHost ();
 
-	// Destructor.
-	virtual ~qtractorVst3PluginHost ();
+    // Destructor.
+    virtual ~qtractorVst3PluginHost ();
 
-	DECLARE_FUNKNOWN_METHODS
+    DECLARE_FUNKNOWN_METHODS
 
-	//--- IHostApplication ---
-	//
-	tresult PLUGIN_API getName (Vst::String128 name) override;
-	tresult PLUGIN_API createInstance (TUID cid, TUID _iid, void **obj) override;
+    //--- IHostApplication ---
+    //
+    tresult PLUGIN_API getName (Vst::String128 name) override;
+    tresult PLUGIN_API createInstance (TUID cid, TUID _iid, void **obj) override;
 
-	FUnknown *get() { return static_cast<Vst::IHostApplication *> (this); }
+    FUnknown *get() { return static_cast<Vst::IHostApplication *> (this); }
 
-	// QTimer stuff...
-	//
-	void startTimer (int msecs);
-	void stopTimer ();
+    // QTimer stuff...
+    //
+    void startTimer (int msecs);
+    void stopTimer ();
 
-	int timerInterval() const;
+    int timerInterval() const;
 
-	// RunLoop adapters...
-	//
-	tresult registerEventHandler (IEventHandler *handler, FileDescriptor fd);
-	tresult unregisterEventHandler (IEventHandler *handler);
+    // RunLoop adapters...
+    //
+    tresult registerEventHandler (IEventHandler *handler, FileDescriptor fd);
+    tresult unregisterEventHandler (IEventHandler *handler);
 
-	tresult registerTimer (ITimerHandler *handler, TimerInterval msecs);
-	tresult unregisterTimer (ITimerHandler *handler);
+    tresult registerTimer (ITimerHandler *handler, TimerInterval msecs);
+    tresult unregisterTimer (ITimerHandler *handler);
 
-	// Executive methods.
-	//
-	void processTimers();
-	void processEventHandlers();
+    // Executive methods.
+    //
+    void processTimers();
+    void processEventHandlers();
 
 #ifdef CONFIG_VST3_XCB
-	void openXcbConnection();
-	void closeXcbConnection();
+    void openXcbConnection();
+    void closeXcbConnection();
 #endif
 
-	// Common host time-keeper context accessors.
-	Vst::ProcessContext *processContext();
+    // Common host time-keeper context accessors.
+    Vst::ProcessContext *processContext();
 
-	void processAddRef();
-	void processReleaseRef();
+    void processAddRef();
+    void processReleaseRef();
 
-	// Common host time-keeper process context.
-	void updateProcessContext(jack_position_t &pos, const bool &xport_changed, const bool &has_bbt);
+    // Common host time-keeper process context.
+    void updateProcessContext(jack_position_t &pos, const bool &xport_changed, const bool &has_bbt);
 
-	// Cleanup.
-	void clear();
+    // Cleanup.
+    void clear();
 
 protected:
 
@@ -154,15 +154,15 @@ private:
 
     struct TimerHandlerItem
     {
-            TimerHandlerItem(ITimerHandler *h, TimerInterval i)
-                    : handler(h), interval(i), counter(0) {}
+        TimerHandlerItem(ITimerHandler *h, TimerInterval i)
+                : handler(h), interval(i), counter(0) {}
 
-            void reset(TimerInterval i)
-                    { interval = i; counter = 0; }
+        void reset(TimerInterval i)
+            { interval = i; counter = 0; }
 
-            ITimerHandler *handler;
-            TimerInterval  interval;
-            TimerInterval  counter;
+        ITimerHandler *handler;
+        TimerInterval  interval;
+        TimerInterval  counter;
     };
 
     std::unordered_map<ITimerHandler *, TimerHandlerItem *> m_timerHandlers;
@@ -191,50 +191,50 @@ class qtractorVst3PluginHost::PlugInterfaceSupport
 {
 public:
 
-	// Constructor.
-	PlugInterfaceSupport ()
-	{
-		addPluInterfaceSupported(Vst::IComponent::iid);
-		addPluInterfaceSupported(Vst::IAudioProcessor::iid);
-		addPluInterfaceSupported(Vst::IEditController::iid);
-		addPluInterfaceSupported(Vst::IConnectionPoint::iid);
-		addPluInterfaceSupported(Vst::IUnitInfo::iid);
-	//	addPluInterfaceSupported(Vst::IUnitData::iid);
-		addPluInterfaceSupported(Vst::IProgramListData::iid);
-		addPluInterfaceSupported(Vst::IMidiMapping::iid);
-	//	addPluInterfaceSupported(Vst::IEditController2::iid);
-	}
+    // Constructor.
+    PlugInterfaceSupport ()
+    {
+        addPluInterfaceSupported(Vst::IComponent::iid);
+        addPluInterfaceSupported(Vst::IAudioProcessor::iid);
+        addPluInterfaceSupported(Vst::IEditController::iid);
+        addPluInterfaceSupported(Vst::IConnectionPoint::iid);
+        addPluInterfaceSupported(Vst::IUnitInfo::iid);
+//	addPluInterfaceSupported(Vst::IUnitData::iid);
+        addPluInterfaceSupported(Vst::IProgramListData::iid);
+        addPluInterfaceSupported(Vst::IMidiMapping::iid);
+//	addPluInterfaceSupported(Vst::IEditController2::iid);
+    }
 
-	OBJ_METHODS (PlugInterfaceSupport, FObject)
-	REFCOUNT_METHODS (FObject)
-	DEFINE_INTERFACES
-		DEF_INTERFACE (Vst::IPlugInterfaceSupport)
-	END_DEFINE_INTERFACES (FObject)
+    OBJ_METHODS (PlugInterfaceSupport, FObject)
+    REFCOUNT_METHODS (FObject)
+    DEFINE_INTERFACES
+        DEF_INTERFACE (Vst::IPlugInterfaceSupport)
+    END_DEFINE_INTERFACES (FObject)
 
-	//--- IPlugInterfaceSupport ----
-	//
-	tresult PLUGIN_API isPlugInterfaceSupported (const TUID _iid) override
-	{
-            //if (m_fuids.contains(QString::fromLocal8Bit(_iid)))
-            for( unsigned i = 0; i < m_fuids.size(); ++i)
-            {
-                if ( strcmp(_iid, m_fuids[i].c_str() ) == 0)
-                    return kResultOk;
-            }
-	//	else
-            return kResultFalse;
-	}
+    //--- IPlugInterfaceSupport ----
+    //
+    tresult PLUGIN_API isPlugInterfaceSupported (const TUID _iid) override
+    {
+        //if (m_fuids.contains(QString::fromLocal8Bit(_iid)))
+        for( unsigned i = 0; i < m_fuids.size(); ++i)
+        {
+            if ( strcmp(_iid, m_fuids[i].c_str() ) == 0)
+                return kResultOk;
+        }
+    //	else
+        return kResultFalse;
+    }
 
 protected:
 
-	void addPluInterfaceSupported(const TUID& _iid)
-            { m_fuids.push_back(_iid); }
-	//	{ m_fuids.append(QString::fromLocal8Bit(_iid)); }
+    void addPluInterfaceSupported(const TUID& _iid)
+        { m_fuids.push_back(_iid); }
+    //	{ m_fuids.append(QString::fromLocal8Bit(_iid)); }
 
 private:
 
-	// Instance members.
-	std::vector<std::string> m_fuids;
+    // Instance members.
+    std::vector<std::string> m_fuids;
 };
 
 
@@ -244,78 +244,78 @@ class qtractorVst3PluginHost::Attribute
 {
 public:
 
-	enum Type
-	{
-		kInteger,
-		kFloat,
-		kString,
-		kBinary
-	};
+    enum Type
+    {
+        kInteger,
+        kFloat,
+        kString,
+        kBinary
+    };
 
-	// Constructors.
-	Attribute (int64 value) : m_size(0), m_type(kInteger)
-		{ m_v.intValue = value; }
+    // Constructors.
+    Attribute (int64 value) : m_size(0), m_type(kInteger)
+        { m_v.intValue = value; }
 
-	Attribute (double value) : m_size(0), m_type(kFloat)
-		{ m_v.floatValue = value; }
+    Attribute (double value) : m_size(0), m_type(kFloat)
+        { m_v.floatValue = value; }
 
-	Attribute (const Vst::TChar *value, uint32 size)
-		: m_size(size), m_type(kString)
-	{
-		m_v.stringValue = new Vst::TChar[size];
-		::memcpy(m_v.stringValue, value, size * sizeof (Vst::TChar));
-	}
+    Attribute (const Vst::TChar *value, uint32 size)
+            : m_size(size), m_type(kString)
+    {
+        m_v.stringValue = new Vst::TChar[size];
+        ::memcpy(m_v.stringValue, value, size * sizeof (Vst::TChar));
+    }
 
-	Attribute (const void *value, uint32 size)
-		: m_size(size), m_type(kBinary)
-	{
-		m_v.binaryValue = new char[size];
-		::memcpy(m_v.binaryValue, value, size);
-	}
+    Attribute (const void *value, uint32 size)
+            : m_size(size), m_type(kBinary)
+    {
+        m_v.binaryValue = new char[size];
+        ::memcpy(m_v.binaryValue, value, size);
+    }
 
-	// Destructor.
-	~Attribute ()
-	{
-		if (m_size)
-			delete [] m_v.binaryValue;
-	}
+    // Destructor.
+    ~Attribute ()
+    {
+        if (m_size)
+            delete [] m_v.binaryValue;
+    }
 
-	// Accessors.
-	int64 intValue () const
-		{ return m_v.intValue; }
+    // Accessors.
+    int64 intValue () const
+        { return m_v.intValue; }
 
-	double floatValue () const
-		{ return m_v.floatValue; }
+    double floatValue () const
+        { return m_v.floatValue; }
 
-	const Vst::TChar *stringValue ( uint32& stringSize )
-	{
-		stringSize = m_size;
-		return m_v.stringValue;
-	}
+    const Vst::TChar *stringValue ( uint32& stringSize )
+    {
+        stringSize = m_size;
+        return m_v.stringValue;
+    }
 
-	const void *binaryValue ( uint32& binarySize )
-	{
-		binarySize = m_size;
-		return m_v.binaryValue;
-	}
+    const void *binaryValue ( uint32& binarySize )
+    {
+        binarySize = m_size;
+        return m_v.binaryValue;
+    }
 
-	Type getType () const
-		{ return m_type; }
+    Type getType () const
+        { return m_type; }
 
 protected:
 
-	// Instance members.
-	union v
-	{
-		int64  intValue;
-		double floatValue;
-		Vst::TChar *stringValue;
-		char  *binaryValue;
+    // Instance members.
+    union v
+    {
+        int64  intValue;
+        double floatValue;
+        Vst::TChar *stringValue;
+        char  *binaryValue;
 
-	} m_v;
+    } m_v;
 
-	uint32 m_size;
-	Type m_type;
+    uint32 m_size;
+    Type m_type;
 };
 
 
@@ -325,198 +325,198 @@ class qtractorVst3PluginHost::AttributeList : public Vst::IAttributeList
 {
 public:
 
-	// Constructor.
-	AttributeList ()
-	{
-		FUNKNOWN_CTOR
-	}
+    // Constructor.
+    AttributeList ()
+    {
+            FUNKNOWN_CTOR
+    }
 
-	// Destructor.
-	virtual ~AttributeList ()
-	{
-            for (auto i : m_list)
-            {
-                delete i.second;
-            }
-	//	qDeleteAll(m_list);
-            m_list.clear();
+    // Destructor.
+    virtual ~AttributeList ()
+    {
+        for (auto i : m_list)
+        {
+            delete i.second;
+        }
+    //	qDeleteAll(m_list);
+        m_list.clear();
 
-            FUNKNOWN_DTOR
-	}
+        FUNKNOWN_DTOR
+    }
 
-	DECLARE_FUNKNOWN_METHODS
+    DECLARE_FUNKNOWN_METHODS
 
-	//--- IAttributeList ---
-	//
-	tresult PLUGIN_API setInt (AttrID aid, int64 value) override
-	{   
-            removeAttrID(aid);
+    //--- IAttributeList ---
+    //
+    tresult PLUGIN_API setInt (AttrID aid, int64 value) override
+    {   
+        removeAttrID(aid);
 
-            std::pair<std::string, Attribute *> Attr ( aid, new Attribute(value) );
-            m_list.insert(Attr);
-            //	m_list.insert(aid, new Attribute(value));
-            return kResultTrue;
-	}
+        std::pair<std::string, Attribute *> Attr ( aid, new Attribute(value) );
+        m_list.insert(Attr);
+        //	m_list.insert(aid, new Attribute(value));
+        return kResultTrue;
+    }
 
-	tresult PLUGIN_API getInt (AttrID aid, int64& value) override
-	{
-            std::unordered_map<std::string, Attribute *>::const_iterator got
-                = m_list.find (aid);
-            
-            if ( got == m_list.end() )
-            {
-                return kResultFalse;
-            }
-            
-            Attribute *attr = got->second;
-	//	Attribute *attr = m_list.value(aid, nullptr);
-            if (attr)
-            {
-                value = attr->intValue();
-                return kResultTrue;
-            }
+    tresult PLUGIN_API getInt (AttrID aid, int64& value) override
+    {
+        std::unordered_map<std::string, Attribute *>::const_iterator got
+            = m_list.find (aid);
 
+        if ( got == m_list.end() )
+        {
             return kResultFalse;
-	}
+        }
 
-	tresult PLUGIN_API setFloat (AttrID aid, double value) override
-	{
-            removeAttrID(aid);
-
-            std::pair<std::string, Attribute *> Attr ( aid, new Attribute(value) );
-            m_list.insert(Attr);
-
-          //  m_list.insert(aid, new Attribute(value));
+        Attribute *attr = got->second;
+    //	Attribute *attr = m_list.value(aid, nullptr);
+        if (attr)
+        {
+            value = attr->intValue();
             return kResultTrue;
-	}
+        }
 
-	tresult PLUGIN_API getFloat (AttrID aid, double& value) override
-	{
-            std::unordered_map<std::string, Attribute *>::const_iterator got
-                = m_list.find (aid);
-            
-            if ( got == m_list.end() )
-            {
-                return kResultFalse;
-            }
-            
-            Attribute *attr = got->second;
-            
-         //   Attribute *attr = m_list.value(aid, nullptr);
-            if (attr)
-            {
-                value = attr->floatValue();
-                return kResultTrue;
-            }
+        return kResultFalse;
+    }
 
+    tresult PLUGIN_API setFloat (AttrID aid, double value) override
+    {
+        removeAttrID(aid);
+
+        std::pair<std::string, Attribute *> Attr ( aid, new Attribute(value) );
+        m_list.insert(Attr);
+
+      //  m_list.insert(aid, new Attribute(value));
+        return kResultTrue;
+    }
+
+    tresult PLUGIN_API getFloat (AttrID aid, double& value) override
+    {
+        std::unordered_map<std::string, Attribute *>::const_iterator got
+            = m_list.find (aid);
+
+        if ( got == m_list.end() )
+        {
             return kResultFalse;
-	}
+        }
 
-	tresult PLUGIN_API setString (AttrID aid, const Vst::TChar *string) override
-	{
-            removeAttrID(aid);
+        Attribute *attr = got->second;
 
-            std::pair<std::string, Attribute *> prm ( aid, new Attribute( string, utf16_to_utf8(string).length() ) );
-                m_list.insert(prm);
-    
+     //   Attribute *attr = m_list.value(aid, nullptr);
+        if (attr)
+        {
+            value = attr->floatValue();
             return kResultTrue;
+        }
+
+        return kResultFalse;
+    }
+
+    tresult PLUGIN_API setString (AttrID aid, const Vst::TChar *string) override
+    {
+        removeAttrID(aid);
+
+        std::pair<std::string, Attribute *> prm ( aid, new Attribute( string, utf16_to_utf8(string).length() ) );
+            m_list.insert(prm);
+
+        return kResultTrue;
 #if 0
-            removeAttrID(aid);
-            m_list.insert(aid, new Attribute(string, fromTChar(string).length()));
-            return kResultTrue;
+        removeAttrID(aid);
+        m_list.insert(aid, new Attribute(string, fromTChar(string).length()));
+        return kResultTrue;
 #endif
 
-	}
+    }
 
-	tresult PLUGIN_API getString (AttrID aid, Vst::TChar *string, uint32 size) override
-	{
-            std::unordered_map<std::string, Attribute *>::const_iterator got
-                = m_list.find (aid);
-            
-            if ( got == m_list.end() )
-            {
-                return kResultFalse;
-            }
-            
-            Attribute *attr = got->second;
-            if (attr)
-            {
+    tresult PLUGIN_API getString (AttrID aid, Vst::TChar *string, uint32 size) override
+    {
+        std::unordered_map<std::string, Attribute *>::const_iterator got
+            = m_list.find (aid);
+
+        if ( got == m_list.end() )
+        {
+            return kResultFalse;
+        }
+
+        Attribute *attr = got->second;
+        if (attr)
+        {
+            uint32 size2 = 0;
+            const Vst::TChar *string2 = attr->stringValue(size2);
+            ::memcpy(string, string2, (size < size2 ? size: size2) * sizeof(Vst::TChar));
+            return kResultTrue;
+        }
+        return kResultFalse;
+#if 0
+        Attribute *attr = m_list.value(aid, nullptr);
+        if (attr) {
                 uint32 size2 = 0;
                 const Vst::TChar *string2 = attr->stringValue(size2);
-                ::memcpy(string, string2, (size < size2 ? size: size2) * sizeof(Vst::TChar));
+                ::memcpy(string, string2, qMin(size, size2) * sizeof(Vst::TChar));
                 return kResultTrue;
-            }
-            return kResultFalse;
-#if 0
-            Attribute *attr = m_list.value(aid, nullptr);
-            if (attr) {
-                    uint32 size2 = 0;
-                    const Vst::TChar *string2 = attr->stringValue(size2);
-                    ::memcpy(string, string2, qMin(size, size2) * sizeof(Vst::TChar));
-                    return kResultTrue;
-            }
+        }
 #endif
-	}
+    }
 
-	tresult PLUGIN_API setBinary (AttrID aid, const void* data, uint32 size) override
-	{
-            removeAttrID(aid);
+    tresult PLUGIN_API setBinary (AttrID aid, const void* data, uint32 size) override
+    {
+        removeAttrID(aid);
 
-            std::pair<std::string, Attribute *> Attr ( aid, new Attribute(data, size) );
-            m_list.insert(Attr);
-            
-          //  m_list.insert(aid, new Attribute(data, size));
-            return kResultTrue;
-	}
+        std::pair<std::string, Attribute *> Attr ( aid, new Attribute(data, size) );
+        m_list.insert(Attr);
 
-	tresult PLUGIN_API getBinary (AttrID aid, const void*& data, uint32& size) override
-	{
-            std::unordered_map<std::string, Attribute *>::const_iterator got
-                = m_list.find (aid);
-            
-            if ( got == m_list.end() )
-            {
-                return kResultFalse;
-            }
-            
-            Attribute *attr = got->second;
-           // Attribute *attr = m_list.value(aid, nullptr);
-            if (attr)
-            {
-                data = attr->binaryValue(size);
-                return kResultTrue;
-            }
-            size = 0;
+      //  m_list.insert(aid, new Attribute(data, size));
+        return kResultTrue;
+    }
+
+    tresult PLUGIN_API getBinary (AttrID aid, const void*& data, uint32& size) override
+    {
+        std::unordered_map<std::string, Attribute *>::const_iterator got
+            = m_list.find (aid);
+
+        if ( got == m_list.end() )
+        {
             return kResultFalse;
-	}
+        }
+
+        Attribute *attr = got->second;
+       // Attribute *attr = m_list.value(aid, nullptr);
+        if (attr)
+        {
+            data = attr->binaryValue(size);
+            return kResultTrue;
+        }
+        size = 0;
+        return kResultFalse;
+    }
 
 protected:
 
-	void removeAttrID (AttrID aid)
-	{
-            std::unordered_map<std::string, Attribute *>::const_iterator got
-                = m_list.find (aid);
-            
-            if ( got == m_list.end() )
-            {
-                return;
-            }
+    void removeAttrID (AttrID aid)
+    {
+        std::unordered_map<std::string, Attribute *>::const_iterator got
+            = m_list.find (aid);
 
-            Attribute *attr = got->second;
-          //  Attribute *attr = m_list.value(aid, nullptr);
-            if (attr)
-            {
-                delete attr;
-                m_list.erase(aid);
-              //  m_list.remove(aid);
-            }
-	}
+        if ( got == m_list.end() )
+        {
+            return;
+        }
+
+        Attribute *attr = got->second;
+      //  Attribute *attr = m_list.value(aid, nullptr);
+        if (attr)
+        {
+            delete attr;
+            m_list.erase(aid);
+          //  m_list.remove(aid);
+        }
+    }
 
 private:
 
-	// Instance members.
-        std::unordered_map<std::string, Attribute *> m_list;
-	//QHash<QString, Attribute *> m_list;
+    // Instance members.
+    std::unordered_map<std::string, Attribute *> m_list;
+    //QHash<QString, Attribute *> m_list;
 };
 
 IMPLEMENT_FUNKNOWN_METHODS (qtractorVst3PluginHost::AttributeList, IAttributeList, IAttributeList::iid)
@@ -528,58 +528,59 @@ class qtractorVst3PluginHost::Message : public Vst::IMessage
 {
 public:
 
-	// Constructor.
-	Message () : m_messageId(nullptr), m_attributeList(nullptr)
-	{
-		FUNKNOWN_CTOR
-	}
+    // Constructor.
+    Message () : m_messageId(nullptr), m_attributeList(nullptr)
+    {
+        FUNKNOWN_CTOR
+    }
 
-	// Destructor.
-	virtual ~Message ()
-	{
-		setMessageID(nullptr);
+    // Destructor.
+    virtual ~Message ()
+    {
+        setMessageID(nullptr);
 
-		if (m_attributeList)
-			m_attributeList->release();
+        if (m_attributeList)
+            m_attributeList->release();
 
-		FUNKNOWN_DTOR
-	}
+        FUNKNOWN_DTOR
+    }
 
-	DECLARE_FUNKNOWN_METHODS
+    DECLARE_FUNKNOWN_METHODS
 
-	//--- IMessage ---
-	//
-	const char *PLUGIN_API getMessageID () override
-		{ return m_messageId; }
+    //--- IMessage ---
+    //
+    const char *PLUGIN_API getMessageID () override
+        { return m_messageId; }
 
-	void PLUGIN_API setMessageID (const char *messageId) override
-	{
-		if (m_messageId)
-			delete [] m_messageId;
+    void PLUGIN_API setMessageID (const char *messageId) override
+    {
+        if (m_messageId)
+            delete [] m_messageId;
 
-		m_messageId = nullptr;
+        m_messageId = nullptr;
 
-		if (messageId) {
-			size_t len = strlen(messageId) + 1;
-			m_messageId = new char[len];
-			::strcpy(m_messageId, messageId);
-		}
-	}
+        if (messageId)
+        {
+            size_t len = strlen(messageId) + 1;
+            m_messageId = new char[len];
+            ::strcpy(m_messageId, messageId);
+        }
+    }
 
-	Vst::IAttributeList* PLUGIN_API getAttributes () override
-	{
-		if (!m_attributeList)
-			m_attributeList = new AttributeList();
+    Vst::IAttributeList* PLUGIN_API getAttributes () override
+    {
+        if (!m_attributeList)
+            m_attributeList = new AttributeList();
 
-		return m_attributeList;
-	}
+        return m_attributeList;
+    }
 
 protected:
 
-	// Instance members.
-	char *m_messageId;
+    // Instance members.
+    char *m_messageId;
 
-	AttributeList *m_attributeList;
+    AttributeList *m_attributeList;
 };
 
 IMPLEMENT_FUNKNOWN_METHODS (qtractorVst3PluginHost::Message, IMessage, IMessage::iid)
@@ -594,57 +595,57 @@ class qtractorVst3PluginHost::Timer
 {
 public:
 
-	// Constructor.
-	Timer (qtractorVst3PluginHost *pHost) : m_pHost(pHost) {}
+    // Constructor.
+    Timer (qtractorVst3PluginHost *pHost) : m_pHost(pHost) {}
 
-	// Main method.
-	void start (int msecs)
-	{
-        //    const int DEFAULT_MSECS = 30;
-            f_miliseconds = float(msecs) *.001;
-            
-        //    DMESSAGE("Miliseconds = %f", f_miliseconds);
+    // Main method.
+    void start (int msecs)
+    {
+    //    const int DEFAULT_MSECS = 30;
+        f_miliseconds = float(msecs) *.001;
 
-            Fl::add_timeout( f_miliseconds, &VST3_Plugin::custom_update_ui, g_VST3_Plugin );
+    //    DMESSAGE("Miliseconds = %f", f_miliseconds);
+
+        Fl::add_timeout( f_miliseconds, &VST3_Plugin::custom_update_ui, g_VST3_Plugin );
 
 #if 0
-            int iInterval = QTimer::interval();
-            if (iInterval == 0)
-                    iInterval = DEFAULT_MSECS;
-            if (iInterval > msecs)
-                    iInterval = msecs;
+        int iInterval = QTimer::interval();
+        if (iInterval == 0)
+                iInterval = DEFAULT_MSECS;
+        if (iInterval > msecs)
+                iInterval = msecs;
 
-            QTimer::start(iInterval);
+        QTimer::start(iInterval);
 #endif
-	}
+    }
 
-        void stop()
-        {
-            Fl::remove_timeout(&VST3_Plugin::custom_update_ui, g_VST3_Plugin);
-        }
-        
-        int interval()
-        {
-           // DMESSAGE("Interval = %d", int(f_miliseconds * 1000) );
-            return int(f_miliseconds * 1000);
-        }
+    void stop()
+    {
+        Fl::remove_timeout(&VST3_Plugin::custom_update_ui, g_VST3_Plugin);
+    }
+
+    int interval()
+    {
+       // DMESSAGE("Interval = %d", int(f_miliseconds * 1000) );
+        return int(f_miliseconds * 1000);
+    }
 
 protected:
 
 #if 0
-	void timerEvent (QTimerEvent *pTimerEvent)
-	{
-            if (pTimerEvent->timerId() == QTimer::timerId()) {
-                    m_pHost->processTimers();
-                    m_pHost->processEventHandlers();
-            }
-	}
+    void timerEvent (QTimerEvent *pTimerEvent)
+    {
+        if (pTimerEvent->timerId() == QTimer::timerId()) {
+                m_pHost->processTimers();
+                m_pHost->processEventHandlers();
+        }
+    }
 #endif
 
 private:
 
-	// Instance members.
-	qtractorVst3PluginHost *m_pHost;
+    // Instance members.
+    qtractorVst3PluginHost *m_pHost;
 };
 #endif
 
@@ -703,58 +704,62 @@ tresult PLUGIN_API qtractorVst3PluginHost::getName ( Vst::String128 name )
 tresult PLUGIN_API qtractorVst3PluginHost::createInstance (
 	TUID cid, TUID _iid, void **obj )
 {
-	const FUID classID (FUID::fromTUID(cid));
-	const FUID interfaceID (FUID::fromTUID(_iid));
+    const FUID classID (FUID::fromTUID(cid));
+    const FUID interfaceID (FUID::fromTUID(_iid));
 
-	if (classID == Vst::IMessage::iid &&
-		interfaceID == Vst::IMessage::iid) {
-		*obj = new Message();
-		return kResultOk;
-	}
-	else
-	if (classID == Vst::IAttributeList::iid &&
-		interfaceID == Vst::IAttributeList::iid) {
-		*obj = new AttributeList();
-		return kResultOk;
-	}
+    if (classID == Vst::IMessage::iid &&
+            interfaceID == Vst::IMessage::iid)
+    {
+        *obj = new Message();
+        return kResultOk;
+    }
+    else
+    if (classID == Vst::IAttributeList::iid &&
+            interfaceID == Vst::IAttributeList::iid)
+    {
+        *obj = new AttributeList();
+        return kResultOk;
+    }
 
-	*obj = nullptr;
-	return kResultFalse;
+    *obj = nullptr;
+    return kResultFalse;
 }
 
 
 tresult PLUGIN_API qtractorVst3PluginHost::queryInterface (
 	const char *_iid, void **obj )
 {
-	QUERY_INTERFACE(_iid, obj, FUnknown::iid, IHostApplication)
-	QUERY_INTERFACE(_iid, obj, IHostApplication::iid, IHostApplication)
+    QUERY_INTERFACE(_iid, obj, FUnknown::iid, IHostApplication)
+    QUERY_INTERFACE(_iid, obj, IHostApplication::iid, IHostApplication)
 
-	if (m_plugInterfaceSupport &&
-		m_plugInterfaceSupport->queryInterface(_iid, obj) == kResultOk)
-		return kResultOk;
+    if (m_plugInterfaceSupport &&
+            m_plugInterfaceSupport->queryInterface(_iid, obj) == kResultOk)
+    {
+        return kResultOk;
+    }
 
-	*obj = nullptr;
-	return kResultFalse;
+    *obj = nullptr;
+    return kResultFalse;
 }
 
 
 uint32 PLUGIN_API qtractorVst3PluginHost::addRef (void)
-	{ return 1;	}
+    { return 1; }
 
 uint32 PLUGIN_API qtractorVst3PluginHost::release (void)
-	{ return 1; }
+    { return 1; }
 
 
 // QTimer stuff...
 //
 void qtractorVst3PluginHost::startTimer ( int msecs )
-	{ if (++m_timerRefCount == 1) m_pTimer->start(msecs); }
+    { if (++m_timerRefCount == 1) m_pTimer->start(msecs); }
 
 void qtractorVst3PluginHost::stopTimer (void)
-	{ if (m_timerRefCount > 0 && --m_timerRefCount == 0) m_pTimer->stop(); }
+    { if (m_timerRefCount > 0 && --m_timerRefCount == 0) m_pTimer->stop(); }
 
 int qtractorVst3PluginHost::timerInterval (void) const
-	{ return m_pTimer->interval(); }
+    { return m_pTimer->interval(); }
 
 // IRunLoop stuff...
 //
@@ -1093,7 +1098,7 @@ public:
 
     // Constructor.
     Handler (VST3_Plugin *pPlugin)
-            : m_pPlugin(pPlugin) { FUNKNOWN_CTOR }
+        : m_pPlugin(pPlugin) { FUNKNOWN_CTOR }
 
     // Destructor.
     virtual ~Handler () { FUNKNOWN_DTOR }
@@ -1153,15 +1158,13 @@ public:
     //--- IConnectionPoint ---
     //
     tresult PLUGIN_API connect (Vst::IConnectionPoint *other) override
-            { return (other ? kResultOk : kInvalidArgument); }
+        { return (other ? kResultOk : kInvalidArgument); }
 
     tresult PLUGIN_API disconnect (Vst::IConnectionPoint *other) override
-            { return (other ? kResultOk : kInvalidArgument); }
+        { return (other ? kResultOk : kInvalidArgument); }
 
     tresult PLUGIN_API notify (Vst::IMessage *message) override
-    {
-        return m_pPlugin->notify(message);
-    }
+        { return m_pPlugin->notify(message); }
 
 private:
 
@@ -1194,35 +1197,36 @@ class VST3_Plugin::RunLoop : public IRunLoop
 {
 public:
 
-	//--- IRunLoop ---
-	//
-	tresult PLUGIN_API registerEventHandler (IEventHandler *handler, FileDescriptor fd) override
-		{ return g_hostContext.registerEventHandler(handler, fd); }
+    //--- IRunLoop ---
+    //
+    tresult PLUGIN_API registerEventHandler (IEventHandler *handler, FileDescriptor fd) override
+        { return g_hostContext.registerEventHandler(handler, fd); }
 
-	tresult PLUGIN_API unregisterEventHandler (IEventHandler *handler) override
-		{ return g_hostContext.unregisterEventHandler(handler); }
+    tresult PLUGIN_API unregisterEventHandler (IEventHandler *handler) override
+        { return g_hostContext.unregisterEventHandler(handler); }
 
-	tresult PLUGIN_API registerTimer (ITimerHandler *handler, TimerInterval msecs) override
-		{ return g_hostContext.registerTimer(handler, msecs); }
+    tresult PLUGIN_API registerTimer (ITimerHandler *handler, TimerInterval msecs) override
+        { return g_hostContext.registerTimer(handler, msecs); }
 
-	tresult PLUGIN_API unregisterTimer (ITimerHandler *handler) override
-		{ return g_hostContext.unregisterTimer(handler); }
+    tresult PLUGIN_API unregisterTimer (ITimerHandler *handler) override
+        { return g_hostContext.unregisterTimer(handler); }
 
-	tresult PLUGIN_API queryInterface (const TUID _iid, void **obj) override
-	{
-		if (FUnknownPrivate::iidEqual(_iid, FUnknown::iid) ||
-			FUnknownPrivate::iidEqual(_iid, IRunLoop::iid)) {
-			addRef();
-			*obj = this;
-			return kResultOk;
-		}
+    tresult PLUGIN_API queryInterface (const TUID _iid, void **obj) override
+    {
+        if (FUnknownPrivate::iidEqual(_iid, FUnknown::iid) ||
+                FUnknownPrivate::iidEqual(_iid, IRunLoop::iid))
+        {
+            addRef();
+            *obj = this;
+            return kResultOk;
+        }
 
-		*obj = nullptr;
-		return kNoInterface;
-	}
+        *obj = nullptr;
+        return kNoInterface;
+    }
 
-	uint32 PLUGIN_API addRef  () override { return 1001; }
-	uint32 PLUGIN_API release () override { return 1001; }
+    uint32 PLUGIN_API addRef  () override { return 1001; }
+    uint32 PLUGIN_API release () override { return 1001; }
 };
 
 
@@ -1231,14 +1235,14 @@ public:
 //
 
 class VST3_Plugin::EditorFrame : public X11PluginUI, public IPlugFrame,
-        private X11PluginUI::Callback
+    private X11PluginUI::Callback
 {
 public:
 
     // Constructor.
     EditorFrame (IPlugView *plugView, bool resizeable) 
-            : X11PluginUI(this, resizeable, false), m_plugView(plugView),
-                    m_runLoop(nullptr), m_resizing(false)
+        : X11PluginUI(this, resizeable, false), m_plugView(plugView),
+                m_runLoop(nullptr), m_resizing(false)
     {
         m_runLoop = owned(NEW RunLoop());
 
@@ -1764,7 +1768,7 @@ VST3_Plugin::configure_midi_outputs ()
 nframes_t
 VST3_Plugin::get_module_latency ( void ) const
 {
-    return 0;
+    return 0;   // FIXME
 }
 
 void
