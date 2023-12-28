@@ -1927,7 +1927,30 @@ VST3_Plugin::try_custom_ui()
             return true;
         }
     }
+    
+    if( !init_custom_ui(true) )
+        return false;
 
+    // UUUUGGGLY HACK - for some reason plugins that do not register timers,
+    // do not show properly if setFrame is set. So, we can't seem to check for
+    // timer registration unless we attached above. If no timers are registered
+    // then close everything and restart, only this time nullptr the setFrame.
+    // There is a 100% chance that this is not the way it should be done, but
+    // until we find the correct way, this seems to work!
+    if(!_timer_registered)
+    {
+        if( !init_custom_ui(false) )
+            return false;
+    }
+
+    _bEditorCreated = show_custom_ui();
+
+    return _bEditorCreated;
+}
+
+bool
+VST3_Plugin::init_custom_ui(bool have_timers)
+{
     if (!openEditor())
     {
         DMESSAGE("No custom UI is available for %s", label());
@@ -1953,6 +1976,9 @@ VST3_Plugin::try_custom_ui()
     m_pEditorFrame->setTitle(label());
 
     void *wid = m_pEditorFrame->getPtr();
+
+    if (!have_timers)
+        m_plugView->setFrame(nullptr);  // The UUUGGLY HACK
     
     if (plugView->attached(wid, kPlatformTypeX11EmbedWindowID) != kResultOk)
     {
@@ -1960,50 +1986,8 @@ VST3_Plugin::try_custom_ui()
         closeEditor();
         return false;
     }
-#if 1
-    // UUUUGGGLY HACK - for some reason plugins that do not register timers,
-    // do not show properly if setFrame is set. So, we can't seem to check for
-    // timer registration unless we attached above. If no timers are registered
-    // then close everything and restart, only this time nullptr the setFrame.
-    // There is a 100% chance that this is not the way it should be done, but
-    // until we find the correct way, this seems to work!
-    if(!_timer_registered)
-    {
-        openEditor();
-        
-        IPlugView *plugView = m_plugView;
-        if (!plugView)
-            return false;
 
-        if (plugView->isPlatformTypeSupported(kPlatformTypeX11EmbedWindowID) != kResultOk)
-        {
-            DMESSAGE("[%p]::openEditor"
-                    " *** X11 Window platform is not supported (%s).", this,
-                    kPlatformTypeX11EmbedWindowID);
-            return false;
-        }
-
-        if (m_plugView->canResize() == kResultOk)
-            _x_is_resizable = true;
-        
-        m_pEditorFrame = new EditorFrame(plugView, _x_is_resizable);
-        m_pEditorFrame->setTitle(label());
-
-        void *wid = m_pEditorFrame->getPtr();
-        
-        m_plugView->setFrame(nullptr);  // The UUUGGLY HACK
-    
-        if (plugView->attached(wid, kPlatformTypeX11EmbedWindowID) != kResultOk)
-        {
-            DMESSAGE(" *** Failed to create/attach editor window - %s.", label());
-            closeEditor();
-            return false;
-        }
-    }
-#endif
-    _bEditorCreated = show_custom_ui();
-
-    return _bEditorCreated;
+    return true;
 }
 
 // Editor controller methods.
