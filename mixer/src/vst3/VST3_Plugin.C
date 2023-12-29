@@ -1506,6 +1506,7 @@ VST3_Plugin::VST3_Plugin() :
     _plugin_filename(),
     m_sName(),
     _last_chunk(nullptr),
+    _project_file(),
     m_iAudioIns(0),
     m_iAudioOuts(0),
     m_iMidiIns(0),
@@ -1588,6 +1589,19 @@ VST3_Plugin::~VST3_Plugin()
     
     if ( _last_chunk )
         std::free(_last_chunk);
+
+    /* This is the case when the user manually removes a Plugin. We set the
+     _is_removed = true, and add any custom data directory to the remove directories
+     vector. If the user saves the project then we remove any items in the vector.
+     We also clear the vector. If the user abandons any changes on exit, then any
+     items added to the vector since the last save will not be removed */
+    if(_is_removed)
+    {
+        if(!_project_file.empty())
+        {
+            remove_custom_data_directories.push_back(_project_file);
+        }
+    }
 }
 
 bool
@@ -1646,6 +1660,8 @@ VST3_Plugin::load_plugin ( Module::Picked picked )
 
     if(!_plugin_ins)
         is_zero_input_synth(true);
+
+    _use_custom_data = true;
 
     return true;
 }
@@ -2207,7 +2223,7 @@ VST3_Plugin::custom_update_ui ( void *v )
  */
 void
 VST3_Plugin::custom_update_ui_x()
-{   
+{
     m_pEditorFrame->idle();
 
     if (_timer_registered)
@@ -3386,13 +3402,135 @@ VST3_Plugin::getState ( void** const dataPtr )
 void
 VST3_Plugin::get ( Log_Entry &e ) const
 {
-    
+    e.add( ":vst3_plugin_path", _plugin_filename.c_str() );
+ 
+    /* these help us display the module on systems which are missing this plugin */
+    e.add( ":plugin_ins", _plugin_ins );
+    e.add( ":plugin_outs", _plugin_outs );
+
+    if ( _use_custom_data  )
+    {
+        Module *m = (Module *) this;
+        VST3_Plugin *pm = static_cast<VST3_Plugin *> (m);
+
+        /* Export directory location */
+        if(!export_import_strip.empty())
+        {
+            std::size_t found = export_import_strip.find_last_of("/\\");
+            std::string path = (export_import_strip.substr(0, found));
+
+            std::string filename = pm->get_custom_data_location(path);
+
+            pm->save_VST3_plugin_state(filename);
+            DMESSAGE("Export location = %s", filename.c_str());
+
+            std::string base_file = filename.substr(filename.find_last_of("/\\") + 1);
+            e.add( ":custom_data", base_file.c_str() );
+        }
+        else
+        {
+            /* If we already have pm->_project_file, it means that we have an existing project
+               already loaded. So use that file instead of making a new one */
+            std::string file = pm->_project_file;
+            if(file.empty())
+            {
+                /* This is a new project */
+                file = pm->get_custom_data_location(project_directory);
+            }
+            if ( !file.empty() )
+            {
+                /* This is an existing project */
+                pm->_project_file = file;
+                pm->save_VST3_plugin_state(file);
+
+                std::string base_file = file.substr(file.find_last_of("/\\") + 1);
+                e.add( ":custom_data", base_file.c_str() );
+            }
+        }
+    }
+
+    Module::get( e );
 }
 
 void
 VST3_Plugin::set ( Log_Entry &e )
 {
+    int n = 0;
+    std::string restore = "";
+
+    /* we need to have number() defined before we create the control inputs in load() */
+    for ( int i = 0; i < e.size(); ++i )
+    {
+        const char *s, *v;
+
+        e.get( i, &s, &v );
+
+    	if ( ! strcmp(s, ":number" ) )
+        {
+	    n = atoi(v);
+        }
+    }
+
+    /* need to call this to set label even for version 0 modules */
+    number(n);
+
+    std::string s_vst3_path = "";
     
+    for ( int i = 0; i < e.size(); ++i )
+    {
+        const char *s, *v;
+
+        e.get( i, &s, &v );
+
+        if ( ! strcmp( s, ":vst3_plugin_path" ) )
+        {
+            s_vst3_path = v;
+        }
+        else if ( ! strcmp( s, ":plugin_ins" ) )
+        {
+            _plugin_ins = atoi( v );
+        }
+        else if ( ! strcmp( s, ":plugin_outs" ) )
+        {
+            _plugin_outs = atoi( v );
+        }
+        else if ( ! strcmp( s, ":custom_data" ) )
+        {
+            if(!export_import_strip.empty())
+            {
+                std::string path = export_import_strip;
+
+                std::size_t found = path.find_last_of("/\\");
+                restore = (path.substr(0, found));
+                restore += "/";
+                restore += v;
+            }
+            else
+            {
+                restore = project_directory;
+                restore += "/";
+                restore += v;
+                _project_file = restore;
+            }
+        }
+    }
+
+    DMESSAGE("Path = %s", s_vst3_path.c_str());
+
+    Module::Picked picked = { VST3, s_vst3_path, 0, "" };
+
+    if ( !load_plugin( picked ) )
+    {
+        // What to do - inform the user and ask if they want to delete?
+        return;
+    }
+
+    Module::set( e );
+
+    if (!restore.empty())
+    {
+        restore_VST3_plugin_state(restore);
+    }
 }
 
 #endif  // VST3_SUPPORT

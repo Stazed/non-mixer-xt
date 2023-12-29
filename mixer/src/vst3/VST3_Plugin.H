@@ -51,6 +51,10 @@
 //#include "pluginterfaces/base/ibstream.h"
 //#include "pluginterfaces/base/ipluginbase.h"
 
+extern std::string project_directory;
+extern std::string export_import_strip;
+extern std::vector<std::string>remove_custom_data_directories;
+
 using namespace Steinberg;
 
 class VST3_Plugin : public Plugin_Module
@@ -152,6 +156,7 @@ private:
     std::string _plugin_filename;
     std::string m_sName;
     void* _last_chunk;
+    std::string _project_file;
 
     unsigned short m_iAudioIns;
     unsigned short m_iAudioOuts;
