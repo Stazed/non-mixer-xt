@@ -1367,6 +1367,132 @@ void VST3_Plugin::EditorFrame::handlePluginUIResized(const uint width, const uin
     m_plugView->onSize(&rect0);
 }
 
+//------------------------------------------------------------------------
+// VST3_Plugin::Stream - Memory based stream for IBStream impl.
+
+class VST3_Plugin::Stream : public IBStream
+{
+public:
+
+    // Constructors.
+    Stream () : m_data(nullptr), m_pos(0), m_size(0)
+            { FUNKNOWN_CTOR }
+    Stream (void * data, int64 data_size) : m_data(data), m_size(data_size), m_pos(0)
+            { FUNKNOWN_CTOR }
+
+    // Destructor.
+    virtual ~Stream () { FUNKNOWN_DTOR }
+
+    DECLARE_FUNKNOWN_METHODS
+
+    //--- IBStream ---
+    //
+    tresult PLUGIN_API read (void *buffer, int32 nbytes, int32 *nread) override
+    {
+        if (m_pos + nbytes > m_size)
+        {
+            const int32 nsize = int32(m_size - m_pos);
+            if (nsize > 0)
+            {
+                nbytes = nsize;
+            } else
+            {
+                nbytes = 0;
+                m_pos = int64(m_size);
+            }
+        }
+
+        if (nbytes > 0)
+        {
+            std::memcpy(buffer, static_cast<const uint8_t*>(m_data) + m_pos, nbytes);
+         //   ::memcpy(buffer, m_data + m_pos, nbytes);
+            m_pos += nbytes;
+        }
+
+        if (nread)
+            *nread = nbytes;
+
+        return kResultOk;
+    }
+
+    tresult PLUGIN_API write (void *buffer, int32 nbytes, int32 *nwrite) override
+    {
+        if (buffer == nullptr)
+            return kInvalidArgument;
+
+        const int32 nsize = m_pos + nbytes;
+        if (nsize > m_size)
+        {
+            m_data = std::realloc(m_data, nsize);
+            m_size = nsize;
+          //  m_data.resize(nsize);
+        }
+
+        if (m_pos >= 0 && nbytes > 0)
+        {
+            std::memcpy(static_cast<uint8_t*>(m_data) + m_pos, buffer, nbytes);
+           // ::memcpy(m_data.data() + m_pos, buffer, nbytes);
+            m_pos += nbytes;
+        }
+        else nbytes = 0;
+
+        if (nwrite)
+            *nwrite = nbytes;
+
+        return kResultOk;
+    }
+
+    tresult PLUGIN_API seek (int64 pos, int32 mode, int64 *npos) override
+    {
+        if (mode == kIBSeekSet)
+            m_pos = pos;
+        else
+        if (mode == kIBSeekCur)
+            m_pos += pos;
+        else
+        if (mode == kIBSeekEnd)
+            m_pos = m_size - pos;
+           // m_pos = m_data.size() - pos;
+
+        if (m_pos < 0)
+            m_pos = 0;
+        else
+        if (m_pos > m_size)
+            m_pos = m_size;
+
+        if (npos)
+            *npos = m_pos;
+
+        return kResultTrue;
+    }
+
+    tresult PLUGIN_API tell (int64 *npos) override
+    {
+        if (npos)
+        {
+            *npos = m_pos;
+            return kResultOk;
+        } else
+        {
+            return kInvalidArgument;
+        }
+    }
+
+    // Other accessors.
+    //
+    void * data() const { return m_data; }
+    int64  size() { return m_pos; }
+
+protected:
+
+    // Instance members.
+    void*           m_data;
+    int64           m_size;
+    int64           m_pos;
+};
+
+IMPLEMENT_FUNKNOWN_METHODS (VST3_Plugin::Stream, IBStream, IBStream::iid)
+
 
 VST3_Plugin::VST3_Plugin() :
     Plugin_Module(),
@@ -1379,6 +1505,7 @@ VST3_Plugin::VST3_Plugin() :
     m_processing(false),
     _plugin_filename(),
     m_sName(),
+    _last_chunk(nullptr),
     m_iAudioIns(0),
     m_iAudioOuts(0),
     m_iMidiIns(0),
@@ -1458,6 +1585,9 @@ VST3_Plugin::~VST3_Plugin()
 
     midi_output.clear();
     midi_input.clear();
+    
+    if ( _last_chunk )
+        std::free(_last_chunk);
 }
 
 bool
@@ -3204,41 +3334,52 @@ VST3_Plugin::restore_VST3_plugin_state(const std::string &filename)
 
     fread(data, size, 1, fp);
     fclose(fp);
-#if 0
-    const clap_istream_impl stream(data, size);
-    if (_state->load(_plugin, &stream))
+
+    Stream state(data, size);
+
+    if (m_component->setState(&state) != kResultOk)
     {
-        updateParamValues(false);   // false means do not update the custom UI
+        fl_alert("IComponent::setState() FAILED! %s", filename.c_str() );
+        goto restore_error;
     }
-    else
+
+    if (m_controller->setComponentState(&state) != kResultOk)
     {
-        fl_alert( "%s could not complete state restore of %s", base_label(), filename.c_str() );
+        fl_alert("IEditController::setComponentState() FAILED! %s", filename.c_str());
+        goto restore_error;
     }
-#endif
+
+    updateParamValues(false);
+
+restore_error:
+
     free(data);
 }
 
 uint64_t
 VST3_Plugin::getState ( void** const dataPtr )
 {
-#if 0
-    if (!_plugin)
+    Vst::IComponent *component = m_component;
+    if (!component)
         return false;
-    
-    std::free(_last_chunk);
 
-    clap_ostream_impl stream;
-    if (_state->save(_plugin, &stream))
+    if ( _last_chunk )
+        std::free(_last_chunk);
+
+    Stream state;
+
+    if (component->getState(&state) != kResultOk)
     {
-        *dataPtr = _last_chunk = stream.buffer;
-        return stream.size;
-    }
-    else
-    {
+        DMESSAGE("getState() Vst::IComponent::getState() FAILED!");
         *dataPtr = _last_chunk = nullptr;
         return 0;
     }
-#endif
+    else
+    {
+        *dataPtr = _last_chunk = state.data();
+        return state.size();
+    }
+
     return 0;
 }
 

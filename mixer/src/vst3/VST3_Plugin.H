@@ -151,6 +151,7 @@ private:
 
     std::string _plugin_filename;
     std::string m_sName;
+    void* _last_chunk;
 
     unsigned short m_iAudioIns;
     unsigned short m_iAudioOuts;
@@ -246,6 +247,8 @@ private:
     std::map<MidiMapKey, Vst::ParamID> m_midiMap;
 
 protected:
+    
+    class Stream;
 
     // Save and restore
     void get ( Log_Entry &e ) const override;

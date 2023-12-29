@@ -738,9 +738,17 @@ Module_Parameter_Editor::cb_save_state_handle ( Fl_Widget *, void *v )
 #ifdef VST3_SUPPORT
     if ( ((Module_Parameter_Editor*)v)->_module->_plug_type == VST3 )
     {
-        filename = fl_file_chooser(title.c_str(), "", file_chooser_location.c_str(), 0);
+#define EXT ".state"
+    filename = fl_file_chooser(title.c_str(), "(*" EXT")", file_chooser_location.c_str (), 0);
+
+    if (filename == NULL)
+        return;
+
+    filename = fl_filename_setext(filename, EXT);
+#undef EXT
     }
-#endif
+#endif  // VST3_SUPPORT
+
     if (filename == NULL)
         return;
 
@@ -773,7 +781,7 @@ Module_Parameter_Editor::save_plugin_state(const std::string &filename)
     if (_module->_plug_type == VST3)
     {
         VST3_Plugin *pm = static_cast<VST3_Plugin *> (_module);
-        pm->save_VST3_plugin_state(directory);
+        pm->save_VST3_plugin_state(filename);
     }
 #endif
 }
@@ -804,7 +812,7 @@ Module_Parameter_Editor::cb_restore_state_handle ( Fl_Widget *, void *v )
 #ifdef VST3_SUPPORT
     if (((Module_Parameter_Editor*)v)->_module->_plug_type == VST3 )
     {
-        directory = fl_dir_chooser(title.c_str(), file_chooser_location.c_str(), 0);
+        directory = fl_file_chooser(title.c_str(), "*.state", file_chooser_location.c_str(), 0);
     }
 #endif
     if (directory == NULL)
