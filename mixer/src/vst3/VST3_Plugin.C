@@ -1375,7 +1375,7 @@ class VST3_Plugin::Stream : public IBStream
 public:
 
     // Constructors.
-    Stream () : m_data(nullptr), m_pos(0), m_size(0)
+    Stream () : m_data(nullptr), m_size(0), m_pos(0)
             { FUNKNOWN_CTOR }
     Stream (void * data, int64 data_size) : m_data(data), m_size(data_size), m_pos(0)
             { FUNKNOWN_CTOR }
@@ -3064,12 +3064,12 @@ VST3_Plugin::create_midi_ports()
     const int32 inbuses = m_component->getBusCount(Vst::kEvent, Vst::kInput);
     const int32 outbuses = m_component->getBusCount(Vst::kEvent, Vst::kOutput);
     
-    for (uint32_t i = 0; i < inbuses; ++i)
+    for (int32_t i = 0; i < inbuses; ++i)
     {
         add_port( Port( this, Port::INPUT, Port::MIDI, "midi_in" ) );
     }
     
-    for (uint32_t i = 0; i < outbuses; ++i)
+    for (int32_t i = 0; i < outbuses; ++i)
     {
         add_port( Port( this, Port::OUTPUT, Port::MIDI, "midi_out" ) );
     }
