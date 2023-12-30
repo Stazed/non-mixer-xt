@@ -156,8 +156,6 @@ private:
     float ** _audio_out_buffers;
 
     bool _activated;
-    bool m_bRealtime;
-    bool m_bConfigure;
     bool m_bEditor;
     
     uint32_t  _position;        ///< Transport position in frames

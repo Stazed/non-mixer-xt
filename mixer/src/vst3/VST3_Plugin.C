@@ -82,17 +82,11 @@ public:
 
         m_pPlugin->setParameter(id, value, 0);
 
-#if 1
         unsigned long index = m_pPlugin->findParamId(id);
 
         // false means don't update custom UI cause that is were it came from
         m_pPlugin->set_control_value( index, value, false );
-        
-#else
-        qtractorPlugin::Param *pParam = m_pPlugin->findParamId(int(id));
-        if (pParam)
-            pParam->updateValue(float(value), false);
-#endif
+
         return kResultOk;
     }
 
@@ -249,45 +243,29 @@ public:
 
         if (m_resizing)
             return kResultFalse;
-        
+
         m_resizing = true;
-#if 1
+
         int width = rect->right  - rect->left;
         int height = rect->bottom - rect->top;
         DMESSAGE("EditorFrame[%p]::resizeView(%p, %p) size=(%d, %d)",
                 this, plugView, rect, width, height);
-        
+
       //  if (m_plugView->canResize() == kResultOk)
         setSize(width, height, false, false);
 
-#else
-        const QSize size(rect->right  - rect->left, rect->bottom - rect->top);
-        DMESSAGE("EditorFrame[%p]::resizeView(%p, %p) size=(%d, %d)",
-                this, plugView, rect, size.width(), size.height());
-
-        if (m_plugView->canResize() == kResultOk)
-            m_widget->resize(size);
-        else
-            m_widget->setFixedSize(size);
-#endif
         m_resizing = false;
 
         ViewRect rect0;
         if (m_plugView->getSize(&rect0) != kResultOk)
             return kInternalError;
-#if 1
+
         int width0 = rect0.right  - rect0.left;
         int height0 = rect0.bottom - rect0.top;
-        
+
         if ( (width0 != width) && (height0 != height) )
             m_plugView->onSize(&rect0);
-#else
-        const QSize size0(
-                rect0.right  - rect0.left,
-                rect0.bottom - rect0.top);
-        if (size != size0)
-                m_plugView->onSize(&rect0);
-#endif
+
         return kResultOk;
     }
 
@@ -374,7 +352,6 @@ public:
         if (nbytes > 0)
         {
             std::memcpy(buffer, static_cast<const uint8_t*>(m_data) + m_pos, nbytes);
-         //   ::memcpy(buffer, m_data + m_pos, nbytes);
             m_pos += nbytes;
         }
 
@@ -394,13 +371,11 @@ public:
         {
             m_data = std::realloc(m_data, nsize);
             m_size = nsize;
-          //  m_data.resize(nsize);
         }
 
         if (m_pos >= 0 && nbytes > 0)
         {
             std::memcpy(static_cast<uint8_t*>(m_data) + m_pos, buffer, nbytes);
-           // ::memcpy(m_data.data() + m_pos, buffer, nbytes);
             m_pos += nbytes;
         }
         else nbytes = 0;
@@ -421,7 +396,6 @@ public:
         else
         if (mode == kIBSeekEnd)
             m_pos = m_size - pos;
-           // m_pos = m_data.size() - pos;
 
         if (m_pos < 0)
             m_pos = 0;
@@ -484,8 +458,6 @@ VST3_Plugin::VST3_Plugin() :
     _audio_in_buffers(nullptr),
     _audio_out_buffers(nullptr),
     _activated(false),
-    m_bRealtime(false),
-    m_bConfigure(false),
     m_bEditor(false),
     _position(0),
     _bpm(120.0f),
@@ -614,10 +586,6 @@ VST3_Plugin::load_plugin ( Module::Picked picked )
         m_bEditor = (editor != nullptr);
     }
 
-    // FIXME
-    m_bRealtime  = true;
-    m_bConfigure = true;
-
     create_audio_ports();
     create_midi_ports();
     create_control_ports();
@@ -728,15 +696,15 @@ VST3_Plugin::handle_chain_name_changed ( void )
 }
 
 void
-VST3_Plugin::handle_sample_rate_change ( nframes_t sample_rate )
+VST3_Plugin::handle_sample_rate_change ( nframes_t /*sample_rate*/ )
 {
-    
+    process_reset();
 }
 
 void
 VST3_Plugin::resize_buffers ( nframes_t buffer_size )
 {
-    
+    Module::resize_buffers( buffer_size );
 }
 
 void
@@ -886,7 +854,10 @@ VST3_Plugin::configure_midi_outputs ()
 nframes_t
 VST3_Plugin::get_module_latency ( void ) const
 {
-    return 0;   // FIXME
+    if (m_processor)
+        return m_processor->getLatencySamples();
+    else
+        return 0; 
 }
 
 void
@@ -922,12 +893,6 @@ VST3_Plugin::process ( nframes_t nframes )
             process_jack_midi_in( nframes, i );
         }
 
-        for ( unsigned int i = 0; i < midi_output.size(); ++i)
-        {
-            /* Plugin to JACK MIDI out */
-            process_jack_midi_out( nframes, i);
-        }
-
         m_params_out.clear();
         m_events_out.clear();
 
@@ -939,6 +904,12 @@ VST3_Plugin::process ( nframes_t nframes )
         if (m_processor->process(m_process_data) != kResultOk)
         {
             WARNING("[%p]::process() FAILED!", this);
+        }
+
+        for ( unsigned int i = 0; i < midi_output.size(); ++i)
+        {
+            /* Plugin to JACK MIDI out */
+            process_jack_midi_out( nframes, i);
         }
 
         m_events_in.clear();
@@ -1050,6 +1021,9 @@ VST3_Plugin::notify ( Vst::IMessage *message )
 bool
 VST3_Plugin::try_custom_ui()
 {
+    if (!m_bEditor)
+        return false;
+
     /* Toggle show and hide */
     if(_bEditorCreated)
     {
