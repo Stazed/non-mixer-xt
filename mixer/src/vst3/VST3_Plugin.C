@@ -39,7 +39,6 @@ const unsigned char  EVENT_NOTE_ON          = 0x90;
 const unsigned char  EVENT_CHANNEL_PRESSURE = 0xa0;
 
 const int DEFAULT_MSECS = 33;
-float f_miliseconds = DEFAULT_MSECS * .001;
 
 using namespace Steinberg;
 using namespace Linux;
@@ -495,6 +494,8 @@ VST3_Plugin::VST3_Plugin() :
     _x_is_resizable(false),
     _x_is_visible(false),
     _timer_registered(false),
+    _f_miliseconds(float(DEFAULT_MSECS) * .001),
+    _i_miliseconds(DEFAULT_MSECS),
     _event_handlers_registered(false),
     m_plugView(nullptr),
     m_pEditorFrame(nullptr)
@@ -1184,10 +1185,14 @@ VST3_Plugin::show_custom_ui()
 }
 
 void
-VST3_Plugin::add_ntk_timer()
+VST3_Plugin::add_ntk_timer(int i_msecs)
 {
-    DMESSAGE("ADD TIMER - %s", label());
-    Fl::add_timeout( f_miliseconds, &VST3_Plugin::custom_update_ui, this );
+    DMESSAGE("ADD TIMER i_msecs = %i: - %s", i_msecs, label());
+    
+    _i_miliseconds = i_msecs;
+    _f_miliseconds = float(_i_miliseconds) * .001;
+
+    Fl::add_timeout( _f_miliseconds, &VST3_Plugin::custom_update_ui, this );
 }
 
 void
@@ -1223,7 +1228,7 @@ VST3_Plugin::custom_update_ui_x()
 
     if(_x_is_visible)
     {
-        Fl::repeat_timeout( f_miliseconds, &VST3_Plugin::custom_update_ui, this );
+        Fl::repeat_timeout( _f_miliseconds, &VST3_Plugin::custom_update_ui, this );
     }
     else
     {

@@ -28,14 +28,11 @@
 #include "Timer.H"
 #include "VST3_Plugin.H"
 
-extern float f_miliseconds;
 
 void
 Timer::start (int msecs)
 {
-    f_miliseconds = float(msecs) *.001;
-
-    m_plugin->add_ntk_timer();
+    m_plugin->add_ntk_timer(msecs);
 }
 
 void
@@ -47,7 +44,7 @@ Timer::stop()
 int
 Timer::interval()
 {
-    return int(f_miliseconds * 1000);
+    return m_plugin->get_timer_msecs();
 }
 
 #endif  // VST3_SUPPORT

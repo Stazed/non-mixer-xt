@@ -94,13 +94,14 @@ public:
     bool show_custom_ui();
     bool hide_custom_ui();
 
-    void add_ntk_timer();
+    void add_ntk_timer(int i_msecs);
     void remove_ntk_timer();
     void custom_update_ui_x();
     static void custom_update_ui ( void * );
     
     void timer_registered(bool reg) {_timer_registered = reg;}
     void event_handlers_registered(bool reg) {_event_handlers_registered = reg; }
+    int get_timer_msecs() {return _i_miliseconds;}
 
     // Save/Restore state
     void save_VST3_plugin_state(const std::string &filename);
@@ -168,6 +169,8 @@ private:
     bool _x_is_resizable;
     bool _x_is_visible;
     bool _timer_registered;
+    float _f_miliseconds;
+    int _i_miliseconds;
     bool _event_handlers_registered;
     IPtr<IPlugView> m_plugView;
 
