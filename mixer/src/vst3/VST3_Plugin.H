@@ -33,23 +33,7 @@
 #include "../Plugin_Module.H"
 #include "../x11/X11PluginUI.H"
 #include "Vst3_Impl.H"
-
-#include "pluginterfaces/vst/ivsthostapplication.h"
-//#include "pluginterfaces/vst/ivstpluginterfacesupport.h"
-
-#include "pluginterfaces/vst/ivstaudioprocessor.h"
-#include "pluginterfaces/vst/ivsteditcontroller.h"
-
-//#include "pluginterfaces/vst/ivstprocesscontext.h"
-//#include "pluginterfaces/vst/ivstparameterchanges.h"
-//#include "pluginterfaces/vst/ivstmidicontrollers.h"
-//#include "pluginterfaces/vst/ivstevents.h"
-#include "pluginterfaces/vst/ivstunits.h"
-
-//#include "pluginterfaces/gui/iplugview.h"
-
-//#include "pluginterfaces/base/ibstream.h"
-//#include "pluginterfaces/base/ipluginbase.h"
+#include "VST3PluginHost.h"
 
 extern std::string project_directory;
 extern std::string export_import_strip;
@@ -110,6 +94,8 @@ public:
     bool show_custom_ui();
     bool hide_custom_ui();
 
+    void add_ntk_timer();
+    void remove_ntk_timer();
     void custom_update_ui_x();
     static void custom_update_ui ( void * );
     
@@ -121,6 +107,8 @@ public:
     void restore_VST3_plugin_state(const std::string &filename);
 
     uint64_t getState (void** const dataPtr);
+    
+    VST3PluginHost m_hostContext;
 
     VST3_Plugin();
     virtual ~VST3_Plugin();
