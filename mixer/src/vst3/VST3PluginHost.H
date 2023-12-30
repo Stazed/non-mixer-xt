@@ -16,7 +16,7 @@
 /*******************************************************************************/
 
 /* 
- * File:   VST3PluginHost.h
+ * File:   VST3PluginHost.H
  * Author: sspresto
  *
  * Created on December 29, 2023, 1:36 PM

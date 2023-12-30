@@ -33,7 +33,7 @@
 #include "../Plugin_Module.H"
 #include "../x11/X11PluginUI.H"
 #include "Vst3_Impl.H"
-#include "VST3PluginHost.h"
+#include "VST3PluginHost.H"
 
 extern std::string project_directory;
 extern std::string export_import_strip;

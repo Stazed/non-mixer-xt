@@ -47,7 +47,7 @@ set (ProgSources
     src/clap/Time.cpp
     src/vst3/Vst3_Discovery.C
     src/vst3/VST3_Plugin.C
-    src/vst3/VST3PluginHost.cpp
+    src/vst3/VST3PluginHost.C
     src/Meter_Indicator_Module.C
     src/Meter_Module.C
     src/Mixer.C

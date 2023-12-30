@@ -16,7 +16,7 @@
 /*******************************************************************************/
 
 /* 
- * File:   VST3PluginHost.cpp
+ * File:   VST3PluginHost.C
  * Author: sspresto
  * 
  * Created on December 29, 2023, 1:36 PM
@@ -24,7 +24,7 @@
 
 #ifdef VST3_SUPPORT
 
-#include "VST3PluginHost.h"
+#include "VST3PluginHost.H"
 #include "../../../nonlib/debug.h"
 #include "VST3_Plugin.H"
 #undef WARNING      // Fix redefinition with /nonlib/debug.h"
