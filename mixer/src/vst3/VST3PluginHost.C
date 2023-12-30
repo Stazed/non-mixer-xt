@@ -78,8 +78,7 @@ tresult PLUGIN_API VST3PluginHost::getName ( Vst::String128 name )
 {
     const std::string str("VST3PluginHost");
     const int nsize = str.length() < 127 ? str.length() : 127;
-//    const QString str("qtractorVst3PluginHost");
-//    const int nsize = qMin(str.length(), 127);
+
     ::memcpy(name, str.c_str(), nsize * sizeof(Vst::TChar));
     name[nsize] = 0;
     return kResultOk;
@@ -157,7 +156,7 @@ tresult VST3PluginHost::registerEventHandler (
     m_eventHandlers.insert(Attr);
 
     m_plugin->event_handlers_registered(true);
-    //m_eventHandlers.insert(handler, int(fd));
+
     return kResultOk;
 }
 
@@ -168,7 +167,6 @@ tresult VST3PluginHost::unregisterEventHandler ( IEventHandler *handler )
 
     m_eventHandlers.erase(handler);
 
-   // m_eventHandlers.remove(handler);
     return kResultOk;
 }
 
@@ -193,25 +191,10 @@ tresult VST3PluginHost::registerTimer (
     {
         timer_handler->reset(msecs);
     }
-    
+
     m_plugin->timer_registered(true);
 
     m_pTimer->start(int(msecs));
-
-//    g_VST3_Plugin->timer_registered(true);
-//    DMESSAGE("GGOT HERE REG - (%p)", g_VST3_Plugin);
-
-#if 0
-    TimerHandlerItem *timer_handler = m_timerHandlers.value(handler, nullptr);
-    if (timer_handler) {
-            timer_handler->reset(msecs);
-    } else {
-            timer_handler = new TimerHandlerItem(handler, msecs);
-            m_timerHandlers.insert(handler, timer_handler);
-    }
-
-    m_pTimer->start(int(msecs));
-#endif
 
     return kResultOk;
 }
@@ -231,18 +214,7 @@ tresult VST3PluginHost::unregisterTimer ( ITimerHandler *handler )
 
     if (m_timerHandlers.empty())
         m_pTimer->stop();
-    
-    
-#if 0
-    TimerHandlerItem *timer_handler = m_timerHandlers.value(handler, nullptr);
-    if (timer_handler) {
-            m_timerHandlers.remove(handler);
-            m_timerHandlerItems.append(timer_handler);
-    }
-    if (m_timerHandlers.isEmpty())
-            m_pTimer->stop();
 
-#endif
     return kResultOk;
 }
 
@@ -260,15 +232,6 @@ void VST3PluginHost::processTimers (void)
             timer_handler->counter = 0;
         }
     }
-#if 0
-    foreach (TimerHandlerItem *timer_handler, m_timerHandlers) {
-            timer_handler->counter += timerInterval();
-            if (timer_handler->counter >= timer_handler->interval) {
-                    timer_handler->handler->onTimer();
-                    timer_handler->counter = 0;
-            }
-    }
-#endif
 }
 #endif
 
@@ -456,7 +419,6 @@ void VST3PluginHost::clear (void)
         delete i;
     }
 
-//    qDeleteAll(m_timerHandlerItems);
     m_timerHandlerItems.clear();
     m_timerHandlers.clear();
 

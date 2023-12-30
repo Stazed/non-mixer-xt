@@ -158,13 +158,10 @@ private:
     };
 
     std::unordered_map<ITimerHandler *, TimerHandlerItem *> m_timerHandlers;
-    //QHash<ITimerHandler *, TimerHandlerItem *> m_timerHandlers;
 
     std::list<TimerHandlerItem *> m_timerHandlerItems;
-    //QList<TimerHandlerItem *> m_timerHandlerItems;
 
     std::unordered_map<IEventHandler *, int> m_eventHandlers;
-    //QMultiHash<IEventHandler *, int> m_eventHandlers;
 
 #ifdef CONFIG_VST3_XCB
     xcb_connection_t *m_pXcbConnection;
@@ -330,7 +327,6 @@ public:
         {
             delete i.second;
         }
-    //	qDeleteAll(m_list);
         m_list.clear();
 
         FUNKNOWN_DTOR
@@ -346,7 +342,7 @@ public:
 
         std::pair<std::string, Attribute *> Attr ( aid, new Attribute(value) );
         m_list.insert(Attr);
-        //	m_list.insert(aid, new Attribute(value));
+
         return kResultTrue;
     }
 
@@ -361,7 +357,7 @@ public:
         }
 
         Attribute *attr = got->second;
-    //	Attribute *attr = m_list.value(aid, nullptr);
+
         if (attr)
         {
             value = attr->intValue();
@@ -378,7 +374,6 @@ public:
         std::pair<std::string, Attribute *> Attr ( aid, new Attribute(value) );
         m_list.insert(Attr);
 
-      //  m_list.insert(aid, new Attribute(value));
         return kResultTrue;
     }
 
@@ -394,7 +389,6 @@ public:
 
         Attribute *attr = got->second;
 
-     //   Attribute *attr = m_list.value(aid, nullptr);
         if (attr)
         {
             value = attr->floatValue();
@@ -412,12 +406,6 @@ public:
             m_list.insert(prm);
 
         return kResultTrue;
-#if 0
-        removeAttrID(aid);
-        m_list.insert(aid, new Attribute(string, fromTChar(string).length()));
-        return kResultTrue;
-#endif
-
     }
 
     tresult PLUGIN_API getString (AttrID aid, Vst::TChar *string, uint32 size) override
@@ -457,7 +445,6 @@ public:
         std::pair<std::string, Attribute *> Attr ( aid, new Attribute(data, size) );
         m_list.insert(Attr);
 
-      //  m_list.insert(aid, new Attribute(data, size));
         return kResultTrue;
     }
 
@@ -472,7 +459,7 @@ public:
         }
 
         Attribute *attr = got->second;
-       // Attribute *attr = m_list.value(aid, nullptr);
+
         if (attr)
         {
             data = attr->binaryValue(size);
@@ -495,12 +482,11 @@ protected:
         }
 
         Attribute *attr = got->second;
-      //  Attribute *attr = m_list.value(aid, nullptr);
+
         if (attr)
         {
             delete attr;
             m_list.erase(aid);
-          //  m_list.remove(aid);
         }
     }
 
@@ -508,7 +494,6 @@ private:
 
     // Instance members.
     std::unordered_map<std::string, Attribute *> m_list;
-    //QHash<QString, Attribute *> m_list;
 };
 
 //IMPLEMENT_FUNKNOWN_METHODS (VST3PluginHost::AttributeList, IAttributeList, IAttributeList::iid)
