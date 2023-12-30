@@ -722,7 +722,7 @@ void qtractor_vst3_scan::clear (void)
 // qtractor_vst3_scan_file - The main scan procedure.
 //
 
-void qtractor_vst3_scan_file ( const std::string& sFilename, std::list<Plugin_Module::Plugin_Info> & pr )
+void qtractor_vst3_scan_file ( const std::string& sFilename, std::list<Plugin_Module::Plugin_Info> & vst3pr )
 {
     qtractor_vst3_scan plugin;
 
@@ -757,7 +757,7 @@ void qtractor_vst3_scan_file ( const std::string& sFilename, std::list<Plugin_Mo
         pi.s_unique_id = sVst3Object;
         pi.id = plugin.uniqueID();          // FIXME garbage
 
-        pr.push_back(pi);
+        vst3pr.push_back(pi);
 
         DMESSAGE("name = %s: category = %s: path = %s: ID = %ul",
                 pi.name.c_str(), pi.category.c_str(), pi.s_unique_id.c_str(), pi.id);

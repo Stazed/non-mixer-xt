@@ -138,7 +138,7 @@ private:
 #endif
 };
 
-void qtractor_vst3_scan_file ( const std::string& sFilename, std::list<Plugin_Module::Plugin_Info> & pr );
+void qtractor_vst3_scan_file ( const std::string& sFilename, std::list<Plugin_Module::Plugin_Info> & vst3pr );
 
 #else
 

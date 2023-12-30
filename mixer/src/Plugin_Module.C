@@ -586,7 +586,7 @@ Plugin_Module::scan_VST3_plugins( std::list<Plugin_Info> & pr )
     for (const auto &q : sp)
     {
 #ifdef CONFIG_VST3
-        vst3_discovery::qtractor_vst3_scan_file( q.u8string().c_str(), pr);
+        vst3_discovery::qtractor_vst3_scan_file( q.u8string().c_str(), vst3_PI_cache);
 #else
         lib_t handle = nullptr;
         
@@ -595,9 +595,9 @@ Plugin_Module::scan_VST3_plugins( std::list<Plugin_Info> & pr )
 #endif
     }
 
-    if ( vst3_PI_cache.empty() )
+    if ( !vst3_PI_cache.empty() )
     {
-        vst3_PI_cache.insert(std::end(vst3_PI_cache), std::begin(pr), std::end(pr));
+        pr.insert(std::end(pr), std::begin(vst3_PI_cache), std::end(vst3_PI_cache));
         return;
     }
 }
