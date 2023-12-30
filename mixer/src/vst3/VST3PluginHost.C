@@ -47,7 +47,7 @@ VST3PluginHost::VST3PluginHost (VST3_Plugin * plug)
     m_plugin = plug;
     m_plugInterfaceSupport = owned(NEW PlugInterfaceSupport());
 
-    m_pTimer = new Timer(this);
+    m_pTimer = new Timer(m_plugin);
 
     m_timerRefCount = 0;
 
@@ -176,7 +176,7 @@ tresult VST3PluginHost::unregisterEventHandler ( IEventHandler *handler )
 tresult VST3PluginHost::registerTimer (
 	ITimerHandler *handler, TimerInterval msecs )
 {
-    DMESSAGE("registerTimer(%p, %u)", handler, uint(msecs));
+    DMESSAGE("Timer registered(%p, %u)", handler, uint(msecs));
 
     std::unordered_map<ITimerHandler *, TimerHandlerItem *>::const_iterator got
             = m_timerHandlers.find(handler);
@@ -195,8 +195,8 @@ tresult VST3PluginHost::registerTimer (
     }
     
     m_plugin->timer_registered(true);
-    
-    DMESSAGE("GGOT HERE REG - (%p)", m_plugin);
+
+    m_pTimer->start(int(msecs));
 
 //    g_VST3_Plugin->timer_registered(true);
 //    DMESSAGE("GGOT HERE REG - (%p)", g_VST3_Plugin);

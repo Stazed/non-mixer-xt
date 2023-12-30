@@ -48,6 +48,8 @@
 #include "pluginterfaces/base/ipluginbase.h"
 #include "pluginterfaces/vst/ivsthostapplication.h"
 
+#include "Timer.H"
+
 //#define ASRT_TMP ASSERT
 #undef ASSERT       // Fix redefinition with /nonlib/debug.h"
 #undef WARNING      // Fix redefinition with /nonlib/debug.h"
@@ -65,6 +67,7 @@ using namespace Steinberg;
 using namespace Linux;
 
 class VST3_Plugin;
+class Timer;
 
 class VST3PluginHost : public Vst::IHostApplication
 {
@@ -129,8 +132,6 @@ protected:
     class Attribute;
     class AttributeList;
     class Message;
-
-    class Timer;
 
 private:
 
@@ -575,67 +576,5 @@ protected:
 };
 
 //IMPLEMENT_FUNKNOWN_METHODS (VST3PluginHost::Message, IMessage, IMessage::iid)
-
-
-//-----------------------------------------------------------------------------
-// class VST3PluginHost::Timer -- VST3 plugin host timer impl.
-//
-
-class VST3PluginHost::Timer
-{
-public:
-
-    // Constructor.
-    Timer (VST3PluginHost *pHost) : m_pHost(pHost) {}
-
-    // Main method.
-    void start (int msecs)
-    {
-//        f_miliseconds = float(msecs) *.001;
-
-    //    DMESSAGE("Miliseconds = %f", f_miliseconds);
-
-    //    Fl::add_timeout( f_miliseconds, &VST3_Plugin::custom_update_ui, g_VST3_Plugin );
-
-#if 0
-        int iInterval = QTimer::interval();
-        if (iInterval == 0)
-                iInterval = DEFAULT_MSECS;
-        if (iInterval > msecs)
-                iInterval = msecs;
-
-        QTimer::start(iInterval);
-#endif
-    }
-
-    void stop()
-    {
-       // Fl::remove_timeout(&VST3_Plugin::custom_update_ui, g_VST3_Plugin);
-    }
-
-    int interval()
-    {
-       // DMESSAGE("Interval = %d", int(f_miliseconds * 1000) );
-//        return int(f_miliseconds * 1000);
-        return 33;
-    }
-
-protected:
-
-#if 0
-    void timerEvent (QTimerEvent *pTimerEvent)
-    {
-        if (pTimerEvent->timerId() == QTimer::timerId()) {
-                m_pHost->processTimers();
-                m_pHost->processEventHandlers();
-        }
-    }
-#endif
-
-private:
-
-    // Instance members.
-    VST3PluginHost *m_pHost;
-};
 
 #endif  // VST3_SUPPORT

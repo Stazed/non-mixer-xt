@@ -1161,8 +1161,8 @@ VST3_Plugin::closeEditor (void)
 
     m_plugView = nullptr;
 
-    Fl::remove_timeout(&VST3_Plugin::custom_update_ui, this);
-//    m_hostContext.stopTimer();
+    if (!_timer_registered)
+        m_hostContext.stopTimer();
 
 #ifdef CONFIG_VST3_XCB
     m_hostContext.closeXcbConnection();
@@ -1177,8 +1177,8 @@ VST3_Plugin::show_custom_ui()
 
     _x_is_visible = true;
 
-    Fl::add_timeout( f_miliseconds, &VST3_Plugin::custom_update_ui, this );
-//    m_hostContext.startTimer(DEFAULT_MSECS);
+    if (!_timer_registered)
+        m_hostContext.startTimer(DEFAULT_MSECS);
 
     return true;
 }
@@ -1186,12 +1186,14 @@ VST3_Plugin::show_custom_ui()
 void
 VST3_Plugin::add_ntk_timer()
 {
+    DMESSAGE("ADD TIMER - %s", label());
     Fl::add_timeout( f_miliseconds, &VST3_Plugin::custom_update_ui, this );
 }
 
 void
 VST3_Plugin::remove_ntk_timer()
 {
+    DMESSAGE("REMOVE TIMER %s", label());
     Fl::remove_timeout(&VST3_Plugin::custom_update_ui, this);
 }
 

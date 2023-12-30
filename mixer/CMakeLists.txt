@@ -48,6 +48,7 @@ set (ProgSources
     src/vst3/Vst3_Discovery.C
     src/vst3/VST3_Plugin.C
     src/vst3/VST3PluginHost.C
+    src/vst3/Timer.C
     src/Meter_Indicator_Module.C
     src/Meter_Module.C
     src/Mixer.C
