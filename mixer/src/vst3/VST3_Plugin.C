@@ -487,10 +487,10 @@ VST3_Plugin::~VST3_Plugin()
 {
     log_destroy();
 
-    deactivate();
-    
     if(_x_is_visible)
-        _x_is_visible = false;
+        hide_custom_ui();
+
+    deactivate();
 
     m_processor = nullptr;
     m_handler = nullptr;
