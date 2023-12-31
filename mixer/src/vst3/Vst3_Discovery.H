@@ -27,13 +27,10 @@
 
 #ifdef VST3_SUPPORT
 
-#define CONFIG_VST3
-
 #include <filesystem>
 #include <vector>
 
 #include "../Plugin_Module.H"
-#include "utils/CarlaVst3Utils.hpp"
 
 namespace vst3_discovery
 {
@@ -49,7 +46,6 @@ std::vector<std::filesystem::path> installedVST3s();
  */
 std::vector<std::filesystem::path> validVST3SearchPaths();
 
-#ifdef CONFIG_VST3
 
 //----------------------------------------------------------------------
 // class qtractor_vst3_scan -- VST3 plugin (bare bones) interface.
@@ -139,14 +135,6 @@ private:
 };
 
 void qtractor_vst3_scan_file ( const std::string& sFilename, std::list<Plugin_Module::Plugin_Info> & vst3pr );
-
-#else
-
-bool lib_close(const lib_t lib);
-
-bool do_vst3_check(lib_t& libHandle, const char* const filename, const bool doInit, std::list<Plugin_Module::Plugin_Info> & pr);
-
-#endif	// CONFIG_VST3
 
 }   // namespace vst3_discovery
 

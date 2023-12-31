@@ -585,14 +585,7 @@ Plugin_Module::scan_VST3_plugins( std::list<Plugin_Info> & pr )
 
     for (const auto &q : sp)
     {
-#ifdef CONFIG_VST3
         vst3_discovery::qtractor_vst3_scan_file( q.u8string().c_str(), vst3_PI_cache);
-#else
-        lib_t handle = nullptr;
-        
-      //  DMESSAGE("VST3 PLUG PATHS %s", q.u8string().c_str());
-        vst3_discovery::do_vst3_check(handle, q.u8string().c_str(), true, pr);
-#endif
     }
 
     if ( !vst3_PI_cache.empty() )
