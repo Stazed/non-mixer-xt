@@ -594,7 +594,7 @@ Module_Parameter_Editor::update_control_visibility ( void )
     int width = control_pack->w() + 100; // LADSPA
 
 #if defined(LV2_SUPPORT) || defined(CLAP_SUPPORT) || defined(VST3_SUPPORT)
-    if ( (_module->_plug_type == LV2) || (_module->_plug_type == CLAP))
+    if ( (_module->_plug_type == LV2) || (_module->_plug_type == CLAP) || (_module->_plug_type == VST3))
     {
         /* When the scroller is not used, we need to expand width to account for 
            the preset, state save and restore button */
