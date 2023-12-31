@@ -447,12 +447,18 @@ VST3_Plugin::VST3_Plugin() :
     m_unitInfos(nullptr),
     m_processor(nullptr),
     m_processing(false),
+    m_buffers_in(nullptr),
+    m_buffers_out(nullptr),
     _plugin_filename(),
     m_sName(),
     _last_chunk(nullptr),
     _project_file(),
     m_iAudioIns(0),
     m_iAudioOuts(0),
+    m_audioInChannels(0),
+    m_audioOutChannels(0),
+    m_audioInBuses(0),
+    m_audioOutBuses(0),
     m_iMidiIns(0),
     m_iMidiOuts(0),
     _audio_in_buffers(nullptr),
@@ -499,6 +505,24 @@ VST3_Plugin::~VST3_Plugin()
     {
         delete []_audio_out_buffers;
         _audio_out_buffers = nullptr;
+    }
+    
+    if(m_buffers_in != nullptr)
+    {
+        for(int i = 0; i < m_audioInBuses; i++)
+        {
+            delete[] m_buffers_in[i].channelBuffers32;
+        }
+        delete[] m_buffers_in;
+    }
+    
+    if(m_buffers_out != nullptr)
+    {
+        for(int i = 0; i < m_audioOutBuses; i++)
+        {
+            delete[] m_buffers_out[i].channelBuffers32;
+        }
+        delete[] m_buffers_out;
     }
 
     for ( unsigned int i = 0; i < midi_input.size(); ++i )
@@ -896,8 +920,27 @@ VST3_Plugin::process ( nframes_t nframes )
         m_params_out.clear();
         m_events_out.clear();
 
-        m_buffers_in.channelBuffers32 = _audio_in_buffers;
-        m_buffers_out.channelBuffers32 = _audio_out_buffers;
+        int j = 0;
+        for (int i = 0; i < m_audioInBuses; i++)
+        {
+            for (int k = 0; k < m_audioInChannels; k++)
+            {
+               // DMESSAGE("III = %d: KKK = %d: JJJ = %d", i, k, j);
+                m_buffers_in[i].channelBuffers32[k] = _audio_in_buffers[j] ;
+                j++;
+            }
+        }
+
+        j = 0;
+        for (int i = 0; i < m_audioOutBuses; i++)
+        {
+            for (int k = 0; k < m_audioOutChannels; k++)
+            {
+               // DMESSAGE("III = %d: KKK = %d: JJJ = %d", i, k, j);
+                m_buffers_out[i].channelBuffers32[k] = _audio_out_buffers[j] ;
+                j++;
+            }
+        }
 
         m_process_data.numSamples = nframes;
 
@@ -1021,8 +1064,8 @@ VST3_Plugin::notify ( Vst::IMessage *message )
 bool
 VST3_Plugin::try_custom_ui()
 {
-    if (!m_bEditor)
-        return false;
+  //  if (!m_bEditor)
+  //      return false;
 
     /* Toggle show and hide */
     if(_bEditorCreated)
@@ -1033,7 +1076,7 @@ VST3_Plugin::try_custom_ui()
             return true;
         }
     }
-    
+
     if( !init_custom_ui(true) )
         return false;
 
@@ -1569,34 +1612,70 @@ VST3_Plugin::process_reset()
     if (m_processor->setupProcessing(setup) != kResultOk)
         return false;
 
-    // Setup processor audio I/O buffers...
-    m_buffers_in.silenceFlags      = 0;
-    m_buffers_in.numChannels       = m_iAudioIns;
-    m_buffers_in.channelBuffers32  = nullptr;
+    if(m_buffers_in != nullptr)
+    {
+        for(int i = 0; i < m_audioInBuses; i++)
+        {
+            delete[] m_buffers_in[i].channelBuffers32;
+        }
+        delete[] m_buffers_in;
+    }
+    
+    if(m_buffers_out != nullptr)
+    {
+        for(int i = 0; i < m_audioOutBuses; i++)
+        {
+            delete[] m_buffers_out[i].channelBuffers32;
+        }
+        delete[] m_buffers_out;
+    }
 
-    m_buffers_out.silenceFlags     = 0;
-    m_buffers_out.numChannels      = m_iAudioOuts;
-    m_buffers_out.channelBuffers32 = nullptr;
+    // Setup processor audio I/O buffers...
+    if (m_audioInBuses)
+    {
+        m_buffers_in = new Vst::AudioBusBuffers[m_audioInBuses];
+        for(int i = 0; i < m_audioInBuses; i++)
+        {
+            m_buffers_in[i].silenceFlags      = 0;
+            m_buffers_in[i].numChannels       = m_audioInChannels;
+            m_buffers_in[i].channelBuffers32  = new float *[m_audioInChannels];    // FIXME    - variable
+        }
+    }
+
+    if (m_audioOutBuses)
+    {
+        m_buffers_out = new Vst::AudioBusBuffers[m_audioOutBuses];
+        for(int i = 0; i < m_audioOutBuses; i++)
+        {
+            m_buffers_out[i].silenceFlags     = 0;
+            m_buffers_out[i].numChannels      = m_audioOutChannels;
+            m_buffers_out[i].channelBuffers32 = new float *[m_audioOutChannels];    // FIXME - variable
+        }
+    }
 
     // Setup processor data struct...
     m_process_data.numSamples             = buffer_size();
     //m_process_data.numSamples             = pAudioEngine->blockSize();
     m_process_data.symbolicSampleSize     = Vst::kSample32;
 
-    if (m_iAudioIns > 0) {
-            m_process_data.numInputs          = 1;
-            m_process_data.inputs             = &m_buffers_in;
-    } else {
-            m_process_data.numInputs          = 0;
-            m_process_data.inputs             = nullptr;
+    if (m_iAudioIns > 0) 
+    {
+        m_process_data.numInputs          = m_audioInBuses;
+        m_process_data.inputs             = m_buffers_in;
+    } else 
+    {
+        m_process_data.numInputs          = 0;
+        m_process_data.inputs             = nullptr;
     }
 
-    if (m_iAudioOuts > 0) {
-            m_process_data.numOutputs         = 1;
-            m_process_data.outputs            = &m_buffers_out;
-    } else {
-            m_process_data.numOutputs         = 0;
-            m_process_data.outputs            = nullptr;
+    if (m_iAudioOuts > 0)
+    {
+        m_process_data.numOutputs         = m_audioOutBuses;
+        m_process_data.outputs            = m_buffers_out;
+    } else
+    {
+        m_process_data.numOutputs         = 0;
+        m_process_data.outputs            = nullptr;
     }
 
     m_process_data.processContext         = m_hostContext.processContext();
@@ -1978,7 +2057,7 @@ VST3_Plugin::numChannels (
 	Vst::MediaType type, Vst::BusDirection direction ) const
 {
     if (!m_component)
-            return -1;
+        return -1;
 
     int nchannels = 0;
 
@@ -2004,7 +2083,41 @@ VST3_Plugin::create_audio_ports()
 {
     _plugin_ins = 0;
     _plugin_outs = 0;
-    
+    m_audioInChannels = 0;
+    m_audioOutChannels = 0;
+    m_audioInBuses = 0;
+    m_audioOutBuses = 0;
+
+    m_audioInBuses = m_component->getBusCount(Vst::kAudio, Vst::kInput);
+    for (int32 i = 0; i < m_audioInBuses; ++i)
+    {
+        Vst::BusInfo busInfo;
+        if (m_component->getBusInfo(Vst::kAudio, Vst::kInput, i, busInfo) == kResultOk)
+        {
+            if ((busInfo.busType == Vst::kMain) ||
+                    (busInfo.flags & Vst::BusInfo::kDefaultActive))
+            {
+                m_audioInChannels = busInfo.channelCount;
+                break;  // assuming all the same??
+            }
+        }
+    }
+
+    m_audioOutBuses = m_component->getBusCount(Vst::kAudio, Vst::kOutput);
+    for (int32 i = 0; i < m_audioOutBuses; ++i)
+    {
+        Vst::BusInfo busInfo;
+        if (m_component->getBusInfo(Vst::kAudio, Vst::kOutput, i, busInfo) == kResultOk)
+        {
+            if ((busInfo.busType == Vst::kMain) ||
+                    (busInfo.flags & Vst::BusInfo::kDefaultActive))
+            {
+                m_audioOutChannels = busInfo.channelCount;
+                break;  // assuming all the same??
+            }
+        }
+    }
+
     for (uint32_t i = 0; i < m_iAudioIns; ++i)
     {
         add_port( Port( this, Port::INPUT, Port::AUDIO, "input" ) );
@@ -2022,7 +2135,19 @@ VST3_Plugin::create_audio_ports()
     _audio_in_buffers = new float * [_plugin_ins];
     _audio_out_buffers = new float * [_plugin_outs];
 
+    for (int32_t i=0; i < _plugin_ins; ++i)
+        _audio_in_buffers[i] = nullptr;
+
+    for (int32_t i=0; i < _plugin_outs; ++i)
+        _audio_out_buffers[i] = nullptr;
+
     MESSAGE( "Plugin has %i inputs and %i outputs", _plugin_ins, _plugin_outs);
+    
+    if((m_audioOutBuses * m_audioOutChannels) != _plugin_outs)
+    {
+        DMESSAGE("Mis-matched PORTS = %d", _plugin_outs);
+        DMESSAGE("Out Channels = %d: Out Buses = %d", m_audioOutChannels, m_audioOutBuses);
+    }
 }
 
 void

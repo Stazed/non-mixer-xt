@@ -136,9 +136,9 @@ private:
     VST3IMPL::EventList m_events_out;
 
     // Processor buffers.
-    Vst::AudioBusBuffers m_buffers_in;
-    Vst::AudioBusBuffers m_buffers_out;
-
+    Vst::AudioBusBuffers *m_buffers_in;
+    Vst::AudioBusBuffers *m_buffers_out;
+    
     // Processor data.
     Vst::ProcessData m_process_data;
 
@@ -149,6 +149,10 @@ private:
 
     unsigned short m_iAudioIns;
     unsigned short m_iAudioOuts;
+    int32_t m_audioInChannels;  // FIXME vector
+    int32_t m_audioOutChannels; // FIXME vector
+    int32_t m_audioInBuses;
+    int32_t m_audioOutBuses;
     unsigned short m_iMidiIns;
     unsigned short m_iMidiOuts;
     
