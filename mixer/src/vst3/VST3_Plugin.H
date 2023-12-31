@@ -149,8 +149,8 @@ private:
 
     unsigned short m_iAudioIns;
     unsigned short m_iAudioOuts;
-    int32_t m_audioInChannels;  // FIXME vector
-    int32_t m_audioOutChannels; // FIXME vector
+    std::vector<int32_t> m_audioInChannels;
+    std::vector<int32_t> m_audioOutChannels;
     int32_t m_audioInBuses;
     int32_t m_audioOutBuses;
     unsigned short m_iMidiIns;
