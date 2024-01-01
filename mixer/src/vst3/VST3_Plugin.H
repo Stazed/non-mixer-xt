@@ -147,8 +147,6 @@ private:
     void* _last_chunk;
     std::string _project_file;
 
-    unsigned short m_iAudioIns;
-    unsigned short m_iAudioOuts;
     std::vector<int32_t> m_audioInChannels;
     std::vector<int32_t> m_audioOutChannels;
     int32_t m_audioInBuses;

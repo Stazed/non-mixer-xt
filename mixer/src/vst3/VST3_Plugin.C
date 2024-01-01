@@ -453,8 +453,6 @@ VST3_Plugin::VST3_Plugin() :
     m_sName(),
     _last_chunk(nullptr),
     _project_file(),
-    m_iAudioIns(0),
-    m_iAudioOuts(0),
     m_audioInBuses(0),
     m_audioOutBuses(0),
     m_iMidiIns(0),
@@ -569,8 +567,9 @@ VST3_Plugin::~VST3_Plugin()
         }
     }
 
- //   if(m_hostContext)
- //       free(m_hostContext);
+    // Causes mumap_chunk(): invalid pointer
+    //if(m_hostContext)
+    //    delete m_hostContext;
 }
 
 bool
@@ -600,8 +599,8 @@ VST3_Plugin::load_plugin ( Module::Picked picked )
 //    m_sLabel = m_sName.simplified().replace(QRegularExpression("[\\s|\\.|\\-]+"), "_");
 //    m_iUniqueID = m_pImpl->uniqueID();
 
-    m_iAudioIns  = numChannels(Vst::kAudio, Vst::kInput);
-    m_iAudioOuts = numChannels(Vst::kAudio, Vst::kOutput);
+    _plugin_ins  = numChannels(Vst::kAudio, Vst::kInput);
+    _plugin_outs = numChannels(Vst::kAudio, Vst::kOutput);
     m_iMidiIns   = numChannels(Vst::kEvent, Vst::kInput);
     m_iMidiOuts  = numChannels(Vst::kEvent, Vst::kOutput);
 
@@ -1661,7 +1660,7 @@ VST3_Plugin::process_reset()
     //m_process_data.numSamples             = pAudioEngine->blockSize();
     m_process_data.symbolicSampleSize     = Vst::kSample32;
 
-    if (m_iAudioIns > 0) 
+    if (_plugin_ins > 0) 
     {
         m_process_data.numInputs          = m_audioInBuses;
         m_process_data.inputs             = m_buffers_in;
@@ -1671,7 +1670,7 @@ VST3_Plugin::process_reset()
         m_process_data.inputs             = nullptr;
     }
 
-    if (m_iAudioOuts > 0)
+    if (_plugin_outs > 0)
     {
         m_process_data.numOutputs         = m_audioOutBuses;
         m_process_data.outputs            = m_buffers_out;
@@ -2084,8 +2083,6 @@ VST3_Plugin::numChannels (
 void
 VST3_Plugin::create_audio_ports()
 {
-    _plugin_ins = 0;
-    _plugin_outs = 0;
     m_audioInBuses = 0;
     m_audioOutBuses = 0;
 
@@ -2117,18 +2114,16 @@ VST3_Plugin::create_audio_ports()
         }
     }
 
-    for (uint32_t i = 0; i < m_iAudioIns; ++i)
+    for (uint32_t i = 0; i < _plugin_ins; ++i)
     {
         add_port( Port( this, Port::INPUT, Port::AUDIO, "input" ) );
-        audio_input[_plugin_ins].hints.plug_port_index = i;
-        _plugin_ins++;
+        audio_input[i].hints.plug_port_index = i;
     }
 
-    for (uint32_t i = 0; i < m_iAudioOuts; ++i)
+    for (uint32_t i = 0; i < _plugin_outs; ++i)
     {
         add_port( Port( this, Port::OUTPUT, Port::AUDIO, "output" ) );
-        audio_output[_plugin_outs].hints.plug_port_index = i;
-        _plugin_outs++;
+        audio_output[i].hints.plug_port_index = i;
     }
 
     _audio_in_buffers = new float * [_plugin_ins]();
