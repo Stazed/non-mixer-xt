@@ -2114,13 +2114,13 @@ VST3_Plugin::create_audio_ports()
         }
     }
 
-    for (uint32_t i = 0; i < _plugin_ins; ++i)
+    for (int32_t i = 0; i < _plugin_ins; ++i)
     {
         add_port( Port( this, Port::INPUT, Port::AUDIO, "input" ) );
         audio_input[i].hints.plug_port_index = i;
     }
 
-    for (uint32_t i = 0; i < _plugin_outs; ++i)
+    for (int32_t i = 0; i < _plugin_outs; ++i)
     {
         add_port( Port( this, Port::OUTPUT, Port::AUDIO, "output" ) );
         audio_output[i].hints.plug_port_index = i;
