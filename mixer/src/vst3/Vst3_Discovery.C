@@ -247,7 +247,7 @@ public:
         const std::string str("non-mixer-xt");
         //const int nsize = qMin(str.length(), 127);
         const int nsize = str.length() < 127 ? str.length() : 127;
-        ::memcpy(name, str.c_str(), nsize * sizeof(Vst::TChar));
+        ::memcpy(name, str.c_str(), nsize -1);
         name[nsize] = 0;
         return kResultOk;
     }

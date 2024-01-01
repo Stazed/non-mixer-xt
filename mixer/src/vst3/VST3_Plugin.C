@@ -162,16 +162,16 @@ public:
     //--- IRunLoop ---
     //
     tresult PLUGIN_API registerEventHandler (IEventHandler *handler, FileDescriptor fd) override
-        { return m_plugin->m_hostContext.registerEventHandler(handler, fd); }
+        { return m_plugin->m_hostContext->registerEventHandler(handler, fd); }
 
     tresult PLUGIN_API unregisterEventHandler (IEventHandler *handler) override
-        { return m_plugin->m_hostContext.unregisterEventHandler(handler); }
+        { return m_plugin->m_hostContext->unregisterEventHandler(handler); }
 
     tresult PLUGIN_API registerTimer (ITimerHandler *handler, TimerInterval msecs) override
-        { return m_plugin->m_hostContext.registerTimer(handler, msecs); }
+        { return m_plugin->m_hostContext->registerTimer(handler, msecs); }
 
     tresult PLUGIN_API unregisterTimer (ITimerHandler *handler) override
-        { return m_plugin->m_hostContext.unregisterTimer(handler); }
+        { return m_plugin->m_hostContext->unregisterTimer(handler); }
 
     tresult PLUGIN_API queryInterface (const TUID _iid, void **obj) override
     {
@@ -439,7 +439,7 @@ IMPLEMENT_FUNKNOWN_METHODS (VST3_Plugin::Stream, IBStream, IBStream::iid)
 
 VST3_Plugin::VST3_Plugin() :
     Plugin_Module(),
-    m_hostContext(this),
+    m_hostContext(nullptr),
     m_module(nullptr),
     m_handler(nullptr),
     m_component(nullptr),
@@ -477,6 +477,8 @@ VST3_Plugin::VST3_Plugin() :
     m_pEditorFrame(nullptr)
 {
     _plug_type = VST3;
+    
+    m_hostContext = new VST3PluginHost(this);
 
     log_create();
 }
@@ -504,7 +506,7 @@ VST3_Plugin::~VST3_Plugin()
         delete []_audio_out_buffers;
         _audio_out_buffers = nullptr;
     }
-    
+
     if(m_buffers_in != nullptr)
     {
         for(int i = 0; i < m_audioInBuses; i++)
@@ -513,7 +515,7 @@ VST3_Plugin::~VST3_Plugin()
         }
         delete[] m_buffers_in;
     }
-    
+
     if(m_buffers_out != nullptr)
     {
         for(int i = 0; i < m_audioOutBuses; i++)
@@ -550,7 +552,7 @@ VST3_Plugin::~VST3_Plugin()
 
     midi_output.clear();
     midi_input.clear();
-    
+
     if ( _last_chunk )
         std::free(_last_chunk);
 
@@ -566,6 +568,9 @@ VST3_Plugin::~VST3_Plugin()
             remove_custom_data_directories.push_back(_project_file);
         }
     }
+
+ //   if(m_hostContext)
+ //       free(m_hostContext);
 }
 
 bool
@@ -1178,7 +1183,7 @@ VST3_Plugin::closeEditor (void)
     m_plugView = nullptr;
 
     if (!_timer_registered)
-        m_hostContext.stopTimer();
+        m_hostContext->stopTimer();
 
 #ifdef CONFIG_VST3_XCB
     m_hostContext.closeXcbConnection();
@@ -1194,7 +1199,7 @@ VST3_Plugin::show_custom_ui()
     _x_is_visible = true;
 
     if (!_timer_registered)
-        m_hostContext.startTimer(DEFAULT_MSECS);
+        m_hostContext->startTimer(DEFAULT_MSECS);
 
     return true;
 }
@@ -1235,11 +1240,11 @@ VST3_Plugin::custom_update_ui_x()
     m_pEditorFrame->idle();
 
     if (_timer_registered)
-        m_hostContext.processTimers();
+        m_hostContext->processTimers();
 
     // FIXME
 //    if (_event_handlers_registered)
-//        m_hostContext.processEventHandlers();
+//        m_hostContext->processEventHandlers();
 
     if(_x_is_visible)
     {
@@ -1362,7 +1367,7 @@ VST3_Plugin::open_descriptor(unsigned long iIndex)
 
     if (factory3)
     {
-        factory3->setHostContext(m_hostContext.get());
+        factory3->setHostContext(m_hostContext->get());
     }
 
     const int32 nclasses = factory->countClasses();
@@ -1438,7 +1443,7 @@ VST3_Plugin::open_descriptor(unsigned long iIndex)
 
             m_component = owned(component);
 
-            if (m_component->initialize(m_hostContext.get()) != kResultOk)
+            if (m_component->initialize(m_hostContext->get()) != kResultOk)
             {
                 DMESSAGE("[%p]::open(\"%s\", %lu)"
                         " *** Failed to initialize plug-in component.", this,
@@ -1467,7 +1472,7 @@ VST3_Plugin::open_descriptor(unsigned long iIndex)
                     }
 
                     if (controller &&
-                            controller->initialize(m_hostContext.get()) != kResultOk)
+                            controller->initialize(m_hostContext->get()) != kResultOk)
                     {
                         DMESSAGE("[%p]::open(\"%s\", %lu)"
                                 " *** Failed to initialize plug-in controller.", this,
@@ -1676,7 +1681,7 @@ VST3_Plugin::process_reset()
         m_process_data.outputs            = nullptr;
     }
 
-    m_process_data.processContext         = m_hostContext.processContext();
+    m_process_data.processContext         = m_hostContext->processContext();
     m_process_data.inputEvents            = &m_events_in;
     m_process_data.outputEvents           = &m_events_out;
     m_process_data.inputParameterChanges  = &m_params_in;
@@ -1701,7 +1706,7 @@ VST3_Plugin::process_jack_transport ( uint32_t nframes )
       (rolling != _rolling || pos.frame != _position ||
        (has_bbt && pos.beats_per_minute != _bpm));
     
-    m_hostContext.updateProcessContext(pos, xport_changed, has_bbt);
+    m_hostContext->updateProcessContext(pos, xport_changed, has_bbt);
 
     // Update transport state to expected values for next cycle
     _position = rolling ? pos.frame + nframes : pos.frame;
@@ -2301,7 +2306,7 @@ VST3_Plugin::activate ( void )
             vst3_activate(component, Vst::kEvent, Vst::kOutput, true);
             component->setActive(true);
             m_processor->setProcessing(true);
-            m_hostContext.processAddRef();
+            m_hostContext->processAddRef();
             m_processing = true;
         }
     }
@@ -2332,7 +2337,7 @@ VST3_Plugin::deactivate ( void )
         Vst::IComponent *component = m_component;
         if (component && m_processor)
         {
-            m_hostContext.processReleaseRef();
+            m_hostContext->processReleaseRef();
             m_processor->setProcessing(false);
             component->setActive(false);
             m_processing = false;
@@ -2454,7 +2459,10 @@ VST3_Plugin::getState ( void** const dataPtr )
         return false;
 
     if ( _last_chunk )
+    {
         std::free(_last_chunk);
+        _last_chunk = nullptr;
+    }
 
     Stream state;
 

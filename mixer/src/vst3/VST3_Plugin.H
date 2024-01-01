@@ -109,7 +109,7 @@ public:
 
     uint64_t getState (void** const dataPtr);
     
-    VST3PluginHost m_hostContext;
+    VST3PluginHost *m_hostContext;
 
     VST3_Plugin();
     virtual ~VST3_Plugin();

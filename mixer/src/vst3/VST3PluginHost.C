@@ -79,7 +79,7 @@ tresult PLUGIN_API VST3PluginHost::getName ( Vst::String128 name )
     const std::string str("VST3PluginHost");
     const int nsize = str.length() < 127 ? str.length() : 127;
 
-    ::memcpy(name, str.c_str(), nsize * sizeof(Vst::TChar));
+    ::memcpy(name, str.c_str(), nsize - 1);
     name[nsize] = 0;
     return kResultOk;
 }
