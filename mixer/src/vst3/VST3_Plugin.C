@@ -33,6 +33,7 @@
 #include "../../../nonlib/dsp.h"
 #include "VST3_Plugin.H"
 #include "../Chain.H"
+#include "Vst3_Discovery.H"
 
 const unsigned char  EVENT_NOTE_OFF         = 0x80;
 const unsigned char  EVENT_NOTE_ON          = 0x90;
@@ -577,9 +578,8 @@ VST3_Plugin::load_plugin ( Module::Picked picked )
 {
     _plugin_filename = picked.s_unique_id;
 
-    if ( ! std::filesystem::exists(_plugin_filename) )
+    if (!find_vst_binary())
     {
-        // FIXME check different location
         DMESSAGE("Failed to find a suitable VST3 bundle binary %s", _plugin_filename.c_str());
         return false;
     }
@@ -1290,6 +1290,55 @@ VST3_Plugin::findParamId ( uint32_t id ) const
     return index;
 }
 
+bool
+VST3_Plugin::find_vst_binary()
+{
+    // First check the path from the snapshot
+    if ( std::filesystem::exists(_plugin_filename) )
+        return true;
+
+    /*  We did not find the plugin from the snapshot path so lets try
+        a different path. The case is if the project was copied to a
+        different computer in which the plugins are installed in a different
+        location - i.e. - /usr/lib vs /usr/local/lib.
+    */
+
+    std::string file(_plugin_filename);
+    std::string restore;
+    // Find the base plugin name
+    std::size_t found = file.find_last_of("/\\");
+    restore = file.substr(found);
+    DMESSAGE("Restore = %s", restore.c_str());
+
+    auto sp = vst3_discovery::installedVST3s();   // This to get paths
+    vst3_discovery::qtractor_vst3_scan plugin;
+
+    for (const auto &q : sp)
+    {
+        std::string path = plugin.get_vst3_object_file(q.u8string().c_str());
+        DMESSAGE("PATH = %s", path.c_str());
+
+        found = path.find_last_of("/\\");
+        std::string base = path.substr(found);
+
+        // Compare the base names and if they match, then use the path
+        if (strcmp( restore.c_str(), base.c_str() ) == 0 )
+        {
+            if ( std::filesystem::exists(path) )
+                return true;    // We found it
+            else
+                return false;   // If it still does not exist then abandon
+        }
+        else
+        {
+            // keep trying until all available paths are checked
+            continue;
+        }
+
+    }
+    // We never found it
+    return false;
+}
 
 // File loader.
 bool

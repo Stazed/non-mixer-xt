@@ -67,23 +67,23 @@ public:
 
     LOG_CREATE_FUNC( VST3_Plugin );
     MODULE_CLONE_FUNC( VST3_Plugin );
-    
+
     std::vector<Port> midi_input;
     std::vector<Port> midi_output;
-    
+
     // Set/add a parameter value/point.
     void setParameter (Vst::ParamID id, Vst::ParamValue value, uint32 offset);
     void set_control_value(unsigned long port_index, float value, bool update_custom_ui);
-    
+
     // Parameter update methods - host to plugin from Module
     void updateParam(Vst::ParamID id, float fValue);
-    
+
     // Parameters update methods - plugin to host
     void updateParamValues(bool update_custom_ui);
     // Get current parameter value.
     Vst::ParamValue getParameter (Vst::ParamID id) const;
     tresult notify (Vst::IMessage *message);
-    
+
     // Open/close editor widget.
     bool try_custom_ui();
     bool init_custom_ui(bool have_timers);
@@ -98,7 +98,7 @@ public:
     void remove_ntk_timer();
     void custom_update_ui_x();
     static void custom_update_ui ( void * );
-    
+
     void timer_registered(bool reg) {_timer_registered = reg;}
     void event_handlers_registered(bool reg) {_event_handlers_registered = reg; }
     int get_timer_msecs() {return _i_miliseconds;}
@@ -108,7 +108,7 @@ public:
     void restore_VST3_plugin_state(const std::string &filename);
 
     uint64_t getState (void** const dataPtr);
-    
+
     VST3PluginHost *m_hostContext;
 
     VST3_Plugin();
@@ -124,7 +124,7 @@ private:
     IPtr<Vst::IComponent> m_component;
     IPtr<Vst::IEditController> m_controller;
     IPtr<Vst::IUnitInfo> m_unitInfos;
-    
+
     Vst::IAudioProcessor *m_processor;
 
     volatile bool m_processing;
@@ -138,7 +138,7 @@ private:
     // Processor buffers.
     Vst::AudioBusBuffers *m_buffers_in;
     Vst::AudioBusBuffers *m_buffers_out;
-    
+
     // Processor data.
     Vst::ProcessData m_process_data;
 
@@ -153,17 +153,17 @@ private:
     int32_t m_audioOutBuses;
     unsigned short m_iMidiIns;
     unsigned short m_iMidiOuts;
-    
+
     float ** _audio_in_buffers;
     float ** _audio_out_buffers;
 
     bool _activated;
     bool m_bEditor;
-    
+
     uint32_t  _position;        ///< Transport position in frames
     float     _bpm;             ///< Transport tempo in beats per minute
     bool      _rolling;         ///< Transport speed (0=stop, 1=play)
-    
+
     // GUI Editor stuff...
     bool _bEditorCreated;
     bool _x_is_resizable;
@@ -177,18 +177,19 @@ private:
     class EditorFrame;
     class RunLoop;
     EditorFrame  *m_pEditorFrame;
-    
+
     // Identififier-parameter map.
     std::unordered_map<uint32_t, unsigned long> m_paramIds;
     // Parameter finder (by id).
     unsigned long findParamId ( uint32_t id ) const;
 
     // File loader.
+    bool find_vst_binary();
     bool open_file(const std::string& sFilename);
     bool open_descriptor(unsigned long iIndex);
 
     void close_descriptor();
-    
+
     // Process functions
     void set_input_buffer ( int n, void *buf );
     void set_output_buffer ( int n, void *buf );
@@ -206,7 +207,7 @@ private:
     void initialize_plugin();
     void clear_plugin();
     int numChannels (Vst::MediaType type, Vst::BusDirection direction ) const;
-    
+
     void create_audio_ports();
     void create_midi_ports();
     void create_control_ports();
@@ -243,7 +244,7 @@ private:
     std::map<MidiMapKey, Vst::ParamID> m_midiMap;
 
 protected:
-    
+
     class Stream;
 
     // Save and restore
