@@ -137,7 +137,7 @@ public:
         unsigned int plugin_type;   // LADSPA, LV2, etc
         std::string s_unique_id;
         unsigned long unique_id;
-        std::string clap_path;
+        std::string s_plug_path;      // CLAP, VST3 binary path
     };
 
 #ifdef LV2_SUPPORT

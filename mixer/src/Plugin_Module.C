@@ -497,7 +497,7 @@ Plugin_Module::scan_CLAP_plugins( std::list<Plugin_Info> & pr )
             pi.s_unique_id  = desc->id;
             pi.author       = desc->vendor;
             pi.id           = 0;
-            pi.clap_path    = q.u8string().c_str();
+            pi.plug_path    = q.u8string().c_str();
             pi.category     = clap_discovery::get_plugin_category(desc->features);
             // desc->version;
             // desc->description;

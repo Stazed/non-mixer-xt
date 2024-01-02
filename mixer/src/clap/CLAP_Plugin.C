@@ -178,7 +178,7 @@ CLAP_Plugin::~CLAP_Plugin()
 bool
 CLAP_Plugin::load_plugin ( Module::Picked picked )
 {
-    _clap_path = picked.clap_path;
+    _clap_path = picked.s_plug_path;
     _clap_id = picked.s_unique_id;
 
     _entry = entry_from_CLAP_file(_clap_path.c_str());

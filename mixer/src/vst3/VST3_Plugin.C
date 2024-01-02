@@ -577,7 +577,7 @@ VST3_Plugin::~VST3_Plugin()
 bool
 VST3_Plugin::load_plugin ( Module::Picked picked )
 {
-    _plugin_filename = picked.clap_path;
+    _plugin_filename = picked.s_plug_path;
     m_iUniqueID = picked.s_unique_id;
 
     if (!find_vst_binary())

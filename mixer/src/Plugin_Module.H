@@ -41,7 +41,7 @@ public:
     public:
         std::string s_unique_id;
         unsigned long id;
-        std::string clap_path;
+        std::string plug_path;  // CLAP & VST3 binary path
         std::string name;
         std::string author;
         std::string category;
@@ -53,7 +53,7 @@ public:
         Plugin_Info ( const std::string &s_type ) :  // LADSPA, LV2 -- TODO other types
             s_unique_id(),
             id(0),
-            clap_path(),
+            plug_path(),
             name(),
             author(),
             category("Unclassified"),

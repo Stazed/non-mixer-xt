@@ -788,12 +788,12 @@ void qtractor_vst3_scan_file ( const std::string& sFilename, std::list<Plugin_Mo
         pi.audio_outputs = plugin.audioOuts();
 
         pi.s_unique_id = plugin.uniqueID();
-        pi.clap_path = sVst3Object;
+        pi.plug_path = sVst3Object;
 
         vst3pr.push_back(pi);
 
         DMESSAGE("name = %s: category = %s: ID = %s: PATH = %s",
-                pi.name.c_str(), pi.category.c_str(), pi.s_unique_id.c_str(), pi.clap_path.c_str());
+                pi.name.c_str(), pi.category.c_str(), pi.s_unique_id.c_str(), pi.plug_path.c_str());
 
         plugin.close_descriptor();
         ++i;
