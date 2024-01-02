@@ -451,6 +451,7 @@ VST3_Plugin::VST3_Plugin() :
     m_buffers_in(nullptr),
     m_buffers_out(nullptr),
     _plugin_filename(),
+    m_iUniqueID(),
     m_sName(),
     _last_chunk(nullptr),
     _project_file(),
@@ -576,7 +577,8 @@ VST3_Plugin::~VST3_Plugin()
 bool
 VST3_Plugin::load_plugin ( Module::Picked picked )
 {
-    _plugin_filename = picked.s_unique_id;
+    _plugin_filename = picked.clap_path;
+    m_iUniqueID = picked.s_unique_id;
 
     if (!find_vst_binary())
     {
@@ -1465,6 +1467,13 @@ VST3_Plugin::open_descriptor(unsigned long iIndex)
                          //   m_sVersion.clear();
                          //   m_sSdkVersion.clear();
                     }
+            }
+
+            std::string iUniqueID = vst3_discovery::UIDtoString(false, classInfo.cid);
+            if(m_iUniqueID != iUniqueID)
+            {
+                MESSAGE("Plugin ID does not match ID1 = %s: ID2 = %s", m_iUniqueID.c_str(), iUniqueID.c_str());
+                return false;
             }
 #if 0
             if (m_sVendor.isEmpty())
@@ -2528,6 +2537,7 @@ VST3_Plugin::getState ( void** const dataPtr )
 void
 VST3_Plugin::get ( Log_Entry &e ) const
 {
+    e.add( ":vst_unique_id", m_iUniqueID.c_str() );
     e.add( ":vst3_plugin_path", _plugin_filename.c_str() );
  
     /* these help us display the module on systems which are missing this plugin */
@@ -2600,6 +2610,7 @@ VST3_Plugin::set ( Log_Entry &e )
     /* need to call this to set label even for version 0 modules */
     number(n);
 
+    std::string s_unique_id = "";
     std::string s_vst3_path = "";
     
     for ( int i = 0; i < e.size(); ++i )
@@ -2608,7 +2619,11 @@ VST3_Plugin::set ( Log_Entry &e )
 
         e.get( i, &s, &v );
 
-        if ( ! strcmp( s, ":vst3_plugin_path" ) )
+        if ( ! strcmp( s, ":vst_unique_id") )
+        {
+            s_unique_id = v;
+        }
+        else if ( ! strcmp( s, ":vst3_plugin_path" ) )
         {
             s_vst3_path = v;
         }
@@ -2643,7 +2658,7 @@ VST3_Plugin::set ( Log_Entry &e )
 
     DMESSAGE("Path = %s", s_vst3_path.c_str());
 
-    Module::Picked picked = { VST3, s_vst3_path, 0, "" };
+    Module::Picked picked = { VST3, s_unique_id, 0, s_vst3_path };
 
     if ( !load_plugin( picked ) )
     {

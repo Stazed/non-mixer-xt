@@ -49,8 +49,48 @@
 
 #define V3_CONTENT_DIR V3_ARCHITECTURE "-" V3_PLATFORM
 
+struct GUID
+{
+    uint32_t Data1;
+    uint16_t Data2;
+    uint16_t Data3;
+    uint8_t Data4[8];
+};
+
 namespace vst3_discovery
 {
+    
+std::string UIDtoString (bool comFormat, const char* _data)
+{
+    std::string result;
+    result.reserve (32);
+    if (comFormat)
+    {
+        const auto& g = reinterpret_cast<const GUID*> (_data);
+
+        char tmp[21] {};
+        snprintf (tmp, 21, "%08X%04X%04X", g->Data1, g->Data2, g->Data3);
+        result = tmp;
+
+        for (uint32_t i = 0; i < 8; ++i)
+        {
+            char s[3] {};
+            snprintf (s, 3, "%02X", g->Data4[i]);
+            result += s;
+        }
+    }
+    else
+    {
+        for (uint32_t i = 0; i < 16; ++i)
+        {
+            char s[3] {};
+            snprintf (s, 3, "%02X", static_cast<uint8_t> (_data[i]));
+            result += s;
+        }
+    }
+    return result;
+}
+
 
 std::vector<std::filesystem::path>
 installedVST3s()
@@ -603,8 +643,7 @@ bool qtractor_vst3_scan::open_descriptor ( unsigned long iIndex )
 
     m_sSubCategories = m_pImpl->subCategory();
 
-    //	m_iUniqueID = qHash(QByteArray(classInfo.cid, sizeof(TUID)));
-    m_iUniqueID = atoi(classInfo.cid);  // FIXME 
+    m_iUniqueID =  UIDtoString(false, classInfo.cid);
 
     m_iAudioIns  = m_pImpl->numChannels(Vst::kAudio, Vst::kInput);
     m_iAudioOuts = m_pImpl->numChannels(Vst::kAudio, Vst::kOutput);
@@ -699,7 +738,7 @@ void qtractor_vst3_scan::clear (void)
     m_sVendor.clear();
     m_sSubCategories.clear();
 
-    m_iUniqueID    = 0;
+    m_iUniqueID    = "";
     m_iAudioIns    = 0;
     m_iAudioOuts   = 0;
 #if 0
@@ -748,13 +787,13 @@ void qtractor_vst3_scan_file ( const std::string& sFilename, std::list<Plugin_Mo
         pi.audio_inputs = plugin.audioIns();
         pi.audio_outputs = plugin.audioOuts();
 
-        pi.s_unique_id = sVst3Object;
-        pi.id = plugin.uniqueID();          // FIXME garbage
+        pi.s_unique_id = plugin.uniqueID();
+        pi.clap_path = sVst3Object;
 
         vst3pr.push_back(pi);
 
-        DMESSAGE("name = %s: category = %s: path = %s: ID = %ul",
-                pi.name.c_str(), pi.category.c_str(), pi.s_unique_id.c_str(), pi.id);
+        DMESSAGE("name = %s: category = %s: ID = %s: PATH = %s",
+                pi.name.c_str(), pi.category.c_str(), pi.s_unique_id.c_str(), pi.clap_path.c_str());
 
         plugin.close_descriptor();
         ++i;

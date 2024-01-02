@@ -51,6 +51,8 @@ std::vector<std::filesystem::path> validVST3SearchPaths();
 // class qtractor_vst3_scan -- VST3 plugin (bare bones) interface.
 //
 
+std::string UIDtoString (bool comFormat, const char* _data);
+
 class qtractor_vst3_scan
 {
 public:
@@ -82,7 +84,7 @@ public:
     const std::string& subCategory() const
         { return m_sSubCategories; }
 
-    unsigned int uniqueID() const
+    std::string uniqueID() const
         { return m_iUniqueID; }
 
     int audioIns() const
@@ -122,7 +124,7 @@ private:
     std::string   m_sSubCategories;
 
     unsigned long m_iIndex;
-    unsigned int  m_iUniqueID;
+    std::string   m_iUniqueID;
     int           m_iAudioIns;
     int           m_iAudioOuts;
 #if 0

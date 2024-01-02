@@ -143,6 +143,7 @@ private:
     Vst::ProcessData m_process_data;
 
     std::string _plugin_filename;
+    std::string m_iUniqueID;
     std::string m_sName;
     void* _last_chunk;
     std::string _project_file;
