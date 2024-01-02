@@ -476,7 +476,7 @@ VST3_Plugin::VST3_Plugin() :
     m_plugView(nullptr),
     m_pEditorFrame(nullptr)
 {
-    _plug_type = VST3;
+    _plug_type = Type_VST3;
     
     m_hostContext = new VST3PluginHost(this);
 
@@ -2658,7 +2658,7 @@ VST3_Plugin::set ( Log_Entry &e )
 
     DMESSAGE("Path = %s", s_vst3_path.c_str());
 
-    Module::Picked picked = { VST3, s_unique_id, 0, s_vst3_path };
+    Module::Picked picked = { Type_VST3, s_unique_id, 0, s_vst3_path };
 
     if ( !load_plugin( picked ) )
     {

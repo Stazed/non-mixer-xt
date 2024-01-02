@@ -83,7 +83,7 @@ Module::Module ( int W, int H, const char *L ) :
     _nframes(0),
     _number(-2),    /* magic number indicates old instance, before numbering */
     _editor(0),
-    _plug_type(NONE),
+    _plug_type(Type_NONE),
     _is_from_custom_ui(false),
     _is_removed(false),
     _use_custom_data(false)
@@ -104,7 +104,7 @@ Module::Module ( bool is_default, int W, int H, const char *L ) :
     _nframes(0),
     _number(-2),    /* magic number indicates old instance, before numbering */
     _editor(0),
-    _plug_type(NONE),
+    _plug_type(Type_NONE),
     _is_from_custom_ui(false),
     _is_removed(false),
     _use_custom_data(false)
@@ -124,7 +124,7 @@ Module::Module ( ) :
     _nframes(0),
     _number(-2),    /* magic number indicates old instance, before numbering */
     _editor(0),
-    _plug_type(NONE),
+    _plug_type(Type_NONE),
     _is_from_custom_ui(false),
     _is_removed(false),
     _use_custom_data(false)
@@ -498,7 +498,7 @@ Module::handle_control_changed ( Module::Port *p )
 #endif
 
 #ifdef LV2_SUPPORT
-    if (m->_plug_type == LV2)
+    if (m->_plug_type == Type_LV2)
     {
         if(m->_is_from_custom_ui)
         {
@@ -517,7 +517,7 @@ Module::handle_control_changed ( Module::Port *p )
     }
 #endif
 #ifdef CLAP_SUPPORT
-    if (m->_plug_type == CLAP)
+    if (m->_plug_type == Type_CLAP)
     {
         if(m->_is_from_custom_ui)
         {
@@ -536,7 +536,7 @@ Module::handle_control_changed ( Module::Port *p )
     }
 #endif
 #ifdef VST3_SUPPORT
-    if (m->_plug_type == VST3)
+    if (m->_plug_type == Type_VST3)
     {
         if(m->_is_from_custom_ui)
         {
@@ -1178,7 +1178,7 @@ Module::insert_menu_cb ( const Fl_Menu_ *menu )
         switch ( picked.plugin_type )
         {
 #ifdef LADSPA_SUPPORT
-            case LADSPA:
+            case Type_LADSPA:
             {
                 LADSPA_Plugin *m = new LADSPA_Plugin();
                 if(!m->load_plugin( picked ))
@@ -1193,7 +1193,7 @@ Module::insert_menu_cb ( const Fl_Menu_ *menu )
             }
 #endif  // LADSPA_SUPPORT
 #ifdef LV2_SUPPORT
-            case LV2:
+            case Type_LV2:
             {
                 LV2_Plugin *m = new LV2_Plugin();
                 if(!m->load_plugin( picked ))
@@ -1208,7 +1208,7 @@ Module::insert_menu_cb ( const Fl_Menu_ *menu )
             }
 #endif  // LV2_SUPPORT
 #ifdef CLAP_SUPPORT
-            case CLAP:
+            case Type_CLAP:
             {
                 CLAP_Plugin *m = new CLAP_Plugin();
                 if(!m->load_plugin( picked ))
@@ -1223,7 +1223,7 @@ Module::insert_menu_cb ( const Fl_Menu_ *menu )
             }
 #endif  // CLAP_SUPPORT
 #ifdef VST3_SUPPORT
-            case VST3:
+            case Type_VST3:
             {
                 VST3_Plugin *m = new VST3_Plugin();
                 if(!m->load_plugin( picked ))
@@ -1441,7 +1441,7 @@ Module::handle ( int m )
             if ( !( Fl::event_key(FL_Control_L) ) &&  !( Fl::event_key(FL_Control_R) ) && (Fl::event_key(32)) ) // 32 == space bar
             {
 #ifdef LV2_SUPPORT
-                if(_plug_type == LV2)
+                if(_plug_type == Type_LV2)
                 {
                     LV2_Plugin *pm = static_cast<LV2_Plugin *> (this);
                     if(!pm->try_custom_ui())
@@ -1456,7 +1456,7 @@ Module::handle ( int m )
                 else
 #endif
 #ifdef CLAP_SUPPORT
-                if(_plug_type == CLAP)
+                if(_plug_type == Type_CLAP)
                 {
                     CLAP_Plugin *pm = static_cast<CLAP_Plugin *> (this);
                     if(!pm->try_custom_ui())
@@ -1467,7 +1467,7 @@ Module::handle ( int m )
                 else
 #endif
 #ifdef VST3_SUPPORT
-                if(_plug_type == VST3)
+                if(_plug_type == Type_VST3)
                 {
                     VST3_Plugin *pm = static_cast<VST3_Plugin *> (this);
                     if(!pm->try_custom_ui())
@@ -1517,7 +1517,7 @@ Module::handle ( int m )
             else if ( e & FL_BUTTON1 )
             {
 #ifdef LV2_SUPPORT
-                if(_plug_type == LV2)
+                if(_plug_type == Type_LV2)
                 {
                     LV2_Plugin *pm = static_cast<LV2_Plugin *> (this);
                     if(!pm->try_custom_ui())
@@ -1532,7 +1532,7 @@ Module::handle ( int m )
                 else
 #endif  
 #ifdef CLAP_SUPPORT
-                if(_plug_type == CLAP)
+                if(_plug_type == Type_CLAP)
                 {
                     CLAP_Plugin *pm = static_cast<CLAP_Plugin *> (this);
                     if(!pm->try_custom_ui())
@@ -1543,7 +1543,7 @@ Module::handle ( int m )
                 else
 #endif
 #ifdef VST3_SUPPORT
-                if(_plug_type == VST3)
+                if(_plug_type == Type_VST3)
                 {
                     VST3_Plugin *pm = static_cast<VST3_Plugin *> (this);
                     if(!pm->try_custom_ui())

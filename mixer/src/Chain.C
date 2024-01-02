@@ -765,7 +765,7 @@ err:
     above meant we don't have JACK ports created for MIDI, we clear any MIDI
     vectors here so the JACK port deletion does not get called on NULL ports and crash */
 #ifdef LV2_SUPPORT
-    if(n->_plug_type == LV2)
+    if(n->_plug_type == Type_LV2)
     {
         LV2_Plugin *plug = static_cast<LV2_Plugin *> (n);
         plug->atom_input.clear();
@@ -773,7 +773,7 @@ err:
     }
 #endif
 #ifdef CLAP_SUPPORT
-    if(n->_plug_type == CLAP)
+    if(n->_plug_type == Type_CLAP)
     {
         CLAP_Plugin *plug = static_cast<CLAP_Plugin *> (n);
         plug->note_input.clear();

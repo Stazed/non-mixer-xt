@@ -61,7 +61,7 @@
 bool
 Module_Parameter_Editor::is_probably_eq ( void )
 {
-    if(_module->_plug_type != LADSPA)
+    if(_module->_plug_type != Type_LADSPA)
         return false;
 
     const char *name = _module->label();
@@ -104,7 +104,7 @@ Module_Parameter_Editor::Module_Parameter_Editor ( Module *module ) :
 
         // TODO other types
 #ifdef LV2_SUPPORT
-        if (_module->_plug_type == LV2)
+        if (_module->_plug_type == Type_LV2)
         {
             LV2_Plugin *pm = static_cast<LV2_Plugin *> (_module);
             
@@ -139,8 +139,8 @@ Module_Parameter_Editor::Module_Parameter_Editor ( Module *module ) :
         }
 #endif  // LV2_SUPPORT
 #if defined(LV2_SUPPORT) || defined(CLAP_SUPPORT) || defined(VST3_SUPPORT)
-        if ((_module->_plug_type == LV2) || (_module->_plug_type == CLAP) 
-                || _module->_plug_type == VST3)
+        if ((_module->_plug_type == Type_LV2) || (_module->_plug_type == Type_CLAP) 
+                || _module->_plug_type == Type_VST3)
         {
             Fl_Color fc = fl_color_add_alpha( FL_CYAN, 200 );
 
@@ -464,7 +464,7 @@ Module_Parameter_Editor::make_controls ( void )
     }
 
 #ifdef LV2_SUPPORT
-    if(module->_plug_type == LV2)
+    if(module->_plug_type == Type_LV2)
     {
         LV2_Plugin *pm = static_cast<LV2_Plugin *> (module);
         atom_port_controller.clear();
@@ -594,7 +594,7 @@ Module_Parameter_Editor::update_control_visibility ( void )
     int width = control_pack->w() + 100; // LADSPA
 
 #if defined(LV2_SUPPORT) || defined(CLAP_SUPPORT) || defined(VST3_SUPPORT)
-    if ( (_module->_plug_type == LV2) || (_module->_plug_type == CLAP) || (_module->_plug_type == VST3))
+    if ( (_module->_plug_type == Type_LV2) || (_module->_plug_type == Type_CLAP) || (_module->_plug_type == Type_VST3))
     {
         /* When the scroller is not used, we need to expand width to account for 
            the preset, state save and restore button */
@@ -717,7 +717,7 @@ Module_Parameter_Editor::cb_save_state_handle ( Fl_Widget *, void *v )
     char *filename = NULL;
 
 #ifdef CLAP_SUPPORT
-    if ( ((Module_Parameter_Editor*)v)->_module->_plug_type == CLAP )
+    if ( ((Module_Parameter_Editor*)v)->_module->_plug_type == Type_CLAP )
     {
 #define EXT ".state"
     filename = fl_file_chooser(title.c_str(), "(*" EXT")", file_chooser_location.c_str (), 0);
@@ -730,13 +730,13 @@ Module_Parameter_Editor::cb_save_state_handle ( Fl_Widget *, void *v )
     }
 #endif  // CLAP_SUPPORT
 #ifdef LV2_SUPPORT
-    if ( ((Module_Parameter_Editor*)v)->_module->_plug_type == LV2 )
+    if ( ((Module_Parameter_Editor*)v)->_module->_plug_type == Type_LV2 )
     {
         filename = fl_file_chooser(title.c_str(), "", file_chooser_location.c_str(), 0);
     }
 #endif
 #ifdef VST3_SUPPORT
-    if ( ((Module_Parameter_Editor*)v)->_module->_plug_type == VST3 )
+    if ( ((Module_Parameter_Editor*)v)->_module->_plug_type == Type_VST3 )
     {
 #define EXT ".state"
     filename = fl_file_chooser(title.c_str(), "(*" EXT")", file_chooser_location.c_str (), 0);
@@ -764,21 +764,21 @@ Module_Parameter_Editor::save_plugin_state(const std::string &filename)
     directory.append("/");  // LV2 only
 
 #ifdef CLAP_SUPPORT
-    if (_module->_plug_type == CLAP)
+    if (_module->_plug_type == Type_CLAP)
     {
         CLAP_Plugin *pm = static_cast<CLAP_Plugin *> (_module);
         pm->save_CLAP_plugin_state(filename);
     }
 #endif
 #ifdef LV2_SUPPORT
-    if (_module->_plug_type == LV2)
+    if (_module->_plug_type == Type_LV2)
     {
         LV2_Plugin *pm = static_cast<LV2_Plugin *> (_module);
         pm->save_LV2_plugin_state(directory);
     }
 #endif
 #ifdef VST3_SUPPORT
-    if (_module->_plug_type == VST3)
+    if (_module->_plug_type == Type_VST3)
     {
         VST3_Plugin *pm = static_cast<VST3_Plugin *> (_module);
         pm->save_VST3_plugin_state(filename);
@@ -798,19 +798,19 @@ Module_Parameter_Editor::cb_restore_state_handle ( Fl_Widget *, void *v )
     char *directory = NULL;    // or file
 
 #ifdef CLAP_SUPPORT
-    if ( ((Module_Parameter_Editor*)v)->_module->_plug_type == CLAP )
+    if ( ((Module_Parameter_Editor*)v)->_module->_plug_type == Type_CLAP )
     {
         directory = fl_file_chooser(title.c_str(), "*.state", file_chooser_location.c_str(), 0);
     }
 #endif
 #ifdef LV2_SUPPORT
-    if (((Module_Parameter_Editor*)v)->_module->_plug_type == LV2 )
+    if (((Module_Parameter_Editor*)v)->_module->_plug_type == Type_LV2 )
     {
         directory = fl_dir_chooser(title.c_str(), file_chooser_location.c_str(), 0);
     }
 #endif
 #ifdef VST3_SUPPORT
-    if (((Module_Parameter_Editor*)v)->_module->_plug_type == VST3 )
+    if (((Module_Parameter_Editor*)v)->_module->_plug_type == Type_VST3 )
     {
         directory = fl_file_chooser(title.c_str(), "*.state", file_chooser_location.c_str(), 0);
     }
@@ -826,21 +826,21 @@ void
 Module_Parameter_Editor::restore_plugin_state(const std::string &directory)
 {
 #ifdef CLAP_SUPPORT
-    if (_module->_plug_type == CLAP)
+    if (_module->_plug_type == Type_CLAP)
     {
         CLAP_Plugin *pm = static_cast<CLAP_Plugin *> (_module);
         pm->restore_CLAP_plugin_state(directory);
     }
 #endif
 #ifdef LV2_SUPPORT
-    if (_module->_plug_type == LV2)
+    if (_module->_plug_type == Type_LV2)
     {
         LV2_Plugin *pm = static_cast<LV2_Plugin *> (_module);
         pm->restore_LV2_plugin_state(directory);
     }
 #endif
 #ifdef VST3_SUPPORT
-    if (_module->_plug_type == VST3)
+    if (_module->_plug_type == Type_VST3)
     {
         VST3_Plugin *pm = static_cast<VST3_Plugin *> (_module);
         pm->restore_VST3_plugin_state(directory);

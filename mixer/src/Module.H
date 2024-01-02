@@ -52,11 +52,11 @@ class Mixer_Strip;
 
 enum Plugin_Index
 {
-    NONE = 0,
-    LADSPA,
-    LV2,
-    CLAP,
-    VST3
+    Type_NONE = 0,
+    Type_LADSPA,
+    Type_LV2,
+    Type_CLAP,
+    Type_VST3
     // VST2
 };
 

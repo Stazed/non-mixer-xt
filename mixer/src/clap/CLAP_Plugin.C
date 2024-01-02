@@ -80,7 +80,7 @@ CLAP_Plugin::CLAP_Plugin() :
     _iMidiDialectIns(0),
     _iMidiDialectOuts(0)
 {
-    _plug_type = CLAP;
+    _plug_type = Type_CLAP;
 
     log_create();
 }
@@ -2649,7 +2649,7 @@ CLAP_Plugin::set ( Log_Entry &e )
 
     DMESSAGE("Path = %s: ID = %s", s_clap_path.c_str(), s_clap_id.c_str());
 
-    Module::Picked picked = { CLAP, strdup(s_clap_id.c_str()), 0, s_clap_path };
+    Module::Picked picked = { Type_CLAP, strdup(s_clap_id.c_str()), 0, s_clap_path };
 
     if ( !load_plugin( picked ) )
     {

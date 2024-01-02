@@ -338,7 +338,7 @@ LADSPA_Plugin::create_control_ports()
 void
 LADSPA_Plugin::init ( void )
 {
-    _plug_type = LADSPA;
+    _plug_type = Type_LADSPA;
 
     set_ladspainfo();
 
@@ -779,7 +779,7 @@ LADSPA_Plugin::set ( Log_Entry &e )
 
         if ( ! strcmp( s, ":plugin_id" ) )
         {
-            Module::Picked picked = { LADSPA, "", (unsigned long) atol ( v ), "" };
+            Module::Picked picked = { Type_LADSPA, "", (unsigned long) atol ( v ), "" };
             load_plugin( picked );
         }
         else if ( ! strcmp( s, ":plugin_ins" ) )

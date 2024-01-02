@@ -42,7 +42,7 @@ static int search_category = 0;
 Module::Picked
 Plugin_Chooser::plugin_chooser ( int ninputs )
 {
-    Module::Picked picked = { NONE, "", 0 , "" };
+    Module::Picked picked = { Type_NONE, "", 0 , "" };
 
     Plugin_Chooser *o = new Plugin_Chooser( 0,0,735,500,"Plugin Chooser");
 
@@ -78,14 +78,14 @@ Plugin_Chooser::plugin_chooser ( int ninputs )
     switch ( picked.plugin_type )
     {
 #ifdef LADSPA_SUPPORT
-        case LADSPA:
+        case Type_LADSPA:
         {
             picked.unique_id = o->value();
             break;
         }
 #endif
 #ifdef LV2_SUPPORT
-        case LV2:
+        case Type_LV2:
         {
             if (!o->s_unique_id().empty())
             {
@@ -95,7 +95,7 @@ Plugin_Chooser::plugin_chooser ( int ninputs )
         }
 #endif
 #ifdef CLAP_SUPPORT
-        case CLAP:
+        case Type_CLAP:
         {
             if (!o->s_unique_id().empty())
             {
@@ -107,7 +107,7 @@ Plugin_Chooser::plugin_chooser ( int ninputs )
         }
 #endif
 #ifdef VST3_SUPPORT
-        case VST3:
+        case Type_VST3:
         {
             if (!o->s_unique_id().empty())
             {
@@ -357,14 +357,14 @@ Plugin_Chooser::cb_table ( Fl_Widget *w )
             if (::strcmp(_plugin_rows[R]->type.c_str(), "LV2") == 0)
             {
                 _s_unique_id   = _plugin_rows[R]->s_unique_id;
-                _plugin_type = LV2;
+                _plugin_type = Type_LV2;
             }
 #endif
 #ifdef LADSPA_SUPPORT
             if(::strcmp(_plugin_rows[R]->type.c_str(), "LADSPA") == 0)
             {
                 _value = _plugin_rows[R]->id;
-                _plugin_type = LADSPA;
+                _plugin_type = Type_LADSPA;
             }
 #endif
 #ifdef CLAP_SUPPORT
@@ -373,7 +373,7 @@ Plugin_Chooser::cb_table ( Fl_Widget *w )
                 _s_unique_id   = _plugin_rows[R]->s_unique_id;
                 _value = _plugin_rows[R]->id;
                 _plug_path = _plugin_rows[R]->plug_path;
-                _plugin_type = CLAP;
+                _plugin_type = Type_CLAP;
             }
 #endif
 #ifdef VST3_SUPPORT
@@ -381,7 +381,7 @@ Plugin_Chooser::cb_table ( Fl_Widget *w )
             {
                 _s_unique_id = _plugin_rows[R]->s_unique_id;
                 _plug_path = _plugin_rows[R]->plug_path;
-                _plugin_type = VST3;
+                _plugin_type = Type_VST3;
             }
 #endif
             // TODO other types
@@ -532,7 +532,7 @@ Plugin_Chooser::load_categories ( void )
 
 Plugin_Chooser::Plugin_Chooser ( int X,int Y,int W,int H, const char *L )
     : Fl_Double_Window ( X,Y,W,H,L ),
-    _plugin_type(NONE),
+    _plugin_type(Type_NONE),
     _s_unique_id(""),
     _value(0),
     _plug_path("")

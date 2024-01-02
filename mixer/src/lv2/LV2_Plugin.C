@@ -1757,7 +1757,7 @@ LV2_Plugin::add_port ( const Port &p )
 void
 LV2_Plugin::init ( void )
 {
-    _plug_type = LV2;
+    _plug_type = Type_LV2;
 
     _idata = new ImplementationData();
 
@@ -3156,7 +3156,7 @@ LV2_Plugin::set ( Log_Entry &e )
 #ifdef LV2_WORKER_SUPPORT
             _loading_from_file = true;
 #endif
-            Module::Picked picked = { LV2, v, 0, "" };
+            Module::Picked picked = { Type_LV2, v, 0, "" };
             load_plugin( picked );
         }
         else if ( ! strcmp( s, ":plugin_ins" ) )
