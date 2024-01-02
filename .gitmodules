@@ -4,3 +4,12 @@
 [submodule "FL"]
 	path = FL
 	url = https://github.com/Stazed/non-FL.git
+[submodule "mixer/src/vst3/vst3sdk/base"]
+	path = mixer/src/vst3/vst3sdk/base
+	url = https://github.com/steinbergmedia/vst3_base.git
+[submodule "mixer/src/vst3/vst3sdk/pluginterfaces"]
+	path = mixer/src/vst3/vst3sdk/pluginterfaces
+	url = https://github.com/steinbergmedia/vst3_pluginterfaces.git
+[submodule "mixer/src/vst3/vst3sdk/public.sdk"]
+	path = mixer/src/vst3/vst3sdk/public.sdk
+	url = https://github.com/steinbergmedia/vst3_public_sdk.git
