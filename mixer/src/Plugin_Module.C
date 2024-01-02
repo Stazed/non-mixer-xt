@@ -533,10 +533,7 @@ Plugin_Module::scan_CLAP_plugins( std::list<Plugin_Info> & pr )
                     ::memset(&info, 0, sizeof(info));
                     if (audio_ports->get(inst, i, true, &info))
                     {
-                        if (info.flags & CLAP_AUDIO_PORT_IS_MAIN)
-                        {
-                            pi.audio_inputs += info.channel_count;
-                        }
+                        pi.audio_inputs += info.channel_count;
                     }
                 }
 
@@ -546,10 +543,7 @@ Plugin_Module::scan_CLAP_plugins( std::list<Plugin_Info> & pr )
                     ::memset(&info, 0, sizeof(info));
                     if (audio_ports->get(inst, i, false, &info))
                     {
-                        if (info.flags & CLAP_AUDIO_PORT_IS_MAIN)
-                        {
-                            pi.audio_outputs += info.channel_count;
-                        }
+                        pi.audio_outputs += info.channel_count;
                     }
                 }
             }
@@ -558,8 +552,8 @@ Plugin_Module::scan_CLAP_plugins( std::list<Plugin_Info> & pr )
 
             clap_PI_cache.push_back( pi );
 
-          //  DMESSAGE("Name = %s: Path = %s: ID = %d: Audio Ins = %d: Audio Outs = %d",
-          //          pi.name.c_str(), pi.path, pi.id, pi.audio_inputs, pi.audio_outputs);
+        //    DMESSAGE("Name = %s: Path = %s: ID = %d: Audio Ins = %d: Audio Outs = %d",
+        //            pi.name.c_str(), pi.plug_path.c_str(), pi.id, pi.audio_inputs, pi.audio_outputs);
         }
     }
 

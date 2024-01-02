@@ -1409,14 +1409,11 @@ CLAP_Plugin::create_audio_ports()
             ::memset(&info, 0, sizeof(info));
             if (audio_ports->get(_plugin, i, true, &info))
             {
-                if (info.flags & CLAP_AUDIO_PORT_IS_MAIN)
+                for (unsigned ii = 0; ii < info.channel_count; ++ii)
                 {
-                    for (unsigned ii = 0; ii < info.channel_count; ++ii)
-                    {
-                        add_port( Port( this, Port::INPUT, Port::AUDIO, info.name ) );
-                        audio_input[_plugin_ins].hints.plug_port_index = ii;
-                        _plugin_ins++;
-                    }
+                    add_port( Port( this, Port::INPUT, Port::AUDIO, info.name ) );
+                    audio_input[_plugin_ins].hints.plug_port_index = ii;
+                    _plugin_ins++;
                 }
             }
         }
@@ -1427,14 +1424,11 @@ CLAP_Plugin::create_audio_ports()
             ::memset(&info, 0, sizeof(info));
             if (audio_ports->get(_plugin, i, false, &info))
             {
-                if (info.flags & CLAP_AUDIO_PORT_IS_MAIN)
+                for (unsigned ii = 0; ii < info.channel_count; ++ii)
                 {
-                    for (unsigned ii = 0; ii < info.channel_count; ++ii)
-                    {
-                        add_port( Port( this, Port::OUTPUT, Port::AUDIO, info.name ) );
-                        audio_output[_plugin_outs].hints.plug_port_index = ii;
-                        _plugin_outs++;
-                    }
+                    add_port( Port( this, Port::OUTPUT, Port::AUDIO, info.name ) );
+                    audio_output[_plugin_outs].hints.plug_port_index = ii;
+                    _plugin_outs++;
                 }
             }
         }
