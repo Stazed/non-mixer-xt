@@ -182,11 +182,11 @@ public:
     void rescan_parameters();
 
     // Events processor buffers.
-    EventList _events_in;
-    EventList _events_out;
+    CLAPIMPL::EventList _events_in;
+    CLAPIMPL::EventList _events_out;
 
     // Parameters processor queue.
-    EventList _params_out;
+    CLAPIMPL::EventList _params_out;
 
     // Save/Restore state
     void save_CLAP_plugin_state(const std::string &filename);
@@ -197,10 +197,10 @@ public:
     LinkedList<HostTimerDetails> _fTimers;
 
     // Event buffer accessors.
-    EventList& events_in  () { return _events_in;  }
-    EventList& events_out () { return _events_out; }
+    CLAPIMPL::EventList& events_in  () { return _events_in;  }
+    CLAPIMPL::EventList& events_out () { return _events_out; }
 
-    EventList& params_out () { return _params_out; }
+    CLAPIMPL::EventList& params_out () { return _params_out; }
 
     // Plugin parameters flush.
     void plugin_params_flush ();

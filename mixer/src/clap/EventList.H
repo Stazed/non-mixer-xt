@@ -32,6 +32,9 @@
 #include <vector>
 #include <cstring>  // memset
 
+namespace CLAPIMPL
+{
+
 class EventList
 {
 public:
@@ -176,5 +179,7 @@ private:
         clap_input_events  m_ins;
         clap_output_events m_outs;
 };
+
+}   // namespace CLAPIMPL
 
 #endif // CLAP_SUPPORT

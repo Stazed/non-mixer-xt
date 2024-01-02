@@ -749,7 +749,7 @@ CLAP_Plugin::process_jack_midi_out ( uint32_t nframes, unsigned int port )
         buf = note_output[port].jack_port()->buffer( nframes );
         jack_midi_clear_buffer(buf);
 
-        EventList& events_out = CLAP_Plugin::events_out ();
+        CLAPIMPL::EventList& events_out = CLAP_Plugin::events_out ();
 
         const uint32_t nevents = events_out.size();
         for (uint32_t i = 0; i < nevents; ++i)
@@ -778,7 +778,7 @@ CLAP_Plugin::process_jack_midi_out ( uint32_t nframes, unsigned int port )
                                 static_cast<jack_midi_data_t*>( &midi_note[0] ), nBytes);
 
                         if ( ret )
-                            WARNING("Jack MIDI note off error = %d", ret);
+                            WARNING("Jack MIDI note on error = %d", ret);
                     }
                     break;
                 }
@@ -1016,7 +1016,7 @@ CLAP_Plugin::process ( nframes_t nframes )
             plugin_params_flush();
            _is_processing = _plugin->start_processing(_plugin);
         }
-        
+
         if (_is_processing)
         {
             process_jack_transport( nframes );
@@ -1657,7 +1657,7 @@ CLAP_Plugin::deactivate ( void )
 
    if ( _activated )
    {
-       _activated = false;
+        _activated = false;
         _plugin->deactivate(_plugin);
    }
 
@@ -1742,7 +1742,7 @@ CLAP_Plugin::parameter_update ( void *v )
 void
 CLAP_Plugin::update_parameters()
 {
-    EventList& params_out = CLAP_Plugin::params_out();
+    CLAPIMPL::EventList& params_out = CLAP_Plugin::params_out();
     const clap_event_header *eh = params_out.pop();
     for ( ; eh; eh = params_out.pop())
     {
@@ -2503,8 +2503,12 @@ CLAP_Plugin::getState ( void** const dataPtr )
 {
     if (!_plugin)
         return false;
-    
-    std::free(_last_chunk);
+
+    if(_last_chunk)
+    {
+        std::free(_last_chunk);
+        _last_chunk = nullptr;
+    }
 
     clap_ostream_impl stream;
     if (_state->save(_plugin, &stream))
