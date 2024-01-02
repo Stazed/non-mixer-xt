@@ -2450,6 +2450,9 @@ CLAP_Plugin::host_is_audio_thread (
 bool
 CLAP_Plugin::is_main_thread()
 {
+    if(_plug_needs_callback)
+        return false;
+
     return Thread::is( "UI" );
 }
 
