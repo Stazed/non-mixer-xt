@@ -117,11 +117,14 @@ private:
     uint     _x_height;
 
     // Audio buffers
-    clap_audio_buffer _audio_ins;
-    clap_audio_buffer _audio_outs;
-
+    clap_audio_buffer_t *_audio_ins;
+    clap_audio_buffer_t *_audio_outs;
     float ** _audio_in_buffers;
     float ** _audio_out_buffers;
+    std::vector<uint32_t> _audioInChannels;
+    std::vector<uint32_t> _audioOutChannels;
+    uint32_t _audioInBuses;
+    uint32_t _audioOutBuses;
 
     const clap_plugin_t *_plugin;
 

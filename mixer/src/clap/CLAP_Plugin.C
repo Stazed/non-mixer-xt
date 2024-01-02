@@ -66,8 +66,12 @@ CLAP_Plugin::CLAP_Plugin() :
     _x_is_resizable(false),
     _x_width(0),
     _x_height(0),
+    _audio_ins(nullptr),
+    _audio_outs(nullptr),
     _audio_in_buffers(nullptr),
     _audio_out_buffers(nullptr),
+    _audioInBuses(0),
+    _audioOutBuses(0),
     _plugin(nullptr),
     _params_flush(false),
     _params(nullptr),
@@ -128,6 +132,24 @@ CLAP_Plugin::~CLAP_Plugin()
     {
         delete []_audio_out_buffers;
         _audio_out_buffers = nullptr;
+    }
+
+    if ( _audio_ins )
+    {
+        for(unsigned i = 0; i < _audioInBuses; i++)
+        {
+            delete[] _audio_ins[i].data32;
+        }
+        delete[] _audio_ins;
+    }
+
+    if ( _audio_outs )
+    {
+        for(unsigned i = 0; i < _audioOutBuses; i++)
+        {
+            delete[] _audio_outs[i].data32;
+        }
+        delete[] _audio_outs;
     }
 
     for ( unsigned int i = 0; i < note_input.size(); ++i )
@@ -373,9 +395,6 @@ CLAP_Plugin::handle_port_connection_change ( void )
 {
     if ( loaded() )
     {
-        _audio_ins.channel_count = plugin_ins();
-        _audio_outs.channel_count = plugin_outs();
-
         if ( _crosswire )
         {
             for ( int i = 0; i < plugin_ins(); ++i )
@@ -519,39 +538,25 @@ CLAP_Plugin::process_reset()
     _bpm = 120.0f;
     _rolling = false;
 
-    ::memset(&_audio_ins, 0, sizeof(_audio_ins));
-    _audio_ins.channel_count = plugin_ins();
-    _audio_ins.data32 = _audio_in_buffers;
-    _audio_ins.data64 = nullptr;
-    _audio_ins.constant_mask = 0;
-    _audio_ins.latency = 0;
-
-    ::memset(&_audio_outs, 0, sizeof(_audio_outs));
-    _audio_outs.channel_count = plugin_outs();
-    _audio_outs.data32 = _audio_out_buffers;
-    _audio_outs.data64 = nullptr;
-    _audio_outs.constant_mask = 0;
-    _audio_outs.latency = 0;
-
     ::memset(&_process, 0, sizeof(_process));
     ::memset(&_transport, 0, sizeof(_transport));
 
     if ( audio_input.size() )
     {
-        _process.audio_inputs  = &_audio_ins;
-        _process.audio_inputs_count = 1;
+        _process.audio_inputs  = (const clap_audio_buffer_t *) _audio_ins;
+        _process.audio_inputs_count = _audioInBuses;
     }
 
     if ( audio_output.size() )
     {
-        _process.audio_outputs = &_audio_outs;
-        _process.audio_outputs_count = 1;
+        _process.audio_outputs = _audio_outs;
+        _process.audio_outputs_count = _audioOutBuses;
     }
 
     _process.in_events  = _events_in.ins();
     _process.out_events = _events_out.outs();
     _process.transport = &_transport;
-    _process.frames_count = buffer_size();      // FIXME Check
+    _process.frames_count = buffer_size();
     _process.steady_time = 0;
 
     _latency = get_module_latency();
@@ -1036,6 +1041,28 @@ CLAP_Plugin::process ( nframes_t nframes )
             _events_out.clear();
             _process.frames_count  = nframes;
 
+            unsigned j = 0;
+            for (unsigned i = 0; i < _audioInBuses; i++)
+            {
+                for (unsigned k = 0; k < _audio_ins[i].channel_count; k++)
+                {
+                    //DMESSAGE("III = %d: KKK = %d: JJJ = %d", i, k, j);
+                    _audio_ins[i].data32[k] = _audio_in_buffers[j] ;
+                    j++;
+                }
+            }
+
+            j = 0;
+            for (unsigned i = 0; i < _audioOutBuses; i++)
+            {
+                for (unsigned k = 0; k < _audio_outs[i].channel_count; k++)
+                {
+                    //DMESSAGE("III = %d: KKK = %d: JJJ = %d", i, k, j);
+                    _audio_outs[i].data32[k] = _audio_out_buffers[j] ;
+                    j++;
+                }
+            }
+
             _plugin->process(_plugin, &_process);
 
             _process.steady_time += nframes;
@@ -1395,6 +1422,8 @@ CLAP_Plugin::create_audio_ports()
 {
     _plugin_ins = 0;
     _plugin_outs = 0;
+    _audioInBuses = 0;
+    _audioOutBuses = 0;
 
     const clap_plugin_audio_ports_t *audio_ports
         = static_cast<const clap_plugin_audio_ports_t *> (
@@ -1403,12 +1432,13 @@ CLAP_Plugin::create_audio_ports()
     if (audio_ports && audio_ports->count && audio_ports->get)
     {
         clap_audio_port_info info;
-        const uint32_t nins = audio_ports->count(_plugin, true);    // true == input
-        for (uint32_t i = 0; i < nins; ++i)
+        _audioInBuses = audio_ports->count(_plugin, true);    // true == input
+        for (uint32_t i = 0; i < _audioInBuses; ++i)
         {
             ::memset(&info, 0, sizeof(info));
             if (audio_ports->get(_plugin, i, true, &info))
             {
+                _audioInChannels.push_back(info.channel_count);
                 for (unsigned ii = 0; ii < info.channel_count; ++ii)
                 {
                     add_port( Port( this, Port::INPUT, Port::AUDIO, info.name ) );
@@ -1418,12 +1448,16 @@ CLAP_Plugin::create_audio_ports()
             }
         }
 
-        const uint32_t nouts = audio_ports->count(_plugin, false);  // false == output
-        for (uint32_t i = 0; i < nouts; ++i)
+        _audioOutBuses = audio_ports->count(_plugin, false);  // false == output
+        
+     //   DMESSAGE("_audioOutBuses = %u", _audioOutBuses);
+        for (uint32_t i = 0; i < _audioOutBuses; ++i)
         {
             ::memset(&info, 0, sizeof(info));
             if (audio_ports->get(_plugin, i, false, &info))
             {
+                _audioOutChannels.push_back(info.channel_count);
+               // DMESSAGE("Channel count = %u", info.channel_count);
                 for (unsigned ii = 0; ii < info.channel_count; ++ii)
                 {
                     add_port( Port( this, Port::OUTPUT, Port::AUDIO, info.name ) );
@@ -1436,6 +1470,32 @@ CLAP_Plugin::create_audio_ports()
 
     _audio_in_buffers = new float * [_plugin_ins];
     _audio_out_buffers = new float * [_plugin_outs];
+
+    if (_audioInBuses)
+    {
+        _audio_ins = new clap_audio_buffer_t[_audioInBuses];
+        for(unsigned int i = 0; i < _audioInBuses; i++)
+        {
+            _audio_ins[i].channel_count = _audioInChannels[i];
+            _audio_ins[i].data32 = new float *[_audioInChannels[i]]();
+            _audio_ins[i].data64 = nullptr;
+            _audio_ins[i].constant_mask = 0;
+            _audio_ins[i].latency = 0;
+        }
+    }
+
+    if (_audioOutBuses)
+    {
+        _audio_outs = new clap_audio_buffer_t[_audioOutBuses];
+        for(unsigned int i = 0; i < _audioOutBuses; i++)
+        {
+            _audio_outs[i].channel_count = _audioOutChannels[i];
+            _audio_outs[i].data32 = new float *[_audioOutChannels[i]]();
+            _audio_outs[i].data64 = nullptr;
+            _audio_outs[i].constant_mask = 0;
+            _audio_outs[i].latency = 0;
+        }
+    }
 
     MESSAGE( "Plugin has %i inputs and %i outputs", _plugin_ins, _plugin_outs);
 }
