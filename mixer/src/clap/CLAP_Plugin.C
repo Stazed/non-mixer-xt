@@ -40,6 +40,7 @@ const unsigned char  EVENT_NOTE_ON          = 0x90;
 
 static constexpr const HostTimerDetails kTimerFallback   = { CLAP_INVALID_ID, 0, 0 };
 static /*           */ HostTimerDetails kTimerFallbackNC = { CLAP_INVALID_ID, 0, 0 };
+const float F_DEFAULT_MSECS = 0.03f;
 
 
 class Chain;    // forward declaration
@@ -283,7 +284,7 @@ CLAP_Plugin::load_plugin ( Module::Picked picked )
     if( _state )
         _use_custom_data = true;
 
-    Fl::add_timeout( 0.06f, &CLAP_Plugin::parameter_update, this );
+    Fl::add_timeout( F_DEFAULT_MSECS, &CLAP_Plugin::parameter_update, this );
 
     return true;
 }
@@ -1902,7 +1903,7 @@ CLAP_Plugin::update_parameters()
         }
     }
 
-    Fl::repeat_timeout( 0.06f, &CLAP_Plugin::parameter_update, this );
+    Fl::repeat_timeout( F_DEFAULT_MSECS, &CLAP_Plugin::parameter_update, this );
 }
 
 void
@@ -2087,7 +2088,7 @@ CLAP_Plugin::show_custom_ui()
     if (_is_floating)
     {
         _x_is_visible = _gui->show(_plugin);
-        Fl::add_timeout( 0.03f, &CLAP_Plugin::custom_update_ui, this );
+        Fl::add_timeout( F_DEFAULT_MSECS, &CLAP_Plugin::custom_update_ui, this );
         return _x_is_visible;
     }
 
@@ -2098,7 +2099,7 @@ CLAP_Plugin::show_custom_ui()
 
     _gui->show(_plugin);
 
-    Fl::add_timeout( 0.03f, &CLAP_Plugin::custom_update_ui, this );
+    Fl::add_timeout( F_DEFAULT_MSECS, &CLAP_Plugin::custom_update_ui, this );
 
     return true;
 }
@@ -2138,7 +2139,7 @@ CLAP_Plugin::custom_update_ui_x()
 
     if(_x_is_visible)
     {
-        Fl::repeat_timeout( 0.03f, &CLAP_Plugin::custom_update_ui, this );
+        Fl::repeat_timeout( F_DEFAULT_MSECS, &CLAP_Plugin::custom_update_ui, this );
     }
     else
     {
