@@ -112,6 +112,7 @@ Plugin_Chooser::plugin_chooser ( int ninputs )
             if (!o->s_unique_id().empty())
             {
                 picked.s_unique_id = o->s_unique_id();
+                picked.clap_path = o->clap_path();
             }
             break;
         }
@@ -378,7 +379,8 @@ Plugin_Chooser::cb_table ( Fl_Widget *w )
 #ifdef VST3_SUPPORT
             if(::strcmp(_plugin_rows[R]->type.c_str(), "VST3") == 0)
             {
-                _s_unique_id   = _plugin_rows[R]->s_unique_id;
+                _s_unique_id = _plugin_rows[R]->s_unique_id;
+                _clap_path = _plugin_rows[R]->clap_path;
                 _plugin_type = VST3;
             }
 #endif
