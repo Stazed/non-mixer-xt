@@ -1660,62 +1660,16 @@ VST3_Plugin::process_reset()
     m_events_out.clear();
 
     Vst::ProcessSetup setup;
-//    const bool bFreewheel    = pAudioEngine->isFreewheel();
-//    setup.processMode        = (bFreewheel ? Vst::kOffline :Vst::kRealtime);
     setup.processMode        = Vst::kRealtime;
     setup.symbolicSampleSize = Vst::kSample32;
-    setup.maxSamplesPerBlock = buffer_size();      // FIXME Check
+    setup.maxSamplesPerBlock = buffer_size();
     setup.sampleRate         = float(sample_rate());
-//    setup.maxSamplesPerBlock = pAudioEngine->bufferSizeEx();
-//    setup.sampleRate         = float(pAudioEngine->sampleRate());
 
     if (m_processor->setupProcessing(setup) != kResultOk)
         return false;
 
-    if(m_buffers_in != nullptr)
-    {
-        for(int i = 0; i < m_audioInBuses; i++)
-        {
-            delete[] m_buffers_in[i].channelBuffers32;
-        }
-        delete[] m_buffers_in;
-    }
-    
-    if(m_buffers_out != nullptr)
-    {
-        for(int i = 0; i < m_audioOutBuses; i++)
-        {
-            delete[] m_buffers_out[i].channelBuffers32;
-        }
-        delete[] m_buffers_out;
-    }
-
-    // Setup processor audio I/O buffers...
-    if (m_audioInBuses)
-    {
-        m_buffers_in = new Vst::AudioBusBuffers[m_audioInBuses];
-        for(int i = 0; i < m_audioInBuses; i++)
-        {
-            m_buffers_in[i].silenceFlags      = 0;
-            m_buffers_in[i].numChannels       = m_audioInChannels[i];
-            m_buffers_in[i].channelBuffers32  = new float *[m_audioInChannels[i]]();
-        }
-    }
-
-    if (m_audioOutBuses)
-    {
-        m_buffers_out = new Vst::AudioBusBuffers[m_audioOutBuses];
-        for(int i = 0; i < m_audioOutBuses; i++)
-        {
-            m_buffers_out[i].silenceFlags     = 0;
-            m_buffers_out[i].numChannels      = m_audioOutChannels[i];
-            m_buffers_out[i].channelBuffers32 = new float *[m_audioOutChannels[i]]();
-        }
-    }
-
     // Setup processor data struct...
     m_process_data.numSamples             = buffer_size();
-    //m_process_data.numSamples             = pAudioEngine->blockSize();
     m_process_data.symbolicSampleSize     = Vst::kSample32;
 
     if (_plugin_ins > 0) 
@@ -2186,6 +2140,29 @@ VST3_Plugin::create_audio_ports()
 
     _audio_in_buffers = new float * [_plugin_ins]();
     _audio_out_buffers = new float * [_plugin_outs]();
+
+    // Setup processor audio I/O buffers...
+    if (m_audioInBuses)
+    {
+        m_buffers_in = new Vst::AudioBusBuffers[m_audioInBuses];
+        for(int i = 0; i < m_audioInBuses; i++)
+        {
+            m_buffers_in[i].silenceFlags      = 0;
+            m_buffers_in[i].numChannels       = m_audioInChannels[i];
+            m_buffers_in[i].channelBuffers32  = new float *[m_audioInChannels[i]]();
+        }
+    }
+
+    if (m_audioOutBuses)
+    {
+        m_buffers_out = new Vst::AudioBusBuffers[m_audioOutBuses];
+        for(int i = 0; i < m_audioOutBuses; i++)
+        {
+            m_buffers_out[i].silenceFlags     = 0;
+            m_buffers_out[i].numChannels      = m_audioOutChannels[i];
+            m_buffers_out[i].channelBuffers32 = new float *[m_audioOutChannels[i]]();
+        }
+    }
 
     MESSAGE( "Plugin has %i inputs and %i outputs", _plugin_ins, _plugin_outs);
 }
