@@ -115,6 +115,13 @@ public:
     virtual ~VST3_Plugin();
 private:
 
+    // Project loading
+    std::string _plugin_filename;
+    std::string m_iUniqueID;
+    std::string m_sName;
+    void* _last_chunk;
+    std::string _project_file;
+
     // Instance variables.
     void *m_module;
 
@@ -141,12 +148,6 @@ private:
 
     // Processor data.
     Vst::ProcessData m_process_data;
-
-    std::string _plugin_filename;
-    std::string m_iUniqueID;
-    std::string m_sName;
-    void* _last_chunk;
-    std::string _project_file;
 
     std::vector<int32_t> m_audioInChannels;
     std::vector<int32_t> m_audioOutChannels;
