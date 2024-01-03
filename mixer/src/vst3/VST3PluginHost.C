@@ -209,7 +209,10 @@ tresult VST3PluginHost::unregisterTimer ( ITimerHandler *handler )
 
     if ( got != m_timerHandlers.end() )
     {
+        TimerHandlerItem *timer_handler = got->second;
+
         m_timerHandlers.erase(handler);
+        m_timerHandlerItems.push_back(timer_handler);
     }
 
     if (m_timerHandlers.empty())

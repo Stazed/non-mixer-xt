@@ -304,9 +304,9 @@ void VST3_Plugin::EditorFrame::handlePluginUIClosed()
     m_plugin->_x_is_visible = false;
 }
 
-void VST3_Plugin::EditorFrame::handlePluginUIResized(const uint width, const uint height)
+void VST3_Plugin::EditorFrame::handlePluginUIResized(const uint /*width*/, const uint /*height*/)
 {
-    DMESSAGE("Handle Resized W = %d: H = %d", width, height);
+   // DMESSAGE("Handle Resized W = %d: H = %d", width, height);
 
     ViewRect rect0;
     if (m_plugView->getSize(&rect0) != kResultOk)
@@ -552,6 +552,7 @@ VST3_Plugin::~VST3_Plugin()
 
     midi_output.clear();
     midi_input.clear();
+    m_hostContext->clear();
 
     if ( _last_chunk )
         std::free(_last_chunk);
