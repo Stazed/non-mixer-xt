@@ -162,17 +162,17 @@ public:
 
     //--- IRunLoop ---
     //
-    tresult PLUGIN_API registerEventHandler (IEventHandler *handler, FileDescriptor fd) override
-        { return m_plugin->m_hostContext->registerEventHandler(handler, fd); }
+    tresult PLUGIN_API registerEventHandler (IEventHandler *handler, FileDescriptor fd) override;
+      //  { return m_plugin->m_hostContext->registerEventHandler(handler, fd); }
 
-    tresult PLUGIN_API unregisterEventHandler (IEventHandler *handler) override
-        { return m_plugin->m_hostContext->unregisterEventHandler(handler); }
+    tresult PLUGIN_API unregisterEventHandler (IEventHandler *handler) override;
+      //  { return m_plugin->m_hostContext->unregisterEventHandler(handler); }
 
-    tresult PLUGIN_API registerTimer (ITimerHandler *handler, TimerInterval msecs) override
-        { return m_plugin->m_hostContext->registerTimer(handler, msecs); }
+    tresult PLUGIN_API registerTimer (ITimerHandler *handler, TimerInterval msecs) override;
+       // { return m_plugin->m_hostContext->registerTimer(handler, msecs); }
 
-    tresult PLUGIN_API unregisterTimer (ITimerHandler *handler) override
-        { return m_plugin->m_hostContext->unregisterTimer(handler); }
+    tresult PLUGIN_API unregisterTimer (ITimerHandler *handler) override;
+      //  { return m_plugin->m_hostContext->unregisterTimer(handler); }
 
     tresult PLUGIN_API queryInterface (const TUID _iid, void **obj) override
     {
@@ -191,8 +191,85 @@ public:
     uint32 PLUGIN_API addRef  () override { return 1001; }
     uint32 PLUGIN_API release () override { return 1001; }
 
+private:
+
     VST3_Plugin * m_plugin;
+    using TimerID = uint64_t;
+    using EventHandler = IPtr<Linux::IEventHandler>;
+    using TimerHandler = IPtr<Linux::ITimerHandler>;
+    using EventHandlers = std::unordered_map<Linux::FileDescriptor, EventHandler>;
+    using TimerHandlers = std::unordered_map<TimerID, TimerHandler>;
+
+    EventHandlers eventHandlers;
+    TimerHandlers timerHandlers;
 };
+
+//------------------------------------------------------------------------
+inline tresult VST3_Plugin::RunLoop::registerEventHandler (IEventHandler* handler,
+                                                             FileDescriptor fd)
+{
+    if (!handler || eventHandlers.find (fd) != eventHandlers.end ())
+            return kInvalidArgument;
+
+  //  return m_plugin->m_hostContext->registerEventHandler(handler, fd);
+ //   Vst::EditorHost::RunLoop::instance ().registerFileDescriptor (
+ //       fd, [handler] (int fd) { handler->onFDIsSet (fd); });
+
+    eventHandlers.emplace (fd, handler);
+    return kResultTrue;
+}
+
+//------------------------------------------------------------------------
+inline tresult VST3_Plugin::RunLoop::unregisterEventHandler (IEventHandler* handler)
+{
+    if (!handler)
+        return kInvalidArgument;
+
+    auto it = std::find_if (eventHandlers.begin (), eventHandlers.end (),
+            [&] (const auto& elem) { return elem.second == handler; });
+    if (it == eventHandlers.end ())
+        return kResultFalse;
+
+   // return m_plugin->m_hostContext->unregisterEventHandler(handler);
+//    Vst::EditorHost::RunLoop::instance ().unregisterFileDescriptor (it->first);
+
+    eventHandlers.erase (it);
+    return kResultTrue;
+}
+
+//------------------------------------------------------------------------
+inline tresult VST3_Plugin::RunLoop::registerTimer (ITimerHandler* handler,
+                                                      TimerInterval milliseconds)
+{
+    if (!handler || milliseconds == 0)
+        return kInvalidArgument;
+
+  //  return m_plugin->m_hostContext->registerTimer(handler, msecs);
+//    auto id = Vst::EditorHost::RunLoop::instance ().registerTimer (
+//        milliseconds, [handler] (auto) { handler->onTimer (); });
+
+//    timerHandlers.emplace (id, handler);
+    return kResultTrue;
+}
+
+//------------------------------------------------------------------------
+inline tresult VST3_Plugin::RunLoop::unregisterTimer (ITimerHandler* handler)
+{
+    if (!handler)
+        return kInvalidArgument;
+
+    auto it = std::find_if (timerHandlers.begin (), timerHandlers.end (),
+            [&] (const auto& elem) { return elem.second == handler; });
+    if (it == timerHandlers.end ())
+        return kResultFalse;
+
+  //  return m_plugin->m_hostContext->unregisterTimer(handler);
+ //   Vst::EditorHost::RunLoop::instance ().unregisterTimer (it->first);
+
+    timerHandlers.erase (it);
+    return kResultTrue;
+}
+
 
 
 //----------------------------------------------------------------------
