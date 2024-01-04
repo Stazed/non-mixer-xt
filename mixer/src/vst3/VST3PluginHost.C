@@ -147,6 +147,8 @@ int VST3PluginHost::timerInterval (void) const
 
 // IRunLoop stuff...
 //
+//------------------------------------------------------------------------
+#if 0
 tresult VST3PluginHost::registerEventHandler (
 	IEventHandler *handler, FileDescriptor fd )
 {
@@ -170,7 +172,6 @@ tresult VST3PluginHost::unregisterEventHandler ( IEventHandler *handler )
     return kResultOk;
 }
 
-#if 1
 tresult VST3PluginHost::registerTimer (
 	ITimerHandler *handler, TimerInterval msecs )
 {
@@ -220,7 +221,7 @@ tresult VST3PluginHost::unregisterTimer ( ITimerHandler *handler )
 
     return kResultOk;
 }
-
+#endif
 // Executive methods.
 //
 void VST3PluginHost::processTimers (void)
@@ -236,7 +237,6 @@ void VST3PluginHost::processTimers (void)
         }
     }
 }
-#endif
 
 void VST3PluginHost::processEventHandlers (void)
 {

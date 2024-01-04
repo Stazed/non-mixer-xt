@@ -34,6 +34,7 @@
 #include "VST3_Plugin.H"
 #include "../Chain.H"
 #include "Vst3_Discovery.H"
+#include "runloop.h"
 
 const unsigned char  EVENT_NOTE_OFF         = 0x80;
 const unsigned char  EVENT_NOTE_ON          = 0x90;
@@ -157,22 +158,14 @@ class VST3_Plugin::RunLoop : public IRunLoop
 {
 public:
     
-    RunLoop(VST3_Plugin * plug) :
-        m_plugin(plug) {}
+    RunLoop() {}
 
     //--- IRunLoop ---
     //
     tresult PLUGIN_API registerEventHandler (IEventHandler *handler, FileDescriptor fd) override;
-      //  { return m_plugin->m_hostContext->registerEventHandler(handler, fd); }
-
     tresult PLUGIN_API unregisterEventHandler (IEventHandler *handler) override;
-      //  { return m_plugin->m_hostContext->unregisterEventHandler(handler); }
-
     tresult PLUGIN_API registerTimer (ITimerHandler *handler, TimerInterval msecs) override;
-       // { return m_plugin->m_hostContext->registerTimer(handler, msecs); }
-
     tresult PLUGIN_API unregisterTimer (ITimerHandler *handler) override;
-      //  { return m_plugin->m_hostContext->unregisterTimer(handler); }
 
     tresult PLUGIN_API queryInterface (const TUID _iid, void **obj) override
     {
@@ -193,7 +186,7 @@ public:
 
 private:
 
-    VST3_Plugin * m_plugin;
+//    VST3_Plugin * m_plugin;
     using TimerID = uint64_t;
     using EventHandler = IPtr<Linux::IEventHandler>;
     using TimerHandler = IPtr<Linux::ITimerHandler>;
@@ -211,9 +204,8 @@ inline tresult VST3_Plugin::RunLoop::registerEventHandler (IEventHandler* handle
     if (!handler || eventHandlers.find (fd) != eventHandlers.end ())
             return kInvalidArgument;
 
-  //  return m_plugin->m_hostContext->registerEventHandler(handler, fd);
- //   Vst::EditorHost::RunLoop::instance ().registerFileDescriptor (
- //       fd, [handler] (int fd) { handler->onFDIsSet (fd); });
+    Vst::EditorHost::RunLoop::instance ().registerFileDescriptor (
+        fd, [handler] (int fd) { handler->onFDIsSet (fd); });
 
     eventHandlers.emplace (fd, handler);
     return kResultTrue;
@@ -230,8 +222,7 @@ inline tresult VST3_Plugin::RunLoop::unregisterEventHandler (IEventHandler* hand
     if (it == eventHandlers.end ())
         return kResultFalse;
 
-   // return m_plugin->m_hostContext->unregisterEventHandler(handler);
-//    Vst::EditorHost::RunLoop::instance ().unregisterFileDescriptor (it->first);
+    Vst::EditorHost::RunLoop::instance ().unregisterFileDescriptor (it->first);
 
     eventHandlers.erase (it);
     return kResultTrue;
@@ -244,11 +235,10 @@ inline tresult VST3_Plugin::RunLoop::registerTimer (ITimerHandler* handler,
     if (!handler || milliseconds == 0)
         return kInvalidArgument;
 
-  //  return m_plugin->m_hostContext->registerTimer(handler, msecs);
-//    auto id = Vst::EditorHost::RunLoop::instance ().registerTimer (
-//        milliseconds, [handler] (auto) { handler->onTimer (); });
+    auto id = Vst::EditorHost::RunLoop::instance ().registerTimer (
+        milliseconds, [handler] (auto) { handler->onTimer (); });
 
-//    timerHandlers.emplace (id, handler);
+    timerHandlers.emplace (id, handler);
     return kResultTrue;
 }
 
@@ -263,8 +253,7 @@ inline tresult VST3_Plugin::RunLoop::unregisterTimer (ITimerHandler* handler)
     if (it == timerHandlers.end ())
         return kResultFalse;
 
-  //  return m_plugin->m_hostContext->unregisterTimer(handler);
- //   Vst::EditorHost::RunLoop::instance ().unregisterTimer (it->first);
+    Vst::EditorHost::RunLoop::instance ().unregisterTimer (it->first);
 
     timerHandlers.erase (it);
     return kResultTrue;
@@ -286,7 +275,7 @@ public:
         : X11PluginUI(this, resizeable, false), m_plugin(plug), m_plugView(plugView),
                 m_runLoop(nullptr), m_resizing(false)
     {
-        m_runLoop = owned(NEW RunLoop(m_plugin));
+        m_runLoop = owned(NEW RunLoop());
 
         m_plugView->setFrame(this);
 
@@ -1168,11 +1157,11 @@ VST3_Plugin::try_custom_ui()
     // then close everything and restart, only this time nullptr the setFrame.
     // There is a 100% chance that this is not the way it should be done, but
     // until we find the correct way, this seems to work!
-    if(!_timer_registered)
-    {
-        if( !init_custom_ui(false) )
-            return false;
-    }
+//    if(!_timer_registered)
+//    {
+ //       if( !init_custom_ui(false) )
+ //           return false;
+ //   }
 
     _bEditorCreated = show_custom_ui();
 
@@ -1261,7 +1250,8 @@ VST3_Plugin::closeEditor (void)
 
     m_plugView = nullptr;
 
-    if (!_timer_registered)
+    Vst::EditorHost::RunLoop::instance ().stop();
+//    if (!_timer_registered)
         m_hostContext->stopTimer();
 
 #ifdef CONFIG_VST3_XCB
@@ -1272,12 +1262,16 @@ VST3_Plugin::closeEditor (void)
 bool
 VST3_Plugin::show_custom_ui()
 {
-    m_pEditorFrame->show();
-    m_pEditorFrame->focus();
+ //   m_pEditorFrame->show();
+ //   m_pEditorFrame->focus();
 
     _x_is_visible = true;
+    
+  //  Vst::EditorHost::RunLoop::instance().setDisplay((Display*) m_pEditorFrame->getDisplay());
+    Vst::EditorHost::RunLoop::instance ().start();
 
-    if (!_timer_registered)
+ //   Vst::EditorHost::RunLoop::instance ().registerWindow( m_pEditorFrame->getPtr(), m_pEditorFrame->idle() );
+ //   if (!_timer_registered)
         m_hostContext->startTimer(DEFAULT_MSECS);
 
     return true;
@@ -1318,8 +1312,10 @@ VST3_Plugin::custom_update_ui_x()
 {
     m_pEditorFrame->idle();
 
-    if (_timer_registered)
+ //   if (_timer_registered)
+ //   {
         m_hostContext->processTimers();
+ //   }
 
     // FIXME
 //    if (_event_handlers_registered)

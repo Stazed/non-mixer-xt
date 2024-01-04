@@ -96,13 +96,13 @@ public:
     int timerInterval() const;
 
     // RunLoop adapters...
-    //
+#if 0
     tresult registerEventHandler (IEventHandler *handler, FileDescriptor fd);
     tresult unregisterEventHandler (IEventHandler *handler);
 
     tresult registerTimer (ITimerHandler *handler, TimerInterval msecs);
     tresult unregisterTimer (ITimerHandler *handler);
-
+#endif
     // Executive methods.
     //
     void processTimers();
