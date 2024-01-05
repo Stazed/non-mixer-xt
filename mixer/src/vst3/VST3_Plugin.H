@@ -31,9 +31,10 @@
 
 #include "../Mixer_Strip.H"
 #include "../Plugin_Module.H"
-#include "../x11/X11PluginUI.H"
 #include "Vst3_Impl.H"
 #include "VST3PluginHost.H"
+
+class EditorFrame;
 
 extern std::string project_directory;
 extern std::string export_import_strip;
@@ -93,6 +94,8 @@ public:
 
     bool show_custom_ui();
     bool hide_custom_ui();
+    EditorFrame * get_editor_frame(){ return m_pEditorFrame;}
+    void set_visibility(bool vis){_x_is_visible = vis;}
 
     void add_ntk_timer(int i_msecs);
     void remove_ntk_timer();
@@ -176,7 +179,6 @@ private:
     bool _event_handlers_registered;
     IPtr<IPlugView> m_plugView;
 
-    class EditorFrame;
     class RunLoop;
     EditorFrame  *m_pEditorFrame;
 

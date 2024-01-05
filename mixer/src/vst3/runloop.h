@@ -45,6 +45,7 @@
 #include <unordered_map>
 #include <vector>
 
+class VST3_Plugin;
 //------------------------------------------------------------------------
 namespace Steinberg {
 namespace Vst {
@@ -94,8 +95,7 @@ public:
 	using FileDescriptorCallback = std::function<void (int fd)>;
 
 	static RunLoop& instance ();
-
-	void setDisplay (Display* display);
+	void setPlugin (VST3_Plugin  *plug);
 
 	void registerWindow (XID window, const EventCallback& callback);
 	void unregisterWindow (XID window);
@@ -108,6 +108,7 @@ public:
 
 	void start ();
 	void stop ();
+        void proccess_timers();
 
 private:
 	void select (timeval* timeout = nullptr);
@@ -119,6 +120,9 @@ private:
 	WindowMap map;
 	FileDescriptorCallbacks fileDescriptors;
 	TimerProcessor timerProcessor;
+
+        timeval m_selectTimeout;
+        VST3_Plugin  *m_Plugin;
 
 	Display* display {nullptr};
 	bool running {false};

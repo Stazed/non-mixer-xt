@@ -25,6 +25,8 @@
 
 #if defined(LV2_SUPPORT) || defined(CLAP_SUPPORT) || defined(VST3_SUPPORT)
 
+#include <X11/Xlib.h>
+
 typedef void (*EventProcPtr)(XEvent* ev);
 
 class X11PluginUI

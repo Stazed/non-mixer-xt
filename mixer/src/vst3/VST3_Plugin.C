@@ -31,6 +31,7 @@
 #include <FL/fl_ask.H>  // fl_alert()
 
 #include "../../../nonlib/dsp.h"
+#include "EditorFrame.h"
 #include "VST3_Plugin.H"
 #include "../Chain.H"
 #include "Vst3_Discovery.H"
@@ -149,237 +150,6 @@ uint32 PLUGIN_API VST3_Plugin::Handler::addRef (void)
 
 uint32 PLUGIN_API VST3_Plugin::Handler::release (void)
     { return 1000; }
-
-//----------------------------------------------------------------------
-// class VST3_Plugin::RunLoop -- VST3 plugin editor run-loop impl.
-//
-
-class VST3_Plugin::RunLoop : public IRunLoop
-{
-public:
-    
-    RunLoop() {}
-
-    //--- IRunLoop ---
-    //
-    tresult PLUGIN_API registerEventHandler (IEventHandler *handler, FileDescriptor fd) override;
-    tresult PLUGIN_API unregisterEventHandler (IEventHandler *handler) override;
-    tresult PLUGIN_API registerTimer (ITimerHandler *handler, TimerInterval msecs) override;
-    tresult PLUGIN_API unregisterTimer (ITimerHandler *handler) override;
-
-    tresult PLUGIN_API queryInterface (const TUID _iid, void **obj) override
-    {
-        if (FUnknownPrivate::iidEqual(_iid, FUnknown::iid) ||
-                FUnknownPrivate::iidEqual(_iid, IRunLoop::iid))
-        {
-            addRef();
-            *obj = this;
-            return kResultOk;
-        }
-
-        *obj = nullptr;
-        return kNoInterface;
-    }
-
-    uint32 PLUGIN_API addRef  () override { return 1001; }
-    uint32 PLUGIN_API release () override { return 1001; }
-
-private:
-
-//    VST3_Plugin * m_plugin;
-    using TimerID = uint64_t;
-    using EventHandler = IPtr<Linux::IEventHandler>;
-    using TimerHandler = IPtr<Linux::ITimerHandler>;
-    using EventHandlers = std::unordered_map<Linux::FileDescriptor, EventHandler>;
-    using TimerHandlers = std::unordered_map<TimerID, TimerHandler>;
-
-    EventHandlers eventHandlers;
-    TimerHandlers timerHandlers;
-};
-
-//------------------------------------------------------------------------
-inline tresult VST3_Plugin::RunLoop::registerEventHandler (IEventHandler* handler,
-                                                             FileDescriptor fd)
-{
-    if (!handler || eventHandlers.find (fd) != eventHandlers.end ())
-            return kInvalidArgument;
-
-    Vst::EditorHost::RunLoop::instance ().registerFileDescriptor (
-        fd, [handler] (int fd) { handler->onFDIsSet (fd); });
-
-    eventHandlers.emplace (fd, handler);
-    return kResultTrue;
-}
-
-//------------------------------------------------------------------------
-inline tresult VST3_Plugin::RunLoop::unregisterEventHandler (IEventHandler* handler)
-{
-    if (!handler)
-        return kInvalidArgument;
-
-    auto it = std::find_if (eventHandlers.begin (), eventHandlers.end (),
-            [&] (const auto& elem) { return elem.second == handler; });
-    if (it == eventHandlers.end ())
-        return kResultFalse;
-
-    Vst::EditorHost::RunLoop::instance ().unregisterFileDescriptor (it->first);
-
-    eventHandlers.erase (it);
-    return kResultTrue;
-}
-
-//------------------------------------------------------------------------
-inline tresult VST3_Plugin::RunLoop::registerTimer (ITimerHandler* handler,
-                                                      TimerInterval milliseconds)
-{
-    if (!handler || milliseconds == 0)
-        return kInvalidArgument;
-
-    auto id = Vst::EditorHost::RunLoop::instance ().registerTimer (
-        milliseconds, [handler] (auto) { handler->onTimer (); });
-
-    timerHandlers.emplace (id, handler);
-    return kResultTrue;
-}
-
-//------------------------------------------------------------------------
-inline tresult VST3_Plugin::RunLoop::unregisterTimer (ITimerHandler* handler)
-{
-    if (!handler)
-        return kInvalidArgument;
-
-    auto it = std::find_if (timerHandlers.begin (), timerHandlers.end (),
-            [&] (const auto& elem) { return elem.second == handler; });
-    if (it == timerHandlers.end ())
-        return kResultFalse;
-
-    Vst::EditorHost::RunLoop::instance ().unregisterTimer (it->first);
-
-    timerHandlers.erase (it);
-    return kResultTrue;
-}
-
-
-
-//----------------------------------------------------------------------
-// class qtractorVst3Plugin::EditorFrame -- VST3 plugin editor frame interface impl.
-//
-
-class VST3_Plugin::EditorFrame : public X11PluginUI, public IPlugFrame,
-    private X11PluginUI::Callback
-{
-public:
-
-    // Constructor.
-    EditorFrame (VST3_Plugin * plug, IPlugView *plugView, bool resizeable) 
-        : X11PluginUI(this, resizeable, false), m_plugin(plug), m_plugView(plugView),
-                m_runLoop(nullptr), m_resizing(false)
-    {
-        m_runLoop = owned(NEW RunLoop());
-
-        m_plugView->setFrame(this);
-
-        ViewRect rect;
-        if (m_plugView->getSize(&rect) == kResultOk)
-        {
-            m_resizing = true;
-            setSize(rect.right - rect.left, rect.bottom - rect.top, false, false);
-            m_resizing = false;
-        }
-    }
-
-    // Destructor.
-    virtual ~EditorFrame ()
-    {
-        m_plugView->setFrame(nullptr);
-        m_runLoop = nullptr;
-    }
-    
-    // Accessors.
-    IPlugView *plugView () const
-            { return m_plugView; }
-    RunLoop *runLoop () const
-            { return m_runLoop; }
-
-    //--- IPlugFrame ---
-    //
-    tresult PLUGIN_API resizeView (IPlugView *plugView, ViewRect *rect) override
-    {
-        if (!rect || !plugView || plugView != m_plugView)
-                return kInvalidArgument;
-
-        if (m_resizing)
-            return kResultFalse;
-
-        m_resizing = true;
-
-        int width = rect->right  - rect->left;
-        int height = rect->bottom - rect->top;
-        DMESSAGE("EditorFrame[%p]::resizeView(%p, %p) size=(%d, %d)",
-                this, plugView, rect, width, height);
-
-      //  if (m_plugView->canResize() == kResultOk)
-        setSize(width, height, false, false);
-
-        m_resizing = false;
-
-        ViewRect rect0;
-        if (m_plugView->getSize(&rect0) != kResultOk)
-            return kInternalError;
-
-        int width0 = rect0.right  - rect0.left;
-        int height0 = rect0.bottom - rect0.top;
-
-        if ( (width0 != width) && (height0 != height) )
-            m_plugView->onSize(&rect0);
-
-        return kResultOk;
-    }
-
-    tresult PLUGIN_API queryInterface (const TUID _iid, void **obj) override
-    {
-        if (FUnknownPrivate::iidEqual(_iid, FUnknown::iid) ||
-                FUnknownPrivate::iidEqual(_iid, IPlugFrame::iid))
-        {
-            addRef();
-            *obj = this;
-            return kResultOk;
-        }
-
-        return m_runLoop->queryInterface(_iid, obj);
-    }
-
-    uint32 PLUGIN_API addRef  () override { return 1002; }
-    uint32 PLUGIN_API release () override { return 1002; }
-
-private:
-
-    // Instance members.
-    VST3_Plugin * m_plugin;
-    IPlugView *m_plugView;
-    IPtr<RunLoop> m_runLoop;
-    bool m_resizing;
-    
-protected:
-    void handlePluginUIClosed() override;
-    void handlePluginUIResized(const uint width, const uint height) override;
-};
-
-void VST3_Plugin::EditorFrame::handlePluginUIClosed()
-{
-    m_plugin->_x_is_visible = false;
-}
-
-void VST3_Plugin::EditorFrame::handlePluginUIResized(const uint /*width*/, const uint /*height*/)
-{
-   // DMESSAGE("Handle Resized W = %d: H = %d", width, height);
-
-    ViewRect rect0;
-    if (m_plugView->getSize(&rect0) != kResultOk)
-        return;
-
-    m_plugView->onSize(&rect0);
-}
 
 //------------------------------------------------------------------------
 // VST3_Plugin::Stream - Memory based stream for IBStream impl.
@@ -545,6 +315,7 @@ VST3_Plugin::VST3_Plugin() :
     _plug_type = Type_VST3;
     
     m_hostContext = new VST3PluginHost(this);
+    Vst::EditorHost::RunLoop::instance ().setPlugin(this);
 
     log_create();
 }
@@ -1157,11 +928,11 @@ VST3_Plugin::try_custom_ui()
     // then close everything and restart, only this time nullptr the setFrame.
     // There is a 100% chance that this is not the way it should be done, but
     // until we find the correct way, this seems to work!
-//    if(!_timer_registered)
-//    {
- //       if( !init_custom_ui(false) )
- //           return false;
- //   }
+    if(!_timer_registered)
+    {
+        if( !init_custom_ui(false) )
+            return false;
+    }
 
     _bEditorCreated = show_custom_ui();
 
@@ -1233,6 +1004,8 @@ VST3_Plugin::openEditor (void)
 void
 VST3_Plugin::closeEditor (void)
 {
+    m_hostContext->stopTimer();
+
     if (m_pEditorFrame != nullptr)
         m_pEditorFrame->hide();
 
@@ -1250,10 +1023,6 @@ VST3_Plugin::closeEditor (void)
 
     m_plugView = nullptr;
 
-    Vst::EditorHost::RunLoop::instance ().stop();
-//    if (!_timer_registered)
-        m_hostContext->stopTimer();
-
 #ifdef CONFIG_VST3_XCB
     m_hostContext.closeXcbConnection();
 #endif
@@ -1262,17 +1031,14 @@ VST3_Plugin::closeEditor (void)
 bool
 VST3_Plugin::show_custom_ui()
 {
- //   m_pEditorFrame->show();
- //   m_pEditorFrame->focus();
+    m_pEditorFrame->show();
+    m_pEditorFrame->focus();
 
     _x_is_visible = true;
-    
-  //  Vst::EditorHost::RunLoop::instance().setDisplay((Display*) m_pEditorFrame->getDisplay());
+
     Vst::EditorHost::RunLoop::instance ().start();
 
- //   Vst::EditorHost::RunLoop::instance ().registerWindow( m_pEditorFrame->getPtr(), m_pEditorFrame->idle() );
- //   if (!_timer_registered)
-        m_hostContext->startTimer(DEFAULT_MSECS);
+    m_hostContext->startTimer(DEFAULT_MSECS);
 
     return true;
 }
@@ -1312,14 +1078,8 @@ VST3_Plugin::custom_update_ui_x()
 {
     m_pEditorFrame->idle();
 
- //   if (_timer_registered)
- //   {
-        m_hostContext->processTimers();
- //   }
-
-    // FIXME
-//    if (_event_handlers_registered)
-//        m_hostContext->processEventHandlers();
+    if (_timer_registered)
+        Vst::EditorHost::RunLoop::instance ().proccess_timers();
 
     if(_x_is_visible)
     {

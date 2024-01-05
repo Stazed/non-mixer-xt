@@ -36,8 +36,12 @@
 //-----------------------------------------------------------------------------
 
 #include "runloop.h"
+#include "VST3_Plugin.H"
+#include "EditorFrame.h"
 #include <algorithm>
 #include <iostream>
+
+class EditorFrame;
 
 //------------------------------------------------------------------------
 namespace Steinberg {
@@ -54,9 +58,9 @@ RunLoop& RunLoop::instance ()
 }
 
 //------------------------------------------------------------------------
-void RunLoop::setDisplay (Display* display)
+void RunLoop::setPlugin (VST3_Plugin  *plug)
 {
-	this->display = display;
+    this->m_Plugin = plug;
 }
 
 //------------------------------------------------------------------------
@@ -148,7 +152,8 @@ bool RunLoop::handleEvents ()
 //------------------------------------------------------------------------
 TimerID RunLoop::registerTimer (TimerInterval interval, const TimerCallback& callback)
 {
-	return timerProcessor.registerTimer (interval, callback);
+    m_Plugin->timer_registered(true);
+    return timerProcessor.registerTimer (interval, callback);
 }
 
 //------------------------------------------------------------------------
@@ -165,44 +170,65 @@ bool timeValEmpty (timeval& val)
 
 //------------------------------------------------------------------------
 void RunLoop::start ()
-{printf("RunLoop::start ()\n");
-	using namespace std::chrono;
-	using clock = high_resolution_clock;
+{
+   // using namespace std::chrono;
+   // using clock = high_resolution_clock;
 
-	running = true;
+   // running = true;
 
 //	auto fd = XConnectionNumber (display);
 //	registerFileDescriptor (fd, [this] (int) { handleEvents (); });
 
 //	XSync (display, false);
 //	handleEvents ();
-	timeval selectTimeout {};
+    timeval selectTimeout {};
+    m_selectTimeout = selectTimeout;
+#if 0
+    // This is the main timeout loop == FL::timeout
+    while (running)
+    {
+            // process file descriptors??
+            select (timeValEmpty (selectTimeout) ? nullptr : &selectTimeout);
 
-        // This is the main timeout loop == FL::timeout
-	while (running && !map.empty ())
-	{
-                // process file descriptors??
-		select (timeValEmpty (selectTimeout) ? nullptr : &selectTimeout);
+            // This is process timers
+            auto nextFireTime = timerProcessor.handleTimersAndReturnNextFireTimeInMs ();
 
-                // This is process timers
-		auto nextFireTime = timerProcessor.handleTimersAndReturnNextFireTimeInMs ();
-
-		if (nextFireTime == TimerProcessor::noTimers)
-		{
-			selectTimeout = {};
-		}
-		else
-		{
-			selectTimeout.tv_sec = nextFireTime / 1000;
-			selectTimeout.tv_usec = (nextFireTime - (selectTimeout.tv_sec * 1000)) * 1000;
-		}
-	}
+            if (nextFireTime == TimerProcessor::noTimers)
+            {
+                    selectTimeout = {};
+            }
+            else
+            {
+                    selectTimeout.tv_sec = nextFireTime / 1000;
+                    selectTimeout.tv_usec = (nextFireTime - (selectTimeout.tv_sec * 1000)) * 1000;
+            }
+    }
+#endif
 }
 
 //------------------------------------------------------------------------
 void RunLoop::stop ()
 {
 	running = false;
+}
+
+void RunLoop::proccess_timers()
+{
+     // process file descriptors??
+  //  select (timeValEmpty (m_selectTimeout) ? nullptr : &m_selectTimeout); // FIXME
+
+    // This is process timers
+    auto nextFireTime = timerProcessor.handleTimersAndReturnNextFireTimeInMs ();
+
+    if (nextFireTime == TimerProcessor::noTimers)
+    {
+        m_selectTimeout = {};
+    }
+    else
+    {
+        m_selectTimeout.tv_sec = nextFireTime / 1000;
+        m_selectTimeout.tv_usec = (nextFireTime - (m_selectTimeout.tv_sec * 1000)) * 1000;
+    }
 }
 
 //------------------------------------------------------------------------
