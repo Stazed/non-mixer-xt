@@ -95,6 +95,8 @@ public:
 	using FileDescriptorCallback = std::function<void (int fd)>;
 
 	static RunLoop& instance ();
+        
+        void setDisplay (Display* display);
 	void setPlugin (VST3_Plugin  *plug);
 
 	void registerWindow (XID window, const EventCallback& callback);

@@ -58,6 +58,12 @@ RunLoop& RunLoop::instance ()
 }
 
 //------------------------------------------------------------------------
+void RunLoop::setDisplay (Display* display)
+{
+	this->display = display;
+}
+
+//------------------------------------------------------------------------
 void RunLoop::setPlugin (VST3_Plugin  *plug)
 {
     this->m_Plugin = plug;
@@ -81,7 +87,8 @@ void RunLoop::unregisterWindow (XID window)
 //------------------------------------------------------------------------
 void RunLoop::registerFileDescriptor (int fd, const FileDescriptorCallback& callback)
 {
-	fileDescriptors.emplace (fd, callback);
+    DMESSAGE("RunLoop::registerFileDescriptor");
+    fileDescriptors.emplace (fd, callback);
 }
 
 //------------------------------------------------------------------------
@@ -107,7 +114,12 @@ void RunLoop::select (timeval* timeout)
 		FD_SET (fd, &exceptFDs);
 		nfds = std::max (nfds, fd);
 	}
-
+#if 0
+        if(timeout)
+            DMESSAGE("timeout.sec %ld: usec = %ld", timeout->tv_sec, timeout->tv_usec);
+        else
+            DMESSAGE("timeout is nullptr");
+#endif
 	int result = ::select (nfds, &readFDs, &writeFDs, nullptr, timeout);
 
 	if (result > 0)
