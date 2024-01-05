@@ -44,11 +44,11 @@
 #include "../x11/X11PluginUI.H"
 #include "VST3_Plugin.H"
 
-class RunLoop : public IRunLoop
+class ARunLoop : public IRunLoop
 {
 public:
     
-    RunLoop() {}
+    ARunLoop(VST3_Plugin *plug) : m_plugin(plug) {}
 
     //--- IRunLoop ---
     //
@@ -76,7 +76,7 @@ public:
 
 private:
 
-//    VST3_Plugin * m_plugin;
+    VST3_Plugin * m_plugin;
     using TimerID = uint64_t;
     using EventHandler = IPtr<Linux::IEventHandler>;
     using TimerHandler = IPtr<Linux::ITimerHandler>;
@@ -98,7 +98,7 @@ public:
         : X11PluginUI(this, resizeable, false, true), m_plugin(plug), m_plugView(plugView),
                 m_runLoop(nullptr), m_resizing(false)
     {
-        m_runLoop = owned(NEW RunLoop());
+        m_runLoop = owned(NEW ARunLoop(m_plugin));
 
         m_plugView->setFrame(this);
 
@@ -121,7 +121,7 @@ public:
     // Accessors.
     IPlugView *plugView () const
             { return m_plugView; }
-    RunLoop *runLoop () const
+    ARunLoop *runLoop () const
             { return m_runLoop; }
 
     //--- IPlugFrame ---
@@ -180,7 +180,7 @@ private:
     // Instance members.
     VST3_Plugin * m_plugin;
     IPlugView *m_plugView;
-    IPtr<RunLoop> m_runLoop;
+    IPtr<ARunLoop> m_runLoop;
     bool m_resizing;
     
 protected:

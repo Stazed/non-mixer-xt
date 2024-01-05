@@ -33,6 +33,7 @@
 #include "../Plugin_Module.H"
 #include "Vst3_Impl.H"
 #include "VST3PluginHost.H"
+#include "runloop.h"
 
 class EditorFrame;
 
@@ -95,6 +96,7 @@ public:
     bool show_custom_ui();
     bool hide_custom_ui();
     EditorFrame * get_editor_frame(){ return m_pEditorFrame;}
+    Vst::EditorHost::RunLoop* get_runloop(){return m_runloop;}
     void set_visibility(bool vis){_x_is_visible = vis;}
 
     void add_ntk_timer(int i_msecs);
@@ -179,8 +181,8 @@ private:
     bool _event_handlers_registered;
     IPtr<IPlugView> m_plugView;
 
-    class RunLoop;
     EditorFrame  *m_pEditorFrame;
+    Vst::EditorHost::RunLoop *m_runloop;
 
     // Identififier-parameter map.
     std::unordered_map<uint32_t, unsigned long> m_paramIds;

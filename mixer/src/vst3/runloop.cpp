@@ -48,40 +48,26 @@ namespace Steinberg {
 namespace Vst {
 namespace EditorHost {
 
-using LockGuard = std::lock_guard<std::recursive_mutex>;
-
-//------------------------------------------------------------------------
-RunLoop& RunLoop::instance ()
-{
-	static RunLoop gInstance;
-	return gInstance;
-}
 
 //------------------------------------------------------------------------
 void RunLoop::setDisplay (Display* display)
 {
-	this->display = display;
-}
-
-//------------------------------------------------------------------------
-void RunLoop::setPlugin (VST3_Plugin  *plug)
-{
-    this->m_Plugin = plug;
+    this->display = display;
 }
 
 //------------------------------------------------------------------------
 void RunLoop::registerWindow (XID window, const EventCallback& callback)
 {
-	map.emplace (window, callback);
+    map.emplace (window, callback);
 }
 
 //------------------------------------------------------------------------
 void RunLoop::unregisterWindow (XID window)
 {
-	auto it = map.find (window);
-	if (it == map.end ())
-		return;
-	map.erase (it);
+    auto it = map.find (window);
+    if (it == map.end ())
+            return;
+    map.erase (it);
 }
 
 //------------------------------------------------------------------------
@@ -105,62 +91,62 @@ void RunLoop::unregisterFileDescriptor (int fd)
 //------------------------------------------------------------------------
 void RunLoop::select (timeval* timeout)
 {
-	int nfds = 0;
-	fd_set readFDs = {}, writeFDs = {}, exceptFDs = {};
+    int nfds = 0;
+    fd_set readFDs = {}, writeFDs = {}, exceptFDs = {};
 
-	for (auto& e : fileDescriptors)
-	{
-		int fd = e.first;
-		FD_SET (fd, &readFDs);
-		FD_SET (fd, &writeFDs);
-		FD_SET (fd, &exceptFDs);
-		nfds = std::max (nfds, fd);
-	}
+    for (auto& e : fileDescriptors)
+    {
+        int fd = e.first;
+        FD_SET (fd, &readFDs);
+        FD_SET (fd, &writeFDs);
+        FD_SET (fd, &exceptFDs);
+        nfds = std::max (nfds, fd);
+    }
 #if 0
-        if(timeout)
-            DMESSAGE("timeout.sec %ld: usec = %ld", timeout->tv_sec, timeout->tv_usec);
-        else
-            DMESSAGE("timeout is nullptr");
+    if(timeout)
+        DMESSAGE("timeout.sec %ld: usec = %ld", timeout->tv_sec, timeout->tv_usec);
+    else
+        DMESSAGE("timeout is nullptr");
 #endif
-	int result = ::select (nfds, &readFDs, &writeFDs, nullptr, timeout);
+    int result = ::select (nfds, &readFDs, &writeFDs, nullptr, timeout);
 
-	if (result > 0)
-	{
-		for (auto& e : fileDescriptors)
-		{
-			if (FD_ISSET (e.first, &readFDs) || FD_ISSET (e.first, &writeFDs) ||
-			    FD_ISSET (e.first, &exceptFDs))
-				e.second (e.first);
-		}
-	}
+    if (result > 0)
+    {
+        for (auto& e : fileDescriptors)
+        {
+            if (FD_ISSET (e.first, &readFDs) || FD_ISSET (e.first, &writeFDs) ||
+                FD_ISSET (e.first, &exceptFDs))
+                    e.second (e.first);
+        }
+    }
 }
 
 //------------------------------------------------------------------------
 bool RunLoop::handleEvents ()
 {
-	auto count = XPending (display);
-	if (count == 0)
-		return false;
-	for (auto i = 0; i < count; ++i)
-	{
-		XEvent event {};
-		XNextEvent (display, &event);
-		auto it = map.find (event.xany.window);
-		if (it != map.end ())
-		{
-			it->second (event);
-			if (event.type == DestroyNotify)
-			{
-				map.erase (it);
-			}
-		}
-		else
-		{
-			XPutBackEvent (display, &event);
-			break;
-		}
-	}
-	return true;
+    auto count = XPending (display);
+    if (count == 0)
+            return false;
+    for (auto i = 0; i < count; ++i)
+    {
+        XEvent event {};
+        XNextEvent (display, &event);
+        auto it = map.find (event.xany.window);
+        if (it != map.end ())
+        {
+            it->second (event);
+            if (event.type == DestroyNotify)
+            {
+                    map.erase (it);
+            }
+        }
+        else
+        {
+            XPutBackEvent (display, &event);
+            break;
+        }
+    }
+    return true;
 }
 
 //------------------------------------------------------------------------
@@ -173,13 +159,13 @@ TimerID RunLoop::registerTimer (TimerInterval interval, const TimerCallback& cal
 //------------------------------------------------------------------------
 void RunLoop::unregisterTimer (TimerID id)
 {
-	timerProcessor.unregisterTimer (id);
+    timerProcessor.unregisterTimer (id);
 }
 
 //------------------------------------------------------------------------
 bool timeValEmpty (timeval& val)
 {
-	return val.tv_sec == 0 && val.tv_usec == 0;
+    return val.tv_sec == 0 && val.tv_usec == 0;
 }
 
 //------------------------------------------------------------------------

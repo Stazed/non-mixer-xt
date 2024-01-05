@@ -310,12 +310,12 @@ VST3_Plugin::VST3_Plugin() :
     _i_miliseconds(DEFAULT_MSECS),
     _event_handlers_registered(false),
     m_plugView(nullptr),
-    m_pEditorFrame(nullptr)
+    m_pEditorFrame(nullptr),
+    m_runloop(nullptr)
 {
     _plug_type = Type_VST3;
-    
     m_hostContext = new VST3PluginHost(this);
-    Vst::EditorHost::RunLoop::instance ().setPlugin(this);
+    m_runloop = new Vst::EditorHost::RunLoop(this);
 
     log_create();
 }
@@ -393,6 +393,8 @@ VST3_Plugin::~VST3_Plugin()
 
     if ( _last_chunk )
         std::free(_last_chunk);
+
+    delete m_runloop;
 
     /* This is the case when the user manually removes a Plugin. We set the
      _is_removed = true, and add any custom data directory to the remove directories
@@ -1005,7 +1007,7 @@ VST3_Plugin::closeEditor (void)
 
     m_plugView = nullptr;
 
-    Vst::EditorHost::RunLoop::instance ().stop();
+    m_runloop->stop();
 
 #ifdef CONFIG_VST3_XCB
     m_hostContext.closeXcbConnection();
@@ -1015,21 +1017,21 @@ VST3_Plugin::closeEditor (void)
 bool
 VST3_Plugin::show_custom_ui()
 {
-    Vst::EditorHost::RunLoop::instance ().setDisplay( (Display*) m_pEditorFrame->getDisplay());
+    m_runloop->setDisplay( (Display*) m_pEditorFrame->getDisplay());
     m_pEditorFrame->show();
     m_pEditorFrame->focus();
 
     _x_is_visible = true;
     
-    Vst::EditorHost::RunLoop::instance ().registerWindow (
+    m_runloop->registerWindow (
         (XID) m_pEditorFrame->getparentwin(),
         [this] (const XEvent& e) { return m_pEditorFrame->handlePlugEvent (e); });
                 
-    Vst::EditorHost::RunLoop::instance ().registerWindow (
+    m_runloop->registerWindow (
         (XID) m_pEditorFrame->getPtr(),
         [this] (const XEvent& e) { return m_pEditorFrame->handlePlugEvent (e); });
 
-    Vst::EditorHost::RunLoop::instance ().start(_event_handlers_registered );
+    m_runloop->start(_event_handlers_registered );
 
     m_hostContext->startTimer(DEFAULT_MSECS);
 
@@ -1071,7 +1073,7 @@ VST3_Plugin::custom_update_ui_x()
 {
     m_pEditorFrame->idle();
 
-    Vst::EditorHost::RunLoop::instance ().proccess_timers(_timer_registered, _event_handlers_registered );
+    m_runloop->proccess_timers(_timer_registered, _event_handlers_registered );
 
     if(_x_is_visible)
     {

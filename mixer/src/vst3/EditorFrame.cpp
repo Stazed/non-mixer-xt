@@ -27,14 +27,14 @@
 #include "runloop.h"
 
 //------------------------------------------------------------------------
-inline tresult RunLoop::registerEventHandler (IEventHandler* handler,
+inline tresult ARunLoop::registerEventHandler (IEventHandler* handler,
                                                              FileDescriptor fd)
 {
     DMESSAGE("HAVE REGISTER FROM PLUGIN");
     if (!handler || eventHandlers.find (fd) != eventHandlers.end ())
             return kInvalidArgument;
 
-    Vst::EditorHost::RunLoop::instance ().registerFileDescriptor (
+    m_plugin->get_runloop()->registerFileDescriptor (
         fd, [handler] (int fd) { handler->onFDIsSet (fd); });
 
     eventHandlers.emplace (fd, handler);
@@ -42,7 +42,7 @@ inline tresult RunLoop::registerEventHandler (IEventHandler* handler,
 }
 
 //------------------------------------------------------------------------
-inline tresult RunLoop::unregisterEventHandler (IEventHandler* handler)
+inline tresult ARunLoop::unregisterEventHandler (IEventHandler* handler)
 {
     if (!handler)
         return kInvalidArgument;
@@ -52,20 +52,20 @@ inline tresult RunLoop::unregisterEventHandler (IEventHandler* handler)
     if (it == eventHandlers.end ())
         return kResultFalse;
 
-    Vst::EditorHost::RunLoop::instance ().unregisterFileDescriptor (it->first);
+    m_plugin->get_runloop()->unregisterFileDescriptor (it->first);
 
     eventHandlers.erase (it);
     return kResultTrue;
 }
 
 //------------------------------------------------------------------------
-inline tresult RunLoop::registerTimer (ITimerHandler* handler,
+inline tresult ARunLoop::registerTimer (ITimerHandler* handler,
                                                       TimerInterval milliseconds)
 {
     if (!handler || milliseconds == 0)
         return kInvalidArgument;
 
-    auto id = Vst::EditorHost::RunLoop::instance ().registerTimer (
+    auto id = m_plugin->get_runloop()->registerTimer (
         milliseconds, [handler] (auto) { handler->onTimer (); });
 
     timerHandlers.emplace (id, handler);
@@ -73,7 +73,7 @@ inline tresult RunLoop::registerTimer (ITimerHandler* handler,
 }
 
 //------------------------------------------------------------------------
-inline tresult RunLoop::unregisterTimer (ITimerHandler* handler)
+inline tresult ARunLoop::unregisterTimer (ITimerHandler* handler)
 {
     if (!handler)
         return kInvalidArgument;
@@ -83,7 +83,7 @@ inline tresult RunLoop::unregisterTimer (ITimerHandler* handler)
     if (it == timerHandlers.end ())
         return kResultFalse;
 
-    Vst::EditorHost::RunLoop::instance ().unregisterTimer (it->first);
+    m_plugin->get_runloop()->unregisterTimer (it->first);
 
     timerHandlers.erase (it);
     return kResultTrue;

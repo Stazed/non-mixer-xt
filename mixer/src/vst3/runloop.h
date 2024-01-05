@@ -91,26 +91,26 @@ private:
 class RunLoop
 {
 public:
-	using EventCallback = std::function<bool (const XEvent& event)>;
-	using FileDescriptorCallback = std::function<void (int fd)>;
+    
+    RunLoop(VST3_Plugin  *plug) : m_Plugin(plug) {}
 
-	static RunLoop& instance ();
-        
-        void setDisplay (Display* display);
-	void setPlugin (VST3_Plugin  *plug);
+    using EventCallback = std::function<bool (const XEvent& event)>;
+    using FileDescriptorCallback = std::function<void (int fd)>;
 
-	void registerWindow (XID window, const EventCallback& callback);
-	void unregisterWindow (XID window);
+    void setDisplay (Display* display);
 
-	void registerFileDescriptor (int fd, const FileDescriptorCallback& callback);
-	void unregisterFileDescriptor (int fd);
+    void registerWindow (XID window, const EventCallback& callback);
+    void unregisterWindow (XID window);
 
-	TimerID registerTimer (TimerInterval interval, const TimerCallback& callback);
-	void unregisterTimer (TimerID id);
+    void registerFileDescriptor (int fd, const FileDescriptorCallback& callback);
+    void unregisterFileDescriptor (int fd);
 
-	void start (bool have_register);
-	void stop ();
-        void proccess_timers(bool have_timers, bool have_events);
+    TimerID registerTimer (TimerInterval interval, const TimerCallback& callback);
+    void unregisterTimer (TimerID id);
+
+    void start (bool have_register);
+    void stop ();
+    void proccess_timers(bool have_timers, bool have_events);
 
 private:
 	void select (timeval* timeout = nullptr);
