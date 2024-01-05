@@ -40,7 +40,7 @@ public:
         virtual void handlePluginUIResized(const uint width, const uint height) = 0;
     };
 
-    X11PluginUI(Callback* const cb, const bool isResizable, const bool canMonitorChildren);
+    X11PluginUI(Callback* const cb, const bool isResizable, const bool canMonitorChildren, bool is_vst3 = false);
 
     ~X11PluginUI();
 
@@ -54,7 +54,9 @@ public:
     void setTransientWinId(const uintptr_t winId);
     void setChildWindow(void* const winId);
     void* getPtr() const;
+    void* getparentwin() const;
     void* getDisplay() const;
+    bool handlePlugEvent (const XEvent& event);
 
 protected:
     Callback* fCallback;
@@ -67,6 +69,7 @@ private:
     Display* fDisplay;
     Window   fHostWindow;
     Window   fChildWindow;
+    Window   plugParentWindow {};
     bool     fChildWindowConfigured;
     bool     fChildWindowMonitoring;
     bool     fIsVisible;
@@ -75,6 +78,7 @@ private:
     uint     fMinimumWidth;
     uint     fMinimumHeight;
     EventProcPtr fEventProc;
+    bool     fIsVst3;
 
 };
 

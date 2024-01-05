@@ -95,7 +95,7 @@ public:
 
     // Constructor.
     EditorFrame (VST3_Plugin * plug, IPlugView *plugView, bool resizeable) 
-        : X11PluginUI(this, resizeable, false), m_plugin(plug), m_plugView(plugView),
+        : X11PluginUI(this, resizeable, false, true), m_plugin(plug), m_plugView(plugView),
                 m_runLoop(nullptr), m_resizing(false)
     {
         m_runLoop = owned(NEW RunLoop());

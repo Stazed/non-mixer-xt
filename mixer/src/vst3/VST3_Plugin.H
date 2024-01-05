@@ -87,7 +87,7 @@ public:
 
     // Open/close editor widget.
     bool try_custom_ui();
-    bool init_custom_ui(bool have_timers);
+    bool init_custom_ui();
     // Editor controller methods.
     bool openEditor (void);
     void closeEditor (void);

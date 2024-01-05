@@ -50,6 +50,7 @@ set (ProgSources
     src/vst3/VST3PluginHost.C
     src/vst3/Timer.C
     src/vst3/runloop.cpp
+    src/vst3/EditorFrame.cpp
     src/Meter_Indicator_Module.C
     src/Meter_Module.C
     src/Mixer.C

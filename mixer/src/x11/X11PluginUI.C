@@ -56,7 +56,7 @@ static int temporaryErrorHandler(Display*, XErrorEvent*)
     return 0;
 }
 
-X11PluginUI::X11PluginUI(Callback* const cb, const bool isResizable, const bool canMonitorChildren):
+X11PluginUI::X11PluginUI(Callback* const cb, const bool isResizable, const bool canMonitorChildren, bool is_vst3):
     fCallback(cb),
     fIsIdling(false),
     fIsResizable(isResizable),
@@ -70,7 +70,8 @@ X11PluginUI::X11PluginUI(Callback* const cb, const bool isResizable, const bool 
     fSetSizeCalledAtLeastOnce(false),
     fMinimumWidth(0),
     fMinimumHeight(0),
-    fEventProc(nullptr)
+    fEventProc(nullptr),
+    fIsVst3(is_vst3)
  {
     fDisplay = XOpenDisplay(nullptr);
     NON_SAFE_ASSERT_RETURN(fDisplay != nullptr,);
@@ -119,6 +120,14 @@ X11PluginUI::X11PluginUI(Callback* const cb, const bool isResizable, const bool 
     };
     XChangeProperty(fDisplay, fHostWindow, _wt, XA_ATOM, 32, PropModeReplace, (const uchar*)&_wts, 2);
 
+    if(fIsVst3)
+    {
+        plugParentWindow =
+                XCreateWindow (fDisplay, fHostWindow, 0, 0, 300, 300, 0, DefaultDepth(fDisplay, screen),
+                               InputOutput, CopyFromParent, CWBorderPixel|CWEventMask, &attr);
+
+        XMapWindow (fDisplay, plugParentWindow);
+    }
 //    if (parentId != 0)
 //        setTransientWinId(parentId);
 }
@@ -472,9 +481,21 @@ X11PluginUI::getPtr() const
 }
 
 void*
+X11PluginUI::getparentwin() const
+{
+    return (void*)plugParentWindow;
+}
+
+void*
 X11PluginUI::getDisplay() const
 {
     return fDisplay;
+}
+
+bool
+X11PluginUI::handlePlugEvent (const XEvent& event)
+{
+    return false;
 }
 
 void

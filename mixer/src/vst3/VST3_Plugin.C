@@ -919,20 +919,8 @@ VST3_Plugin::try_custom_ui()
         }
     }
 
-    if( !init_custom_ui(true) )
+    if( !init_custom_ui() )
         return false;
-
-    // UUUUGGGLY HACK - for some reason plugins that do not register timers,
-    // do not show properly if setFrame is set. So, we can't seem to check for
-    // timer registration unless we attached above. If no timers are registered
-    // then close everything and restart, only this time nullptr the setFrame.
-    // There is a 100% chance that this is not the way it should be done, but
-    // until we find the correct way, this seems to work!
-    if(!_timer_registered)
-    {
-        if( !init_custom_ui(false) )
-            return false;
-    }
 
     _bEditorCreated = show_custom_ui();
 
@@ -940,7 +928,7 @@ VST3_Plugin::try_custom_ui()
 }
 
 bool
-VST3_Plugin::init_custom_ui(bool have_timers)
+VST3_Plugin::init_custom_ui()
 {
     if (!openEditor())
     {
@@ -967,12 +955,6 @@ VST3_Plugin::init_custom_ui(bool have_timers)
     m_pEditorFrame->setTitle(label());
 
     void *wid = m_pEditorFrame->getPtr();
-
-    if (!have_timers)
-    {
-        DMESSAGE("NO TIMERS - %s", label());
-        m_plugView->setFrame(nullptr);  // The UUUGGLY HACK
-    }
     
     if (plugView->attached(wid, kPlatformTypeX11EmbedWindowID) != kResultOk)
     {
@@ -1023,6 +1005,8 @@ VST3_Plugin::closeEditor (void)
 
     m_plugView = nullptr;
 
+    Vst::EditorHost::RunLoop::instance ().stop();
+
 #ifdef CONFIG_VST3_XCB
     m_hostContext.closeXcbConnection();
 #endif
@@ -1031,12 +1015,21 @@ VST3_Plugin::closeEditor (void)
 bool
 VST3_Plugin::show_custom_ui()
 {
+    Vst::EditorHost::RunLoop::instance ().setDisplay( (Display*) m_pEditorFrame->getDisplay());
     m_pEditorFrame->show();
     m_pEditorFrame->focus();
 
     _x_is_visible = true;
+    
+    Vst::EditorHost::RunLoop::instance ().registerWindow (
+        (XID) m_pEditorFrame->getparentwin(),
+        [this] (const XEvent& e) { return m_pEditorFrame->handlePlugEvent (e); });
+                
+    Vst::EditorHost::RunLoop::instance ().registerWindow (
+        (XID) m_pEditorFrame->getPtr(),
+        [this] (const XEvent& e) { return m_pEditorFrame->handlePlugEvent (e); });
 
-    Vst::EditorHost::RunLoop::instance ().start();
+    Vst::EditorHost::RunLoop::instance ().start(_event_handlers_registered );
 
     m_hostContext->startTimer(DEFAULT_MSECS);
 
@@ -1078,8 +1071,7 @@ VST3_Plugin::custom_update_ui_x()
 {
     m_pEditorFrame->idle();
 
-    if (_timer_registered)
-        Vst::EditorHost::RunLoop::instance ().proccess_timers();
+    Vst::EditorHost::RunLoop::instance ().proccess_timers(_timer_registered, _event_handlers_registered );
 
     if(_x_is_visible)
     {

@@ -30,6 +30,7 @@
 inline tresult RunLoop::registerEventHandler (IEventHandler* handler,
                                                              FileDescriptor fd)
 {
+    DMESSAGE("HAVE REGISTER FROM PLUGIN");
     if (!handler || eventHandlers.find (fd) != eventHandlers.end ())
             return kInvalidArgument;
 

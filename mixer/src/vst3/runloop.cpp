@@ -87,17 +87,19 @@ void RunLoop::unregisterWindow (XID window)
 //------------------------------------------------------------------------
 void RunLoop::registerFileDescriptor (int fd, const FileDescriptorCallback& callback)
 {
-    DMESSAGE("RunLoop::registerFileDescriptor");
+    DMESSAGE("RunLoop::registerFileDescriptor = %d", fd);
+    m_Plugin->event_handlers_registered(true);
     fileDescriptors.emplace (fd, callback);
 }
 
 //------------------------------------------------------------------------
 void RunLoop::unregisterFileDescriptor (int fd)
 {
-	auto it = fileDescriptors.find (fd);
-	if (it == fileDescriptors.end ())
-		return;
-	fileDescriptors.erase (it);
+    DMESSAGE("RunLoop::unregisterFileDescriptor = %d", fd);
+    auto it = fileDescriptors.find (fd);
+    if (it == fileDescriptors.end ())
+            return;
+    fileDescriptors.erase (it);
 }
 
 //------------------------------------------------------------------------
@@ -181,53 +183,36 @@ bool timeValEmpty (timeval& val)
 }
 
 //------------------------------------------------------------------------
-void RunLoop::start ()
+void RunLoop::start (bool have_register)
 {
-   // using namespace std::chrono;
-   // using clock = high_resolution_clock;
+    if(have_register && (display != nullptr))
+    {
+        auto fd = XConnectionNumber (display);
+        registerFileDescriptor (fd, [this] (int) { handleEvents (); });
 
-   // running = true;
+        XSync (display, false);
+        handleEvents ();
+    }
 
-//	auto fd = XConnectionNumber (display);
-//	registerFileDescriptor (fd, [this] (int) { handleEvents (); });
-
-//	XSync (display, false);
-//	handleEvents ();
     timeval selectTimeout {};
     m_selectTimeout = selectTimeout;
-#if 0
-    // This is the main timeout loop == FL::timeout
-    while (running)
-    {
-            // process file descriptors??
-            select (timeValEmpty (selectTimeout) ? nullptr : &selectTimeout);
-
-            // This is process timers
-            auto nextFireTime = timerProcessor.handleTimersAndReturnNextFireTimeInMs ();
-
-            if (nextFireTime == TimerProcessor::noTimers)
-            {
-                    selectTimeout = {};
-            }
-            else
-            {
-                    selectTimeout.tv_sec = nextFireTime / 1000;
-                    selectTimeout.tv_usec = (nextFireTime - (selectTimeout.tv_sec * 1000)) * 1000;
-            }
-    }
-#endif
 }
 
 //------------------------------------------------------------------------
 void RunLoop::stop ()
 {
-	running = false;
+    fileDescriptors.clear();
+    running = false;
 }
 
-void RunLoop::proccess_timers()
+void RunLoop::proccess_timers(bool have_timers, bool have_events)
 {
      // process file descriptors??
-  //  select (timeValEmpty (m_selectTimeout) ? nullptr : &m_selectTimeout); // FIXME
+    if(have_events)
+        select (timeValEmpty (m_selectTimeout) ? nullptr : &m_selectTimeout);
+
+    if(!have_timers)
+        return;
 
     // This is process timers
     auto nextFireTime = timerProcessor.handleTimersAndReturnNextFireTimeInMs ();

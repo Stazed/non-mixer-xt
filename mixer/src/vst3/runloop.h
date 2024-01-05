@@ -108,9 +108,9 @@ public:
 	TimerID registerTimer (TimerInterval interval, const TimerCallback& callback);
 	void unregisterTimer (TimerID id);
 
-	void start ();
+	void start (bool have_register);
 	void stop ();
-        void proccess_timers();
+        void proccess_timers(bool have_timers, bool have_events);
 
 private:
 	void select (timeval* timeout = nullptr);
