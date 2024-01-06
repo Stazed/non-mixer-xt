@@ -80,7 +80,7 @@ private:
     Display* fDisplay;
     Window   fHostWindow;
     Window   fChildWindow;
-    Window   plugParentWindow;
+    Window   plugParentWindow;  // VST3
     bool     fChildWindowConfigured;
     bool     fChildWindowMonitoring;
     bool     fIsVisible;

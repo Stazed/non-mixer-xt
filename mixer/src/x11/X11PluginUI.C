@@ -481,6 +481,9 @@ X11PluginUI::getPtr() const
     return (void*)fHostWindow;
 }
 
+/**
+ Used only by VST3
+ */
 void*
 X11PluginUI::getparentwin() const
 {
@@ -493,8 +496,12 @@ X11PluginUI::getDisplay() const
     return fDisplay;
 }
 
+/**
+ Dummy VST3 event callback for file descriptors. Just returns false as all the
+ event handling is done in the idle() callback.
+ */
 bool
-X11PluginUI::handlePlugEvent (const XEvent& event)
+X11PluginUI::handlePlugEvent (const XEvent& /*event*/)
 {
     return false;
 }

@@ -139,7 +139,7 @@ bool RunLoop::handleEvents ()
             it->second (event);
             if (event.type == DestroyNotify)
             {
-                    map.erase (it);
+                map.erase (it);
             }
         }
         else
@@ -190,12 +190,11 @@ void RunLoop::start (bool have_register)
 void RunLoop::stop ()
 {
     fileDescriptors.clear();
-    running = false;
 }
 
 void RunLoop::proccess_timers(bool have_timers, bool have_events)
 {
-     // process file descriptors??
+     // process file descriptors
     if(have_events)
         select (timeValEmpty (m_selectTimeout) ? nullptr : &m_selectTimeout);
 
@@ -221,94 +220,95 @@ void RunLoop::proccess_timers(bool have_timers, bool have_events)
 //------------------------------------------------------------------------
 uint64_t TimerProcessor::handleTimersAndReturnNextFireTimeInMs ()
 {
-	using std::chrono::time_point_cast;
+    using std::chrono::time_point_cast;
 
-	if (timers.empty ())
-		return noTimers;
+    if (timers.empty ())
+        return noTimers;
 
-	auto current = time_point_cast<Millisecond> (Clock::now ());
+    auto current = time_point_cast<Millisecond> (Clock::now ());
 
-	std::vector<TimerID> timersToFire;
-	for (auto& timer : timers)
-	{
-		if (timer.nextFireTime > current)
-			break;
-		timersToFire.push_back (timer.id);
-		updateTimerNextFireTime (timer, current);
-	}
+    std::vector<TimerID> timersToFire;
+    for (auto& timer : timers)
+    {
+        if (timer.nextFireTime > current)
+            break;
+        timersToFire.push_back (timer.id);
+        updateTimerNextFireTime (timer, current);
+    }
 
-	for (auto id : timersToFire)
-	{
-		for (auto& timer : timers)
-		{
-			if (timer.id == id)
-			{
-				timer.callback (timer.id);
-				break;
-			}
-		}
-	}
-	if (timersToFire.empty ())
-		return noTimers;
+    for (auto id : timersToFire)
+    {
+        for (auto& timer : timers)
+        {
+            if (timer.id == id)
+            {
+                timer.callback (timer.id);
+                break;
+            }
+        }
+    }
+    if (timersToFire.empty ())
+        return noTimers;
 
-	sortTimers ();
+    sortTimers ();
 
-	auto nextFireTime = timers.front ().nextFireTime;
-	current = now ();
-	if (nextFireTime < current)
-		return 0;
-	return (nextFireTime - current).count ();
+    auto nextFireTime = timers.front ().nextFireTime;
+    current = now ();
+
+    if (nextFireTime < current)
+        return 0;
+    return (nextFireTime - current).count ();
 }
 
 //------------------------------------------------------------------------
 void TimerProcessor::updateTimerNextFireTime (Timer& timer, TimePoint current)
 {
-	timer.nextFireTime = current + Millisecond (timer.interval);
+    timer.nextFireTime = current + Millisecond (timer.interval);
 }
 
 //------------------------------------------------------------------------
 void TimerProcessor::sortTimers ()
 {
-	std::sort (timers.begin (), timers.end (),
-	           [] (const Timer& t1, const Timer& t2) { return t1.nextFireTime < t2.nextFireTime; });
+    std::sort (timers.begin (), timers.end (),
+            [] (const Timer& t1, const Timer& t2) { return t1.nextFireTime < t2.nextFireTime; });
 }
 
 //------------------------------------------------------------------------
 auto TimerProcessor::now () -> TimePoint
 {
-	using std::chrono::time_point_cast;
+    using std::chrono::time_point_cast;
 
-	return time_point_cast<Millisecond> (Clock::now ());
+    return time_point_cast<Millisecond> (Clock::now ());
 }
 
 //------------------------------------------------------------------------
 auto TimerProcessor::registerTimer (TimerInterval interval, const TimerCallback& callback)
     -> TimerID
 {
-	auto timerId = ++timerIdCounter;
-	Timer timer;
-	timer.id = timerId;
-	timer.callback = callback;
-	timer.interval = interval;
-	updateTimerNextFireTime (timer, now ());
+    auto timerId = ++timerIdCounter;
+    Timer timer;
+    timer.id = timerId;
+    timer.callback = callback;
+    timer.interval = interval;
+    updateTimerNextFireTime (timer, now ());
 
-	timers.emplace_back (std::move (timer));
-	sortTimers ();
+    timers.emplace_back (std::move (timer));
+    sortTimers ();
 
-	return timerId;
+    return timerId;
 }
 
 //------------------------------------------------------------------------
 void TimerProcessor::unregisterTimer (TimerID id)
 {
-	for (auto it = timers.begin (), end = timers.end (); it != end; ++it)
-	{
-		if (it->id == id)
-		{
-			timers.erase (it);
-			break;
-		}
-	}
+    for (auto it = timers.begin (), end = timers.end (); it != end; ++it)
+    {
+        if (it->id == id)
+        {
+            timers.erase (it);
+            break;
+        }
+    }
 }
 
 //------------------------------------------------------------------------

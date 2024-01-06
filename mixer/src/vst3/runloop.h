@@ -62,31 +62,31 @@ using TimerCallback = std::function<void (TimerID)>;
 class TimerProcessor
 {
 public:
-	TimerID registerTimer (TimerInterval interval, const TimerCallback& callback);
-	void unregisterTimer (TimerID id);
+    TimerID registerTimer (TimerInterval interval, const TimerCallback& callback);
+    void unregisterTimer (TimerID id);
 
-	static constexpr uint64_t noTimers = std::numeric_limits<uint64_t>::max ();
-	uint64_t handleTimersAndReturnNextFireTimeInMs ();
+    static constexpr uint64_t noTimers = std::numeric_limits<uint64_t>::max ();
+    uint64_t handleTimersAndReturnNextFireTimeInMs ();
 
 private:
-	using Clock = std::chrono::steady_clock;
-	using Millisecond = std::chrono::milliseconds;
-	using TimePoint = std::chrono::time_point<Clock, Millisecond>;
+    using Clock = std::chrono::steady_clock;
+    using Millisecond = std::chrono::milliseconds;
+    using TimePoint = std::chrono::time_point<Clock, Millisecond>;
 
-	struct Timer
-	{
-		TimerID id;
-		TimerInterval interval;
-		TimerCallback callback;
-		TimePoint nextFireTime;
-	};
-	using Timers = std::vector<Timer>;
-	Timers timers;
-	TimerID timerIdCounter {0};
+    struct Timer
+    {
+        TimerID id;
+        TimerInterval interval;
+        TimerCallback callback;
+        TimePoint nextFireTime;
+    };
+    using Timers = std::vector<Timer>;
+    Timers timers;
+    TimerID timerIdCounter {0};
 
-	void updateTimerNextFireTime (Timer& timer, TimePoint current);
-	void sortTimers ();
-	TimePoint now ();
+    void updateTimerNextFireTime (Timer& timer, TimePoint current);
+    void sortTimers ();
+    TimePoint now ();
 };
 
 //------------------------------------------------------------------------
@@ -115,21 +115,20 @@ public:
     void proccess_timers(bool have_timers, bool have_events);
 
 private:
-	void select (timeval* timeout = nullptr);
-	bool handleEvents ();
+    void select (timeval* timeout = nullptr);
+    bool handleEvents ();
 
-	using WindowMap = std::unordered_map<XID, EventCallback>;
-	using FileDescriptorCallbacks = std::unordered_map<int, FileDescriptorCallback>;
+    using WindowMap = std::unordered_map<XID, EventCallback>;
+    using FileDescriptorCallbacks = std::unordered_map<int, FileDescriptorCallback>;
 
-	WindowMap map;
-	FileDescriptorCallbacks fileDescriptors;
-	TimerProcessor timerProcessor;
+    WindowMap map;
+    FileDescriptorCallbacks fileDescriptors;
+    TimerProcessor timerProcessor;
 
-        timeval m_selectTimeout;
-        VST3_Plugin  *m_Plugin;
+    timeval m_selectTimeout;
+    VST3_Plugin  *m_Plugin;
 
-	Display* display {nullptr};
-	bool running {false};
+    Display* display {nullptr};
 };
 
 //------------------------------------------------------------------------
