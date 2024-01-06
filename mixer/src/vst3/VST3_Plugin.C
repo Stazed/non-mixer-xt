@@ -2233,10 +2233,7 @@ VST3_Plugin::vst3_activate ( Vst::IComponent *component,
         Vst::BusInfo busInfo;
         if (component->getBusInfo(type, direction, i, busInfo) == kResultOk)
         {
-            if (busInfo.flags & Vst::BusInfo::kDefaultActive)
-            {
-                component->activateBus(type, direction, i, state);
-            }
+            component->activateBus(type, direction, i, state);
         }
     }
 }
