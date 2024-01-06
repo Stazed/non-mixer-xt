@@ -2127,6 +2127,19 @@ VST3_Plugin::create_control_ports()
                 }
             }
         }
+
+        if (bypassable()) {
+        Port pb( this, Port::INPUT, Port::CONTROL, "dsp/bypass" );
+        pb.hints.type = Port::Hints::BOOLEAN;
+        pb.hints.ranged = true;
+        pb.hints.maximum = 1.0f;
+        pb.hints.minimum = 0.0f;
+        pb.hints.dimensions = 1;
+        pb.hints.visible = false;
+        pb.hints.invisible_with_signals = true;
+        pb.connect_to( _bypass );
+        add_port( pb );
+        }
     }
     
     DMESSAGE ("Control INS = %d: Control OUTS = %d", control_ins, control_outs);
