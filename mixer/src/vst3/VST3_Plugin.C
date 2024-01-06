@@ -974,10 +974,6 @@ VST3_Plugin::openEditor (void)
 {
     closeEditor();
 
-#ifdef CONFIG_VST3_XCB
-    m_hostContext.openXcbConnection();
-#endif
-
     Vst::IEditController *controller = m_controller;
     if (controller)
         m_plugView = owned(controller->createView(Vst::ViewType::kEditor));
@@ -1008,10 +1004,6 @@ VST3_Plugin::closeEditor (void)
     m_plugView = nullptr;
 
     m_runloop->stop();
-
-#ifdef CONFIG_VST3_XCB
-    m_hostContext.closeXcbConnection();
-#endif
 }
 
 bool

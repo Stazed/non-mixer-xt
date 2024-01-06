@@ -95,24 +95,6 @@ public:
 
     int timerInterval() const;
 
-    // RunLoop adapters...
-#if 0
-    tresult registerEventHandler (IEventHandler *handler, FileDescriptor fd);
-    tresult unregisterEventHandler (IEventHandler *handler);
-
-    tresult registerTimer (ITimerHandler *handler, TimerInterval msecs);
-    tresult unregisterTimer (ITimerHandler *handler);
-#endif
-    // Executive methods.
-    //
-    void processTimers();
-    void processEventHandlers();
-
-#ifdef CONFIG_VST3_XCB
-    void openXcbConnection();
-    void closeXcbConnection();
-#endif
-
     // Common host time-keeper context accessors.
     Vst::ProcessContext *processContext();
 
@@ -143,30 +125,6 @@ private:
     Timer *m_pTimer;
 
     unsigned int m_timerRefCount;
-
-    struct TimerHandlerItem
-    {
-        TimerHandlerItem(ITimerHandler *h, TimerInterval i)
-                : handler(h), interval(i), counter(0) {}
-
-        void reset(TimerInterval i)
-            { interval = i; counter = 0; }
-
-        ITimerHandler *handler;
-        TimerInterval  interval;
-        TimerInterval  counter;
-    };
-
-    std::unordered_map<ITimerHandler *, TimerHandlerItem *> m_timerHandlers;
-
-    std::list<TimerHandlerItem *> m_timerHandlerItems;
-
-    std::unordered_map<IEventHandler *, int> m_eventHandlers;
-
-#ifdef CONFIG_VST3_XCB
-    xcb_connection_t *m_pXcbConnection;
-    int               m_iXcbFileDescriptor;
-#endif
 
     Vst::ProcessContext m_processContext;
     unsigned int        m_processRefCount;
