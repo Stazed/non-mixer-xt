@@ -25,6 +25,8 @@
 
 #pragma once
 
+#ifdef VST3_SUPPORT
+
 #include "pluginterfaces/vst/ivstpluginterfacesupport.h"
 #include "pluginterfaces/vst/ivstprocesscontext.h"
 #include "pluginterfaces/vst/ivstparameterchanges.h"
@@ -189,3 +191,4 @@ protected:
 };
 
 
+#endif  // VST3_SUPPORT

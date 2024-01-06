@@ -35,6 +35,8 @@
 // OF THE POSSIBILITY OF SUCH DAMAGE.
 //-----------------------------------------------------------------------------
 
+#ifdef VST3_SUPPORT
+
 #include "runloop.h"
 #include "VST3_Plugin.H"
 #include "EditorFrame.h"
@@ -313,3 +315,6 @@ void TimerProcessor::unregisterTimer (TimerID id)
 } // EditorHost
 } // Vst
 } // Steinberg
+
+
+#endif  // VST3_SUPPORT

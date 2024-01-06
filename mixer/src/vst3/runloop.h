@@ -37,6 +37,8 @@
 
 #pragma once
 
+#ifdef VST3_SUPPORT
+
 #include <X11/Xlib.h>
 #include <chrono>
 #include <functional>
@@ -134,3 +136,5 @@ private:
 } // EditorHost
 } // Vst
 } // Steinberg
+
+#endif  // VST3_SUPPORT

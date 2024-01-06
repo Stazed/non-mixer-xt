@@ -23,6 +23,8 @@
  * Created on January 4, 2024, 6:01 PM
  */
 
+#ifdef VST3_SUPPORT
+
 #include "EditorFrame.h"
 #include "runloop.h"
 
@@ -115,3 +117,5 @@ void EditorFrame::handlePluginUIResized(const uint width, const uint height)
         m_plugView->onSize(&rect0);
     }
 }
+
+#endif  // VST3_SUPPORT
