@@ -29,6 +29,16 @@
 
 typedef void (*EventProcPtr)(XEvent* ev);
 
+using Coord = int32_t;
+
+//------------------------------------------------------------------------
+struct Size
+{
+    Coord width;
+    Coord height;
+};;
+
+
 class X11PluginUI
 {
 public:
@@ -57,6 +67,7 @@ public:
     void* getparentwin() const;
     void* getDisplay() const;
     bool handlePlugEvent (const XEvent& event);
+    Size getSize () const;
 
 protected:
     Callback* fCallback;
@@ -69,7 +80,7 @@ private:
     Display* fDisplay;
     Window   fHostWindow;
     Window   fChildWindow;
-    Window   plugParentWindow {};
+    Window   plugParentWindow;
     bool     fChildWindowConfigured;
     bool     fChildWindowMonitoring;
     bool     fIsVisible;

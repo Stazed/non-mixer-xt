@@ -63,6 +63,7 @@ X11PluginUI::X11PluginUI(Callback* const cb, const bool isResizable, const bool 
     fDisplay(nullptr),
     fHostWindow(0),
     fChildWindow(0),
+    plugParentWindow(0),
     fChildWindowConfigured(false),
     fChildWindowMonitoring(isResizable || canMonitorChildren),
     fIsVisible(false),
@@ -496,6 +497,20 @@ bool
 X11PluginUI::handlePlugEvent (const XEvent& event)
 {
     return false;
+}
+
+//------------------------------------------------------------------------
+Size X11PluginUI::getSize () const
+{
+    ::Window root;
+    int x, y;
+    unsigned int width, height;
+    unsigned int border_width;
+    unsigned int depth;
+
+    XGetGeometry (fDisplay, fHostWindow, &root, &x, &y, &width, &height, &border_width, &depth);
+
+    return {static_cast<int> (width), static_cast<int> (height)};
 }
 
 void

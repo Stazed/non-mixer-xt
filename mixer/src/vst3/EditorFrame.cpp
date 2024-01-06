@@ -92,12 +92,10 @@ inline tresult ARunLoop::unregisterTimer (ITimerHandler* handler)
 
 void EditorFrame::handlePluginUIClosed()
 {
-  //  Vst::EditorHost::RunLoop::instance().stop();
-  //  m_plugin->hide_custom_ui();
     m_plugin->set_visibility(false);
 }
 
-void EditorFrame::handlePluginUIResized(const uint /*width*/, const uint /*height*/)
+void EditorFrame::handlePluginUIResized(const uint width, const uint height)
 {
    // DMESSAGE("Handle Resized W = %d: H = %d", width, height);
 
@@ -105,5 +103,15 @@ void EditorFrame::handlePluginUIResized(const uint /*width*/, const uint /*heigh
     if (m_plugView->getSize(&rect0) != kResultOk)
         return;
 
-    m_plugView->onSize(&rect0);
+    Size a_size = getSize();
+
+ //   DMESSAGE("rect0 W = %d: H = %d", rect0.getHeight(), rect0.getHeight());
+ //   DMESSAGE("a_size W = %d: H = %d", a_size.width, a_size.height);
+    
+    if(rect0.getWidth() != a_size.width || rect0.getHeight() != a_size.height)
+    {
+        rect0.right = rect0.left + width;
+        rect0.bottom = rect0.top + height;
+        m_plugView->onSize(&rect0);
+    }
 }
