@@ -283,9 +283,7 @@ public:
     //
     tresult PLUGIN_API getName (Vst::String128 name) override
     {
-        //const QString str("qtractor_plugin_scan");
-        const std::string str("non-mixer-xt");
-        //const int nsize = qMin(str.length(), 127);
+        const std::string str("non-mixer-xt-discovery");
         const int nsize = str.length() < 127 ? str.length() : 127;
         ::memcpy(name, str.c_str(), nsize -1);
         name[nsize] = 0;
