@@ -1142,7 +1142,7 @@ VST3_Plugin::find_vst_binary()
     DMESSAGE("Restore = %s", restore.c_str());
 
     auto sp = vst3_discovery::installedVST3s();   // This to get paths
-    vst3_discovery::qtractor_vst3_scan plugin;
+    vst3_discovery::vst3_discovery_scan plugin;
 
     for (const auto &q : sp)
     {

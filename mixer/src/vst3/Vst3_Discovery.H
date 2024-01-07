@@ -48,20 +48,20 @@ std::vector<std::filesystem::path> validVST3SearchPaths();
 
 
 //----------------------------------------------------------------------
-// class qtractor_vst3_scan -- VST3 plugin (bare bones) interface.
+// class vst3_discovery_scan -- VST3 plugin (bare bones) interface.
 //
 
 std::string UIDtoString (bool comFormat, const char* _data);
 
-class qtractor_vst3_scan
+class vst3_discovery_scan
 {
 public:
 
     // Constructor.
-    qtractor_vst3_scan();
+    vst3_discovery_scan();
 
     // destructor.
-    ~qtractor_vst3_scan();
+    ~vst3_discovery_scan();
 
     // File loader.
     bool open(const std::string& sFilename);
@@ -137,7 +137,7 @@ private:
 #endif
 };
 
-void qtractor_vst3_scan_file ( const std::string& sFilename, std::list<Plugin_Module::Plugin_Info> & vst3pr );
+void vst3_discovery_scan_file ( const std::string& sFilename, std::list<Plugin_Module::Plugin_Info> & vst3pr );
 
 }   // namespace vst3_discovery
 

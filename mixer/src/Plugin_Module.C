@@ -579,7 +579,7 @@ Plugin_Module::scan_VST3_plugins( std::list<Plugin_Info> & pr )
 
     for (const auto &q : sp)
     {
-        vst3_discovery::qtractor_vst3_scan_file( q.u8string().c_str(), vst3_PI_cache);
+        vst3_discovery::vst3_discovery_scan_file( q.u8string().c_str(), vst3_PI_cache);
     }
 
     if ( !vst3_PI_cache.empty() )

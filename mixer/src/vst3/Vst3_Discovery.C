@@ -263,16 +263,16 @@ using namespace Steinberg;
 
 //-----------------------------------------------------------------------------
 
-class qtractor_vst3_scan_host : public Vst::IHostApplication
+class vst3_discovery_scan_host : public Vst::IHostApplication
 {
 public:
 
-    qtractor_vst3_scan_host ()
+    vst3_discovery_scan_host ()
     {
         FUNKNOWN_CTOR
     }
 
-    virtual ~qtractor_vst3_scan_host ()
+    virtual ~vst3_discovery_scan_host ()
     {
         FUNKNOWN_DTOR
     }
@@ -302,7 +302,7 @@ public:
 };
 
 
-tresult PLUGIN_API qtractor_vst3_scan_host::queryInterface (
+tresult PLUGIN_API vst3_discovery_scan_host::queryInterface (
 	const char *_iid, void **obj )
 {
     QUERY_INTERFACE(_iid, obj, FUnknown::iid, IHostApplication)
@@ -313,21 +313,21 @@ tresult PLUGIN_API qtractor_vst3_scan_host::queryInterface (
 }
 
 
-uint32 PLUGIN_API qtractor_vst3_scan_host::addRef (void)
+uint32 PLUGIN_API vst3_discovery_scan_host::addRef (void)
     { return 1;	}
 
-uint32 PLUGIN_API qtractor_vst3_scan_host::release (void)
+uint32 PLUGIN_API vst3_discovery_scan_host::release (void)
     { return 1; }
 
 
-static qtractor_vst3_scan_host g_vst3HostContext;
+static vst3_discovery_scan_host g_vst3HostContext;
 
 
 //----------------------------------------------------------------------
-// class qtractor_vst3_scan::Impl -- VST3 plugin interface impl.
+// class vst3_discovery_scan::Impl -- VST3 plugin interface impl.
 //
 
-class qtractor_vst3_scan::Impl
+class vst3_discovery_scan::Impl
 {
 public:
 
@@ -372,7 +372,7 @@ public:
         if (!get_plugin_factory)
         {
 
-            DMESSAGE("qtractor_vst3_scan::Impl[%p]::open_descriptor(%lu)"
+            DMESSAGE("[%p]::open_descriptor(%lu)"
                     " *** Failed to resolve plug-in factory.", this, iIndex);
 
             return false;
@@ -381,7 +381,7 @@ public:
         IPluginFactory *factory = get_plugin_factory();
         if (!factory)
         {
-            DMESSAGE("qtractor_vst3_scan::Impl[%p]::open_descriptor(%lu)"
+            DMESSAGE("[%p]::open_descriptor(%lu)"
                     " *** Failed to retrieve plug-in factory.", this, iIndex);
 
             return false;
@@ -437,7 +437,7 @@ public:
                                 classInfo.cid, Vst::IComponent::iid,
                                 (void **) &component) != kResultOk)
                 {
-                    DMESSAGE("qtractor_vst3_scan::Impl[%p]::open_descriptor(%lu)"
+                    DMESSAGE("[%p]::open_descriptor(%lu)"
                             " *** Failed to create plug-in component.", this, iIndex);
 
                     return false;
@@ -447,7 +447,7 @@ public:
 
                 if (m_component->initialize(g_vst3HostContext.get()) != kResultOk)
                 {
-                    DMESSAGE("qtractor_vst3_scan::Impl[%p]::open_descriptor(%lu)"
+                    DMESSAGE("[%p]::open_descriptor(%lu)"
                             " *** Failed to initialize plug-in component.", this, iIndex);
                     close_descriptor();
                     return false;
@@ -465,13 +465,13 @@ public:
                                         controller_cid, Vst::IEditController::iid,
                                         (void **) &controller) != kResultOk)
                         {
-                            DMESSAGE("qtractor_vst3_scan::Impl[%p]::open_descriptor(%lu)"
+                            DMESSAGE("Impl[%p]::open_descriptor(%lu)"
                                     " *** Failed to create plug-in controller.", this, iIndex);
                         }
                         if (controller &&
                                 controller->initialize(g_vst3HostContext.get()) != kResultOk)
                         {
-                            DMESSAGE("qtractor_vst3_scan::Impl[%p]::open_descriptor(%lu)"
+                            DMESSAGE("[%p]::open_descriptor(%lu)"
                                     " *** Failed to initialize plug-in controller.", this, iIndex);
                             controller = nullptr;
                         }
@@ -602,17 +602,17 @@ private:
 };
 
 //----------------------------------------------------------------------
-// class qtractor_vst3_scan -- VST3 plugin interface
+// class vst3_discovery_scan -- VST3 plugin interface
 //
 
 // Constructor.
-qtractor_vst3_scan::qtractor_vst3_scan (void) : m_pImpl(new Impl())
+vst3_discovery_scan::vst3_discovery_scan (void) : m_pImpl(new Impl())
 {
     clear();
 }
 
 // destructor.
-qtractor_vst3_scan::~qtractor_vst3_scan (void)
+vst3_discovery_scan::~vst3_discovery_scan (void)
 {
     close_descriptor();
     close();
@@ -621,20 +621,20 @@ qtractor_vst3_scan::~qtractor_vst3_scan (void)
 }
 
 // File loader.
-bool qtractor_vst3_scan::open ( const std::string& sFilename )
+bool vst3_discovery_scan::open ( const std::string& sFilename )
 {
     close();
 
-//    DMESSAGE("qtractor_vst3_scan[%p]::open(\"%s\")", this, sFilename.c_str());
+//    DMESSAGE("[%p]::open(\"%s\")", this, sFilename.c_str());
 
     return m_pImpl->open(sFilename);
 }
 
-bool qtractor_vst3_scan::open_descriptor ( unsigned long iIndex )
+bool vst3_discovery_scan::open_descriptor ( unsigned long iIndex )
 {
     close_descriptor();
 
-//  DMESSAGE("qtractor_vst3_scan[%p]::open_descriptor( %lu)", this, iIndex);
+//  DMESSAGE("[%p]::open_descriptor( %lu)", this, iIndex);
 
     if (!m_pImpl->open_descriptor(iIndex))
         return false;
@@ -688,7 +688,7 @@ bool qtractor_vst3_scan::open_descriptor ( unsigned long iIndex )
 }
 
 // Convert filesystem paths for vst3 to binary file name of vst3
-std::string qtractor_vst3_scan::get_vst3_object_file(std::string filename)
+std::string vst3_discovery_scan::get_vst3_object_file(std::string filename)
 {
     std::filesystem::path binaryfilename = filename;
 
@@ -712,7 +712,7 @@ std::string qtractor_vst3_scan::get_vst3_object_file(std::string filename)
 
 
 // File unloader.
-void qtractor_vst3_scan::close_descriptor (void)
+void vst3_discovery_scan::close_descriptor (void)
 {
     m_pImpl->close_descriptor();
 
@@ -720,23 +720,23 @@ void qtractor_vst3_scan::close_descriptor (void)
 }
 
 
-void qtractor_vst3_scan::close (void)
+void vst3_discovery_scan::close (void)
 {
-  //  DMESSAGE("qtractor_vst3_scan[%p]::close()", this);
+  //  DMESSAGE("vst3_discovery_scan[%p]::close()", this);
 
     m_pImpl->close();
 }
 
 #if 0
 // Properties.
-bool qtractor_vst3_scan::isOpen (void) const
+bool vst3_discovery_scan::isOpen (void) const
 {
     return (m_pImpl->controller() != nullptr);
 }
 #endif
 
 // Cleaner/wiper.
-void qtractor_vst3_scan::clear (void)
+void vst3_discovery_scan::clear (void)
 {
     m_sName.clear();
     m_sVendor.clear();
@@ -756,12 +756,12 @@ void qtractor_vst3_scan::clear (void)
 
 
 //-------------------------------------------------------------------------
-// qtractor_vst3_scan_file - The main scan procedure.
+// vst3_discovery_scan_file - The main scan procedure.
 //
 
-void qtractor_vst3_scan_file ( const std::string& sFilename, std::list<Plugin_Module::Plugin_Info> & vst3pr )
+void vst3_discovery_scan_file ( const std::string& sFilename, std::list<Plugin_Module::Plugin_Info> & vst3pr )
 {
-    qtractor_vst3_scan plugin;
+    vst3_discovery_scan plugin;
 
     std::string sVst3Object = plugin.get_vst3_object_file(sFilename);
 
