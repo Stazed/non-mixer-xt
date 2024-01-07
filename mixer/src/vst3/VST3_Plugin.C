@@ -1889,8 +1889,8 @@ VST3_Plugin::create_audio_ports()
     m_audioInBuses = 0;
     m_audioOutBuses = 0;
 
-    m_audioInBuses = m_component->getBusCount(Vst::kAudio, Vst::kInput);
-    for (int32 i = 0; i < m_audioInBuses; ++i)
+    int32 in_buses = m_component->getBusCount(Vst::kAudio, Vst::kInput);
+    for (int32 i = 0; i < in_buses; ++i)
     {
         Vst::BusInfo busInfo;
         if (m_component->getBusInfo(Vst::kAudio, Vst::kInput, i, busInfo) == kResultOk)
@@ -1898,13 +1898,14 @@ VST3_Plugin::create_audio_ports()
             if ((busInfo.busType == Vst::kMain) ||
                     (busInfo.flags & Vst::BusInfo::kDefaultActive))
             {
+                m_audioInBuses++;
                 m_audioInChannels.push_back(busInfo.channelCount);
             }
         }
     }
 
-    m_audioOutBuses = m_component->getBusCount(Vst::kAudio, Vst::kOutput);
-    for (int32 i = 0; i < m_audioOutBuses; ++i)
+    int32 out_buses = m_component->getBusCount(Vst::kAudio, Vst::kOutput);
+    for (int32 i = 0; i < out_buses; ++i)
     {
         Vst::BusInfo busInfo;
         if (m_component->getBusInfo(Vst::kAudio, Vst::kOutput, i, busInfo) == kResultOk)
@@ -1912,6 +1913,7 @@ VST3_Plugin::create_audio_ports()
             if ((busInfo.busType == Vst::kMain) ||
                     (busInfo.flags & Vst::BusInfo::kDefaultActive))
             {
+                m_audioOutBuses++;
                 m_audioOutChannels.push_back(busInfo.channelCount);
             }
         }
@@ -1963,12 +1965,12 @@ VST3_Plugin::create_midi_ports()
 {
     const int32 inbuses = m_component->getBusCount(Vst::kEvent, Vst::kInput);
     const int32 outbuses = m_component->getBusCount(Vst::kEvent, Vst::kOutput);
-    
+
     for (int32_t i = 0; i < inbuses; ++i)
     {
         add_port( Port( this, Port::INPUT, Port::MIDI, "midi_in" ) );
     }
-    
+
     for (int32_t i = 0; i < outbuses; ++i)
     {
         add_port( Port( this, Port::OUTPUT, Port::MIDI, "midi_out" ) );
