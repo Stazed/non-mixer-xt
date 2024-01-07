@@ -332,7 +332,8 @@ class qtractor_vst3_scan::Impl
 public:
 
     // Constructor.
-    Impl() : m_module(nullptr), m_component(nullptr), m_controller(nullptr) {}
+//    Impl() : m_module(nullptr), m_component(nullptr), m_controller(nullptr) {}
+    Impl() : m_module(nullptr), m_component(nullptr) {}
 
     // destructor.
     ~Impl() { close_descriptor(); close(); }
@@ -451,7 +452,7 @@ public:
                     close_descriptor();
                     return false;
                 }
-
+#if 0
                 Vst::IEditController *controller = nullptr;
                 if (m_component->queryInterface(
                                 Vst::IEditController::iid,
@@ -490,7 +491,7 @@ public:
                         controller_cp->connect(component_cp);
                     }
                 }
-
+#endif
                 return true;
             }
 
@@ -502,6 +503,7 @@ public:
 
     void close_descriptor ()
     {
+#if 0
         if (m_component && m_controller)
         {
             FUnknownPtr<Vst::IConnectionPoint> component_cp(m_component);
@@ -520,7 +522,7 @@ public:
         }
 
         m_controller = nullptr;
-
+#endif
         if (m_component)
         {
             m_component->terminate();
@@ -547,10 +549,10 @@ public:
     // Accessors.
     Vst::IComponent *component() const
         { return m_component; }
-
+#if 0
     Vst::IEditController *controller() const
         { return m_controller; }
-
+#endif
     const PClassInfo& classInfo() const
         { return m_classInfo; }
 
@@ -594,7 +596,9 @@ private:
     PFactoryInfo m_factoryInfo;
 
     IPtr<Vst::IComponent> m_component;
+#if 0
     IPtr<Vst::IEditController> m_controller;
+#endif
 };
 
 //----------------------------------------------------------------------
@@ -723,13 +727,13 @@ void qtractor_vst3_scan::close (void)
     m_pImpl->close();
 }
 
-
+#if 0
 // Properties.
 bool qtractor_vst3_scan::isOpen (void) const
 {
     return (m_pImpl->controller() != nullptr);
 }
-
+#endif
 
 // Cleaner/wiper.
 void qtractor_vst3_scan::clear (void)

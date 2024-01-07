@@ -72,8 +72,9 @@ public:
     void close();
 
     // Properties.
+#if 0
     bool isOpen() const;
-
+#endif
     // Properties.
     const std::string& name() const
         { return m_sName; }
