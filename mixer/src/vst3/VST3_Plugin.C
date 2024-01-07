@@ -451,12 +451,12 @@ VST3_Plugin::load_plugin ( Module::Picked picked )
 
     base_label(m_sName.c_str());
 
-    initialize_plugin();
-
     _plugin_ins  = numChannels(Vst::kAudio, Vst::kInput);
     _plugin_outs = numChannels(Vst::kAudio, Vst::kOutput);
     m_iMidiIns   = numChannels(Vst::kEvent, Vst::kInput);
     m_iMidiOuts  = numChannels(Vst::kEvent, Vst::kOutput);
+
+    initialize_plugin();
 
     Vst::IEditController *controller = m_controller;
     if (controller)
