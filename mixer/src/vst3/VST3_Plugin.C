@@ -436,11 +436,6 @@ VST3_Plugin::load_plugin ( Module::Picked picked )
 
     initialize_plugin();
 
-    // Properties...
-//    m_sName = m_pImpl->name();
-//    m_sLabel = m_sName.simplified().replace(QRegularExpression("[\\s|\\.|\\-]+"), "_");
-//    m_iUniqueID = m_pImpl->uniqueID();
-
     _plugin_ins  = numChannels(Vst::kAudio, Vst::kInput);
     _plugin_outs = numChannels(Vst::kAudio, Vst::kOutput);
     m_iMidiIns   = numChannels(Vst::kEvent, Vst::kInput);
@@ -908,9 +903,6 @@ VST3_Plugin::notify ( Vst::IMessage *message )
 bool
 VST3_Plugin::try_custom_ui()
 {
-  //  if (!m_bEditor)
-  //      return false;
-
     /* Toggle show and hide */
     if(_bEditorCreated)
     {
@@ -1192,17 +1184,11 @@ VST3_Plugin::open_descriptor(unsigned long iIndex)
         DMESSAGE("Could not open %s", _plugin_filename.c_str());
         return false;
     }
-    #if 0
-    typedef bool (PLUGIN_API *VST3_ModuleEntry)(void *);
-    const VST3_ModuleEntry module_entry
-            = reinterpret_cast<VST3_ModuleEntry> (m_pFile->resolve("ModuleEntry"));
-    if (module_entry)
-            module_entry(m_pFile->module());
-    #endif
+
     typedef IPluginFactory *(PLUGIN_API *VST3_GetPluginFactory)();
     const VST3_GetPluginFactory get_plugin_factory
             = reinterpret_cast<VST3_GetPluginFactory> (::dlsym(m_module, "GetPluginFactory"));
-    //	= reinterpret_cast<VST3_GetPluginFactory> (m_pFile->resolve("GetPluginFactory"));
+
     if (!get_plugin_factory)
     {
         DMESSAGE("[%p]::open(\"%s\", %lu)"
@@ -1255,38 +1241,20 @@ VST3_Plugin::open_descriptor(unsigned long iIndex)
 
         if (iIndex == i)
         {
-#if 1
             PClassInfoW classInfoW;
             if (factory3 && factory3->getClassInfoUnicode(n, &classInfoW) == kResultOk)
             {
-                    m_sName = utf16_to_utf8(classInfoW.name);
-                 //   m_sName = fromTChar(classInfoW.name);
-                 //   m_sCategory = QString::fromLocal8Bit(classInfoW.category);
-                 //   m_sSubCategories = QString::fromLocal8Bit(classInfoW.subCategories);
-                 //   m_sVendor = fromTChar(classInfoW.vendor);
-                 //   m_sVersion = fromTChar(classInfoW.version);
-                 //   m_sSdkVersion = fromTChar(classInfoW.sdkVersion);
-            } else {
-                    PClassInfo2 classInfo2;
-                    if (factory2 && factory2->getClassInfo2(n, &classInfo2) == kResultOk)
-                    {
-                        m_sName = classInfo2.name;
-                         //   m_sName = QString::fromLocal8Bit(classInfo2.name);
-                         //   m_sCategory = QString::fromLocal8Bit(classInfo2.category);
-                         //   m_sSubCategories = QString::fromLocal8Bit(classInfo2.subCategories);
-                         //   m_sVendor = QString::fromLocal8Bit(classInfo2.vendor);
-                         //   m_sVersion = QString::fromLocal8Bit(classInfo2.version);
-                         //   m_sSdkVersion = QString::fromLocal8Bit(classInfo2.sdkVersion);
-                    } else 
-                    {
-                        m_sName = classInfo.name;
-                         //   m_sName = QString::fromLocal8Bit(classInfo.name);
-                         //   m_sCategory = QString::fromLocal8Bit(classInfo.category);
-                         //   m_sSubCategories.clear();
-                         //   m_sVendor.clear();
-                         //   m_sVersion.clear();
-                         //   m_sSdkVersion.clear();
-                    }
+                m_sName = utf16_to_utf8(classInfoW.name);
+            } else
+            {
+                PClassInfo2 classInfo2;
+                if (factory2 && factory2->getClassInfo2(n, &classInfo2) == kResultOk)
+                {
+                    m_sName = classInfo2.name;
+                } else 
+                {
+                    m_sName = classInfo.name;
+                }
             }
 
             std::string iUniqueID = vst3_discovery::UIDtoString(false, classInfo.cid);
@@ -1295,17 +1263,7 @@ VST3_Plugin::open_descriptor(unsigned long iIndex)
                 MESSAGE("Plugin ID does not match ID1 = %s: ID2 = %s", m_iUniqueID.c_str(), iUniqueID.c_str());
                 return false;
             }
-#if 0
-            if (m_sVendor.isEmpty())
-                    m_sVendor = QString::fromLocal8Bit(factoryInfo.vendor);
-            if (m_sEmail.isEmpty())
-                    m_sEmail = QString::fromLocal8Bit(factoryInfo.email);
-            if (m_sUrl.isEmpty())
-                    m_sUrl = QString::fromLocal8Bit(factoryInfo.url);
 
-            m_iUniqueID = qHash(QByteArray(classInfo.cid, sizeof(TUID)));
-#endif
-#endif  // 1
             Vst::IComponent *component = nullptr;
             if (factory->createInstance(
                     classInfo.cid, Vst::IComponent::iid,
@@ -1345,7 +1303,6 @@ VST3_Plugin::open_descriptor(unsigned long iIndex)
                         DMESSAGE("qtractorVst3PluginType::Impl[%p]::open(\"%s\", %lu)"
                                 " *** Failed to create plug-in controller.", this,
                                 _plugin_filename.c_str(), iIndex);
-
                     }
 
                     if (controller &&
@@ -1432,7 +1389,6 @@ VST3_Plugin::close_descriptor()
         typedef bool (PLUGIN_API *VST3_ModuleExit)();
         const VST3_ModuleExit module_exit
                 = reinterpret_cast<VST3_ModuleExit> (::dlsym(m_module, "ModuleExit"));
-              //  = reinterpret_cast<VST3_ModuleExit> (m_pFile->resolve("ModuleExit"));
 
         if (module_exit)
             module_exit();
@@ -1586,16 +1542,17 @@ VST3_Plugin::process_midi_in (
         const int key = (data[i] & 0x7f);
 
         // program change
-        if (status == 0xc0) {
-                // TODO: program-change...
-                continue;
+        if (status == 0xc0)
+        {
+            // TODO: program-change...
+            continue;
         }
 
         // after-touch
         if (status == 0xd0)
         {
             const MidiMapKey mkey(port, channel, Vst::kAfterTouch);
-            //const Vst::ParamID id = m_midiMap.value(mkey, Vst::kNoParamId);
+
             std::map<MidiMapKey, Vst::ParamID>::const_iterator got
                     = m_midiMap.find (mkey);
 
@@ -1614,7 +1571,7 @@ VST3_Plugin::process_midi_in (
 
         // check data size (#2)
         if (++i >= size)
-                break;
+            break;
 
         // channel value (normalized)
         const int value = (data[i] & 0x7f);
@@ -1658,7 +1615,7 @@ VST3_Plugin::process_midi_in (
         else if (status == 0xb0)
         {
             const MidiMapKey mkey(port, channel, key);
-            //  const Vst::ParamID id = m_midiMap.value(mkey, Vst::kNoParamId);
+
             std::map<MidiMapKey, Vst::ParamID>::const_iterator got
                     = m_midiMap.find (mkey);
 
@@ -1677,7 +1634,7 @@ VST3_Plugin::process_midi_in (
         else if (status == 0xe0)
         {
             const MidiMapKey mkey(port, channel, Vst::kPitchBend);
-            //  const Vst::ParamID id = m_midiMap.value(mkey, Vst::kNoParamId);
+
             std::map<MidiMapKey, Vst::ParamID>::const_iterator got
                     = m_midiMap.find (mkey);
 
