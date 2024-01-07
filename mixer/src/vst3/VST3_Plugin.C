@@ -282,6 +282,7 @@ VST3_Plugin::VST3_Plugin() :
     m_sName(),
     _last_chunk(nullptr),
     _project_file(),
+    _found_plugin(false),
     m_module(nullptr),
     m_handler(nullptr),
     m_component(nullptr),
@@ -426,9 +427,25 @@ VST3_Plugin::load_plugin ( Module::Picked picked )
         return false;
     }
 
-    if ( !open_descriptor(0) )
+    if (!open_file(_plugin_filename))
     {
-        DMESSAGE("Could not open descriptor %s", _plugin_filename.c_str());
+        DMESSAGE("Could not open file %s", _plugin_filename.c_str());
+        return false;
+    }
+
+    _found_plugin = false;
+    unsigned long i = 0;
+    while (open_descriptor(i))
+    {
+        if(_found_plugin)
+            break;
+
+        ++i;
+    }
+
+    if (!_found_plugin)
+    {
+        DMESSAGE("Could not find %s: ID = (%s)", _plugin_filename.c_str(), m_iUniqueID.c_str());
         return false;
     }
 
@@ -817,7 +834,7 @@ VST3_Plugin::set_control_value(unsigned long port_index, float value, bool updat
 {
     if( port_index >= control_input.size())
     {
-        WARNING("Invalid Port Index = %d: Value = %f", port_index, value);
+        DMESSAGE("Invalid Port Index = %d: Value = %f", port_index, value);
         return;
     }
 
@@ -1178,12 +1195,6 @@ bool
 VST3_Plugin::open_descriptor(unsigned long iIndex)
 {
     close_descriptor();
-    
-    if (!open_file(_plugin_filename))
-    {
-        DMESSAGE("Could not open %s", _plugin_filename.c_str());
-        return false;
-    }
 
     typedef IPluginFactory *(PLUGIN_API *VST3_GetPluginFactory)();
     const VST3_GetPluginFactory get_plugin_factory
@@ -1211,7 +1222,7 @@ VST3_Plugin::open_descriptor(unsigned long iIndex)
     PFactoryInfo factoryInfo;
     if (factory->getFactoryInfo(&factoryInfo) != kResultOk)
     {
-        DMESSAGE("qtractorVst3PluginType::Impl[%p]::open(\"%s\", %lu)"
+        DMESSAGE("[%p]::open(\"%s\", %lu)"
                 " *** Failed to retrieve plug-in factory information.", this,
                 _plugin_filename.c_str(), iIndex);
 
@@ -1260,8 +1271,11 @@ VST3_Plugin::open_descriptor(unsigned long iIndex)
             std::string iUniqueID = vst3_discovery::UIDtoString(false, classInfo.cid);
             if(m_iUniqueID != iUniqueID)
             {
-                MESSAGE("Plugin ID does not match ID1 = %s: ID2 = %s", m_iUniqueID.c_str(), iUniqueID.c_str());
-                return false;
+                continue;
+            }
+            else
+            {
+                _found_plugin = true;
             }
 
             Vst::IComponent *component = nullptr;
@@ -1300,7 +1314,7 @@ VST3_Plugin::open_descriptor(unsigned long iIndex)
                             controller_cid, Vst::IEditController::iid,
                             (void **) &controller) != kResultOk)
                     {
-                        DMESSAGE("qtractorVst3PluginType::Impl[%p]::open(\"%s\", %lu)"
+                        DMESSAGE("[%p]::open(\"%s\", %lu)"
                                 " *** Failed to create plug-in controller.", this,
                                 _plugin_filename.c_str(), iIndex);
                     }

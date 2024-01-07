@@ -126,6 +126,7 @@ private:
     std::string m_sName;
     void* _last_chunk;
     std::string _project_file;
+    bool _found_plugin;
 
     // Instance variables.
     void *m_module;
