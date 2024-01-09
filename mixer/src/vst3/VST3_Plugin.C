@@ -276,10 +276,10 @@ IMPLEMENT_FUNKNOWN_METHODS (VST3_Plugin::Stream, IBStream, IBStream::iid)
 
 VST3_Plugin::VST3_Plugin() :
     Plugin_Module(),
-    m_hostContext(nullptr),
+    _pHostContext(nullptr),
     _plugin_filename(),
-    m_iUniqueID(),
-    m_sName(),
+    _sUniqueID(),
+    _sName(),
     _last_chunk(nullptr),
     _project_file(),
     _found_plugin(false),
@@ -292,14 +292,14 @@ VST3_Plugin::VST3_Plugin() :
     _bProcessing(false),
     _vst_buffers_in(nullptr),
     _vst_buffers_out(nullptr),
-    m_audioInBuses(0),
-    m_audioOutBuses(0),
-    m_iMidiIns(0),
-    m_iMidiOuts(0),
+    _iAudioInBuses(0),
+    _iAudioOutBuses(0),
+    _iMidiIns(0),
+    _iMidiOuts(0),
     _audio_in_buffers(nullptr),
     _audio_out_buffers(nullptr),
     _activated(false),
-    m_bEditor(false),
+    _bEditor(false),
     _position(0),
     _bpm(120.0f),
     _rolling(false),
@@ -310,13 +310,13 @@ VST3_Plugin::VST3_Plugin() :
     _f_miliseconds(float(DEFAULT_MSECS) * .001),
     _i_miliseconds(DEFAULT_MSECS),
     _event_handlers_registered(false),
-    m_plugView(nullptr),
+    _iPlugView(nullptr),
     _pEditorFrame(nullptr),
-    m_runloop(nullptr)
+    _pRunloop(nullptr)
 {
     _plug_type = Type_VST3;
-    m_hostContext = new VST3PluginHost(this);
-    m_runloop = new Vst::EditorHost::RunLoop(this);
+    _pHostContext = new VST3PluginHost(this);
+    _pRunloop = new Vst::EditorHost::RunLoop(this);
 
     log_create();
 }
@@ -347,7 +347,7 @@ VST3_Plugin::~VST3_Plugin()
 
     if(_vst_buffers_in != nullptr)
     {
-        for(int i = 0; i < m_audioInBuses; i++)
+        for(int i = 0; i < _iAudioInBuses; i++)
         {
             delete[] _vst_buffers_in[i].channelBuffers32;
         }
@@ -356,7 +356,7 @@ VST3_Plugin::~VST3_Plugin()
 
     if(_vst_buffers_out != nullptr)
     {
-        for(int i = 0; i < m_audioOutBuses; i++)
+        for(int i = 0; i < _iAudioOutBuses; i++)
         {
             delete[] _vst_buffers_out[i].channelBuffers32;
         }
@@ -390,12 +390,12 @@ VST3_Plugin::~VST3_Plugin()
 
     midi_output.clear();
     midi_input.clear();
-    m_hostContext->clear();
+    _pHostContext->clear();
 
     if ( _last_chunk )
         std::free(_last_chunk);
 
-    delete m_runloop;
+    delete _pRunloop;
 
     /* This is the case when the user manually removes a Plugin. We set the
      _is_removed = true, and add any custom data directory to the remove directories
@@ -411,15 +411,15 @@ VST3_Plugin::~VST3_Plugin()
     }
 
     // Causes mumap_chunk(): invalid pointer
-    //if(m_hostContext)
-    //    delete m_hostContext;
+    //if(_pHostContext)
+    //    delete _pHostContext;
 }
 
 bool
 VST3_Plugin::load_plugin ( Module::Picked picked )
 {
     _plugin_filename = picked.s_plug_path;
-    m_iUniqueID = picked.s_unique_id;
+    _sUniqueID = picked.s_unique_id;
 
     if (!find_vst_binary())
     {
@@ -445,16 +445,16 @@ VST3_Plugin::load_plugin ( Module::Picked picked )
 
     if (!_found_plugin)
     {
-        DMESSAGE("Could not find %s: ID = (%s)", _plugin_filename.c_str(), m_iUniqueID.c_str());
+        DMESSAGE("Could not find %s: ID = (%s)", _plugin_filename.c_str(), _sUniqueID.c_str());
         return false;
     }
 
-    base_label(m_sName.c_str());
+    base_label(_sName.c_str());
 
     _plugin_ins  = numChannels(Vst::kAudio, Vst::kInput);
     _plugin_outs = numChannels(Vst::kAudio, Vst::kOutput);
-    m_iMidiIns   = numChannels(Vst::kEvent, Vst::kInput);
-    m_iMidiOuts  = numChannels(Vst::kEvent, Vst::kOutput);
+    _iMidiIns   = numChannels(Vst::kEvent, Vst::kInput);
+    _iMidiOuts  = numChannels(Vst::kEvent, Vst::kOutput);
 
     initialize_plugin();
 
@@ -463,7 +463,7 @@ VST3_Plugin::load_plugin ( Module::Picked picked )
     {
         IPtr<IPlugView> editor =
                 owned(controller->createView(Vst::ViewType::kEditor));
-        m_bEditor = (editor != nullptr);
+        _bEditor = (editor != nullptr);
     }
 
     create_audio_ports();
@@ -777,7 +777,7 @@ VST3_Plugin::process ( nframes_t nframes )
         _cEvents_out.clear();
 
         int j = 0;
-        for (int i = 0; i < m_audioInBuses; i++)
+        for (int i = 0; i < _iAudioInBuses; i++)
         {
             for (int k = 0; k < _vst_buffers_in[i].numChannels; k++)
             {
@@ -788,7 +788,7 @@ VST3_Plugin::process ( nframes_t nframes )
         }
 
         j = 0;
-        for (int i = 0; i < m_audioOutBuses; i++)
+        for (int i = 0; i < _iAudioOutBuses; i++)
         {
             for (int k = 0; k < _vst_buffers_out[i].numChannels; k++)
             {
@@ -947,7 +947,7 @@ VST3_Plugin::init_custom_ui()
         return false;
     }
 
-    IPlugView *plugView = m_plugView;
+    IPlugView *plugView = _iPlugView;
     if (!plugView)
         return false;
 
@@ -959,7 +959,7 @@ VST3_Plugin::init_custom_ui()
         return false;
     }
     
-    if (m_plugView->canResize() == kResultOk)
+    if (_iPlugView->canResize() == kResultOk)
         _x_is_resizable = true;
 
     _pEditorFrame = new EditorFrame(this, plugView, _x_is_resizable);
@@ -985,20 +985,20 @@ VST3_Plugin::openEditor (void)
 
     Vst::IEditController *controller = _pController;
     if (controller)
-        m_plugView = owned(controller->createView(Vst::ViewType::kEditor));
+        _iPlugView = owned(controller->createView(Vst::ViewType::kEditor));
 
-    return (m_plugView != nullptr);
+    return (_iPlugView != nullptr);
 }
 
 void
 VST3_Plugin::closeEditor (void)
 {
-    m_hostContext->stopTimer();
+    _pHostContext->stopTimer();
 
     if (_pEditorFrame != nullptr)
         _pEditorFrame->hide();
 
-    IPlugView *plugView = m_plugView;
+    IPlugView *plugView = _iPlugView;
     if (plugView && plugView->removed() != kResultOk)
     {
         DMESSAGE(" *** Failed to remove/detach window.");
@@ -1010,31 +1010,31 @@ VST3_Plugin::closeEditor (void)
         _pEditorFrame = nullptr;
     }
 
-    m_plugView = nullptr;
+    _iPlugView = nullptr;
 
-    m_runloop->stop();
+    _pRunloop->stop();
 }
 
 bool
 VST3_Plugin::show_custom_ui()
 {
-    m_runloop->setDisplay( (Display*) _pEditorFrame->getDisplay());
+    _pRunloop->setDisplay( (Display*) _pEditorFrame->getDisplay());
     _pEditorFrame->show();
     _pEditorFrame->focus();
 
     _x_is_visible = true;
     
-    m_runloop->registerWindow (
+    _pRunloop->registerWindow (
         (XID) _pEditorFrame->getparentwin(),
         [this] (const XEvent& e) { return _pEditorFrame->handlePlugEvent (e); });
                 
-    m_runloop->registerWindow (
+    _pRunloop->registerWindow (
         (XID) _pEditorFrame->getPtr(),
         [this] (const XEvent& e) { return _pEditorFrame->handlePlugEvent (e); });
 
-    m_runloop->start(_event_handlers_registered );
+    _pRunloop->start(_event_handlers_registered );
 
-    m_hostContext->startTimer(DEFAULT_MSECS);
+    _pHostContext->startTimer(DEFAULT_MSECS);
 
     return true;
 }
@@ -1074,7 +1074,7 @@ VST3_Plugin::custom_update_ui_x()
 {
     _pEditorFrame->idle();
 
-    m_runloop->proccess_timers(_timer_registered, _event_handlers_registered );
+    _pRunloop->proccess_timers(_timer_registered, _event_handlers_registered );
 
     if(_x_is_visible)
     {
@@ -1108,9 +1108,9 @@ unsigned long
 VST3_Plugin::findParamId ( uint32_t id ) const
 {
     std::unordered_map<uint32_t, unsigned long>::const_iterator got
-        = m_paramIds.find (id);
+        = _mParamIds.find (id);
 
-    if ( got == m_paramIds.end() )
+    if ( got == _mParamIds.end() )
     {
         // probably a control out - we don't do anything with these
          // DMESSAGE("Param Id not found = %d", id);
@@ -1234,7 +1234,7 @@ VST3_Plugin::open_descriptor(unsigned long iIndex)
 
     if (factory3)
     {
-        factory3->setHostContext(m_hostContext->get());
+        factory3->setHostContext(_pHostContext->get());
     }
 
     const int32 nclasses = factory->countClasses();
@@ -1255,21 +1255,21 @@ VST3_Plugin::open_descriptor(unsigned long iIndex)
             PClassInfoW classInfoW;
             if (factory3 && factory3->getClassInfoUnicode(n, &classInfoW) == kResultOk)
             {
-                m_sName = utf16_to_utf8(classInfoW.name);
+                _sName = utf16_to_utf8(classInfoW.name);
             } else
             {
                 PClassInfo2 classInfo2;
                 if (factory2 && factory2->getClassInfo2(n, &classInfo2) == kResultOk)
                 {
-                    m_sName = classInfo2.name;
+                    _sName = classInfo2.name;
                 } else 
                 {
-                    m_sName = classInfo.name;
+                    _sName = classInfo.name;
                 }
             }
 
             std::string iUniqueID = vst3_discovery::UIDtoString(false, classInfo.cid);
-            if(m_iUniqueID != iUniqueID)
+            if(_sUniqueID != iUniqueID)
             {
                 continue;
             }
@@ -1292,7 +1292,7 @@ VST3_Plugin::open_descriptor(unsigned long iIndex)
 
             _pComponent = owned(component);
 
-            if (_pComponent->initialize(m_hostContext->get()) != kResultOk)
+            if (_pComponent->initialize(_pHostContext->get()) != kResultOk)
             {
                 DMESSAGE("[%p]::open(\"%s\", %lu)"
                         " *** Failed to initialize plug-in component.", this,
@@ -1320,7 +1320,7 @@ VST3_Plugin::open_descriptor(unsigned long iIndex)
                     }
 
                     if (controller &&
-                            controller->initialize(m_hostContext->get()) != kResultOk)
+                            controller->initialize(_pHostContext->get()) != kResultOk)
                     {
                         DMESSAGE("[%p]::open(\"%s\", %lu)"
                                 " *** Failed to initialize plug-in controller.", this,
@@ -1464,7 +1464,7 @@ VST3_Plugin::process_reset()
 
     if (_plugin_ins > 0) 
     {
-        _vst_process_data.numInputs          = m_audioInBuses;
+        _vst_process_data.numInputs          = _iAudioInBuses;
         _vst_process_data.inputs             = _vst_buffers_in;
     } else 
     {
@@ -1474,7 +1474,7 @@ VST3_Plugin::process_reset()
 
     if (_plugin_outs > 0)
     {
-        _vst_process_data.numOutputs         = m_audioOutBuses;
+        _vst_process_data.numOutputs         = _iAudioOutBuses;
         _vst_process_data.outputs            = _vst_buffers_out;
     } else
     {
@@ -1482,7 +1482,7 @@ VST3_Plugin::process_reset()
         _vst_process_data.outputs            = nullptr;
     }
 
-    _vst_process_data.processContext         = m_hostContext->processContext();
+    _vst_process_data.processContext         = _pHostContext->processContext();
     _vst_process_data.inputEvents            = &_cEvents_in;
     _vst_process_data.outputEvents           = &_cEvents_out;
     _vst_process_data.inputParameterChanges  = &_cParams_in;
@@ -1507,7 +1507,7 @@ VST3_Plugin::process_jack_transport ( uint32_t nframes )
       (rolling != _rolling || pos.frame != _position ||
        (has_bbt && pos.beats_per_minute != _bpm));
     
-    m_hostContext->updateProcessContext(pos, xport_changed, has_bbt);
+    _pHostContext->updateProcessContext(pos, xport_changed, has_bbt);
 
     // Update transport state to expected values for next cycle
     _position = rolling ? pos.frame + nframes : pos.frame;
@@ -1568,9 +1568,9 @@ VST3_Plugin::process_midi_in (
             const MidiMapKey mkey(port, channel, Vst::kAfterTouch);
 
             std::map<MidiMapKey, Vst::ParamID>::const_iterator got
-                    = m_midiMap.find (mkey);
+                    = _mMidiMap.find (mkey);
 
-            if (got == m_midiMap.end())
+            if (got == _mMidiMap.end())
                 continue;
 
             const Vst::ParamID id = got->second;
@@ -1631,9 +1631,9 @@ VST3_Plugin::process_midi_in (
             const MidiMapKey mkey(port, channel, key);
 
             std::map<MidiMapKey, Vst::ParamID>::const_iterator got
-                    = m_midiMap.find (mkey);
+                    = _mMidiMap.find (mkey);
 
-            if (got == m_midiMap.end())
+            if (got == _mMidiMap.end())
                 continue;
 
             const Vst::ParamID id = got->second;
@@ -1650,9 +1650,9 @@ VST3_Plugin::process_midi_in (
             const MidiMapKey mkey(port, channel, Vst::kPitchBend);
 
             std::map<MidiMapKey, Vst::ParamID>::const_iterator got
-                    = m_midiMap.find (mkey);
+                    = _mMidiMap.find (mkey);
 
-            if (got == m_midiMap.end())
+            if (got == _mMidiMap.end())
                 continue;
 
             const Vst::ParamID id = got->second;
@@ -1821,7 +1821,7 @@ VST3_Plugin::initialize_plugin()
 #endif
     if (controller)
     {
-        const int32 nports = m_iMidiIns;
+        const int32 nports = _iMidiIns;
         FUnknownPtr<Vst::IMidiMapping> midiMapping(controller);
         if (midiMapping && nports > 0)
         {
@@ -1836,7 +1836,7 @@ VST3_Plugin::initialize_plugin()
                                         j, k, Vst::CtrlNumber(i), id) == kResultOk)
                         {
                             std::pair<MidiMapKey, Vst::ParamID> prm ( MidiMapKey(j, k, i), id );
-                            m_midiMap.insert(prm);
+                            _mMidiMap.insert(prm);
                         }
                     }
                 }
@@ -1854,7 +1854,7 @@ VST3_Plugin::clear_plugin()
     m_programParamInfo.unitId = Vst::UnitID(-1);
     m_programs.clear();
 #endif
-    m_midiMap.clear();
+    _mMidiMap.clear();
 }
 
 int
@@ -1886,8 +1886,8 @@ VST3_Plugin::numChannels (
 void
 VST3_Plugin::create_audio_ports()
 {
-    m_audioInBuses = 0;
-    m_audioOutBuses = 0;
+    _iAudioInBuses = 0;
+    _iAudioOutBuses = 0;
 
     int32 in_buses = _pComponent->getBusCount(Vst::kAudio, Vst::kInput);
     for (int32 i = 0; i < in_buses; ++i)
@@ -1898,8 +1898,8 @@ VST3_Plugin::create_audio_ports()
             if ((busInfo.busType == Vst::kMain) ||
                     (busInfo.flags & Vst::BusInfo::kDefaultActive))
             {
-                m_audioInBuses++;
-                m_audioInChannels.push_back(busInfo.channelCount);
+                _iAudioInBuses++;
+                _vAudioInChannels.push_back(busInfo.channelCount);
             }
         }
     }
@@ -1913,8 +1913,8 @@ VST3_Plugin::create_audio_ports()
             if ((busInfo.busType == Vst::kMain) ||
                     (busInfo.flags & Vst::BusInfo::kDefaultActive))
             {
-                m_audioOutBuses++;
-                m_audioOutChannels.push_back(busInfo.channelCount);
+                _iAudioOutBuses++;
+                _vAudioOutChannels.push_back(busInfo.channelCount);
             }
         }
     }
@@ -1935,25 +1935,25 @@ VST3_Plugin::create_audio_ports()
     _audio_out_buffers = new float * [_plugin_outs]();
 
     // Setup processor audio I/O buffers...
-    if (m_audioInBuses)
+    if (_iAudioInBuses)
     {
-        _vst_buffers_in = new Vst::AudioBusBuffers[m_audioInBuses];
-        for(int i = 0; i < m_audioInBuses; i++)
+        _vst_buffers_in = new Vst::AudioBusBuffers[_iAudioInBuses];
+        for(int i = 0; i < _iAudioInBuses; i++)
         {
             _vst_buffers_in[i].silenceFlags      = 0;
-            _vst_buffers_in[i].numChannels       = m_audioInChannels[i];
-            _vst_buffers_in[i].channelBuffers32  = new float *[m_audioInChannels[i]]();
+            _vst_buffers_in[i].numChannels       = _vAudioInChannels[i];
+            _vst_buffers_in[i].channelBuffers32  = new float *[_vAudioInChannels[i]]();
         }
     }
 
-    if (m_audioOutBuses)
+    if (_iAudioOutBuses)
     {
-        _vst_buffers_out = new Vst::AudioBusBuffers[m_audioOutBuses];
-        for(int i = 0; i < m_audioOutBuses; i++)
+        _vst_buffers_out = new Vst::AudioBusBuffers[_iAudioOutBuses];
+        for(int i = 0; i < _iAudioOutBuses; i++)
         {
             _vst_buffers_out[i].silenceFlags     = 0;
-            _vst_buffers_out[i].numChannels      = m_audioOutChannels[i];
-            _vst_buffers_out[i].channelBuffers32 = new float *[m_audioOutChannels[i]]();
+            _vst_buffers_out[i].numChannels      = _vAudioOutChannels[i];
+            _vst_buffers_out[i].channelBuffers32 = new float *[_vAudioOutChannels[i]]();
         }
     }
 
@@ -2088,7 +2088,7 @@ VST3_Plugin::create_control_ports()
                    //         utf16_to_utf8(paramInfo.title).c_str(), p.hints.parameter_id );
 
                     std::pair<uint32_t, unsigned long> prm ( p.hints.parameter_id, control_ins - 1 );
-                    m_paramIds.insert(prm);
+                    _mParamIds.insert(prm);
                 }
             }
         }
@@ -2142,7 +2142,7 @@ VST3_Plugin::activate ( void )
             vst3_activate(component, Vst::kEvent, Vst::kOutput, true);
             component->setActive(true);
             _pProcessor->setProcessing(true);
-            m_hostContext->processAddRef();
+            _pHostContext->processAddRef();
             _bProcessing = true;
         }
     }
@@ -2173,7 +2173,7 @@ VST3_Plugin::deactivate ( void )
         Vst::IComponent *component = _pComponent;
         if (component && _pProcessor)
         {
-            m_hostContext->processReleaseRef();
+            _pHostContext->processReleaseRef();
             _pProcessor->setProcessing(false);
             component->setActive(false);
             _bProcessing = false;
@@ -2317,7 +2317,7 @@ VST3_Plugin::getState ( void** const dataPtr )
 void
 VST3_Plugin::get ( Log_Entry &e ) const
 {
-    e.add( ":vst_unique_id", m_iUniqueID.c_str() );
+    e.add( ":vst_unique_id", _sUniqueID.c_str() );
     e.add( ":vst3_plugin_path", _plugin_filename.c_str() );
  
     /* these help us display the module on systems which are missing this plugin */

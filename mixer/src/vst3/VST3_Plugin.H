@@ -96,7 +96,7 @@ public:
     bool show_custom_ui();
     bool hide_custom_ui();
     EditorFrame * get_editor_frame(){ return _pEditorFrame;}
-    Vst::EditorHost::RunLoop* get_runloop(){return m_runloop;}
+    Vst::EditorHost::RunLoop* get_runloop(){return _pRunloop;}
     void set_visibility(bool vis){_x_is_visible = vis;}
 
     void add_ntk_timer(int i_msecs);
@@ -114,7 +114,7 @@ public:
 
     uint64_t getState (void** const dataPtr);
 
-    VST3PluginHost *m_hostContext;
+    VST3PluginHost *_pHostContext;
 
     VST3_Plugin();
     virtual ~VST3_Plugin();
@@ -122,8 +122,8 @@ private:
 
     // Project loading
     std::string _plugin_filename;
-    std::string m_iUniqueID;
-    std::string m_sName;
+    std::string _sUniqueID;
+    std::string _sName;
     void* _last_chunk;
     std::string _project_file;
     bool _found_plugin;
@@ -155,18 +155,18 @@ private:
     // Processor data.
     Vst::ProcessData _vst_process_data;
 
-    std::vector<int32_t> m_audioInChannels;
-    std::vector<int32_t> m_audioOutChannels;
-    int32_t m_audioInBuses;
-    int32_t m_audioOutBuses;
-    unsigned short m_iMidiIns;
-    unsigned short m_iMidiOuts;
+    std::vector<int32_t> _vAudioInChannels;
+    std::vector<int32_t> _vAudioOutChannels;
+    int32_t _iAudioInBuses;
+    int32_t _iAudioOutBuses;
+    unsigned short _iMidiIns;
+    unsigned short _iMidiOuts;
 
     float ** _audio_in_buffers;
     float ** _audio_out_buffers;
 
     bool _activated;
-    bool m_bEditor;
+    bool _bEditor;  // unused??
 
     uint32_t  _position;        ///< Transport position in frames
     float     _bpm;             ///< Transport tempo in beats per minute
@@ -180,13 +180,13 @@ private:
     float _f_miliseconds;
     int _i_miliseconds;
     bool _event_handlers_registered;
-    IPtr<IPlugView> m_plugView;
+    IPtr<IPlugView> _iPlugView;
 
     EditorFrame  *_pEditorFrame;
-    Vst::EditorHost::RunLoop *m_runloop;
+    Vst::EditorHost::RunLoop *_pRunloop;
 
     // Identififier-parameter map.
-    std::unordered_map<uint32_t, unsigned long> m_paramIds;
+    std::unordered_map<uint32_t, unsigned long> _mParamIds;
     // Parameter finder (by id).
     unsigned long findParamId ( uint32_t id ) const;
 
@@ -248,7 +248,7 @@ private:
         int16 controller;
     };
 
-    std::map<MidiMapKey, Vst::ParamID> m_midiMap;
+    std::map<MidiMapKey, Vst::ParamID> _mMidiMap;
 
 protected:
 
