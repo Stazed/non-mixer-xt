@@ -95,7 +95,7 @@ public:
 
     bool show_custom_ui();
     bool hide_custom_ui();
-    EditorFrame * get_editor_frame(){ return m_pEditorFrame;}
+    EditorFrame * get_editor_frame(){ return _pEditorFrame;}
     Vst::EditorHost::RunLoop* get_runloop(){return m_runloop;}
     void set_visibility(bool vis){_x_is_visible = vis;}
 
@@ -129,13 +129,13 @@ private:
     bool _found_plugin;
 
     // Instance variables.
-    void *m_module;
+    void *_pModule;
 
     class Handler;  // Forward declaration
-    IPtr<Handler> m_handler;
+    IPtr<Handler> _pHandler;
 
-    IPtr<Vst::IComponent> m_component;
-    IPtr<Vst::IEditController> m_controller;
+    IPtr<Vst::IComponent> _pComponent;
+    IPtr<Vst::IEditController> _pController;
     IPtr<Vst::IUnitInfo> m_unitInfos;
 
     Vst::IAudioProcessor *m_processor;
@@ -182,7 +182,7 @@ private:
     bool _event_handlers_registered;
     IPtr<IPlugView> m_plugView;
 
-    EditorFrame  *m_pEditorFrame;
+    EditorFrame  *_pEditorFrame;
     Vst::EditorHost::RunLoop *m_runloop;
 
     // Identififier-parameter map.

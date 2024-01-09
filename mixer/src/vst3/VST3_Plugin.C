@@ -283,10 +283,10 @@ VST3_Plugin::VST3_Plugin() :
     _last_chunk(nullptr),
     _project_file(),
     _found_plugin(false),
-    m_module(nullptr),
-    m_handler(nullptr),
-    m_component(nullptr),
-    m_controller(nullptr),
+    _pModule(nullptr),
+    _pHandler(nullptr),
+    _pComponent(nullptr),
+    _pController(nullptr),
     m_unitInfos(nullptr),
     m_processor(nullptr),
     m_processing(false),
@@ -311,7 +311,7 @@ VST3_Plugin::VST3_Plugin() :
     _i_miliseconds(DEFAULT_MSECS),
     _event_handlers_registered(false),
     m_plugView(nullptr),
-    m_pEditorFrame(nullptr),
+    _pEditorFrame(nullptr),
     m_runloop(nullptr)
 {
     _plug_type = Type_VST3;
@@ -331,7 +331,7 @@ VST3_Plugin::~VST3_Plugin()
     deactivate();
 
     m_processor = nullptr;
-    m_handler = nullptr;
+    _pHandler = nullptr;
 
     if ( _audio_in_buffers )
     {
@@ -458,7 +458,7 @@ VST3_Plugin::load_plugin ( Module::Picked picked )
 
     initialize_plugin();
 
-    Vst::IEditController *controller = m_controller;
+    Vst::IEditController *controller = _pController;
     if (controller)
     {
         IPtr<IPlugView> editor =
@@ -859,7 +859,7 @@ VST3_Plugin::set_control_value(unsigned long port_index, float value, bool updat
 void
 VST3_Plugin::updateParam(Vst::ParamID id, float fValue)
 {
-    Vst::IEditController *controller = m_controller;
+    Vst::IEditController *controller = _pController;
     if (!controller)
         return;
 
@@ -890,7 +890,7 @@ VST3_Plugin::updateParamValues(bool update_custom_ui)
 Vst::ParamValue
 VST3_Plugin::getParameter ( Vst::ParamID id ) const
 {
-    Vst::IEditController *controller = m_controller;
+    Vst::IEditController *controller = _pController;
     if (controller)
     {
         return controller->getParamNormalized(id);
@@ -904,12 +904,12 @@ VST3_Plugin::notify ( Vst::IMessage *message )
 {
     DMESSAGE("[%p]::notify(%p)", this, message);
 
-    Vst::IComponent *component = m_component;
+    Vst::IComponent *component = _pComponent;
     FUnknownPtr<Vst::IConnectionPoint> component_cp(component);
     if (component_cp)
         component_cp->notify(message);
 
-    Vst::IEditController *controller = m_controller;
+    Vst::IEditController *controller = _pController;
     FUnknownPtr<Vst::IConnectionPoint> controller_cp(controller);
     if (controller_cp)
         controller_cp->notify(message);
@@ -962,10 +962,10 @@ VST3_Plugin::init_custom_ui()
     if (m_plugView->canResize() == kResultOk)
         _x_is_resizable = true;
 
-    m_pEditorFrame = new EditorFrame(this, plugView, _x_is_resizable);
-    m_pEditorFrame->setTitle(label());
+    _pEditorFrame = new EditorFrame(this, plugView, _x_is_resizable);
+    _pEditorFrame->setTitle(label());
 
-    void *wid = m_pEditorFrame->getPtr();
+    void *wid = _pEditorFrame->getPtr();
     
     if (plugView->attached(wid, kPlatformTypeX11EmbedWindowID) != kResultOk)
     {
@@ -983,7 +983,7 @@ VST3_Plugin::openEditor (void)
 {
     closeEditor();
 
-    Vst::IEditController *controller = m_controller;
+    Vst::IEditController *controller = _pController;
     if (controller)
         m_plugView = owned(controller->createView(Vst::ViewType::kEditor));
 
@@ -995,8 +995,8 @@ VST3_Plugin::closeEditor (void)
 {
     m_hostContext->stopTimer();
 
-    if (m_pEditorFrame != nullptr)
-        m_pEditorFrame->hide();
+    if (_pEditorFrame != nullptr)
+        _pEditorFrame->hide();
 
     IPlugView *plugView = m_plugView;
     if (plugView && plugView->removed() != kResultOk)
@@ -1004,10 +1004,10 @@ VST3_Plugin::closeEditor (void)
         DMESSAGE(" *** Failed to remove/detach window.");
     }
 
-    if (m_pEditorFrame)
+    if (_pEditorFrame)
     {
-        delete m_pEditorFrame;
-        m_pEditorFrame = nullptr;
+        delete _pEditorFrame;
+        _pEditorFrame = nullptr;
     }
 
     m_plugView = nullptr;
@@ -1018,19 +1018,19 @@ VST3_Plugin::closeEditor (void)
 bool
 VST3_Plugin::show_custom_ui()
 {
-    m_runloop->setDisplay( (Display*) m_pEditorFrame->getDisplay());
-    m_pEditorFrame->show();
-    m_pEditorFrame->focus();
+    m_runloop->setDisplay( (Display*) _pEditorFrame->getDisplay());
+    _pEditorFrame->show();
+    _pEditorFrame->focus();
 
     _x_is_visible = true;
     
     m_runloop->registerWindow (
-        (XID) m_pEditorFrame->getparentwin(),
-        [this] (const XEvent& e) { return m_pEditorFrame->handlePlugEvent (e); });
+        (XID) _pEditorFrame->getparentwin(),
+        [this] (const XEvent& e) { return _pEditorFrame->handlePlugEvent (e); });
                 
     m_runloop->registerWindow (
-        (XID) m_pEditorFrame->getPtr(),
-        [this] (const XEvent& e) { return m_pEditorFrame->handlePlugEvent (e); });
+        (XID) _pEditorFrame->getPtr(),
+        [this] (const XEvent& e) { return _pEditorFrame->handlePlugEvent (e); });
 
     m_runloop->start(_event_handlers_registered );
 
@@ -1072,7 +1072,7 @@ VST3_Plugin::custom_update_ui ( void *v )
 void
 VST3_Plugin::custom_update_ui_x()
 {
-    m_pEditorFrame->idle();
+    _pEditorFrame->idle();
 
     m_runloop->proccess_timers(_timer_registered, _event_handlers_registered );
 
@@ -1177,16 +1177,16 @@ VST3_Plugin::open_file ( const std::string& sFilename )
 {
     DMESSAGE("Open %s", sFilename.c_str());
 
-    m_module = ::dlopen(sFilename.c_str(), RTLD_LOCAL | RTLD_LAZY);
-    if (!m_module)
+    _pModule = ::dlopen(sFilename.c_str(), RTLD_LOCAL | RTLD_LAZY);
+    if (!_pModule)
         return false;
 
     typedef bool (*VST3_ModuleEntry)(void *);
     const VST3_ModuleEntry module_entry
-            = VST3_ModuleEntry(::dlsym(m_module, "ModuleEntry"));
+            = VST3_ModuleEntry(::dlsym(_pModule, "ModuleEntry"));
 
     if (module_entry)
-        module_entry(m_module);
+        module_entry(_pModule);
 
     return true;
 }
@@ -1198,7 +1198,7 @@ VST3_Plugin::open_descriptor(unsigned long iIndex)
 
     typedef IPluginFactory *(PLUGIN_API *VST3_GetPluginFactory)();
     const VST3_GetPluginFactory get_plugin_factory
-            = reinterpret_cast<VST3_GetPluginFactory> (::dlsym(m_module, "GetPluginFactory"));
+            = reinterpret_cast<VST3_GetPluginFactory> (::dlsym(_pModule, "GetPluginFactory"));
 
     if (!get_plugin_factory)
     {
@@ -1290,9 +1290,9 @@ VST3_Plugin::open_descriptor(unsigned long iIndex)
                 return false;
             }
 
-            m_component = owned(component);
+            _pComponent = owned(component);
 
-            if (m_component->initialize(m_hostContext->get()) != kResultOk)
+            if (_pComponent->initialize(m_hostContext->get()) != kResultOk)
             {
                 DMESSAGE("[%p]::open(\"%s\", %lu)"
                         " *** Failed to initialize plug-in component.", this,
@@ -1303,12 +1303,12 @@ VST3_Plugin::open_descriptor(unsigned long iIndex)
             }
 
             Vst::IEditController *controller = nullptr;
-            if (m_component->queryInterface(
+            if (_pComponent->queryInterface(
                     Vst::IEditController::iid,
                     (void **) &controller) != kResultOk)
             {
                 TUID controller_cid;
-                if (m_component->getControllerClassId(controller_cid) == kResultOk)
+                if (_pComponent->getControllerClassId(controller_cid) == kResultOk)
                 {
                     if (factory->createInstance(
                             controller_cid, Vst::IEditController::iid,
@@ -1331,15 +1331,15 @@ VST3_Plugin::open_descriptor(unsigned long iIndex)
                 }
             }
 
-            if (controller) m_controller = owned(controller);
+            if (controller) _pController = owned(controller);
 
             Vst::IUnitInfo *unitInfos = nullptr;
-            if (m_component->queryInterface(
+            if (_pComponent->queryInterface(
                             Vst::IUnitInfo::iid,
                             (void **) &unitInfos) != kResultOk)
             {
-                if (m_controller &&
-                        m_controller->queryInterface(
+                if (_pController &&
+                        _pController->queryInterface(
                                 Vst::IUnitInfo::iid,
                                 (void **) &unitInfos) != kResultOk)
                 {
@@ -1352,10 +1352,10 @@ VST3_Plugin::open_descriptor(unsigned long iIndex)
             if (unitInfos) m_unitInfos = owned(unitInfos);
 
             // Connect components...
-            if (m_component && m_controller)
+            if (_pComponent && _pController)
             {
-                FUnknownPtr<Vst::IConnectionPoint> component_cp(m_component);
-                FUnknownPtr<Vst::IConnectionPoint> controller_cp(m_controller);
+                FUnknownPtr<Vst::IConnectionPoint> component_cp(_pComponent);
+                FUnknownPtr<Vst::IConnectionPoint> controller_cp(_pController);
                 if (component_cp && controller_cp)
                 {
                         component_cp->connect(controller_cp);
@@ -1375,10 +1375,10 @@ VST3_Plugin::open_descriptor(unsigned long iIndex)
 void
 VST3_Plugin::close_descriptor()
 {
-    if (m_component && m_controller)
+    if (_pComponent && _pController)
     {
-        FUnknownPtr<Vst::IConnectionPoint> component_cp(m_component);
-        FUnknownPtr<Vst::IConnectionPoint> controller_cp(m_controller);
+        FUnknownPtr<Vst::IConnectionPoint> component_cp(_pComponent);
+        FUnknownPtr<Vst::IConnectionPoint> controller_cp(_pController);
         if (component_cp && controller_cp)
         {
             component_cp->disconnect(controller_cp);
@@ -1388,21 +1388,21 @@ VST3_Plugin::close_descriptor()
 
     m_unitInfos = nullptr;
 
-    if (m_component && m_controller &&
-            FUnknownPtr<Vst::IEditController> (m_component).getInterface())
+    if (_pComponent && _pController &&
+            FUnknownPtr<Vst::IEditController> (_pComponent).getInterface())
     {
-        m_controller->terminate();
+        _pController->terminate();
     }
 
-    m_controller = nullptr;
+    _pController = nullptr;
 
-    if (m_component)
+    if (_pComponent)
     {
-        m_component->terminate();
-        m_component = nullptr;
+        _pComponent->terminate();
+        _pComponent = nullptr;
         typedef bool (PLUGIN_API *VST3_ModuleExit)();
         const VST3_ModuleExit module_exit
-                = reinterpret_cast<VST3_ModuleExit> (::dlsym(m_module, "ModuleExit"));
+                = reinterpret_cast<VST3_ModuleExit> (::dlsym(_pModule, "ModuleExit"));
 
         if (module_exit)
             module_exit();
@@ -1424,7 +1424,7 @@ VST3_Plugin::set_output_buffer ( int n, void *buf )
 bool
 VST3_Plugin::loaded ( void ) const
 {
-    if ( m_module )
+    if ( _pModule )
         return true;
 
     return false;
@@ -1750,15 +1750,15 @@ VST3_Plugin::initialize_plugin()
 {
     clear_plugin();
 
-    Vst::IComponent *component = m_component;
+    Vst::IComponent *component = _pComponent;
     if (!component)
             return;
 
-    Vst::IEditController *controller = m_controller;
+    Vst::IEditController *controller = _pController;
     if (controller)
     {
-        m_handler = owned(NEW VST3_Plugin::Handler(this));
-        controller->setComponentHandler(m_handler);
+        _pHandler = owned(NEW VST3_Plugin::Handler(this));
+        controller->setComponentHandler(_pHandler);
     }
 
     m_processor = FUnknownPtr<Vst::IAudioProcessor> (component);
@@ -1861,16 +1861,16 @@ int
 VST3_Plugin::numChannels (
 	Vst::MediaType type, Vst::BusDirection direction ) const
 {
-    if (!m_component)
+    if (!_pComponent)
         return -1;
 
     int nchannels = 0;
 
-    const int32 nbuses = m_component->getBusCount(type, direction);
+    const int32 nbuses = _pComponent->getBusCount(type, direction);
     for (int32 i = 0; i < nbuses; ++i)
     {
         Vst::BusInfo busInfo;
-        if (m_component->getBusInfo(type, direction, i, busInfo) == kResultOk)
+        if (_pComponent->getBusInfo(type, direction, i, busInfo) == kResultOk)
         {
             if ((busInfo.busType == Vst::kMain) ||
                     (busInfo.flags & Vst::BusInfo::kDefaultActive))
@@ -1889,11 +1889,11 @@ VST3_Plugin::create_audio_ports()
     m_audioInBuses = 0;
     m_audioOutBuses = 0;
 
-    int32 in_buses = m_component->getBusCount(Vst::kAudio, Vst::kInput);
+    int32 in_buses = _pComponent->getBusCount(Vst::kAudio, Vst::kInput);
     for (int32 i = 0; i < in_buses; ++i)
     {
         Vst::BusInfo busInfo;
-        if (m_component->getBusInfo(Vst::kAudio, Vst::kInput, i, busInfo) == kResultOk)
+        if (_pComponent->getBusInfo(Vst::kAudio, Vst::kInput, i, busInfo) == kResultOk)
         {
             if ((busInfo.busType == Vst::kMain) ||
                     (busInfo.flags & Vst::BusInfo::kDefaultActive))
@@ -1904,11 +1904,11 @@ VST3_Plugin::create_audio_ports()
         }
     }
 
-    int32 out_buses = m_component->getBusCount(Vst::kAudio, Vst::kOutput);
+    int32 out_buses = _pComponent->getBusCount(Vst::kAudio, Vst::kOutput);
     for (int32 i = 0; i < out_buses; ++i)
     {
         Vst::BusInfo busInfo;
-        if (m_component->getBusInfo(Vst::kAudio, Vst::kOutput, i, busInfo) == kResultOk)
+        if (_pComponent->getBusInfo(Vst::kAudio, Vst::kOutput, i, busInfo) == kResultOk)
         {
             if ((busInfo.busType == Vst::kMain) ||
                     (busInfo.flags & Vst::BusInfo::kDefaultActive))
@@ -1963,8 +1963,8 @@ VST3_Plugin::create_audio_ports()
 void
 VST3_Plugin::create_midi_ports()
 {
-    const int32 inbuses = m_component->getBusCount(Vst::kEvent, Vst::kInput);
-    const int32 outbuses = m_component->getBusCount(Vst::kEvent, Vst::kOutput);
+    const int32 inbuses = _pComponent->getBusCount(Vst::kEvent, Vst::kInput);
+    const int32 outbuses = _pComponent->getBusCount(Vst::kEvent, Vst::kOutput);
 
     for (int32_t i = 0; i < inbuses; ++i)
     {
@@ -1985,7 +1985,7 @@ VST3_Plugin::create_control_ports()
     unsigned long control_ins = 0;
     unsigned long control_outs = 0;
     
-    Vst::IEditController *controller = m_controller;
+    Vst::IEditController *controller = _pController;
 
     if (controller)
     {
@@ -2133,7 +2133,7 @@ VST3_Plugin::activate ( void )
     {
         _activated = true;
 
-	Vst::IComponent *component = m_component;
+	Vst::IComponent *component = _pComponent;
 	if (component && m_processor)
         {
             vst3_activate(component, Vst::kAudio, Vst::kInput,  true);
@@ -2170,7 +2170,7 @@ VST3_Plugin::deactivate ( void )
    if ( _activated )
    {
         _activated = false;
-        Vst::IComponent *component = m_component;
+        Vst::IComponent *component = _pComponent;
         if (component && m_processor)
         {
             m_hostContext->processReleaseRef();
@@ -2265,13 +2265,13 @@ VST3_Plugin::restore_VST3_plugin_state(const std::string &filename)
 
     Stream state(data, size);
 
-    if (m_component->setState(&state) != kResultOk)
+    if (_pComponent->setState(&state) != kResultOk)
     {
         fl_alert("IComponent::setState() FAILED! %s", filename.c_str() );
         goto restore_error;
     }
 
-    if (m_controller->setComponentState(&state) != kResultOk)
+    if (_pController->setComponentState(&state) != kResultOk)
     {
         MESSAGE("IEditController::setComponentState() FAILED! %s", filename.c_str());
         //goto restore_error;
@@ -2287,7 +2287,7 @@ restore_error:
 uint64_t
 VST3_Plugin::getState ( void** const dataPtr )
 {
-    Vst::IComponent *component = m_component;
+    Vst::IComponent *component = _pComponent;
     if (!component)
         return false;
 

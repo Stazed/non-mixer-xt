@@ -162,13 +162,12 @@ public:
     //
     tresult PLUGIN_API isPlugInterfaceSupported (const TUID _iid) override
     {
-        //if (m_fuids.contains(QString::fromLocal8Bit(_iid)))
         for( unsigned i = 0; i < m_fuids.size(); ++i)
         {
             if ( strcmp(_iid, m_fuids[i].c_str() ) == 0)
                 return kResultOk;
         }
-    //	else
+
         return kResultFalse;
     }
 
@@ -176,7 +175,6 @@ protected:
 
     void addPluInterfaceSupported(const TUID& _iid)
         { m_fuids.push_back(_iid); }
-    //	{ m_fuids.append(QString::fromLocal8Bit(_iid)); }
 
 private:
 
@@ -385,15 +383,6 @@ public:
             return kResultTrue;
         }
         return kResultFalse;
-#if 0
-        Attribute *attr = m_list.value(aid, nullptr);
-        if (attr) {
-                uint32 size2 = 0;
-                const Vst::TChar *string2 = attr->stringValue(size2);
-                ::memcpy(string, string2, qMin(size, size2) * sizeof(Vst::TChar));
-                return kResultTrue;
-        }
-#endif
     }
 
     tresult PLUGIN_API setBinary (AttrID aid, const void* data, uint32 size) override
