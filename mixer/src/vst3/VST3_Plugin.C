@@ -288,10 +288,10 @@ VST3_Plugin::VST3_Plugin() :
     _pComponent(nullptr),
     _pController(nullptr),
     m_unitInfos(nullptr),
-    m_processor(nullptr),
-    m_processing(false),
-    m_buffers_in(nullptr),
-    m_buffers_out(nullptr),
+    _pProcessor(nullptr),
+    _bProcessing(false),
+    _vst_buffers_in(nullptr),
+    _vst_buffers_out(nullptr),
     m_audioInBuses(0),
     m_audioOutBuses(0),
     m_iMidiIns(0),
@@ -330,7 +330,7 @@ VST3_Plugin::~VST3_Plugin()
 
     deactivate();
 
-    m_processor = nullptr;
+    _pProcessor = nullptr;
     _pHandler = nullptr;
 
     if ( _audio_in_buffers )
@@ -345,22 +345,22 @@ VST3_Plugin::~VST3_Plugin()
         _audio_out_buffers = nullptr;
     }
 
-    if(m_buffers_in != nullptr)
+    if(_vst_buffers_in != nullptr)
     {
         for(int i = 0; i < m_audioInBuses; i++)
         {
-            delete[] m_buffers_in[i].channelBuffers32;
+            delete[] _vst_buffers_in[i].channelBuffers32;
         }
-        delete[] m_buffers_in;
+        delete[] _vst_buffers_in;
     }
 
-    if(m_buffers_out != nullptr)
+    if(_vst_buffers_out != nullptr)
     {
         for(int i = 0; i < m_audioOutBuses; i++)
         {
-            delete[] m_buffers_out[i].channelBuffers32;
+            delete[] _vst_buffers_out[i].channelBuffers32;
         }
-        delete[] m_buffers_out;
+        delete[] _vst_buffers_out;
     }
 
     for ( unsigned int i = 0; i < midi_input.size(); ++i )
@@ -734,8 +734,8 @@ VST3_Plugin::configure_midi_outputs ()
 nframes_t
 VST3_Plugin::get_module_latency ( void ) const
 {
-    if (m_processor)
-        return m_processor->getLatencySamples();
+    if (_pProcessor)
+        return _pProcessor->getLatencySamples();
     else
         return 0; 
 }
@@ -759,10 +759,10 @@ VST3_Plugin::process ( nframes_t nframes )
     }
     else
     {
-        if (!m_processor)
+        if (!_pProcessor)
             return;
 
-        if (!m_processing)
+        if (!_bProcessing)
             return;
 
         process_jack_transport( nframes );
@@ -773,16 +773,16 @@ VST3_Plugin::process ( nframes_t nframes )
             process_jack_midi_in( nframes, i );
         }
 
-        m_params_out.clear();
-        m_events_out.clear();
+        _cParams_out.clear();
+        _cEvents_out.clear();
 
         int j = 0;
         for (int i = 0; i < m_audioInBuses; i++)
         {
-            for (int k = 0; k < m_buffers_in[i].numChannels; k++)
+            for (int k = 0; k < _vst_buffers_in[i].numChannels; k++)
             {
                // DMESSAGE("III = %d: KKK = %d: JJJ = %d", i, k, j);
-                m_buffers_in[i].channelBuffers32[k] = _audio_in_buffers[j] ;
+                _vst_buffers_in[i].channelBuffers32[k] = _audio_in_buffers[j] ;
                 j++;
             }
         }
@@ -790,17 +790,17 @@ VST3_Plugin::process ( nframes_t nframes )
         j = 0;
         for (int i = 0; i < m_audioOutBuses; i++)
         {
-            for (int k = 0; k < m_buffers_out[i].numChannels; k++)
+            for (int k = 0; k < _vst_buffers_out[i].numChannels; k++)
             {
                // DMESSAGE("III = %d: KKK = %d: JJJ = %d", i, k, j);
-                m_buffers_out[i].channelBuffers32[k] = _audio_out_buffers[j] ;
+                _vst_buffers_out[i].channelBuffers32[k] = _audio_out_buffers[j] ;
                 j++;
             }
         }
 
-        m_process_data.numSamples = nframes;
+        _vst_process_data.numSamples = nframes;
 
-        if (m_processor->process(m_process_data) != kResultOk)
+        if (_pProcessor->process(_vst_process_data) != kResultOk)
         {
             WARNING("[%p]::process() FAILED!", this);
         }
@@ -811,8 +811,8 @@ VST3_Plugin::process ( nframes_t nframes )
             process_jack_midi_out( nframes, i);
         }
 
-        m_events_in.clear();
-        m_params_in.clear();
+        _cEvents_in.clear();
+        _cParams_in.clear();
     }
 }
 
@@ -822,7 +822,7 @@ VST3_Plugin::setParameter (
 	Vst::ParamID id, Vst::ParamValue value, uint32 offset )
 {
     int32 index = 0;
-    Vst::IParamValueQueue *queue = m_params_in.addParameterData(id, index);
+    Vst::IParamValueQueue *queue = _cParams_in.addParameterData(id, index);
     if (queue && (queue->addPoint(offset, value, index) != kResultOk))
     {
         WARNING("setParameter(%u, %g, %u) FAILED!", this, id, value, offset);
@@ -1433,7 +1433,7 @@ VST3_Plugin::loaded ( void ) const
 bool
 VST3_Plugin::process_reset()
 {
-    if (!m_processor)
+    if (!_pProcessor)
         return false;
 
     deactivate();
@@ -1443,11 +1443,11 @@ VST3_Plugin::process_reset()
     _rolling = false;
 
     // Initialize running state...
-    m_params_in.clear();
-    m_params_out.clear();
+    _cParams_in.clear();
+    _cParams_out.clear();
 
-    m_events_in.clear();
-    m_events_out.clear();
+    _cEvents_in.clear();
+    _cEvents_out.clear();
 
     Vst::ProcessSetup setup;
     setup.processMode        = Vst::kRealtime;
@@ -1455,38 +1455,38 @@ VST3_Plugin::process_reset()
     setup.maxSamplesPerBlock = buffer_size();
     setup.sampleRate         = float(sample_rate());
 
-    if (m_processor->setupProcessing(setup) != kResultOk)
+    if (_pProcessor->setupProcessing(setup) != kResultOk)
         return false;
 
     // Setup processor data struct...
-    m_process_data.numSamples             = buffer_size();
-    m_process_data.symbolicSampleSize     = Vst::kSample32;
+    _vst_process_data.numSamples             = buffer_size();
+    _vst_process_data.symbolicSampleSize     = Vst::kSample32;
 
     if (_plugin_ins > 0) 
     {
-        m_process_data.numInputs          = m_audioInBuses;
-        m_process_data.inputs             = m_buffers_in;
+        _vst_process_data.numInputs          = m_audioInBuses;
+        _vst_process_data.inputs             = _vst_buffers_in;
     } else 
     {
-        m_process_data.numInputs          = 0;
-        m_process_data.inputs             = nullptr;
+        _vst_process_data.numInputs          = 0;
+        _vst_process_data.inputs             = nullptr;
     }
 
     if (_plugin_outs > 0)
     {
-        m_process_data.numOutputs         = m_audioOutBuses;
-        m_process_data.outputs            = m_buffers_out;
+        _vst_process_data.numOutputs         = m_audioOutBuses;
+        _vst_process_data.outputs            = _vst_buffers_out;
     } else
     {
-        m_process_data.numOutputs         = 0;
-        m_process_data.outputs            = nullptr;
+        _vst_process_data.numOutputs         = 0;
+        _vst_process_data.outputs            = nullptr;
     }
 
-    m_process_data.processContext         = m_hostContext->processContext();
-    m_process_data.inputEvents            = &m_events_in;
-    m_process_data.outputEvents           = &m_events_out;
-    m_process_data.inputParameterChanges  = &m_params_in;
-    m_process_data.outputParameterChanges = &m_params_out;
+    _vst_process_data.processContext         = m_hostContext->processContext();
+    _vst_process_data.inputEvents            = &_cEvents_in;
+    _vst_process_data.outputEvents           = &_cEvents_out;
+    _vst_process_data.inputParameterChanges  = &_cParams_in;
+    _vst_process_data.outputParameterChanges = &_cParams_out;
 
     activate();
 
@@ -1604,7 +1604,7 @@ VST3_Plugin::process_midi_in (
             event.noteOn.channel = channel;
             event.noteOn.pitch = key;
             event.noteOn.velocity = float(value) / 127.0f;
-            m_events_in.addEvent(event);
+            _cEvents_in.addEvent(event);
         }
         // note off
         else if (status == 0x80)
@@ -1614,7 +1614,7 @@ VST3_Plugin::process_midi_in (
             event.noteOff.channel = channel;
             event.noteOff.pitch = key;
             event.noteOff.velocity = float(value) / 127.0f;
-            m_events_in.addEvent(event);
+            _cEvents_in.addEvent(event);
         }
         // key pressure/poly.aftertouch
         else if (status == 0xa0)
@@ -1623,7 +1623,7 @@ VST3_Plugin::process_midi_in (
             event.polyPressure.channel = channel;
             event.polyPressure.pitch = key;
             event.polyPressure.pressure = float(value) / 127.0f;
-            m_events_in.addEvent(event);
+            _cEvents_in.addEvent(event);
         }
         // control-change
         else if (status == 0xb0)
@@ -1678,7 +1678,7 @@ VST3_Plugin::process_jack_midi_out ( uint32_t nframes, unsigned int port )
         jack_midi_clear_buffer(buf);
 
         // Process MIDI output stream, if any...
-        VST3IMPL::EventList& events_out = m_events_out;
+        VST3IMPL::EventList& events_out = _cEvents_out;
         const int32 nevents = events_out.getEventCount();
         for (int32 i = 0; i < nevents; ++i)
         {
@@ -1761,7 +1761,7 @@ VST3_Plugin::initialize_plugin()
         controller->setComponentHandler(_pHandler);
     }
 
-    m_processor = FUnknownPtr<Vst::IAudioProcessor> (component);
+    _pProcessor = FUnknownPtr<Vst::IAudioProcessor> (component);
 #if 0
     if (controller)
     {
@@ -1937,23 +1937,23 @@ VST3_Plugin::create_audio_ports()
     // Setup processor audio I/O buffers...
     if (m_audioInBuses)
     {
-        m_buffers_in = new Vst::AudioBusBuffers[m_audioInBuses];
+        _vst_buffers_in = new Vst::AudioBusBuffers[m_audioInBuses];
         for(int i = 0; i < m_audioInBuses; i++)
         {
-            m_buffers_in[i].silenceFlags      = 0;
-            m_buffers_in[i].numChannels       = m_audioInChannels[i];
-            m_buffers_in[i].channelBuffers32  = new float *[m_audioInChannels[i]]();
+            _vst_buffers_in[i].silenceFlags      = 0;
+            _vst_buffers_in[i].numChannels       = m_audioInChannels[i];
+            _vst_buffers_in[i].channelBuffers32  = new float *[m_audioInChannels[i]]();
         }
     }
 
     if (m_audioOutBuses)
     {
-        m_buffers_out = new Vst::AudioBusBuffers[m_audioOutBuses];
+        _vst_buffers_out = new Vst::AudioBusBuffers[m_audioOutBuses];
         for(int i = 0; i < m_audioOutBuses; i++)
         {
-            m_buffers_out[i].silenceFlags     = 0;
-            m_buffers_out[i].numChannels      = m_audioOutChannels[i];
-            m_buffers_out[i].channelBuffers32 = new float *[m_audioOutChannels[i]]();
+            _vst_buffers_out[i].silenceFlags     = 0;
+            _vst_buffers_out[i].numChannels      = m_audioOutChannels[i];
+            _vst_buffers_out[i].channelBuffers32 = new float *[m_audioOutChannels[i]]();
         }
     }
 
@@ -2116,7 +2116,7 @@ VST3_Plugin::activate ( void )
     if ( !loaded() )
         return;
     
-    if (m_processing)
+    if (_bProcessing)
         return;
 
     DMESSAGE( "Activating plugin \"%s\"", label() );
@@ -2134,16 +2134,16 @@ VST3_Plugin::activate ( void )
         _activated = true;
 
 	Vst::IComponent *component = _pComponent;
-	if (component && m_processor)
+	if (component && _pProcessor)
         {
             vst3_activate(component, Vst::kAudio, Vst::kInput,  true);
             vst3_activate(component, Vst::kAudio, Vst::kOutput, true);
             vst3_activate(component, Vst::kEvent, Vst::kInput,  true);
             vst3_activate(component, Vst::kEvent, Vst::kOutput, true);
             component->setActive(true);
-            m_processor->setProcessing(true);
+            _pProcessor->setProcessing(true);
             m_hostContext->processAddRef();
-            m_processing = true;
+            _bProcessing = true;
         }
     }
 
@@ -2157,7 +2157,7 @@ VST3_Plugin::deactivate ( void )
     if ( !loaded() )
         return;
     
-    if (!m_processing)
+    if (!_bProcessing)
         return;
 
     DMESSAGE( "Deactivating plugin \"%s\"", label() );
@@ -2171,12 +2171,12 @@ VST3_Plugin::deactivate ( void )
    {
         _activated = false;
         Vst::IComponent *component = _pComponent;
-        if (component && m_processor)
+        if (component && _pProcessor)
         {
             m_hostContext->processReleaseRef();
-            m_processor->setProcessing(false);
+            _pProcessor->setProcessing(false);
             component->setActive(false);
-            m_processing = false;
+            _bProcessing = false;
             vst3_activate(component, Vst::kEvent, Vst::kOutput, false);
             vst3_activate(component, Vst::kEvent, Vst::kInput,  false);
             vst3_activate(component, Vst::kAudio, Vst::kOutput, false);

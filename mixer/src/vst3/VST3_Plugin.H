@@ -136,24 +136,24 @@ private:
 
     IPtr<Vst::IComponent> _pComponent;
     IPtr<Vst::IEditController> _pController;
-    IPtr<Vst::IUnitInfo> m_unitInfos;
+    IPtr<Vst::IUnitInfo> m_unitInfos;   // Not implemented
 
-    Vst::IAudioProcessor *m_processor;
+    Vst::IAudioProcessor *_pProcessor;
 
-    volatile bool m_processing;
+    volatile bool _bProcessing;
 
-    VST3IMPL::ParamChanges m_params_in;
-    VST3IMPL::ParamChanges m_params_out;
+    VST3IMPL::ParamChanges _cParams_in;
+    VST3IMPL::ParamChanges _cParams_out;    // dummy not used, required by some plugins - DPF
 
-    VST3IMPL::EventList m_events_in;
-    VST3IMPL::EventList m_events_out;
+    VST3IMPL::EventList _cEvents_in;
+    VST3IMPL::EventList _cEvents_out;
 
     // Processor buffers.
-    Vst::AudioBusBuffers *m_buffers_in;
-    Vst::AudioBusBuffers *m_buffers_out;
+    Vst::AudioBusBuffers *_vst_buffers_in;
+    Vst::AudioBusBuffers *_vst_buffers_out;
 
     // Processor data.
-    Vst::ProcessData m_process_data;
+    Vst::ProcessData _vst_process_data;
 
     std::vector<int32_t> m_audioInChannels;
     std::vector<int32_t> m_audioOutChannels;
