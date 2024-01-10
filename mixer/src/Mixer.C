@@ -403,6 +403,7 @@ void Mixer::cb_menu(Fl_Widget* o) {
 
         ab.copyright->label( "Copyright (C) 2008-2021 Jonathan Moore Liles\n"
                              "Copyright (C) 2022-2023 Stazed" );
+        ab.credits->labelsize(14);
         ab.credits->label(
             "Legacy Non Mixer by Jonathan Moore Liles.\n"
             "Filipe Coelho - initial LV2 implementation, X11 embedded,\n"
@@ -410,9 +411,10 @@ void Mixer::cb_menu(Fl_Widget* o) {
             "David Robillard for LV2 atom ports and MIDI\n"
             "event support from the Jalv project.\n"
             "Rui Nuno Capela for LV2 showInterface, external\n"
-            "UI, presets and CLAP support from the Qtractor project.\n"
+            "UI, presets CLAP and VST3* support from the Qtractor project.\n"
             "Jean-Emmanuel Doucet - Extended OSC support.\n"
-            "Non Mixer XT modifications by Stazed.\n"
+            "Non Mixer XT modifications by Stazed.\n\n"
+            "*VST is a trademark of Steinberg Media Technologies GmbH."
         );
 
         /* The FL submodule label is set to timeline, so reset it here to the mixer */
