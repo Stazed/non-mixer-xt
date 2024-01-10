@@ -1,6 +1,6 @@
 [Desktop Entry]
 Name=Non Mixer XT
-Comment=Modular Digital Audio Workstation - Mixer
+Comment="Modular Jack audio mixer (non-mixer) with eXTended LV2, CLAP, VST3 support"
 Comment[fr]=Station de travail audio-numérique modulaire - Mixeur
 Exec=non-mixer-xt
 Terminal=false
