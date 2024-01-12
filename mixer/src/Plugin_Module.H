@@ -50,7 +50,7 @@ public:
         const std::string type;
         bool favorite;
 
-        Plugin_Info ( const std::string &s_type ) :  // LADSPA, LV2 -- TODO other types
+        Plugin_Info ( const std::string &s_type ) :  // LADSPA, LV2, CLAP, VST2, VST3
             s_unique_id(),
             id(0),
             plug_path(),

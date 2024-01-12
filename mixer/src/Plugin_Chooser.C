@@ -106,6 +106,17 @@ Plugin_Chooser::plugin_chooser ( int ninputs )
             break;
         }
 #endif
+#ifdef VST2_SUPPORT
+        case Type_VST2:
+        {
+            if (!o->s_unique_id().empty())
+            {
+                picked.s_unique_id = o->s_unique_id();
+                picked.s_plug_path = o->plug_path();
+            }
+            break;
+        }
+#endif
 #ifdef VST3_SUPPORT
         case Type_VST3:
         {
@@ -117,7 +128,6 @@ Plugin_Chooser::plugin_chooser ( int ninputs )
             break;
         }
 #endif
-        // TODO other types here
         default:
             break;
     }
@@ -162,9 +172,11 @@ Plugin_Chooser::search ( const char *name, const char *author, const char *categ
                   (p->audio_inputs == 0 && ninputs == 1) ) )    // this would be a synth with no inputs
                 continue;
 
-#ifdef CLAP_SUPPORT
-            /* We do not support multiple instance for CLAP ATM. */
-            if( strcmp( p->type.c_str(), "CLAP" ) == 0 )
+#if defined(CLAP_SUPPORT) || defined(VST3_SUPPORT) || defined(VST2_SUPPORT)
+            /* We do not support multiple instance for these ATM. */
+            if( (strcmp( p->type.c_str(), "CLAP" ) == 0) ||
+                    (strcmp( p->type.c_str(), "VST2" ) == 0) ||
+                    (strcmp( p->type.c_str(), "VST3" ) == 0))
             {
                 if (p->audio_inputs == 1 && ninputs > 1)
                     continue;
@@ -376,6 +388,14 @@ Plugin_Chooser::cb_table ( Fl_Widget *w )
                 _plugin_type = Type_CLAP;
             }
 #endif
+#ifdef VST2_SUPPORT
+            if(::strcmp(_plugin_rows[R]->type.c_str(), "VST2") == 0)
+            {
+                _s_unique_id = _plugin_rows[R]->s_unique_id;
+                _plug_path = _plugin_rows[R]->plug_path;
+                _plugin_type = Type_VST2;
+            }
+#endif
 #ifdef VST3_SUPPORT
             if(::strcmp(_plugin_rows[R]->type.c_str(), "VST3") == 0)
             {
@@ -384,7 +404,6 @@ Plugin_Chooser::cb_table ( Fl_Widget *w )
                 _plugin_type = Type_VST3;
             }
 #endif
-            // TODO other types
             hide();
         }
     }
@@ -456,6 +475,16 @@ Plugin_Chooser::load_favorites ( void )
                     }
                 }
 #endif
+#ifdef VST2_SUPPORT
+                if( !strcmp(type, "VST2") )
+                {
+                    if( !strcmp(c_unique_id, (*i).s_unique_id.c_str()) )
+                    {
+                        (*i).favorite = 1;
+                        favorites++;
+                    }
+                }
+#endif
 #ifdef VST3_SUPPORT
                 if( !strcmp(type, "VST3") )
                 {
@@ -466,7 +495,6 @@ Plugin_Chooser::load_favorites ( void )
                     }
                 }
 #endif
-                // TODO other types
             }
         }
 

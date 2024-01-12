@@ -56,6 +56,7 @@ enum Plugin_Index
     Type_LADSPA,
     Type_LV2,
     Type_CLAP,
+    Type_VST2,
     Type_VST3
     // VST2
 };

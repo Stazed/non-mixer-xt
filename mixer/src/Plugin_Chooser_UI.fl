@@ -77,8 +77,12 @@ widget_class Plugin_Chooser_UI {
       xywh {20 -48 34 18}
     }
     MenuItem {} {
-      label VST3
+      label VST2
       xywh {30 -38 34 18}
+    }
+    MenuItem {} {
+      label VST3
+      xywh {40 -28 34 18}
     }
   }
 } 
