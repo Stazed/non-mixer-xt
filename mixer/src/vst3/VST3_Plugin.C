@@ -1156,7 +1156,10 @@ VST3_Plugin::find_vst_binary()
         if (strcmp( restore.c_str(), base.c_str() ) == 0 )
         {
             if ( std::filesystem::exists(path) )
+            {
+                _plugin_filename = path;
                 return true;    // We found it
+            }
             else
                 return false;   // If it still does not exist then abandon
         }
