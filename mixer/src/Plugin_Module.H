@@ -109,9 +109,13 @@ public:
 #ifdef CLAP_SUPPORT
     void scan_CLAP_plugins( std::list<Plugin_Info> & pr );
 #endif
+#ifdef VST2_SUPPORT
+    void scan_VST2_plugins( std::list<Plugin_Info> & pr );
+#endif
 #ifdef VST3_SUPPORT
     void scan_VST3_plugins( std::list<Plugin_Info> & pr );
 #endif
+
     static void spawn_discover_thread ( void );
     static void join_discover_thread ( void );
 

@@ -214,10 +214,12 @@ Plugin_Module::get_all_plugins ( void )
 #ifdef CLAP_SUPPORT
     pm.scan_CLAP_plugins( pr );     // Scan CLAP
 #endif
-#ifdef VST3_SUPPORT
-    pm.scan_VST3_plugins( pr );
+#ifdef VST2_SUPPORT
+    pm.scan_VST2_plugins( pr );     // Scan VST2
 #endif
-    // TODO Additional plugin types here
+#ifdef VST3_SUPPORT
+    pm.scan_VST3_plugins( pr );     // Scan VST3
+#endif
 
     pr.sort();
 
@@ -564,6 +566,14 @@ Plugin_Module::scan_CLAP_plugins( std::list<Plugin_Info> & pr )
     }
 }
 #endif  // CLAP_SUPPORT
+
+#ifdef VST2_SUPPORT
+void
+Plugin_Module::scan_VST2_plugins( std::list<Plugin_Info> & pr )
+{
+    
+}
+#endif  // VST2_SUPPORT
 
 #ifdef VST3_SUPPORT
 void

@@ -29,6 +29,7 @@ option (NativeOptimizations "Enable native CPU optimizations" ON)
 option (EnableLADSPASupport "Enable LADSPA plugin support" ON)
 option (EnableLV2Support "Enable LV2 plugin support" ON)
 option (EnableCLAPSupport "Enable CLAP plugin support" ON)
+option (EnableVST2Support "Enable VST(2) plugin support" ON)
 option (EnableVST3Support "Enable VST3 plugin support" ON)
 
 
@@ -105,6 +106,10 @@ if (EnableCLAPSupport)
     endif (CLAP_FOUND)
 endif (EnableCLAPSupport)
 
+if (EnableVST2Support)
+    add_definitions(-D'VST2_SUPPORT=1')
+endif (EnableVST2Support)
+
 if (EnableVST3Support)
     add_definitions(-D'VST3_SUPPORT=1')
 endif (EnableVST3Support)
@@ -169,7 +174,6 @@ endif (LIBM)
 
 # Check for VST3 SDK.
 if (EnableVST3Support AND NOT CONFIG_VST3SDK)
-# FIXME using travesty lib makes CONFIG_VST3SDK unnecessary
     set (CONFIG_VST3SDK ${CMAKE_CURRENT_SOURCE_DIR}/mixer/src/vst3/vst3sdk)
     message(STATUS "CONFIG_VST3SDK = ${CONFIG_VST3SDK}")
 endif ()
@@ -273,6 +277,10 @@ if (EnableCLAPSupport)
     package_status(CLAP_FOUND      "CLAP support . . . . . . . . . . . . . . . . . . . . . .:"  )
 endif (EnableCLAPSupport)
 
+if (EnableVST2Support)
+    package_status(CONFIG_VST3SDK  "VST2 support . . . . . . . . . . . . . . . . . . . . . .:"  )
+endif (EnableVST2Support)
+
 if (EnableVST3Support)
     package_status(CONFIG_VST3SDK  "VST3 support . . . . . . . . . . . . . . . . . . . . . .:"  )
 endif (EnableVST3Support)
@@ -289,6 +297,7 @@ message (STATUS                    "____________________ User Options___________
 package_status(EnableLADSPASupport "Build LADSPA support . . . . . . . . . . . . . . . . . .:"  )
 package_status(EnableLV2Support    "Build LV2 support. . . . . . . . . . . . . . . . . . . .:"  )
 package_status(EnableCLAPSupport   "Build CLAP support . . . . . . . . . . . . . . . . . . .:"  )
+package_status(EnableVST2Support   "Build VST2 support . . . . . . . . . . . . . . . . . . .:"  )
 package_status(EnableVST3Support   "Build VST3 support . . . . . . . . . . . . . . . . . . .:"  )
 package_status(EnableOptimizations "Use optimizations. . . . . . . . . . . . . . . . . . . .:"  )
 package_status(EnableSSE           "Use sse. . . . . . . . . . . . . . . . . . . . . . . . .:"  )

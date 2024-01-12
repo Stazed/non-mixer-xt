@@ -85,9 +85,8 @@ set(ExternLibraries
     lrdf
 )
 
-# FIXME using travesty lib makes this unnecessary
 if (CONFIG_VST3SDK)
-  add_definitions(-DRELEASE) # required by vstsdk
+  add_definitions(-DRELEASE)
   set (VST3SDK_SOURCES
     ${CONFIG_VST3SDK}/base/source/baseiids.cpp
     ${CONFIG_VST3SDK}/base/source/fobject.cpp
@@ -101,10 +100,9 @@ endif ()
 
 add_executable (non-mixer-xt
     ${ProgSources}
-    ${VST3SDK_SOURCES}  # FIXME using travesty lib makes this unnecessary
+    ${VST3SDK_SOURCES}
     src/main.C)
 
-# FIXME using travesty lib makes this unnecessary
 if (EnableVST3Support AND CONFIG_VST3SDK)
     target_include_directories (non-mixer-xt PRIVATE ${CONFIG_VST3SDK})
 endif()
