@@ -41,7 +41,7 @@ namespace vst3_discovery
 std::vector<std::filesystem::path> installedVST3s();
 
 /*
- * Return a list of the valid CLAP search paths, per the spec
+ * Return a list of the valid VST3 search paths, per the spec
  * in entry.h.
  */
 std::vector<std::filesystem::path> validVST3SearchPaths();
