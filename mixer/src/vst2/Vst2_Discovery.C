@@ -168,7 +168,7 @@ qtractor_vst2_scan::qtractor_vst2_scan (void)
 // destructor.
 qtractor_vst2_scan::~qtractor_vst2_scan (void)
 {
-	close();
+    close();
 }
 
 
@@ -176,9 +176,9 @@ qtractor_vst2_scan::~qtractor_vst2_scan (void)
 bool qtractor_vst2_scan::open ( const std::string& sFilename )
 {
     close();
-    
+
     m_pLibrary = lib_open(sFilename.c_str());
-    
+
     if (m_pLibrary == nullptr)
     {
         DMESSAGE("Cannot Open %s", sFilename.c_str());
@@ -186,29 +186,7 @@ bool qtractor_vst2_scan::open ( const std::string& sFilename )
     }
 
     DMESSAGE("Open %s", sFilename.c_str());
-#if 0
-    std::string baseName;
-    // Find the base plugin name
-    std::size_t found = sFilename.find_last_of("/\\");
-    baseName = sFilename.substr(found);
-    DMESSAGE("Base Name = %s", baseName.c_str());
-    
-    m_sName = baseName;
-#endif
-    
-#if 0           // FIXME
-    if (!QLibrary::isLibrary(sFilename))
-            return false;
 
-#ifdef CONFIG_DEBUG_0
-    qDebug("qtractor_vst2_scan[%p]::open(\"%s\", %lu)", this,
-            sFilename.toUtf8().constData());
-#endif
-
-    m_pLibrary = new QLibrary(sFilename);
-
-    m_sName = QFileInfo(sFilename).baseName();
-#endif
     return true;
 }
 
@@ -236,21 +214,6 @@ bool qtractor_vst2_scan::open_descriptor ( unsigned long iIndex )
 
     m_pEffect = (*pfnGetPluginInstance)(qtractor_vst2_scan_callback);
 
-
-#if 0       // FIXME
-	VST_GetPluginInstance pfnGetPluginInstance
-		= (VST_GetPluginInstance) m_pLibrary->resolve("VSTPluginMain");
-	if (pfnGetPluginInstance == nullptr)
-		pfnGetPluginInstance = (VST_GetPluginInstance) m_pLibrary->resolve("main");
-	if (pfnGetPluginInstance == nullptr) {
-	#ifdef CONFIG_DEBUG
-		qDebug("qtractor_vst2_scan[%p]: plugin does not have a main entry point.", this);
-	#endif
-		return false;
-	}
-	m_pEffect = (*pfnGetPluginInstance)(qtractor_vst2_scan_callback);
-        
-#endif
     if (m_pEffect == nullptr)
     {
         DMESSAGE("plugin instance could not be created.");
@@ -280,23 +243,20 @@ bool qtractor_vst2_scan::open_descriptor ( unsigned long iIndex )
                 break;
         }
         // Check if we're actually the intended plugin...
-        if (i < iIndex || id == 0 || !buf[0]) {
-        #ifdef CONFIG_DEBUG
-                qDebug("qtractor_vst2_scan[%p]: "
-                        "vst2_shell(%lu) plugin is not a valid VST.", this, iIndex);
-        #endif
-                m_pEffect = nullptr;
-                return false;
+        if (i < iIndex || id == 0 || !buf[0])
+        {
+            DMESSAGE("vst2_shell(%lu) plugin is not a valid VST.", iIndex);
+            m_pEffect = nullptr;
+            return false;
         }
         // Make it known...
         g_iVst2ShellCurrentId = id;
         // Re-allocate the thing all over again...
 
         pfnGetPluginInstance = lib_symbol<VST_GetPluginInstance>(m_pLibrary, "VSTPluginMain");
-        
+
         if (pfnGetPluginInstance == nullptr)
             pfnGetPluginInstance = lib_symbol<VST_GetPluginInstance> (m_pLibrary, "main");
-       
 
         if (pfnGetPluginInstance == nullptr)
         {
@@ -306,33 +266,14 @@ bool qtractor_vst2_scan::open_descriptor ( unsigned long iIndex )
 	}
 
         m_pEffect = (*pfnGetPluginInstance)(qtractor_vst2_scan_callback);
-                
-#if 0   // FIXME
-		pfnGetPluginInstance
-			= (VST_GetPluginInstance) m_pLibrary->resolve("VSTPluginMain");
-		if (pfnGetPluginInstance == nullptr)
-			pfnGetPluginInstance = (VST_GetPluginInstance) m_pLibrary->resolve("main");
-		if (pfnGetPluginInstance == nullptr) {
-		#ifdef CONFIG_DEBUG
-			qDebug("qtractor_vst2_scan[%p]: "
-				"vst2_shell(%lu) plugin does not have a main entry point.", this, iIndex);
-		#endif
-			m_pEffect = nullptr;
-			return false;
-		}
-		// Does the VST plugin instantiate OK?
-		m_pEffect = (*pfnGetPluginInstance)(qtractor_vst2_scan_callback);
-                
-#endif
+
         // Not needed anymore, hopefully...
         g_iVst2ShellCurrentId = 0;
         // Don't go further if failed...
-        if (m_pEffect == nullptr) {
-        #ifdef CONFIG_DEBUG
-                qDebug("qtractor_vst2_scan[%p]: "
-                        "vst2_shell(%lu) plugin instance could not be created.", this, iIndex);
-        #endif
-                return false;
+        if (m_pEffect == nullptr)
+        {
+            DMESSAGE("vst2_shell(%lu) plugin instance could not be created.", iIndex);
+            return false;
         }
 
         if (m_pEffect->magic != kEffectMagic)
@@ -343,7 +284,6 @@ bool qtractor_vst2_scan::open_descriptor ( unsigned long iIndex )
         }
 
         DMESSAGE( "vst2_shell(%lu) id=0x%x name=\"%s\"",  i, id, buf);
-
     }
     else
     // Not a VST Shell plugin...
@@ -398,6 +338,7 @@ bool qtractor_vst2_scan::open_descriptor ( unsigned long iIndex )
         break;
     }
 
+#if 0
     // Specific inquiries...
     m_iFlagsEx = 0;
 
@@ -414,7 +355,7 @@ bool qtractor_vst2_scan::open_descriptor ( unsigned long iIndex )
     if (vst2_canDo("midiProgramNames"))    m_iFlagsEx |= effFlagsExCanMidiProgramNames;
 
     m_bEditor = (m_pEffect->flags & effFlagsHasEditor);
-
+#endif
     return true;
 }
 
@@ -422,19 +363,17 @@ bool qtractor_vst2_scan::open_descriptor ( unsigned long iIndex )
 // Plugin unloader.
 void qtractor_vst2_scan::close_descriptor (void)
 {
-	if (m_pEffect == nullptr)
-		return;
+    if (m_pEffect == nullptr)
+        return;
 
-#ifdef CONFIG_DEBUG_0
-	qDebug("qtractor_vst2_scan[%p]::close_descriptor()", this);
-#endif
+    DMESSAGE("close_descriptor()");
 
-	vst2_dispatch(effClose, 0, 0, 0, 0.0f);
+    vst2_dispatch(effClose, 0, 0, 0, 0.0f);
 
-	m_pEffect  = nullptr;
-	m_iFlagsEx = 0;
-//	m_bEditor  = false;
-	m_sName.clear();
+    m_pEffect  = nullptr;
+    m_iFlagsEx = 0;
+    m_bEditor  = false;
+    m_sName.clear();
 }
 
 
@@ -460,11 +399,8 @@ bool qtractor_vst2_scan::isOpen (void) const
 {
     if (m_pLibrary == nullptr)
         return false;
-    
+
     return true;
-#if 0   // FIXME
-	return m_pLibrary->isLoaded();
-#endif
 }
 
 unsigned int qtractor_vst2_scan::uniqueID() const
@@ -497,22 +433,20 @@ bool qtractor_vst2_scan::hasProgramChunks() const
 int qtractor_vst2_scan::vst2_dispatch (
 	long opcode, long index, long value, void *ptr, float opt ) const
 {
-	if (m_pEffect == nullptr)
-		return 0;
+    if (m_pEffect == nullptr)
+            return 0;
 
-#ifdef CONFIG_DEBUG_0
-	qDebug("vst2_plugin[%p]::vst2_dispatch(%ld, %ld, %ld, %p, %g)",
-		this, opcode, index, value, ptr, opt);
-#endif
+ //   DMESSAGE("vst2_dispatch(%ld, %ld, %ld, %p, %g)",
+ //           opcode, index, value, ptr, opt);
 
-	return m_pEffect->dispatcher(m_pEffect, opcode, index, value, ptr, opt);
+    return m_pEffect->dispatcher(m_pEffect, opcode, index, value, ptr, opt);
 }
 
 
 // VST flag inquirer.
 bool qtractor_vst2_scan::vst2_canDo ( const char *pszCanDo ) const
 {
-	return (vst2_dispatch(effCanDo, 0, 0, (void *) pszCanDo, 0.0f) > 0);
+    return (vst2_dispatch(effCanDo, 0, 0, (void *) pszCanDo, 0.0f) > 0);
 }
 
 
@@ -522,35 +456,35 @@ bool qtractor_vst2_scan::vst2_canDo ( const char *pszCanDo ) const
 static VstIntPtr VSTCALLBACK qtractor_vst2_scan_callback ( AEffect* effect,
 	VstInt32 opcode, VstInt32 index, VstIntPtr /*value*/, void */*ptr*/, float opt )
 {
-	VstIntPtr ret = 0;
+    VstIntPtr ret = 0;
 
-	switch (opcode) {
-	case audioMasterVersion:
-		ret = 2;
-		break;
-	case audioMasterAutomate:
-		effect->setParameter(effect, index, opt);
-		break;
-	case audioMasterCurrentId:
-		ret = (VstIntPtr) g_iVst2ShellCurrentId;
-		break;
-	case audioMasterGetSampleRate:
-		effect->dispatcher(effect, effSetSampleRate, 0, 0, nullptr, 44100.0f);
-		break;
-	case audioMasterGetBlockSize:
-		effect->dispatcher(effect, effSetBlockSize, 0, 1024, nullptr, 0.0f);
-		break;
-	case audioMasterGetAutomationState:
-		ret = 1; // off
-		break;
-	case audioMasterGetLanguage:
-		ret = kVstLangEnglish;
-		break;
-	default:
-		break;
-	}
+    switch (opcode) {
+    case audioMasterVersion:
+        ret = 2;
+        break;
+    case audioMasterAutomate:
+        effect->setParameter(effect, index, opt);
+        break;
+    case audioMasterCurrentId:
+        ret = (VstIntPtr) g_iVst2ShellCurrentId;
+        break;
+    case audioMasterGetSampleRate:
+        effect->dispatcher(effect, effSetSampleRate, 0, 0, nullptr, 44100.0f);
+        break;
+    case audioMasterGetBlockSize:
+        effect->dispatcher(effect, effSetBlockSize, 0, 1024, nullptr, 0.0f);
+        break;
+    case audioMasterGetAutomationState:
+        ret = 1; // off
+        break;
+    case audioMasterGetLanguage:
+        ret = kVstLangEnglish;
+        break;
+    default:
+        break;
+    }
 
-	return ret;
+    return ret;
 }
 
 
@@ -560,9 +494,8 @@ static VstIntPtr VSTCALLBACK qtractor_vst2_scan_callback ( AEffect* effect,
 
 void vst2_discovery_scan_file ( const std::string& sFilename, std::list<Plugin_Module::Plugin_Info> & vst2pr )
 {
-#ifdef CONFIG_DEBUG
-    qDebug("qtractor_vst2_scan_file(\"%s\")", sFilename.toUtf8().constData());
-#endif
+    DMESSAGE("scan_file(\"%s\")", sFilename.c_str());
+
     qtractor_vst2_scan plugin;
 
     if (!plugin.open(sFilename))
@@ -593,34 +526,6 @@ void vst2_discovery_scan_file ( const std::string& sFilename, std::list<Plugin_M
     }
 
     plugin.close();
-#if 0
-        QTextStream sout(stdout);
-        unsigned long i = 0;
-        while (plugin.open_descriptor(i)) {
-                sout << "VST|";
-                sout << plugin.name() << '|';
-                sout << plugin.numInputs()     << ':' << plugin.numOutputs()     << '|';
-                sout << plugin.numMidiInputs() << ':' << plugin.numMidiOutputs() << '|';
-                sout << plugin.numParams()     << ':' << 0                       << '|';
-                QStringList flags;
-                if (plugin.hasEditor())
-                        flags.append("GUI");
-                if (plugin.hasProgramChunks())
-                        flags.append("EXT");
-                flags.append("RT");
-                sout << flags.join(",") << '|';
-                sout << sFilename << '|' << i << '|';
-                sout << "0x" << QString::number(plugin.uniqueID(), 16) << '\n';
-                plugin.close_descriptor();
-                ++i;
-        }
-
-        plugin.close();
-
-        // Must always give an answer, even if it's a wrong one...
-        if (i == 0)
-                sout << "qtractor_vst2_scan: " << sFilename << ": plugin file error.\n";
-#endif
 }
     
 }   // namespace vst2_discovery
