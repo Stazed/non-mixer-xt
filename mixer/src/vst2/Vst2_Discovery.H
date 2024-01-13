@@ -30,6 +30,8 @@
 
 #include <string>
 
+#include "CarlaLibUtils.hpp"
+
 namespace vst2_discovery
 {
     
@@ -82,7 +84,7 @@ protected:
 private:
 
     // Instance variables.
-    void         *m_pLibrary;       // FIXME
+    lib_t         m_pLibrary;       // FIXME
     AEffect      *m_pEffect;
     unsigned int  m_iFlagsEx;
     bool          m_bEditor;

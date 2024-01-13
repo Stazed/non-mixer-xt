@@ -104,6 +104,23 @@ qtractor_vst2_scan::~qtractor_vst2_scan (void)
 bool qtractor_vst2_scan::open ( const std::string& sFilename )
 {
     close();
+    
+    m_pLibrary = lib_open(sFilename.c_str());
+    
+    if (m_pLibrary == nullptr)
+    {
+        DMESSAGE("Cannot Open %s", sFilename.c_str());
+        return false;
+    }
+    
+    std::string baseName;
+    // Find the base plugin name
+    std::size_t found = sFilename.find_last_of("/\\");
+    baseName = sFilename.substr(found);
+    DMESSAGE("Base Name = %s", baseName.c_str());
+    
+    m_sName = baseName;
+    
 #if 0           // FIXME
     if (!QLibrary::isLibrary(sFilename))
             return false;

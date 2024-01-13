@@ -29,6 +29,7 @@
 # define unlikely(x) x
 #endif
 
+# define CARLA_CATCH_UNWIND
 
 #define NON_SAFE_ASSERT_CONTINUE(cond)      if (__builtin_expect(!(cond),0)) { non_safe_assert(#cond, __FILE__, __LINE__); continue; }
 #define NON_SAFE_ASSERT_RETURN(cond, ret)   if (__builtin_expect(!(cond),0)) { non_safe_assert(#cond, __FILE__, __LINE__); return ret; }
@@ -38,6 +39,7 @@
 #define CARLA_SAFE_ASSERT_RETURN(cond, ret)   if (__builtin_expect(!(cond),0)) { non_safe_assert(#cond, __FILE__, __LINE__); return ret; }
 
 #define CARLA_SAFE_ASSERT(cond)               if (unlikely(!(cond))) non_safe_assert      (#cond, __FILE__, __LINE__);
+#define CARLA_SAFE_EXCEPTION_RETURN(msg, ret) CARLA_CATCH_UNWIND catch(...) { carla_safe_exception(msg, __FILE__, __LINE__); return ret; }
 
 /*
  * Print a safe assertion error message.
@@ -46,6 +48,15 @@ static inline
 void non_safe_assert(const char* const assertion, const char* const file, const int line) noexcept
 {
     WARNING("Non-mixer assertion failure: \"%s\" in file %s, line %i", assertion, file, line);
+}
+
+/*
+ * Print a safe exception error message.
+ */
+static inline
+void carla_safe_exception(const char* const exception, const char* const file, const int line) noexcept
+{
+    WARNING("Carla exception caught: \"%s\" in file %s, line %i", exception, file, line);
 }
 
 /*

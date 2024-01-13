@@ -45,6 +45,7 @@ set (ProgSources
     src/clap/CLAP_Plugin.C
     src/clap/Clap_Discovery.C
     src/clap/Time.cpp
+    src/vst2/Vst2_Discovery.C
     src/vst3/Vst3_Discovery.C
     src/vst3/VST3_Plugin.C
     src/vst3/VST3PluginHost.C

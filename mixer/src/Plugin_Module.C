@@ -46,6 +46,11 @@ static LADSPAInfo *ladspainfo;
     static std::list<Plugin_Module::Plugin_Info> clap_PI_cache;
 #endif
 
+#ifdef VST2_SUPPORT
+    #include "vst2/Vst2_Discovery.H"
+    static std::list<Plugin_Module::Plugin_Info> vst2_PI_cache;
+#endif
+
 #ifdef VST3_SUPPORT
     #include "vst3/Vst3_Discovery.H"
     static std::list<Plugin_Module::Plugin_Info> vst3_PI_cache;
