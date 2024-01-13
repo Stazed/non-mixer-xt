@@ -28,6 +28,8 @@
 
 #ifdef VST2_SUPPORT
 
+#include <string>
+
 namespace vst2_discovery
 {
     
@@ -45,7 +47,7 @@ public:
     ~qtractor_vst2_scan();
 
     // File loader.
-    bool open(const QString& sFilename);
+    bool open(const std::string& sFilename);
     bool open_descriptor(unsigned long iIndex = 0);
     void close_descriptor();
     void close();
@@ -53,7 +55,7 @@ public:
     // Properties.
     bool isOpen() const;
 
-    const QString& name() const { return m_sName; }
+    const std::string& name() const { return m_sName; }
 
     unsigned int uniqueID() const;
 
@@ -80,11 +82,11 @@ protected:
 private:
 
     // Instance variables.
-    QLibrary     *m_pLibrary;
+    void         *m_pLibrary;       // FIXME
     AEffect      *m_pEffect;
     unsigned int  m_iFlagsEx;
     bool          m_bEditor;
-    QString       m_sName;
+    std::string   m_sName;
 };
     
 }   // namespace vst2_discovvery
