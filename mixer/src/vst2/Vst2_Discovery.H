@@ -75,6 +75,8 @@ public:
     bool isOpen() const;
 
     const std::string& name() const { return m_sName; }
+    const std::string& vendor() const { return m_sVendor; }
+    const std::string& category() const { return m_sCategory; }
 
     unsigned int uniqueID() const;
 
@@ -101,11 +103,13 @@ protected:
 private:
 
     // Instance variables.
-    lib_t         m_pLibrary;       // FIXME
+    lib_t         m_pLibrary;
     AEffect      *m_pEffect;
     unsigned int  m_iFlagsEx;
     bool          m_bEditor;
     std::string   m_sName;
+    std::string   m_sVendor;
+    std::string   m_sCategory;
 };
 
 void vst2_discovery_scan_file ( const std::string& sFilename, std::list<Plugin_Module::Plugin_Info> & vst2pr );

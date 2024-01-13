@@ -143,6 +143,7 @@ enum VST_FlagsEx
 	effFlagsExCanMidiProgramNames       = 1 << 10
 };
 
+#define STR_MAX 0xFF
 
 // Some VeSTige missing opcodes and flags.
 const int effSetProgramName = 4;
@@ -323,34 +324,33 @@ bool qtractor_vst2_scan::open_descriptor ( unsigned long iIndex )
 		m_pEffect = (*pfnGetPluginInstance)(qtractor_vst2_scan_callback);
                 
 #endif
-            // Not needed anymore, hopefully...
-            g_iVst2ShellCurrentId = 0;
-            // Don't go further if failed...
-            if (m_pEffect == nullptr) {
-            #ifdef CONFIG_DEBUG
-                    qDebug("qtractor_vst2_scan[%p]: "
-                            "vst2_shell(%lu) plugin instance could not be created.", this, iIndex);
-            #endif
-                    return false;
-            }
-            if (m_pEffect->magic != kEffectMagic) {
-            #ifdef CONFIG_DEBUG
-                    qDebug("qtractor_vst2_scan[%p]: "
-                            "vst2_shell(%lu) plugin is not a valid VST.", this, iIndex);
-            #endif
-                    m_pEffect = nullptr;
-                    return false;
-            }
-    #ifdef CONFIG_DEBUG
-            qDebug("qtractor_vst2_scan[%p]: "
-                    "vst2_shell(%lu) id=0x%x name=\"%s\"", this, i, id, buf);
-    #endif
+        // Not needed anymore, hopefully...
+        g_iVst2ShellCurrentId = 0;
+        // Don't go further if failed...
+        if (m_pEffect == nullptr) {
+        #ifdef CONFIG_DEBUG
+                qDebug("qtractor_vst2_scan[%p]: "
+                        "vst2_shell(%lu) plugin instance could not be created.", this, iIndex);
+        #endif
+                return false;
+        }
+
+        if (m_pEffect->magic != kEffectMagic)
+        {
+            DMESSAGE("vst2_shell(%lu) plugin is not a valid VST.",  iIndex);
+            m_pEffect = nullptr;
+            return false;
+        }
+
+        DMESSAGE( "vst2_shell(%lu) id=0x%x name=\"%s\"",  i, id, buf);
+
     }
     else
     // Not a VST Shell plugin...
-    if (iIndex > 0) {
-            m_pEffect = nullptr;
-            return false;
+    if (iIndex > 0)
+    {
+        m_pEffect = nullptr;
+        return false;
     }
 
 //	vst2_dispatch(effIdentify, 0, 0, nullptr, 0.0f);
@@ -360,6 +360,43 @@ bool qtractor_vst2_scan::open_descriptor ( unsigned long iIndex )
     char szName[256]; ::memset(szName, 0, sizeof(szName));
     if (vst2_dispatch(effGetEffectName, 0, 0, (void *) szName, 0.0f))
             m_sName = szName;
+
+    char strBuf[STR_MAX+1];
+    carla_zeroChars(strBuf, STR_MAX+1);
+
+    if (vst2_dispatch(effGetVendorString, 0, 0, strBuf, 0.0f))
+        m_sVendor = strBuf;
+    else
+        m_sVendor.clear();
+
+    // get category
+    switch (vst2_dispatch(effGetPlugCategory, 0, 0, nullptr, 0.0f))
+    {
+    case kPlugCategSynth:
+        m_sCategory = "Instrument Plugin";
+        break;
+    case kPlugCategAnalysis:
+        m_sCategory = "Utilities";
+        break;
+    case kPlugCategMastering:
+        m_sCategory = "Amplitude/Dynamics";
+        break;
+    case kPlugCategRoomFx:
+        m_sCategory = "Time/Delays";
+        break;
+    case kPlugCategRestoration:
+        m_sCategory = "Utilities";
+        break;
+    case kPlugCategGenerator:
+        m_sCategory = "Instrument Plugin";
+        break;
+    default:
+        if (m_pEffect->flags & effFlagsIsSynth)
+            m_sCategory = "Instrument Plugin";
+        else
+            m_sCategory = "Unclassified";
+        break;
+    }
 
     // Specific inquiries...
     m_iFlagsEx = 0;
@@ -410,13 +447,8 @@ void qtractor_vst2_scan::close (void)
     DMESSAGE("close()");
 
     vst2_dispatch(effClose, 0, 0, 0, 0.0f);
-#if 0   // FIXME
-    if (m_pLibrary->isLoaded() && !m_bEditor)
-            m_pLibrary->unload();
 
-    delete m_pLibrary;
-#endif
-    lib_close(m_pLibrary);
+//    lib_close(m_pLibrary);
     m_pLibrary = nullptr;
 
     m_bEditor = false;
@@ -542,28 +574,19 @@ void vst2_discovery_scan_file ( const std::string& sFilename, std::list<Plugin_M
         Plugin_Module::Plugin_Info pi("VST2");
 
         pi.name = plugin.name();
-#if 0
         pi.author = plugin.vendor();
-
-        if (std::strstr(plugin.subCategory().c_str(), "Instrument") != nullptr)
-        {
-            pi.category =  "Instrument Plugin";
-        }
-        else
-        {
-             pi.category = getCategoryFromName(pi.name);
-        }
-#endif
+        pi.category = plugin.category();
         pi.audio_inputs = plugin.numInputs();
         pi.audio_outputs = plugin.numOutputs();
 
-        pi.s_unique_id = plugin.uniqueID();
+        pi.id = plugin.uniqueID();
         pi.plug_path = sFilename;
 
         vst2pr.push_back(pi);
 
-        DMESSAGE("name = %s: category = %s: ID = %s: PATH = %s",
-                pi.name.c_str(), pi.category.c_str(), pi.s_unique_id.c_str(), pi.plug_path.c_str());
+        DMESSAGE("name = %s: category = %s: ID = %u: PATH = %s",
+                pi.name.c_str(), pi.category.c_str(), pi.id, pi.plug_path.c_str());
+        DMESSAGE("Vendor = %s", pi.author.c_str());
 
         plugin.close_descriptor();
         ++i;

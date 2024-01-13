@@ -125,6 +125,18 @@ const char* lib_error(const char* const filename) noexcept
 #endif
 }
 
+/*
+ * Clear a char array.
+ */
+static inline
+void carla_zeroChars(char chars[], const std::size_t count) noexcept
+{
+    CARLA_SAFE_ASSERT_RETURN(chars != nullptr,);
+    CARLA_SAFE_ASSERT_RETURN(count > 0,);
+
+    std::memset(chars, 0, count*sizeof(char));
+}
+
 // -----------------------------------------------------------------------
 
 #endif // CARLA_LIB_UTILS_HPP_INCLUDED
