@@ -33,13 +33,84 @@
 namespace vst2_discovery
 {
 
+std::vector<std::filesystem::path>
+installedVST2s()
+{
+    auto sp = validVST2SearchPaths();
+    std::vector<std::filesystem::path> vst2s;
+
+    for (const auto &p : sp)
+    {
+        DMESSAGE("VST(2) PLUG PATHS %s", p.u8string().c_str());
+        try
+        {
+            for (auto const &dir_entry : std::filesystem::recursive_directory_iterator(p))
+            {
+                if (!std::filesystem::is_directory(dir_entry.path()))
+                {
+                    if (dir_entry.path().extension().u8string() == ".so")
+                        vst2s.emplace_back(dir_entry.path());
+                }
+            }
+        }
+
+        catch (const std::filesystem::filesystem_error &)
+        {
+            MESSAGE("Vst(2) path directory not found - %s", p.u8string().c_str());
+        }
+    }
+    return vst2s;
+}
+
+/**
+ * This returns all the search paths for VST(2) plugin locations.
+ * @return 
+ *      vector of filesystem::path of vst(2) locations.
+ */
+
+std::vector<std::filesystem::path>
+validVST2SearchPaths()
+{
+    std::vector<std::filesystem::path> res;
+
+    /* These are the standard locations for linux */
+    res.emplace_back("/usr/lib/vst");
+
+    // some distros make /usr/lib64 a symlink to /usr/lib so don't include it
+    // or we get duplicates.
+    if(std::filesystem::is_symlink("/usr/lib64"))
+    {
+        if(!strcmp(std::filesystem::read_symlink("/usr/lib64").c_str(), "/usr/lib"))
+            res.emplace_back("/usr/lib64/vst");
+    }
+    else
+    {
+        res.emplace_back("/usr/lib64/vst");
+    }
+    
+    res.emplace_back("/usr/local/lib/vst");
+
+    // some distros make /usr/local/lib64 a symlink to /usr/local/lib so don't include it
+    // or we get duplicates.
+    if(std::filesystem::is_symlink("/us/local/lib64"))
+    {
+        if(!strcmp(std::filesystem::read_symlink("/usr/local/lib64").c_str(), "/usr/local/lib"))
+            res.emplace_back("/usr/local/lib64/vst");
+    }
+    else
+    {
+        res.emplace_back("/usr/local/lib64/vst");
+    }
+
+    res.emplace_back(std::filesystem::path(getenv("HOME")) / std::filesystem::path(".vst"));
+
+    return res;
+}
+
 
 #if !defined(__WIN32__) && !defined(_WIN32) && !defined(WIN32)
 #define __cdecl
 #endif
-
-#include "vestige/vestige.h"
-
 
 #if !defined(VST_2_3_EXTENSIONS)
 typedef int32_t  VstInt32;
@@ -112,7 +183,9 @@ bool qtractor_vst2_scan::open ( const std::string& sFilename )
         DMESSAGE("Cannot Open %s", sFilename.c_str());
         return false;
     }
-    
+
+    DMESSAGE("Open %s", sFilename.c_str());
+#if 0
     std::string baseName;
     // Find the base plugin name
     std::size_t found = sFilename.find_last_of("/\\");
@@ -120,6 +193,7 @@ bool qtractor_vst2_scan::open ( const std::string& sFilename )
     DMESSAGE("Base Name = %s", baseName.c_str());
     
     m_sName = baseName;
+#endif
     
 #if 0           // FIXME
     if (!QLibrary::isLibrary(sFilename))
@@ -424,7 +498,7 @@ static VstIntPtr VSTCALLBACK qtractor_vst2_scan_callback ( AEffect* effect,
 // The VST plugin stance scan method.
 //
 
-static void qtractor_vst2_scan_file ( const std::string& sFilename )
+void vst2_discovery_scan_file ( const std::string& sFilename, std::list<Plugin_Module::Plugin_Info> & vst2pr )
 {
 #ifdef CONFIG_DEBUG
         qDebug("qtractor_vst2_scan_file(\"%s\")", sFilename.toUtf8().constData());

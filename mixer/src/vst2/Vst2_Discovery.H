@@ -29,11 +29,28 @@
 #ifdef VST2_SUPPORT
 
 #include <string>
+#include <vector>
+#include <filesystem>
 
+#include "vestige/vestige.h"
 #include "CarlaLibUtils.hpp"
+#include "../Plugin_Module.H"
 
 namespace vst2_discovery
 {
+
+/*
+ * Traverse the valid VST2 search paths looking for
+ * paths to .vst2 instances
+ */
+std::vector<std::filesystem::path> installedVST2s();
+
+/*
+ * Return a list of the valid VST2 search paths, per the spec
+ * in entry.h.
+ */
+std::vector<std::filesystem::path> validVST2SearchPaths();
+
     
 typedef struct _AEffect AEffect;
 
@@ -90,6 +107,8 @@ private:
     bool          m_bEditor;
     std::string   m_sName;
 };
+
+void vst2_discovery_scan_file ( const std::string& sFilename, std::list<Plugin_Module::Plugin_Info> & vst2pr );
     
 }   // namespace vst2_discovvery
 

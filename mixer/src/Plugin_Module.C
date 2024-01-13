@@ -576,7 +576,24 @@ Plugin_Module::scan_CLAP_plugins( std::list<Plugin_Info> & pr )
 void
 Plugin_Module::scan_VST2_plugins( std::list<Plugin_Info> & pr )
 {
-    
+    if ( !vst2_PI_cache.empty() )
+    {
+        pr.insert(std::end(pr), std::begin(vst2_PI_cache), std::end(vst2_PI_cache));
+        return;
+    }
+
+    auto sp = vst2_discovery::installedVST2s();   // This to get paths
+
+    for (const auto &q : sp)
+    {
+        vst2_discovery::vst2_discovery_scan_file( q.u8string().c_str(), vst2_PI_cache);
+    }
+
+    if ( !vst2_PI_cache.empty() )
+    {
+        pr.insert(std::end(pr), std::begin(vst2_PI_cache), std::end(vst2_PI_cache));
+        return;
+    }
 }
 #endif  // VST2_SUPPORT
 
