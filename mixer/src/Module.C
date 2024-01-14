@@ -44,6 +44,9 @@
 #ifdef LADSPA_SUPPORT
 #include "ladspa/LADSPA_Plugin.H"
 #endif
+#ifdef VST2_SUPPORT
+#include "vst2/VST2_Plugin.H"
+#endif
 #ifdef VST3_SUPPORT
 #include "vst3/VST3_Plugin.H"
 #endif
@@ -493,7 +496,7 @@ Module::handle_control_changed ( Module::Port *p )
         }
     }
 
-#if defined(LV2_SUPPORT) || defined(CLAP_SUPPORT) || defined(VST3_SUPPORT)
+#if defined(LV2_SUPPORT) || defined(CLAP_SUPPORT) || defined(VST2_SUPPORT) || defined(VST3_SUPPORT)
     Module *m = p->module();
 #endif
 
@@ -532,6 +535,25 @@ Module::handle_control_changed ( Module::Port *p )
             float value = p->control_value();
             DMESSAGE("CLAP Param ID = %d: Value = %f", param_id, value);
             pm->setParameter(param_id, value);
+        }
+    }
+#endif
+#ifdef VST2_SUPPORT
+    if (m->_plug_type == Type_VST2)
+    {
+        if(m->_is_from_custom_ui)
+        {
+          //  DMESSAGE("Received control from custom UI");
+            m->_is_from_custom_ui = false;
+        }
+        else
+        {
+            VST2_Plugin *pm = static_cast<VST2_Plugin *> (m);
+
+            uint32_t param_id = p->hints.parameter_id;
+            float value = p->control_value();
+            DMESSAGE("VST2 Param ID = %d: Value = %f", param_id, value);
+           // pm->setParameter(param_id, value);
         }
     }
 #endif
@@ -1222,6 +1244,21 @@ Module::insert_menu_cb ( const Fl_Menu_ *menu )
                 break;
             }
 #endif  // CLAP_SUPPORT
+#ifdef VST2_SUPPORT
+            case Type_VST2:
+            {
+                VST2_Plugin *m = new VST2_Plugin();
+                if(!m->load_plugin( picked ))
+                {
+                    fl_alert( "%s could not be loaded", m->base_label() );
+                    delete m;
+                    return;
+                }
+
+                mod = m;
+                break;
+            }
+#endif  // VST2_SUPPORT
 #ifdef VST3_SUPPORT
             case Type_VST3:
             {
@@ -1466,6 +1503,17 @@ Module::handle ( int m )
                 }
                 else
 #endif
+#ifdef VST2_SUPPORT
+                if(_plug_type == Type_VST2)
+                {
+                    VST2_Plugin *pm = static_cast<VST2_Plugin *> (this);
+                    if(!pm->try_custom_ui())
+                    {
+                        command_open_parameter_editor();
+                    }
+                }
+                else
+#endif
 #ifdef VST3_SUPPORT
                 if(_plug_type == Type_VST3)
                 {
@@ -1535,6 +1583,17 @@ Module::handle ( int m )
                 if(_plug_type == Type_CLAP)
                 {
                     CLAP_Plugin *pm = static_cast<CLAP_Plugin *> (this);
+                    if(!pm->try_custom_ui())
+                    {
+                        command_open_parameter_editor();
+                    }
+                }
+                else
+#endif
+#ifdef VST2_SUPPORT
+                if(_plug_type == Type_VST2)
+                {
+                    VST2_Plugin *pm = static_cast<VST2_Plugin *> (this);
                     if(!pm->try_custom_ui())
                     {
                         command_open_parameter_editor();

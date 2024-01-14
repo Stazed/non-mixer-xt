@@ -55,6 +55,9 @@
 #ifdef CLAP_SUPPORT
 #include "clap/CLAP_Plugin.H"
 #endif
+#ifdef VST2_SUPPORT
+#include "vst2/VST2_Plugin.H"
+#endif
 #ifdef VST3_SUPPORT
 #include "vst3/VST3_Plugin.H"
 #endif
@@ -192,6 +195,9 @@ main ( int argc, char **argv )
 #endif
 #ifdef LADSPA_SUPPORT
     LOG_REGISTER_CREATE( LADSPA_Plugin );
+#endif
+#ifdef VST2_SUPPORT
+    LOG_REGISTER_CREATE( VST2_Plugin );
 #endif
 #ifdef VST3_SUPPORT
     LOG_REGISTER_CREATE( VST3_Plugin );

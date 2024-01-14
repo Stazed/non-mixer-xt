@@ -46,8 +46,7 @@ namespace vst2_discovery
 std::vector<std::filesystem::path> installedVST2s();
 
 /*
- * Return a list of the valid VST2 search paths, per the spec
- * in entry.h.
+ * Return a list of the valid VST2 search paths.
  */
 std::vector<std::filesystem::path> validVST2SearchPaths();
 

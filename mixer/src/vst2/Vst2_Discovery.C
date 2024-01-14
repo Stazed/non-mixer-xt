@@ -506,6 +506,7 @@ void vst2_discovery_scan_file ( const std::string& sFilename, std::list<Plugin_M
     {
         Plugin_Module::Plugin_Info pi("VST2");
 
+        pi.s_unique_id = "(null)";  // (null) since we have to have something for favorites save and scan
         pi.name = plugin.name();
         pi.author = plugin.vendor();
         pi.category = plugin.category();

@@ -109,10 +109,10 @@ Plugin_Chooser::plugin_chooser ( int ninputs )
 #ifdef VST2_SUPPORT
         case Type_VST2:
         {
-            if (!o->s_unique_id().empty())
+            if (!o->plug_path().empty())
             {
-                picked.s_unique_id = o->s_unique_id();
                 picked.s_plug_path = o->plug_path();
+                picked.unique_id = o->value();
             }
             break;
         }
@@ -391,7 +391,7 @@ Plugin_Chooser::cb_table ( Fl_Widget *w )
 #ifdef VST2_SUPPORT
             if(::strcmp(_plugin_rows[R]->type.c_str(), "VST2") == 0)
             {
-                _s_unique_id = _plugin_rows[R]->s_unique_id;
+                _value = _plugin_rows[R]->id;
                 _plug_path = _plugin_rows[R]->plug_path;
                 _plugin_type = Type_VST2;
             }
@@ -478,11 +478,8 @@ Plugin_Chooser::load_favorites ( void )
 #ifdef VST2_SUPPORT
                 if( !strcmp(type, "VST2") )
                 {
-                    if( !strcmp(c_unique_id, (*i).s_unique_id.c_str()) )
-                    {
-                        (*i).favorite = 1;
-                        favorites++;
-                    }
+                    (*i).favorite = 1;
+                    favorites++;
                 }
 #endif
 #ifdef VST3_SUPPORT

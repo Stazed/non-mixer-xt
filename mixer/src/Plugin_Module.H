@@ -51,7 +51,7 @@ public:
         bool favorite;
 
         Plugin_Info ( const std::string &s_type ) :  // LADSPA, LV2, CLAP, VST2, VST3
-            s_unique_id(),
+            s_unique_id("(null)"),  // (null) since we have to have something for favorites save and scan
             id(0),
             plug_path(),
             name(),
