@@ -45,6 +45,9 @@ typedef AEffect* (*VST_GetPluginInstance) (audioMasterCallback);
 static VstIntPtr VSTCALLBACK Vst2Plugin_HostCallback (AEffect* effect,
 	VstInt32 opcode, VstInt32 index, VstIntPtr value, void *ptr, float opt);
 
+// Dynamic singleton list of VST2 plugins.
+static std::map<AEffect *, VST2_Plugin *> g_vst2Plugins;
+
 // Current working VST2 Shell identifier.
 static int g_iVst2ShellCurrentId = 0;
 
@@ -63,6 +66,9 @@ VST2_Plugin::VST2_Plugin() :
 VST2_Plugin::~VST2_Plugin()
 {
     log_destroy();
+
+    g_vst2Plugins.erase (m_pEffect);    // erasing by key
+
 }
 
 bool
@@ -70,14 +76,15 @@ VST2_Plugin::load_plugin ( Module::Picked picked )
 {
     m_sFilename = picked.s_plug_path;
     m_iUniqueID = picked.unique_id;
-    
+
     if (!open_lib(m_sFilename))
         return false;
-    else
-    {
-        DMESSAGE("GOT OPEN");   // FIXME
-        close_lib();
-    }
+
+    if(!open_descriptor(0))     // FIXME index
+        return false;
+
+    std::pair<AEffect *, VST2_Plugin *> efct ( m_pEffect, this );
+    g_vst2Plugins.insert(efct);
 
     return false;
 }
@@ -618,9 +625,13 @@ VST2_Plugin::resizeEditor ( int w, int h )
 // Global VST2 plugin lookup.
 VST2_Plugin *VST2_Plugin::findPlugin ( AEffect *pVst2Effect )
 {
-    
-    // FIXME
-    //return g_vst2Plugins.value(pVst2Effect, nullptr);
+    std::map<AEffect *, VST2_Plugin *>::const_iterator got
+                    = g_vst2Plugins.find (pVst2Effect);
+
+    if (got == g_vst2Plugins.end())
+        return nullptr;
+    else
+        return got->second;
 }
 
 static VstIntPtr VSTCALLBACK Vst2Plugin_HostCallback ( AEffect *effect,
@@ -724,32 +735,24 @@ static VstIntPtr VSTCALLBACK Vst2Plugin_HostCallback ( AEffect *effect,
 
 	case audioMasterGetSampleRate:
 		DMESSAGE("audioMasterGetSampleRate");
-#if 0
+
 		pVst2Plugin = VST2_Plugin::findPlugin(effect);
-		if (pVst2Plugin) {
-			qtractorSession *pSession = qtractorSession::getInstance();
-			if (pSession) {
-				qtractorAudioEngine *pAudioEngine = pSession->audioEngine();
-				if (pAudioEngine)
-					ret = (VstIntPtr) pAudioEngine->sampleRate();
-			}
+		if (pVst2Plugin)
+                {
+                    ret = (VstIntPtr)pVst2Plugin->sample_rate();
 		}
-#endif
+
 		break;
 
 	case audioMasterGetBlockSize:
 		DMESSAGE("audioMasterGetBlockSize");
-#if 0
+
 		pVst2Plugin = VST2_Plugin::findPlugin(effect);
-		if (pVst2Plugin) {
-			qtractorSession *pSession = qtractorSession::getInstance();
-			if (pSession) {
-				qtractorAudioEngine *pAudioEngine = pSession->audioEngine();
-				if (pAudioEngine)
-					ret = (VstIntPtr) pAudioEngine->blockSize();
-			}
+		if (pVst2Plugin)
+                {
+                    ret = (VstIntPtr) pVst2Plugin->buffer_size();
 		}
-#endif
+
 		break;
 
 	case audioMasterGetInputLatency:
