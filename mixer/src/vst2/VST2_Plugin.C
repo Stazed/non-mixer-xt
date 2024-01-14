@@ -30,6 +30,24 @@
 #include "../Chain.H"
 #include "../Mixer_Strip.H"
 
+#if !defined(__WIN32__) && !defined(_WIN32) && !defined(WIN32)
+#define __cdecl
+#endif
+
+#if !defined(VST_2_3_EXTENSIONS)
+typedef int32_t  VstInt32;
+typedef intptr_t VstIntPtr;
+#define VSTCALLBACK
+#endif
+
+typedef AEffect* (*VST_GetPluginInstance) (audioMasterCallback);
+
+static VstIntPtr VSTCALLBACK Vst2Plugin_HostCallback (AEffect* effect,
+	VstInt32 opcode, VstInt32 index, VstIntPtr value, void *ptr, float opt);
+
+// Current working VST2 Shell identifier.
+static int g_iVst2ShellCurrentId = 0;
+
 VST2_Plugin::VST2_Plugin() :
     Plugin_Module(),
     m_sFilename(),
@@ -378,6 +396,159 @@ VST2_Plugin::close_lib()
     m_pLibrary = nullptr;
 }
 
+bool
+VST2_Plugin::open_descriptor ( unsigned long iIndex )
+{
+    if (m_pLibrary == nullptr)
+        return false;
+
+    close_descriptor();
+
+    DMESSAGE("open_descriptor - iIndex = (%lu)",  iIndex);
+
+    VST_GetPluginInstance pfnGetPluginInstance = lib_symbol<VST_GetPluginInstance>(m_pLibrary, "VSTPluginMain");
+
+    if (pfnGetPluginInstance == nullptr)
+        pfnGetPluginInstance = lib_symbol<VST_GetPluginInstance> (m_pLibrary, "main");
+
+    if (pfnGetPluginInstance == nullptr)
+    {
+        DMESSAGE("error", "Not a VST plugin");
+        return false;
+    }
+
+    m_pEffect = (*pfnGetPluginInstance)(Vst2Plugin_HostCallback);
+
+    if (m_pEffect == nullptr)
+    {
+        DMESSAGE("plugin instance could not be created.");
+        return false;
+    }
+
+    // Did VST plugin instantiated OK?
+    if (m_pEffect->magic != kEffectMagic)
+    {
+        DMESSAGE("Plugin is not a valid VST.");
+        m_pEffect = nullptr;
+        return false;
+    }
+
+    // Check whether it's a VST Shell...
+    const int categ = vst2_dispatch(effGetPlugCategory, 0, 0, nullptr, 0.0f);
+    if (categ == kPlugCategShell)
+    {
+        int id = 0;
+        char buf[40];
+        unsigned long i = 0;
+        for ( ; iIndex >= i; ++i)
+        {
+            buf[0] = (char) 0;
+            id = vst2_dispatch(effShellGetNextPlugin, 0, 0, (void *) buf, 0.0f);
+            if (id == 0 || !buf[0])
+                break;
+        }
+        // Check if we're actually the intended plugin...
+        if (i < iIndex || id == 0 || !buf[0])
+        {
+            DMESSAGE("vst2_shell(%lu) plugin is not a valid VST.", iIndex);
+            m_pEffect = nullptr;
+            return false;
+        }
+        // Make it known...
+        g_iVst2ShellCurrentId = id;
+        // Re-allocate the thing all over again...
+
+        pfnGetPluginInstance = lib_symbol<VST_GetPluginInstance>(m_pLibrary, "VSTPluginMain");
+
+        if (pfnGetPluginInstance == nullptr)
+            pfnGetPluginInstance = lib_symbol<VST_GetPluginInstance> (m_pLibrary, "main");
+
+        if (pfnGetPluginInstance == nullptr)
+        {
+            DMESSAGE("error", "Not a VST plugin");
+            m_pEffect = nullptr;
+            return false;
+	}
+
+        m_pEffect = (*pfnGetPluginInstance)(Vst2Plugin_HostCallback);
+
+        // Not needed anymore, hopefully...
+        g_iVst2ShellCurrentId = 0;
+        // Don't go further if failed...
+        if (m_pEffect == nullptr)
+        {
+            DMESSAGE("vst2_shell(%lu) plugin instance could not be created.", iIndex);
+            return false;
+        }
+
+        if (m_pEffect->magic != kEffectMagic)
+        {
+            DMESSAGE("vst2_shell(%lu) plugin is not a valid VST.",  iIndex);
+            m_pEffect = nullptr;
+            return false;
+        }
+
+        DMESSAGE( "vst2_shell(%lu) id=0x%x name=\"%s\"",  i, id, buf);
+    }
+    else
+    // Not a VST Shell plugin...
+    if (iIndex > 0)
+    {
+        m_pEffect = nullptr;
+        return false;
+    }
+
+//	vst2_dispatch(effIdentify, 0, 0, nullptr, 0.0f);
+    vst2_dispatch(effOpen,     0, 0, nullptr, 0.0f);
+
+    // Get label name...
+    char szName[256]; ::memset(szName, 0, sizeof(szName));
+    if (vst2_dispatch(effGetEffectName, 0, 0, (void *) szName, 0.0f))
+    {
+        label(szName);
+         //   m_sName = szName;
+    }
+
+#if 0
+    // Specific inquiries...
+    m_iFlagsEx = 0;
+
+    if (vst2_canDo("sendVstEvents"))       m_iFlagsEx |= effFlagsExCanSendVstEvents;
+    if (vst2_canDo("sendVstMidiEvent"))    m_iFlagsEx |= effFlagsExCanSendVstMidiEvents;
+    if (vst2_canDo("sendVstTimeInfo"))     m_iFlagsEx |= effFlagsExCanSendVstTimeInfo;
+    if (vst2_canDo("receiveVstEvents"))    m_iFlagsEx |= effFlagsExCanReceiveVstEvents;
+    if (vst2_canDo("receiveVstMidiEvent")) m_iFlagsEx |= effFlagsExCanReceiveVstMidiEvents;
+    if (vst2_canDo("receiveVstTimeInfo"))  m_iFlagsEx |= effFlagsExCanReceiveVstTimeInfo;
+    if (vst2_canDo("offline"))             m_iFlagsEx |= effFlagsExCanProcessOffline;
+    if (vst2_canDo("plugAsChannelInsert")) m_iFlagsEx |= effFlagsExCanUseAsInsert;
+    if (vst2_canDo("plugAsSend"))          m_iFlagsEx |= effFlagsExCanUseAsSend;
+    if (vst2_canDo("mixDryWet"))           m_iFlagsEx |= effFlagsExCanMixDryWet;
+    if (vst2_canDo("midiProgramNames"))    m_iFlagsEx |= effFlagsExCanMidiProgramNames;
+
+    m_bEditor = (m_pEffect->flags & effFlagsHasEditor);
+#endif
+    return true;
+}
+
+
+// Plugin unloader.
+void
+VST2_Plugin::close_descriptor (void)
+{
+    if (m_pEffect == nullptr)
+        return;
+
+    DMESSAGE("close_descriptor()");
+
+    vst2_dispatch(effClose, 0, 0, 0, 0.0f);
+
+    m_pEffect  = nullptr;
+//    m_iFlagsEx = 0;
+//    m_bEditor  = false;
+//    m_sName.clear();
+}
+
+
 // VST host dispatcher.
 int VST2_Plugin::vst2_dispatch (
 	long opcode, long index, long value, void *ptr, float opt ) const
@@ -389,6 +560,350 @@ int VST2_Plugin::vst2_dispatch (
  //           opcode, index, value, ptr, opt);
 
     return m_pEffect->dispatcher(m_pEffect, opcode, index, value, ptr, opt);
+}
+
+// Parameter update executive.
+void
+VST2_Plugin::updateParamValue (
+	unsigned long iIndex, float fValue, bool bUpdate )
+{
+    // FIXME
+}
+
+// All parameters update method.
+void
+VST2_Plugin::updateParamValues ( bool bUpdate )
+{
+#if 0
+    int nupdate = 0;
+
+    // Make sure all cached parameter values are in sync
+    // with plugin parameter values; update cache otherwise.
+    AEffect *pVst2Effect = vst2_effect(0);
+    if (pVst2Effect) {
+            const qtractorPlugin::Params& params = qtractorPlugin::params();
+            qtractorPlugin::Params::ConstIterator param = params.constBegin();
+            const qtractorPlugin::Params::ConstIterator param_end = params.constEnd();
+            for ( ; param != param_end; ++param) {
+                    qtractorPlugin::Param *pParam = param.value();
+                    const float fValue
+                            = pVst2Effect->getParameter(pVst2Effect, pParam->index());
+                    if (pParam->value() != fValue) {
+                            pParam->setValue(fValue, bUpdate);
+                            ++nupdate;
+                    }
+            }
+    }
+
+    if (nupdate > 0)
+            updateFormDirtyCount();
+#endif
+}
+
+void
+VST2_Plugin::idleEditor (void)
+{
+    // FIXME
+}
+
+// Our own editor widget size accessor.
+void
+VST2_Plugin::resizeEditor ( int w, int h )
+{
+    // FIXME
+}
+
+
+
+// Global VST2 plugin lookup.
+VST2_Plugin *VST2_Plugin::findPlugin ( AEffect *pVst2Effect )
+{
+    
+    // FIXME
+    //return g_vst2Plugins.value(pVst2Effect, nullptr);
+}
+
+static VstIntPtr VSTCALLBACK Vst2Plugin_HostCallback ( AEffect *effect,
+	VstInt32 opcode, VstInt32 index, VstIntPtr value, void *ptr, float opt )
+{
+	VstIntPtr ret = 0;
+	VST2_Plugin *pVst2Plugin = nullptr;
+	static VstTimeInfo s_vst2TimeInfo;
+//	qtractorSession *pSession = qtractorSession::getInstance();
+
+	switch (opcode) {
+
+	// VST 1.0 opcodes...
+	case audioMasterVersion:
+		DMESSAGE("audioMasterVersion");
+		ret = 2; // vst2.x
+		break;
+
+	case audioMasterAutomate:
+		DMESSAGE("audioMasterAutomate");
+		pVst2Plugin = VST2_Plugin::findPlugin(effect);
+		if (pVst2Plugin) {
+			pVst2Plugin->updateParamValue(index, opt, false);
+		}
+		break;
+
+	case audioMasterCurrentId:
+		DMESSAGE("audioMasterCurrentId");
+                // FIXME
+	//	ret = (VstIntPtr) g_iVst2ShellCurrentId;
+		break;
+
+	case audioMasterIdle:
+		DMESSAGE("audioMasterIdle");
+		pVst2Plugin = VST2_Plugin::findPlugin(effect);
+		if (pVst2Plugin) {
+			pVst2Plugin->updateParamValues(false);
+			pVst2Plugin->idleEditor();
+		//	QApplication::processEvents();
+		}
+		break;
+
+	case audioMasterGetTime:
+		DMESSAGE("audioMasterGetTime");
+#if 0
+		::memset(&s_vst2TimeInfo, 0, sizeof(s_vst2TimeInfo));
+		if (pSession) {
+			qtractorAudioEngine *pAudioEngine = pSession->audioEngine();
+			if (pAudioEngine) {
+				const qtractorAudioEngine::TimeInfo& timeInfo
+					= pAudioEngine->timeInfo();
+				s_vst2TimeInfo.samplePos = double(timeInfo.frame);
+				s_vst2TimeInfo.sampleRate = double(timeInfo.sampleRate);
+				s_vst2TimeInfo.flags = 0;
+				if (timeInfo.playing)
+					s_vst2TimeInfo.flags |= (kVstTransportChanged | kVstTransportPlaying);
+				s_vst2TimeInfo.flags |= kVstPpqPosValid;
+				s_vst2TimeInfo.ppqPos = double(timeInfo.beats);
+				s_vst2TimeInfo.flags |= kVstBarsValid;
+				s_vst2TimeInfo.barStartPos = double(timeInfo.barBeats);
+				s_vst2TimeInfo.flags |= kVstTempoValid;
+				s_vst2TimeInfo.tempo  = double(timeInfo.tempo);
+				s_vst2TimeInfo.flags |= kVstTimeSigValid;
+				s_vst2TimeInfo.timeSigNumerator = timeInfo.beatsPerBar;
+				s_vst2TimeInfo.timeSigDenominator = timeInfo.beatType;
+			}
+		}
+		ret = (VstIntPtr) &s_vst2TimeInfo;
+#endif
+		break;
+
+	case audioMasterProcessEvents:
+		DMESSAGE("audioMasterProcessEvents");
+#if 0
+		pVst2Plugin = VST2_Plugin::findPlugin(effect);
+		if (pVst2Plugin) {
+			qtractorMidiManager *pMidiManager = nullptr;
+			qtractorPluginList *pPluginList = pVst2Plugin->list();
+			if (pPluginList)
+				pMidiManager = pPluginList->midiManager();
+			if (pMidiManager) {
+				pMidiManager->vst2_events_copy((VstEvents *) ptr);
+				ret = 1; // supported and processed.
+			}
+		}
+#endif
+		break;
+
+	case audioMasterIOChanged:
+		DMESSAGE("audioMasterIOChanged");
+		break;
+
+	case audioMasterSizeWindow:
+		DMESSAGE("audioMasterSizeWindow");
+		pVst2Plugin = VST2_Plugin::findPlugin(effect);
+		if (pVst2Plugin) {
+			pVst2Plugin->resizeEditor(int(index), int(value));
+			ret = 1; // supported.
+		}
+		break;
+
+	case audioMasterGetSampleRate:
+		DMESSAGE("audioMasterGetSampleRate");
+#if 0
+		pVst2Plugin = VST2_Plugin::findPlugin(effect);
+		if (pVst2Plugin) {
+			qtractorSession *pSession = qtractorSession::getInstance();
+			if (pSession) {
+				qtractorAudioEngine *pAudioEngine = pSession->audioEngine();
+				if (pAudioEngine)
+					ret = (VstIntPtr) pAudioEngine->sampleRate();
+			}
+		}
+#endif
+		break;
+
+	case audioMasterGetBlockSize:
+		DMESSAGE("audioMasterGetBlockSize");
+#if 0
+		pVst2Plugin = VST2_Plugin::findPlugin(effect);
+		if (pVst2Plugin) {
+			qtractorSession *pSession = qtractorSession::getInstance();
+			if (pSession) {
+				qtractorAudioEngine *pAudioEngine = pSession->audioEngine();
+				if (pAudioEngine)
+					ret = (VstIntPtr) pAudioEngine->blockSize();
+			}
+		}
+#endif
+		break;
+
+	case audioMasterGetInputLatency:
+		DMESSAGE("audioMasterGetInputLatency");
+		break;
+
+	case audioMasterGetOutputLatency:
+		DMESSAGE("audioMasterGetOutputLatency");
+		break;
+
+	case audioMasterGetCurrentProcessLevel:
+	//	DMESSAGE("audioMasterGetCurrentProcessLevel");
+		break;
+
+	case audioMasterGetAutomationState:
+		DMESSAGE("audioMasterGetAutomationState");
+		ret = 1; // off.
+		break;
+
+#if !defined(VST_2_3_EXTENSIONS) 
+	case audioMasterGetSpeakerArrangement:
+		DMESSAGE("audioMasterGetSpeakerArrangement");
+		break;
+#endif
+
+	case audioMasterGetVendorString:
+		DMESSAGE("audioMasterGetVendorString");
+		//::strcpy((char *) ptr, QTRACTOR_DOMAIN);
+                ::strcpy((char *) ptr, WEBSITE);
+		ret = 1; // ok.
+		break;
+
+	case audioMasterGetProductString:
+		DMESSAGE("audioMasterGetProductString");
+                //::strcpy((char *) ptr, QTRACTOR_TITLE);
+		::strcpy((char *) ptr, PACKAGE);
+		ret = 1; // ok.
+		break;
+
+	case audioMasterGetVendorVersion:
+		DMESSAGE("audioMasterGetVendorVersion");
+		break;
+
+	case audioMasterVendorSpecific:
+		DMESSAGE("audioMasterVendorSpecific");
+		break;
+
+	case audioMasterCanDo:
+		DMESSAGE("audioMasterCanDo");
+		if (::strcmp("receiveVstMidiEvent", (char *) ptr) == 0 ||
+			::strcmp("sendVstMidiEvent",    (char *) ptr) == 0 ||
+			::strcmp("sendVstTimeInfo",     (char *) ptr) == 0 ||
+			::strcmp("midiProgramNames",    (char *) ptr) == 0 ||
+			::strcmp("sizeWindow",          (char *) ptr) == 0) {
+			ret = 1; // can do.
+		}
+		break;
+
+	case audioMasterGetLanguage:
+		DMESSAGE("audioMasterGetLanguage");
+		ret = (VstIntPtr) kVstLangEnglish;
+		break;
+
+#if 0 // !VST_FORCE_DEPRECATED
+	case audioMasterPinConnected:
+		VST2_HC_DEBUG("audioMasterPinConnected");
+		break;
+
+	// VST 2.0 opcodes...
+	case audioMasterWantMidi:
+		VST2_HC_DEBUG("audioMasterWantMidi");
+		break;
+
+	case audioMasterSetTime:
+		VST2_HC_DEBUG("audioMasterSetTime");
+		break;
+
+	case audioMasterTempoAt:
+		VST2_HC_DEBUG("audioMasterTempoAt");
+		if (pSession)
+			ret = (VstIntPtr) (pSession->tempo() * 10000.0f);
+		break;
+
+	case audioMasterGetNumAutomatableParameters:
+		VST2_HC_DEBUG("audioMasterGetNumAutomatableParameters");
+		break;
+
+	case audioMasterGetParameterQuantization:
+		VST2_HC_DEBUG("audioMasterGetParameterQuantization");
+		ret = 1; // full single float precision
+		break;
+
+	case audioMasterNeedIdle:
+		VST2_HC_DEBUG("audioMasterNeedIdle");
+		break;
+
+	case audioMasterGetPreviousPlug:
+		VST2_HC_DEBUG("audioMasterGetPreviousPlug");
+		break;
+
+	case audioMasterGetNextPlug:
+		VST2_HC_DEBUG("audioMasterGetNextPlug");
+		break;
+
+	case audioMasterWillReplaceOrAccumulate:
+		VST2_HC_DEBUG("audioMasterWillReplaceOrAccumulate");
+		ret = 1;
+		break;
+
+	case audioMasterSetOutputSampleRate:
+		VST2_HC_DEBUG("audioMasterSetOutputSampleRate");
+		break;
+
+	case audioMasterSetIcon:
+		VST2_HC_DEBUG("audioMasterSetIcon");
+		break;
+
+	case audioMasterOpenWindow:
+		VST2_HC_DEBUG("audioMasterOpenWindow");
+		break;
+
+	case audioMasterCloseWindow:
+		VST2_HC_DEBUG("audioMasterCloseWindow");
+		break;
+#endif
+
+	case audioMasterGetDirectory:
+		DMESSAGE("audioMasterGetDirectory");
+		break;
+
+	case audioMasterUpdateDisplay:
+		DMESSAGE("audioMasterUpdateDisplay");
+		pVst2Plugin = VST2_Plugin::findPlugin(effect);
+		if (pVst2Plugin) {
+			pVst2Plugin->updateParamValues(false);
+		//	QApplication::processEvents();
+			ret = 1; // supported.
+		}
+		break;
+
+	case audioMasterBeginEdit:
+		DMESSAGE("audioMasterBeginEdit");
+		break;
+
+	case audioMasterEndEdit:
+		DMESSAGE("audioMasterEndEdit");
+		break;
+
+	default:
+		DMESSAGE("audioMasterUnknown");
+		break;
+	}
+
+	return ret;
 }
 
 void

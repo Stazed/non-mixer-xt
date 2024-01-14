@@ -69,6 +69,18 @@ public:
     // Open/close editor widget.
     bool try_custom_ui();
 
+    // Global VST2 plugin lookup.
+    static VST2_Plugin *findPlugin(AEffect *pVst2Effect);
+
+    // Parameter update executive.
+    void updateParamValue(unsigned long iIndex, float fValue, bool bUpdate);
+
+    // All parameters update method.
+    void updateParamValues(bool bUpdate);
+    
+    void idleEditor (void);
+    void resizeEditor ( int w, int h );
+
 private:
 
     std::string   m_sFilename;
@@ -77,6 +89,10 @@ private:
     AEffect      *m_pEffect;
     bool open_lib ( const std::string& sFilename );
     void close_lib();
+
+    bool open_descriptor ( unsigned long iIndex );
+    void close_descriptor (void);
+
     int vst2_dispatch(long opcode, long index, long value, void *ptr, float opt) const;
 
     void activate ( void );
