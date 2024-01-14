@@ -51,12 +51,49 @@ static std::map<AEffect *, VST2_Plugin *> g_vst2Plugins;
 // Current working VST2 Shell identifier.
 static int g_iVst2ShellCurrentId = 0;
 
+// Specific extended flags that saves us
+// from calling canDo() in audio callbacks.
+enum qtractorVst2PluginFlagsEx
+{
+    effFlagsExCanSendVstEvents          = 1 << 0,
+    effFlagsExCanSendVstMidiEvents      = 1 << 1,
+    effFlagsExCanSendVstTimeInfo        = 1 << 2,
+    effFlagsExCanReceiveVstEvents       = 1 << 3,
+    effFlagsExCanReceiveVstMidiEvents   = 1 << 4,
+    effFlagsExCanReceiveVstTimeInfo     = 1 << 5,
+    effFlagsExCanProcessOffline         = 1 << 6,
+    effFlagsExCanUseAsInsert            = 1 << 7,
+    effFlagsExCanUseAsSend              = 1 << 8,
+    effFlagsExCanMixDryWet              = 1 << 9,
+    effFlagsExCanMidiProgramNames       = 1 << 10
+};
+
+// Some VeSTige missing opcodes and flags.
+const int effSetProgramName = 4;
+const int effGetParamLabel = 6;
+const int effGetParamDisplay = 7;
+const int effGetChunk = 23;
+const int effSetChunk = 24;
+const int effGetProgramNameIndexed = 29;
+const int effFlagsProgramChunks = 32;
+
+
 VST2_Plugin::VST2_Plugin() :
     Plugin_Module(),
     m_sFilename(),
     m_iUniqueID(0),
     m_pLibrary(nullptr),
-    m_pEffect(nullptr)
+    m_pEffect(nullptr),
+    m_iFlagsEx(0),
+    m_iControlIns(0),
+    m_iControlOuts(0),
+    m_iAudioIns(0),
+    m_iAudioOuts(0),
+    m_iMidiIns(0),
+    m_iMidiOuts(0),
+    m_bRealtime(false),
+    m_bConfigure(false),
+    m_bEditor(false)
 {
     _plug_type = Type_VST2;
 
@@ -83,8 +120,17 @@ VST2_Plugin::load_plugin ( Module::Picked picked )
     if(!open_descriptor(0))     // FIXME index
         return false;
 
+    if( m_pEffect->uniqueID != (int) m_iUniqueID)
+    {
+        DMESSAGE("Incorrect ID SB = %ul: IS = %d", m_iUniqueID, m_pEffect->uniqueID);
+        close_descriptor();
+        return false;
+    }
+
     std::pair<AEffect *, VST2_Plugin *> efct ( m_pEffect, this );
     g_vst2Plugins.insert(efct);
+    
+    initialize_plugin();
 
     return false;
 }
@@ -555,6 +601,54 @@ VST2_Plugin::close_descriptor (void)
 //    m_sName.clear();
 }
 
+// VST2 flag inquirer.
+bool
+VST2_Plugin::vst2_canDo ( const char *pszCanDo ) const
+{
+    return (vst2_dispatch(effCanDo, 0, 0, (void *) pszCanDo, 0.0f) > 0);
+}
+
+
+bool
+VST2_Plugin::initialize_plugin()
+{
+    // Specific inquiries...
+    m_iFlagsEx = 0;
+//	if (vst2_canDo("sendVstEvents"))       m_iFlagsEx |= effFlagsExCanSendVstEvents;
+    if (vst2_canDo("sendVstMidiEvent"))    m_iFlagsEx |= effFlagsExCanSendVstMidiEvents;
+//	if (vst2_canDo("sendVstTimeInfo"))     m_iFlagsEx |= effFlagsExCanSendVstTimeInfo;
+//	if (vst2_canDo("receiveVstEvents"))    m_iFlagsEx |= effFlagsExCanReceiveVstEvents;
+    if (vst2_canDo("receiveVstMidiEvent")) m_iFlagsEx |= effFlagsExCanReceiveVstMidiEvents;
+//	if (vst2_canDo("receiveVstTimeInfo"))  m_iFlagsEx |= effFlagsExCanReceiveVstTimeInfo;
+//	if (vst2_canDo("offline"))             m_iFlagsEx |= effFlagsExCanProcessOffline;
+//	if (vst2_canDo("plugAsChannelInsert")) m_iFlagsEx |= effFlagsExCanUseAsInsert;
+//	if (vst2_canDo("plugAsSend"))          m_iFlagsEx |= effFlagsExCanUseAsSend;
+//	if (vst2_canDo("mixDryWet"))           m_iFlagsEx |= effFlagsExCanMixDryWet;
+//	if (vst2_canDo("midiProgramNames"))    m_iFlagsEx |= effFlagsExCanMidiProgramNames;
+
+    // Compute and cache port counts...
+    m_iControlIns  = m_pEffect->numParams;
+    m_iControlOuts = 0;
+    m_iAudioIns    = m_pEffect->numInputs;
+    m_iAudioOuts   = m_pEffect->numOutputs;
+    m_iMidiIns     = ((m_iFlagsEx & effFlagsExCanReceiveVstMidiEvents)
+            || (m_pEffect->flags & effFlagsIsSynth) ? 1 : 0);
+    m_iMidiOuts    = ((m_iFlagsEx & effFlagsExCanSendVstMidiEvents) ? 1 : 0);
+
+    // Cache flags.
+    m_bRealtime  = true;
+    m_bConfigure = (m_pEffect->flags & effFlagsProgramChunks);
+    m_bEditor    = (m_pEffect->flags & effFlagsHasEditor);
+
+    // HACK: Some native VST2 plugins with a GUI editor
+    // need to skip explicit shared library unloading,
+    // on close, in order to avoid mysterious crashes
+    // later on session and/or application exit.
+  //  if (m_bEditor) file()->setAutoUnload(false);
+
+    return true;
+}
+
 
 // VST host dispatcher.
 int VST2_Plugin::vst2_dispatch (
@@ -912,13 +1006,13 @@ static VstIntPtr VSTCALLBACK Vst2Plugin_HostCallback ( AEffect *effect,
 void
 VST2_Plugin::activate ( void )
 {
-    // FIXME
+    vst2_dispatch(effMainsChanged, 0, 1, nullptr, 0.0f);
 }
 
 void
 VST2_Plugin::deactivate ( void )
 {
-    // FIXME
+    vst2_dispatch(effMainsChanged, 0, 0, nullptr, 0.0f);
 }
 
 void

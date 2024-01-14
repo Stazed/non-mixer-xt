@@ -87,11 +87,27 @@ private:
     unsigned long m_iUniqueID;
     lib_t         m_pLibrary;
     AEffect      *m_pEffect;
+    unsigned int  m_iFlagsEx;
+
+    // Cached port counts.
+    unsigned short m_iControlIns;
+    unsigned short m_iControlOuts;
+    unsigned short m_iAudioIns;
+    unsigned short m_iAudioOuts;
+    unsigned short m_iMidiIns;
+    unsigned short m_iMidiOuts;
+
+    // Cached flags.
+    bool m_bRealtime;
+    bool m_bConfigure;
+    bool m_bEditor;
+
     bool open_lib ( const std::string& sFilename );
     void close_lib();
 
     bool open_descriptor ( unsigned long iIndex );
     void close_descriptor (void);
+    bool initialize_plugin();
 
     int vst2_dispatch(long opcode, long index, long value, void *ptr, float opt) const;
 
@@ -105,6 +121,7 @@ private:
 
 protected:
 
+    bool vst2_canDo(const char *pszCanDo) const;
     // Save and restore
     void get ( Log_Entry &e ) const override;
     void set ( Log_Entry &e ) override;
