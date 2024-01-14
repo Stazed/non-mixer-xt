@@ -31,7 +31,11 @@
 #include "../Mixer_Strip.H"
 
 VST2_Plugin::VST2_Plugin() :
-    Plugin_Module()
+    Plugin_Module(),
+    m_sFilename(),
+    m_iUniqueID(0),
+    m_pLibrary(nullptr),
+    m_pEffect(nullptr)
 {
     _plug_type = Type_VST2;
 
@@ -46,6 +50,17 @@ VST2_Plugin::~VST2_Plugin()
 bool
 VST2_Plugin::load_plugin ( Module::Picked picked )
 {
+    m_sFilename = picked.s_plug_path;
+    m_iUniqueID = picked.unique_id;
+    
+    if (!open_lib(m_sFilename))
+        return false;
+    else
+    {
+        DMESSAGE("GOT OPEN");   // FIXME
+        close_lib();
+    }
+
     return false;
 }
 
@@ -330,6 +345,50 @@ bool
 VST2_Plugin::try_custom_ui()
 {
     return false;   // FIXME
+}
+
+bool
+VST2_Plugin::open_lib ( const std::string& sFilename )
+{
+    close_lib();
+
+    m_pLibrary = lib_open(sFilename.c_str());
+
+    if (m_pLibrary == nullptr)
+    {
+        DMESSAGE("Cannot Open %s", sFilename.c_str());
+        return false;
+    }
+
+    DMESSAGE("Open %s", sFilename.c_str());
+
+    return true;
+}
+
+void
+VST2_Plugin::close_lib()
+{
+    if (m_pLibrary == nullptr)
+        return;
+
+    DMESSAGE("close()");
+
+    vst2_dispatch(effClose, 0, 0, 0, 0.0f);
+
+    m_pLibrary = nullptr;
+}
+
+// VST host dispatcher.
+int VST2_Plugin::vst2_dispatch (
+	long opcode, long index, long value, void *ptr, float opt ) const
+{
+    if (m_pEffect == nullptr)
+            return 0;
+
+ //   DMESSAGE("vst2_dispatch(%ld, %ld, %ld, %p, %g)",
+ //           opcode, index, value, ptr, opt);
+
+    return m_pEffect->dispatcher(m_pEffect, opcode, index, value, ptr, opt);
 }
 
 void

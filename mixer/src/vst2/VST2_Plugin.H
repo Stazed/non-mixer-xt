@@ -27,7 +27,11 @@
 
 #ifdef VST2_SUPPORT
 
+#include "vestige/vestige.h"
+#include "CarlaLibUtils.hpp"
 #include "../Plugin_Module.H"
+
+typedef struct _AEffect AEffect;
 
 class VST2_Plugin : public Plugin_Module
 {
@@ -66,6 +70,14 @@ public:
     bool try_custom_ui();
 
 private:
+
+    std::string   m_sFilename;
+    unsigned long m_iUniqueID;
+    lib_t         m_pLibrary;
+    AEffect      *m_pEffect;
+    bool open_lib ( const std::string& sFilename );
+    void close_lib();
+    int vst2_dispatch(long opcode, long index, long value, void *ptr, float opt) const;
 
     void activate ( void );
     void deactivate ( void );
