@@ -1058,66 +1058,92 @@ VST2_Plugin::create_midi_ports()
 void
 VST2_Plugin::create_control_ports()
 {
-#if 0
-    for (int iIndex = 0; iIndex < m_iControlIns; ++iIndex)
+    for (unsigned long iIndex = 0; iIndex < m_iControlIns; ++iIndex)
     {
-        char szName[64]; szName[0] = (char) 0;
-        vst2_dispatch(effGetParamName, iIndex, 0, (void *) szName, 0.0f);
-        if (!szName[0])
-            ::snprintf(szName, sizeof(szName), "Param #%lu", iIndex + 1); // Default dummy name.
-
-        setName(szName);
-
-        setMinValue(0.0f);
-        setMaxValue(1.0f);
+        Port::Direction d = Port::INPUT;
 
         ::memset(&m_props, 0, sizeof(m_props));
 
         if (vst2_dispatch(effGetParameterProperties, iIndex, 0, (void *) &m_props, 0.0f))
         {
-        #ifdef CONFIG_DEBUG_0
-                qDebug("  VstParamProperties(%lu) {", iIndex);
-                qDebug("    .label                   = \"%s\"", m_props.label);
-                qDebug("    .shortLabel              = \"%s\"", m_props.shortLabel);
-                qDebug("    .category                = %d", m_props.category);
-                qDebug("    .categoryLabel           = \"%s\"", m_props.categoryLabel);
-                qDebug("    .minInteger              = %d", int(m_props.minInteger));
-                qDebug("    .maxInteger              = %d", int(m_props.maxInteger));
-                qDebug("    .stepInteger             = %d", int(m_props.stepInteger));
-                qDebug("    .stepFloat               = %g", m_props.stepFloat);
-        #ifndef CONFIG_VESTIGE_OLD
-                qDebug("    .smallStepFloat          = %g", m_props.smallStepFloat);
-                qDebug("    .largeStepFloat          = %g", m_props.largeStepFloat);
-                qDebug("    .largeStepInteger        = %d", int(m_props.largeStepInteger));
-                qDebug("    >IsSwitch                = %d", (m_props.flags & kVstParameterIsSwitch ? 1 : 0));
-                qDebug("    >UsesIntegerMinMax       = %d", (m_props.flags & kVstParameterUsesIntegerMinMax ? 1 : 0));
-                qDebug("    >UsesFloatStep           = %d", (m_props.flags & kVstParameterUsesFloatStep ? 1 : 0));
-                qDebug("    >UsesIntStep             = %d", (m_props.flags & kVstParameterUsesIntStep ? 1 : 0));
-                qDebug("    >SupportsDisplayIndex    = %d", (m_props.flags & kVstParameterSupportsDisplayIndex ? 1 : 0));
-                qDebug("    >SupportsDisplayCategory = %d", (m_props.flags & kVstParameterSupportsDisplayCategory ? 1 : 0));
-                qDebug("    >CanRamp                 = %d", (m_props.flags & kVstParameterCanRamp ? 1 : 0));
-                qDebug("    .displayIndex            = %d", m_props.displayIndex);
-                qDebug("    .numParametersInCategory = %d", m_props.numParametersInCategory);
-        #endif
-                qDebug("}");
-        #endif
-                if (isBoundedBelow())
-                        setMinValue(float(m_props.minInteger));
-                if (isBoundedAbove())
-                        setMaxValue(float(m_props.maxInteger));
-        }
+            Port p( this, d, Port::CONTROL, strdup( m_props.label ) );
 
-        // ATTN: Set default value as initial one...
-        if (pVst2Type && pVst2Type->effect()) {
-                AEffect *pVst2Effect = (pVst2Type->effect())->vst2_effect();
-                if (pVst2Effect)
-                        qtractorPlugin::Param::setValue(
-                                pVst2Effect->getParameter(pVst2Effect, iIndex), true);
-        }
+            /* Used for OSC path creation unique symbol */
+            std::string osc_symbol = strdup( m_props.shortLabel );
+            osc_symbol.erase(std::remove(osc_symbol.begin(), osc_symbol.end(), ' '), osc_symbol.end());
+            osc_symbol += std::to_string( iIndex );
 
-        setDefaultValue(qtractorPlugin::Param::value());
-    }
+            p.set_symbol(osc_symbol.c_str());
+
+            p.hints.ranged = true;
+            p.hints.minimum = (float) 0.0;
+            p.hints.maximum = (float) 1.0;
+
+#if 0
+            DMESSAGE("  VstParamProperties(%lu) {", iIndex);
+            DMESSAGE("    .label                   = \"%s\"", m_props.label);
+            DMESSAGE("    .shortLabel              = \"%s\"", m_props.shortLabel);
+            DMESSAGE("    .category                = %d", m_props.category);
+            DMESSAGE("    .categoryLabel           = \"%s\"", m_props.categoryLabel);
+            DMESSAGE("    .minInteger              = %d", int(m_props.minInteger));
+            DMESSAGE("    .maxInteger              = %d", int(m_props.maxInteger));
+            DMESSAGE("    .stepInteger             = %d", int(m_props.stepInteger));
+            DMESSAGE("    .stepFloat               = %g", m_props.stepFloat);
+
+            DMESSAGE("    .smallStepFloat          = %g", m_props.smallStepFloat);
+            DMESSAGE("    .largeStepFloat          = %g", m_props.largeStepFloat);
+            DMESSAGE("    .largeStepInteger        = %d", int(m_props.largeStepInteger));
+            DMESSAGE("    >IsSwitch                = %d", (m_props.flags & kVstParameterIsSwitch ? 1 : 0));
+            DMESSAGE("    >UsesIntegerMinMax       = %d", (m_props.flags & kVstParameterUsesIntegerMinMax ? 1 : 0));
+            DMESSAGE("    >UsesFloatStep           = %d", (m_props.flags & kVstParameterUsesFloatStep ? 1 : 0));
+            DMESSAGE("    >UsesIntStep             = %d", (m_props.flags & kVstParameterUsesIntStep ? 1 : 0));
+            DMESSAGE("    >SupportsDisplayIndex    = %d", (m_props.flags & kVstParameterSupportsDisplayIndex ? 1 : 0));
+            DMESSAGE("    >SupportsDisplayCategory = %d", (m_props.flags & kVstParameterSupportsDisplayCategory ? 1 : 0));
+            DMESSAGE("    >CanRamp                 = %d", (m_props.flags & kVstParameterCanRamp ? 1 : 0));
+            DMESSAGE("    .displayIndex            = %d", m_props.displayIndex);
+            DMESSAGE("    .numParametersInCategory = %d", m_props.numParametersInCategory);
+            DMESSAGE("}");
 #endif
+            if ((m_props.flags & kVstParameterUsesIntegerMinMax))
+            {
+                p.hints.type = Port::Hints::INTEGER;
+                p.hints.minimum = (float(m_props.minInteger));
+                p.hints.maximum = (float(m_props.maxInteger));
+            }
+
+            if ((m_props.flags & kVstParameterIsSwitch))
+                p.hints.type = Port::Hints::BOOLEAN;
+
+            // ATTN: Set default value as initial one...
+            if (m_pEffect)
+            {
+                p.hints.default_value = (float) m_pEffect->getParameter(m_pEffect, iIndex);
+            }
+
+            float *control_value = new float;
+
+            *control_value = p.hints.default_value;
+
+            p.connect_to( control_value );
+
+            p.hints.plug_port_index = iIndex;
+
+            add_port( p );
+        }
+    }
+
+    if (bypassable()) {
+    Port pb( this, Port::INPUT, Port::CONTROL, "dsp/bypass" );
+    pb.hints.type = Port::Hints::BOOLEAN;
+    pb.hints.ranged = true;
+    pb.hints.maximum = 1.0f;
+    pb.hints.minimum = 0.0f;
+    pb.hints.dimensions = 1;
+    pb.hints.visible = false;
+    pb.hints.invisible_with_signals = true;
+    pb.connect_to( _bypass );
+    add_port( pb );
+    }
 }
 
 void

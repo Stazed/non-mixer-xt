@@ -98,6 +98,8 @@ private:
     unsigned short m_iMidiIns;
     unsigned short m_iMidiOuts;
 
+    VstParameterProperties m_props;
+
     // Cached flags.
     bool m_bRealtime;
     bool m_bConfigure;
