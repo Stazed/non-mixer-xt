@@ -141,6 +141,9 @@ VST2_Plugin::load_plugin ( Module::Picked picked )
     create_audio_ports();
     create_midi_ports();
     create_control_ports();
+    
+    vst2_dispatch(effSetSampleRate, 0, 0, nullptr, float(sample_rate()));
+    vst2_dispatch(effSetBlockSize,  0, buffer_size(), nullptr, 0.0f);
 
     activate();
 
@@ -420,7 +423,15 @@ VST2_Plugin::process ( nframes_t nframes )
     }
     else
     {
-        
+        if (m_pEffect == nullptr)
+            return;
+
+        // Make it run audio...
+        if (m_pEffect->flags & effFlagsCanReplacing)
+        {
+            m_pEffect->processReplacing(
+                m_pEffect, _audio_in_buffers,  _audio_out_buffers, nframes);
+        }
     }
 }
 
@@ -1209,15 +1220,13 @@ VST2_Plugin::add_port ( const Port &p )
 void
 VST2_Plugin::set_input_buffer ( int n, void *buf )
 {
-    // FIXME
-   // _audio_in_buffers[n] = static_cast<float*>( buf );
+    _audio_in_buffers[n] = static_cast<float*>( buf );
 }
 
 void
 VST2_Plugin::set_output_buffer ( int n, void *buf )
 {
-    // FIXME
-   // _audio_out_buffers[n] = static_cast<float*>( buf );
+    _audio_out_buffers[n] = static_cast<float*>( buf );
 }
 
 bool
