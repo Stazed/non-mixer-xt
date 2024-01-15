@@ -1123,6 +1123,9 @@ VST2_Plugin::create_control_ports()
 void
 VST2_Plugin::activate ( void )
 {
+    if ( !loaded() )
+        return;
+
     DMESSAGE( "Activating plugin \"%s\"", label() );
     
     if ( !bypass() )
@@ -1146,6 +1149,9 @@ VST2_Plugin::activate ( void )
 void
 VST2_Plugin::deactivate ( void )
 {
+    if ( !loaded() )
+        return;
+
     DMESSAGE( "Deactivating plugin \"%s\"", label() );
 
     if ( chain() )
@@ -1191,9 +1197,8 @@ VST2_Plugin::set_output_buffer ( int n, void *buf )
 bool
 VST2_Plugin::loaded ( void ) const
 {
-    // FIXME
-   // if ( _pModule )
-   //     return true;
+    if ( m_pEffect )
+        return true;
 
     return false;
 }
