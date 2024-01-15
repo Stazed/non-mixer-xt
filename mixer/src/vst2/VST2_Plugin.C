@@ -722,6 +722,16 @@ VST2_Plugin::updateParamValues ( bool bUpdate )
 #endif
 }
 
+// Host to plugin
+void
+VST2_Plugin::setParameter(uint32_t iIndex, float value)
+{
+    if (m_pEffect)
+    {
+        m_pEffect->setParameter(m_pEffect, iIndex, value);
+    }
+}
+
 void
 VST2_Plugin::idleEditor (void)
 {

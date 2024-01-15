@@ -550,10 +550,10 @@ Module::handle_control_changed ( Module::Port *p )
         {
             VST2_Plugin *pm = static_cast<VST2_Plugin *> (m);
 
-            uint32_t param_id = p->hints.parameter_id;
+            uint32_t iIndex = p->hints.plug_port_index;
             float value = p->control_value();
-            DMESSAGE("VST2 Param ID = %d: Value = %f", param_id, value);
-           // pm->setParameter(param_id, value);
+            DMESSAGE("VST2 Param ID = %d: Value = %f", iIndex, value);
+            pm->setParameter(iIndex, value);
         }
     }
 #endif

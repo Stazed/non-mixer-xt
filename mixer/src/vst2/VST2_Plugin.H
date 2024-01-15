@@ -72,12 +72,15 @@ public:
     // Global VST2 plugin lookup.
     static VST2_Plugin *findPlugin(AEffect *pVst2Effect);
 
-    // Parameter update executive.
+    // Parameter update executive - plugin to host.
     void updateParamValue(unsigned long iIndex, float fValue, bool bUpdate);
 
-    // All parameters update method.
+    // All parameters update method - plugin to host.
     void updateParamValues(bool bUpdate);
-    
+
+    // Host to plugin
+    void setParameter(uint32_t iIndex, float value);
+
     void idleEditor (void);
     void resizeEditor ( int w, int h );
 
