@@ -102,6 +102,7 @@ private:
     bool m_bRealtime;
     bool m_bConfigure;
     bool m_bEditor;
+    bool _activated;
 
     float ** _audio_in_buffers;
     float ** _audio_out_buffers;

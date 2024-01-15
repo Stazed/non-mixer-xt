@@ -95,6 +95,7 @@ VST2_Plugin::VST2_Plugin() :
     m_bRealtime(false),
     m_bConfigure(false),
     m_bEditor(false),
+    _activated(false),
     _audio_in_buffers(nullptr),
     _audio_out_buffers(nullptr)
 {
@@ -140,6 +141,8 @@ VST2_Plugin::load_plugin ( Module::Picked picked )
     create_audio_ports();
     create_midi_ports();
     create_control_ports();
+
+    activate();
 
     return true;
 }
@@ -851,6 +854,7 @@ static VstIntPtr VSTCALLBACK Vst2Plugin_HostCallback ( AEffect *effect,
 		pVst2Plugin = VST2_Plugin::findPlugin(effect);
 		if (pVst2Plugin)
                 {
+                   // DMESSAGE("HOST CALLBACK = %s", pVst2Plugin->base_label());
                     ret = (VstIntPtr) pVst2Plugin->buffer_size();
 		}
 
@@ -1119,13 +1123,44 @@ VST2_Plugin::create_control_ports()
 void
 VST2_Plugin::activate ( void )
 {
-    vst2_dispatch(effMainsChanged, 0, 1, nullptr, 0.0f);
+    DMESSAGE( "Activating plugin \"%s\"", label() );
+    
+    if ( !bypass() )
+        FATAL( "Attempt to activate already active plugin" );
+
+    if ( chain() )
+        chain()->client()->lock();
+
+    *_bypass = 0.0f;
+
+    if ( ! _activated )
+    {
+        _activated = true;
+        vst2_dispatch(effMainsChanged, 0, 1, nullptr, 0.0f);
+    }
+
+    if ( chain() )
+        chain()->client()->unlock();
 }
 
 void
 VST2_Plugin::deactivate ( void )
 {
-    vst2_dispatch(effMainsChanged, 0, 0, nullptr, 0.0f);
+    DMESSAGE( "Deactivating plugin \"%s\"", label() );
+
+    if ( chain() )
+        chain()->client()->lock();
+
+    *_bypass = 1.0f;
+
+    if ( _activated )
+    {
+        _activated = false;
+        vst2_dispatch(effMainsChanged, 0, 0, nullptr, 0.0f);
+    }
+
+    if ( chain() )
+        chain()->client()->unlock();
 }
 
 void
