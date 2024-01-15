@@ -69,4 +69,30 @@ void non_zeroStruct(T& s) noexcept
     std::memset(&s, 0, sizeof(T));
 }
 
+/*
+ * Clear a struct array.
+ */
+template <typename T>
+static inline
+void non_zeroStructs(T structs[], const std::size_t count) noexcept
+{
+    CARLA_SAFE_ASSERT_RETURN(structs != nullptr,);
+    CARLA_SAFE_ASSERT_RETURN(count > 0,);
+
+    std::memset(structs, 0, count*sizeof(T));
+}
+
+/*
+ * Clear a pointer array.
+ */
+template<typename T>
+static inline
+void carla_zeroPointers(T* ptrs[], const std::size_t count) noexcept
+{
+    CARLA_SAFE_ASSERT_RETURN(ptrs != nullptr,);
+    CARLA_SAFE_ASSERT_RETURN(count > 0,);
+
+    std::memset(ptrs, 0, count*sizeof(T*));
+}
+
 #endif  // #if defined(LV2_SUPPORT) || defined(CLAP_SUPPORT) || defined(VST3_SUPPORT)

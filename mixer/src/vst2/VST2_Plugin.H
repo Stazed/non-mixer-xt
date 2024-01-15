@@ -30,8 +30,12 @@
 #include "vestige/vestige.h"
 #include "CarlaLibUtils.hpp"
 #include "../Plugin_Module.H"
+#include "../x11/XTUtils.H"
 
 typedef struct _AEffect AEffect;
+
+// Maximum pre-allocated events for some VST2
+constexpr const uint16_t kPluginMaxMidiEvents = 512;
 
 class VST2_Plugin : public Plugin_Module
 {
@@ -84,6 +88,8 @@ public:
     void idleEditor (void);
     void resizeEditor ( int w, int h );
 
+    int ProcessEvents (void *ptr);
+
 private:
 
     std::string   m_sFilename;
@@ -92,6 +98,25 @@ private:
     AEffect      *m_pEffect;
     unsigned int  m_iFlagsEx;
     std::string   m_sName;
+
+    uint32_t     fMidiEventCount;
+    VstMidiEvent fMidiEvents[kPluginMaxMidiEvents*2];
+    VstTimeInfo  fTimeInfo;
+
+    struct FixedVstEvents {
+        int32_t numEvents;
+        intptr_t reserved;
+        VstEvent* data[kPluginMaxMidiEvents*2];
+
+        FixedVstEvents() noexcept
+            : numEvents(0),
+              reserved(0)
+        {
+            carla_zeroPointers(data, kPluginMaxMidiEvents*2);
+        }
+
+       // CARLA_DECLARE_NON_COPYABLE(FixedVstEvents);
+    } fEvents;
 
     // Cached port counts.
     unsigned short m_iControlIns;
@@ -131,6 +156,10 @@ private:
     void set_input_buffer ( int n, void *buf );
     void set_output_buffer ( int n, void *buf );
     bool loaded ( void ) const;
+
+    void process_jack_midi_in ( uint32_t nframes, unsigned int port );
+    void process_midi_in (unsigned char *data, unsigned int size,
+	unsigned long offset, unsigned short port );
 
 protected:
 

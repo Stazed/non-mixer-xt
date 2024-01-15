@@ -77,6 +77,7 @@ const int effSetChunk = 24;
 const int effGetProgramNameIndexed = 29;
 const int effFlagsProgramChunks = 32;
 
+static const int32_t kVstMidiEventSize = static_cast<int32_t>(sizeof(VstMidiEvent));
 
 VST2_Plugin::VST2_Plugin() :
     Plugin_Module(),
@@ -86,6 +87,9 @@ VST2_Plugin::VST2_Plugin() :
     m_pEffect(nullptr),
     m_iFlagsEx(0),
     m_sName(),
+    fMidiEventCount(0),
+    fTimeInfo(),
+    fEvents(),
     m_iControlIns(0),
     m_iControlOuts(0),
     m_iAudioIns(0),
@@ -100,6 +104,13 @@ VST2_Plugin::VST2_Plugin() :
     _audio_out_buffers(nullptr)
 {
     _plug_type = Type_VST2;
+
+    non_zeroStructs(fMidiEvents, kPluginMaxMidiEvents*2);
+    non_zeroStruct(fTimeInfo);
+
+    for (ushort i=0; i < kPluginMaxMidiEvents*2; ++i)
+        fEvents.data[i] = (VstEvent*)&fMidiEvents[i];
+
 
     log_create();
 }
@@ -425,6 +436,22 @@ VST2_Plugin::process ( nframes_t nframes )
     {
         if (m_pEffect == nullptr)
             return;
+
+        fMidiEventCount = 0;
+        non_zeroStructs(fMidiEvents, kPluginMaxMidiEvents*2);
+
+        for( unsigned int i = 0; i < midi_input.size(); ++i )
+        {
+            /* JACK MIDI in to plugin MIDI in */
+            process_jack_midi_in( nframes, i );
+        }
+
+        if (fMidiEventCount > 0)
+        {
+            fEvents.numEvents = static_cast<int32_t>(fMidiEventCount);
+            fEvents.reserved  = 0;
+            vst2_dispatch(effProcessEvents, 0, 0, &fEvents, 0.0f);
+        }
 
         // Make it run audio...
         if (m_pEffect->flags & effFlagsCanReplacing)
@@ -800,7 +827,7 @@ static VstIntPtr VSTCALLBACK Vst2Plugin_HostCallback ( AEffect *effect,
 		break;
 
 	case audioMasterGetTime:
-		DMESSAGE("audioMasterGetTime");
+	//	DMESSAGE("audioMasterGetTime");
 #if 0
 		::memset(&s_vst2TimeInfo, 0, sizeof(s_vst2TimeInfo));
 		if (pSession) {
@@ -830,20 +857,13 @@ static VstIntPtr VSTCALLBACK Vst2Plugin_HostCallback ( AEffect *effect,
 
 	case audioMasterProcessEvents:
 		DMESSAGE("audioMasterProcessEvents");
-#if 0
-		pVst2Plugin = VST2_Plugin::findPlugin(effect);
-		if (pVst2Plugin) {
-			qtractorMidiManager *pMidiManager = nullptr;
-			qtractorPluginList *pPluginList = pVst2Plugin->list();
-			if (pPluginList)
-				pMidiManager = pPluginList->midiManager();
-			if (pMidiManager) {
-				pMidiManager->vst2_events_copy((VstEvents *) ptr);
-				ret = 1; // supported and processed.
-			}
-		}
-#endif
-		break;
+
+                pVst2Plugin = VST2_Plugin::findPlugin(effect);
+		if (pVst2Plugin)
+                {
+                    ret = pVst2Plugin->ProcessEvents(ptr);
+                }
+                break;
 
 	case audioMasterIOChanged:
 		DMESSAGE("audioMasterIOChanged");
@@ -1246,6 +1266,106 @@ VST2_Plugin::loaded ( void ) const
         return true;
 
     return false;
+}
+
+void
+VST2_Plugin::process_jack_midi_in ( uint32_t nframes, unsigned int port )
+{
+    /* Process any MIDI events from jack */
+    if ( midi_input[port].jack_port() )
+    {
+        void *buf = midi_input[port].jack_port()->buffer( nframes );
+
+        for (uint32_t i = 0; i < jack_midi_get_event_count(buf); ++i)
+        {
+            jack_midi_event_t ev;
+            jack_midi_event_get(&ev, buf, i);
+
+            process_midi_in(ev.buffer, ev.size, ev.time, 0);
+        }
+    }
+}
+
+void
+VST2_Plugin::process_midi_in (unsigned char *data, unsigned int size,
+	unsigned long offset, unsigned short port )
+{
+    for (unsigned int i = 0; i < size; ++i)
+    {
+        // channel status
+        const int channel = (data[i] & 0x0f);// + 1;
+        const int status  = (data[i] & 0xf0);
+
+        // all system common/real-time ignored
+        if (status == 0xf0)
+            continue;
+
+        // check data size (#1)
+        if (++i >= size)
+            break;
+
+        // channel key
+        const int key = (data[i] & 0x7f);
+
+        // channel value (normalized)
+        const int value = (data[i] & 0x7f);
+
+        // note on
+        if (status == 0x90)
+        {
+            VstMidiEvent& vstMidiEvent(fMidiEvents[fMidiEventCount++]);
+
+            vstMidiEvent.type        = kVstMidiType;
+            vstMidiEvent.byteSize    = kVstMidiEventSize;
+            vstMidiEvent.midiData[0] = char(status | channel);
+            vstMidiEvent.midiData[1] = char(key);
+            vstMidiEvent.midiData[2] = char(value);
+        }
+        else
+        // note off
+        if (status == 0x80)
+        {
+            VstMidiEvent& vstMidiEvent(fMidiEvents[fMidiEventCount++]);
+
+            vstMidiEvent.type        = kVstMidiType;
+            vstMidiEvent.byteSize    = kVstMidiEventSize;
+            vstMidiEvent.midiData[0] = char(status | channel);
+            vstMidiEvent.midiData[1] = char(key);
+            vstMidiEvent.midiData[2] = char(value);
+        }
+    }
+}
+
+int
+VST2_Plugin::ProcessEvents (void *ptr)
+{
+    if (fMidiEventCount >= kPluginMaxMidiEvents*2-1)
+        return 0;
+
+    if (const VstEvents* const vstEvents = (const VstEvents*)ptr)
+    {
+        for (int32_t i=0; i < vstEvents->numEvents && i < kPluginMaxMidiEvents*2; ++i)
+        {
+            if (vstEvents->events[i] == nullptr)
+                break;
+
+            const VstMidiEvent* const vstMidiEvent((const VstMidiEvent*)vstEvents->events[i]);
+
+            if (vstMidiEvent->type != kVstMidiType)
+                continue;
+
+            // reverse-find first free event, and put it there
+            for (uint32_t j=(kPluginMaxMidiEvents*2)-1; j >= fMidiEventCount; --j)
+            {
+                if (fMidiEvents[j].type == 0)
+                {
+                    std::memcpy(&fMidiEvents[j], vstMidiEvent, sizeof(VstMidiEvent));
+                    break;
+                }
+            }
+        }
+    }
+    return 1;
 }
 
 void
