@@ -88,6 +88,7 @@ private:
     lib_t         m_pLibrary;
     AEffect      *m_pEffect;
     unsigned int  m_iFlagsEx;
+    std::string   m_sName;
 
     // Cached port counts.
     unsigned short m_iControlIns;
@@ -102,6 +103,9 @@ private:
     bool m_bConfigure;
     bool m_bEditor;
 
+    float ** _audio_in_buffers;
+    float ** _audio_out_buffers;
+
     bool open_lib ( const std::string& sFilename );
     void close_lib();
 
@@ -111,6 +115,9 @@ private:
 
     int vst2_dispatch(long opcode, long index, long value, void *ptr, float opt) const;
 
+    void create_audio_ports();
+    void create_midi_ports();
+    void create_control_ports();
     void activate ( void );
     void deactivate ( void );
     void add_port ( const Port &p ) override;

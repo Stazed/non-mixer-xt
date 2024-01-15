@@ -85,6 +85,7 @@ VST2_Plugin::VST2_Plugin() :
     m_pLibrary(nullptr),
     m_pEffect(nullptr),
     m_iFlagsEx(0),
+    m_sName(),
     m_iControlIns(0),
     m_iControlOuts(0),
     m_iAudioIns(0),
@@ -93,7 +94,9 @@ VST2_Plugin::VST2_Plugin() :
     m_iMidiOuts(0),
     m_bRealtime(false),
     m_bConfigure(false),
-    m_bEditor(false)
+    m_bEditor(false),
+    _audio_in_buffers(nullptr),
+    _audio_out_buffers(nullptr)
 {
     _plug_type = Type_VST2;
 
@@ -127,12 +130,18 @@ VST2_Plugin::load_plugin ( Module::Picked picked )
         return false;
     }
 
+    base_label(m_sName.c_str());
+
     std::pair<AEffect *, VST2_Plugin *> efct ( m_pEffect, this );
     g_vst2Plugins.insert(efct);
     
     initialize_plugin();
 
-    return false;
+    create_audio_ports();
+    create_midi_ports();
+    create_control_ports();
+
+    return true;
 }
 
 bool
@@ -558,8 +567,7 @@ VST2_Plugin::open_descriptor ( unsigned long iIndex )
     char szName[256]; ::memset(szName, 0, sizeof(szName));
     if (vst2_dispatch(effGetEffectName, 0, 0, (void *) szName, 0.0f))
     {
-        label(szName);
-         //   m_sName = szName;
+        m_sName = szName;
     }
 
 #if 0
@@ -596,9 +604,8 @@ VST2_Plugin::close_descriptor (void)
     vst2_dispatch(effClose, 0, 0, 0, 0.0f);
 
     m_pEffect  = nullptr;
-//    m_iFlagsEx = 0;
-//    m_bEditor  = false;
-//    m_sName.clear();
+    m_iFlagsEx = 0;
+    m_bEditor  = false;
 }
 
 // VST2 flag inquirer.
@@ -1001,6 +1008,112 @@ static VstIntPtr VSTCALLBACK Vst2Plugin_HostCallback ( AEffect *effect,
 	}
 
 	return ret;
+}
+
+void
+VST2_Plugin::create_audio_ports()
+{
+    _plugin_ins = 0;
+    _plugin_outs = 0;
+    for (int32_t i = 0; i < m_iAudioIns; ++i)
+    {
+        add_port( Port( this, Port::INPUT, Port::AUDIO, "input" ) );
+        audio_input[i].hints.plug_port_index = i;
+        _plugin_ins++;
+    }
+
+    for (int32_t i = 0; i < m_iAudioOuts; ++i)
+    {
+        add_port( Port( this, Port::OUTPUT, Port::AUDIO, "output" ) );
+        audio_output[i].hints.plug_port_index = i;
+        _plugin_outs++;
+    }
+
+    _audio_in_buffers = new float * [_plugin_ins]();
+    _audio_out_buffers = new float * [_plugin_outs]();
+
+    MESSAGE( "Plugin has %i inputs and %i outputs", _plugin_ins, _plugin_outs);
+}
+
+void
+VST2_Plugin::create_midi_ports()
+{
+    for (int32_t i = 0; i < m_iMidiIns; ++i)
+    {
+        add_port( Port( this, Port::INPUT, Port::MIDI, "midi_in" ) );
+    }
+
+    for (int32_t i = 0; i < m_iMidiOuts; ++i)
+    {
+        add_port( Port( this, Port::OUTPUT, Port::MIDI, "midi_out" ) );
+    }
+
+    MESSAGE( "Plugin has %i MIDI ins and %i MIDI outs", m_iMidiIns, m_iMidiOuts);
+}
+
+void
+VST2_Plugin::create_control_ports()
+{
+#if 0
+    for (int iIndex = 0; iIndex < m_iControlIns; ++iIndex)
+    {
+        char szName[64]; szName[0] = (char) 0;
+        vst2_dispatch(effGetParamName, iIndex, 0, (void *) szName, 0.0f);
+        if (!szName[0])
+            ::snprintf(szName, sizeof(szName), "Param #%lu", iIndex + 1); // Default dummy name.
+
+        setName(szName);
+
+        setMinValue(0.0f);
+        setMaxValue(1.0f);
+
+        ::memset(&m_props, 0, sizeof(m_props));
+
+        if (vst2_dispatch(effGetParameterProperties, iIndex, 0, (void *) &m_props, 0.0f))
+        {
+        #ifdef CONFIG_DEBUG_0
+                qDebug("  VstParamProperties(%lu) {", iIndex);
+                qDebug("    .label                   = \"%s\"", m_props.label);
+                qDebug("    .shortLabel              = \"%s\"", m_props.shortLabel);
+                qDebug("    .category                = %d", m_props.category);
+                qDebug("    .categoryLabel           = \"%s\"", m_props.categoryLabel);
+                qDebug("    .minInteger              = %d", int(m_props.minInteger));
+                qDebug("    .maxInteger              = %d", int(m_props.maxInteger));
+                qDebug("    .stepInteger             = %d", int(m_props.stepInteger));
+                qDebug("    .stepFloat               = %g", m_props.stepFloat);
+        #ifndef CONFIG_VESTIGE_OLD
+                qDebug("    .smallStepFloat          = %g", m_props.smallStepFloat);
+                qDebug("    .largeStepFloat          = %g", m_props.largeStepFloat);
+                qDebug("    .largeStepInteger        = %d", int(m_props.largeStepInteger));
+                qDebug("    >IsSwitch                = %d", (m_props.flags & kVstParameterIsSwitch ? 1 : 0));
+                qDebug("    >UsesIntegerMinMax       = %d", (m_props.flags & kVstParameterUsesIntegerMinMax ? 1 : 0));
+                qDebug("    >UsesFloatStep           = %d", (m_props.flags & kVstParameterUsesFloatStep ? 1 : 0));
+                qDebug("    >UsesIntStep             = %d", (m_props.flags & kVstParameterUsesIntStep ? 1 : 0));
+                qDebug("    >SupportsDisplayIndex    = %d", (m_props.flags & kVstParameterSupportsDisplayIndex ? 1 : 0));
+                qDebug("    >SupportsDisplayCategory = %d", (m_props.flags & kVstParameterSupportsDisplayCategory ? 1 : 0));
+                qDebug("    >CanRamp                 = %d", (m_props.flags & kVstParameterCanRamp ? 1 : 0));
+                qDebug("    .displayIndex            = %d", m_props.displayIndex);
+                qDebug("    .numParametersInCategory = %d", m_props.numParametersInCategory);
+        #endif
+                qDebug("}");
+        #endif
+                if (isBoundedBelow())
+                        setMinValue(float(m_props.minInteger));
+                if (isBoundedAbove())
+                        setMaxValue(float(m_props.maxInteger));
+        }
+
+        // ATTN: Set default value as initial one...
+        if (pVst2Type && pVst2Type->effect()) {
+                AEffect *pVst2Effect = (pVst2Type->effect())->vst2_effect();
+                if (pVst2Effect)
+                        qtractorPlugin::Param::setValue(
+                                pVst2Effect->getParameter(pVst2Effect, iIndex), true);
+        }
+
+        setDefaultValue(qtractorPlugin::Param::value());
+    }
+#endif
 }
 
 void
