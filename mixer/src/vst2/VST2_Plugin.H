@@ -90,6 +90,7 @@ public:
 
     int ProcessEvents (void *ptr);
     VstTimeInfo& get_time_info() {return fTimeInfo;}
+    unsigned long get_unique_id() {return m_iUniqueID;}
 
 private:
 

@@ -818,8 +818,11 @@ static VstIntPtr VSTCALLBACK Vst2Plugin_HostCallback ( AEffect *effect,
 
 	case audioMasterCurrentId:
 		DMESSAGE("audioMasterCurrentId");
-                // FIXME
-	//	ret = (VstIntPtr) g_iVst2ShellCurrentId;
+                pVst2Plugin = VST2_Plugin::findPlugin(effect);
+		if (pVst2Plugin) {
+                    ret = (VstIntPtr)pVst2Plugin->get_unique_id();
+                }
+
 		break;
 
 	case audioMasterIdle:
