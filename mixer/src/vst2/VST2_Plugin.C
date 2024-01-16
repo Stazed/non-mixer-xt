@@ -1135,74 +1135,70 @@ VST2_Plugin::create_control_ports()
     {
         Port::Direction d = Port::INPUT;
 
-        ::memset(&m_props, 0, sizeof(m_props));
+        char szName[64]; szName[0] = (char) 0;
+        vst2_dispatch(effGetParamName, iIndex, 0, (void *) szName, 0.0f);
 
+        if (!szName[0])
+            ::snprintf(szName, sizeof(szName), "Param #%lu", iIndex + 1);
+
+        bool have_props = false;
+        ::memset(&m_props, 0, sizeof(m_props));
         if (vst2_dispatch(effGetParameterProperties, iIndex, 0, (void *) &m_props, 0.0f))
         {
-            Port p( this, d, Port::CONTROL, strdup( m_props.label ) );
+            ::snprintf(szName, sizeof(szName), "%s", m_props.label);
+            have_props = true;
+        }
 
-            /* Used for OSC path creation unique symbol */
-            std::string osc_symbol = strdup( m_props.shortLabel );
-            osc_symbol.erase(std::remove(osc_symbol.begin(), osc_symbol.end(), ' '), osc_symbol.end());
-            osc_symbol += std::to_string( iIndex );
+        Port p( this, d, Port::CONTROL, strdup( szName ) );
 
-            p.set_symbol(osc_symbol.c_str());
+        /* Used for OSC path creation unique symbol */
+        std::string osc_symbol;
 
-            p.hints.ranged = true;
-            p.hints.minimum = (float) 0.0;
-            p.hints.maximum = (float) 1.0;
+        if(have_props && (m_props.shortLabel[0] != 0))
+            osc_symbol = strdup( m_props.shortLabel );
+        else
+            osc_symbol = strdup( szName );
 
-#if 0
-            DMESSAGE("  VstParamProperties(%lu) {", iIndex);
-            DMESSAGE("    .label                   = \"%s\"", m_props.label);
-            DMESSAGE("    .shortLabel              = \"%s\"", m_props.shortLabel);
-            DMESSAGE("    .category                = %d", m_props.category);
-            DMESSAGE("    .categoryLabel           = \"%s\"", m_props.categoryLabel);
-            DMESSAGE("    .minInteger              = %d", int(m_props.minInteger));
-            DMESSAGE("    .maxInteger              = %d", int(m_props.maxInteger));
-            DMESSAGE("    .stepInteger             = %d", int(m_props.stepInteger));
-            DMESSAGE("    .stepFloat               = %g", m_props.stepFloat);
+        osc_symbol.erase(std::remove(osc_symbol.begin(), osc_symbol.end(), ' '), osc_symbol.end());
+        osc_symbol += std::to_string( iIndex );
 
-            DMESSAGE("    .smallStepFloat          = %g", m_props.smallStepFloat);
-            DMESSAGE("    .largeStepFloat          = %g", m_props.largeStepFloat);
-            DMESSAGE("    .largeStepInteger        = %d", int(m_props.largeStepInteger));
-            DMESSAGE("    >IsSwitch                = %d", (m_props.flags & kVstParameterIsSwitch ? 1 : 0));
-            DMESSAGE("    >UsesIntegerMinMax       = %d", (m_props.flags & kVstParameterUsesIntegerMinMax ? 1 : 0));
-            DMESSAGE("    >UsesFloatStep           = %d", (m_props.flags & kVstParameterUsesFloatStep ? 1 : 0));
-            DMESSAGE("    >UsesIntStep             = %d", (m_props.flags & kVstParameterUsesIntStep ? 1 : 0));
-            DMESSAGE("    >SupportsDisplayIndex    = %d", (m_props.flags & kVstParameterSupportsDisplayIndex ? 1 : 0));
-            DMESSAGE("    >SupportsDisplayCategory = %d", (m_props.flags & kVstParameterSupportsDisplayCategory ? 1 : 0));
-            DMESSAGE("    >CanRamp                 = %d", (m_props.flags & kVstParameterCanRamp ? 1 : 0));
-            DMESSAGE("    .displayIndex            = %d", m_props.displayIndex);
-            DMESSAGE("    .numParametersInCategory = %d", m_props.numParametersInCategory);
-            DMESSAGE("}");
-#endif
+        p.set_symbol(osc_symbol.c_str());
+
+        p.hints.ranged = true;
+        p.hints.minimum = (float) 0.0;
+        p.hints.maximum = (float) 1.0;
+
+        if(have_props)
+        {
             if ((m_props.flags & kVstParameterUsesIntegerMinMax))
             {
                 p.hints.type = Port::Hints::INTEGER;
                 p.hints.minimum = (float(m_props.minInteger));
                 p.hints.maximum = (float(m_props.maxInteger));
             }
+        }
 
+        if(have_props)
+        {
             if ((m_props.flags & kVstParameterIsSwitch))
                 p.hints.type = Port::Hints::BOOLEAN;
-
-            // ATTN: Set default value as initial one...
-            if (m_pEffect)
-            {
-                p.hints.default_value = (float) m_pEffect->getParameter(m_pEffect, iIndex);
-            }
-
-            float *control_value = new float;
-
-            *control_value = p.hints.default_value;
-
-            p.connect_to( control_value );
-
-            p.hints.plug_port_index = iIndex;
-
-            add_port( p );
         }
+
+        // ATTN: Set default value as initial one...
+        if (m_pEffect)
+        {
+            p.hints.default_value = (float) m_pEffect->getParameter(m_pEffect, iIndex);
+        }
+
+        float *control_value = new float;
+
+        *control_value = p.hints.default_value;
+
+        p.connect_to( control_value );
+
+        p.hints.plug_port_index = iIndex;
+
+        add_port( p );
     }
 
     if (bypassable()) {
