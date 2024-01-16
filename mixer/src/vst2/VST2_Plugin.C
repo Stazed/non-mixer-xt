@@ -122,7 +122,49 @@ VST2_Plugin::~VST2_Plugin()
 {
     log_destroy();
 
+    deactivate();
+
     g_vst2Plugins.erase (m_pEffect);    // erasing by key
+
+    if ( _audio_in_buffers )
+    {
+        delete []_audio_in_buffers;
+        _audio_in_buffers = nullptr;
+    }
+
+    if ( _audio_out_buffers )
+    {
+        delete []_audio_out_buffers;
+        _audio_out_buffers = nullptr;
+    }
+
+    for ( unsigned int i = 0; i < midi_input.size(); ++i )
+    {
+        if(!(midi_input[i].type() == Port::MIDI))
+            continue;
+
+        if(midi_input[i].jack_port())
+        {
+            midi_input[i].disconnect();
+            midi_input[i].jack_port()->shutdown();
+            delete midi_input[i].jack_port();
+        }
+    } 
+    for ( unsigned int i = 0; i < midi_output.size(); ++i )
+    {
+        if(!(midi_output[i].type() == Port::MIDI))
+            continue;
+
+        if(midi_output[i].jack_port())
+        {
+            midi_output[i].disconnect();
+            midi_output[i].jack_port()->shutdown();
+            delete midi_output[i].jack_port();
+        }
+    }
+
+    midi_output.clear();
+    midi_input.clear();
 
 }
 
