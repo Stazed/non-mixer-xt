@@ -174,6 +174,7 @@ private:
     void process_jack_midi_in ( uint32_t nframes, unsigned int port );
     void process_midi_in (unsigned char *data, unsigned int size,
 	unsigned long offset, unsigned short port );
+    void process_jack_midi_out ( uint32_t nframes, unsigned int port );
 
     bool show_custom_ui();
     bool hide_custom_ui();

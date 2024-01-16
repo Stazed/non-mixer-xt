@@ -520,6 +520,12 @@ VST2_Plugin::process ( nframes_t nframes )
                 m_pEffect, _audio_in_buffers,  _audio_out_buffers, nframes);
         }
 
+        for ( unsigned int i = 0; i < midi_output.size(); ++i)
+        {
+            /* Plugin to JACK MIDI out */
+            process_jack_midi_out( nframes, i);
+        }
+
         fTimeInfo.samplePos += nframes;
     }
 }
@@ -1578,6 +1584,45 @@ VST2_Plugin::process_midi_in (unsigned char *data, unsigned int size,
             vstMidiEvent.midiData[0] = char(status | channel);
             vstMidiEvent.midiData[1] = char(key);
             vstMidiEvent.midiData[2] = char(value);
+        }
+
+        // FIXME other events
+    }
+}
+
+void
+VST2_Plugin::process_jack_midi_out ( uint32_t nframes, unsigned int port )
+{
+    void* buf = NULL;
+
+    if ( midi_output[port].jack_port() )
+    {
+        buf = midi_output[port].jack_port()->buffer( nframes );
+        jack_midi_clear_buffer(buf);
+        
+        // reverse lookup MIDI events
+        for (uint32_t k = (kPluginMaxMidiEvents*2)-1; k >= fMidiEventCount; --k)
+        {
+            if (fMidiEvents[k].type == 0)
+                break;
+
+            const VstMidiEvent& vstMidiEvent(fMidiEvents[k]);
+
+            CARLA_SAFE_ASSERT_CONTINUE(vstMidiEvent.deltaFrames >= 0);
+            CARLA_SAFE_ASSERT_CONTINUE(vstMidiEvent.midiData[0] != 0);
+
+            uint8_t midiData[3];
+            midiData[0] = static_cast<uint8_t>(vstMidiEvent.midiData[0]);
+            midiData[1] = static_cast<uint8_t>(vstMidiEvent.midiData[1]);
+            midiData[2] = static_cast<uint8_t>(vstMidiEvent.midiData[2]);
+
+            int ret =  jack_midi_event_write(buf, static_cast<uint32_t>(vstMidiEvent.deltaFrames),
+                                static_cast<jack_midi_data_t*>( midiData ), 3);
+
+            if ( ret )
+                WARNING("Jack MIDI event on error = %d", ret);
+
+            break;
         }
     }
 }
