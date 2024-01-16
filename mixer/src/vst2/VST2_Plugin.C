@@ -908,42 +908,33 @@ int VST2_Plugin::vst2_dispatch (
     return m_pEffect->dispatcher(m_pEffect, opcode, index, value, ptr, opt);
 }
 
-// Parameter update executive.
+// Parameter update executive plugin to host
 void
 VST2_Plugin::updateParamValue (
 	unsigned long iIndex, float fValue, bool bUpdate )
 {
-    // FIXME
+    if(iIndex >= 0 && iIndex < control_input.size())
+    {
+        _is_from_custom_ui = !bUpdate;
+        control_input[iIndex].control_value(fValue);
+    }
 }
 
-// All parameters update method.
+// All parameters update method plugin to host
 void
 VST2_Plugin::updateParamValues ( bool bUpdate )
 {
-#if 0
-    int nupdate = 0;
-
-    // Make sure all cached parameter values are in sync
-    // with plugin parameter values; update cache otherwise.
-    AEffect *pVst2Effect = vst2_effect(0);
-    if (pVst2Effect) {
-            const qtractorPlugin::Params& params = qtractorPlugin::params();
-            qtractorPlugin::Params::ConstIterator param = params.constBegin();
-            const qtractorPlugin::Params::ConstIterator param_end = params.constEnd();
-            for ( ; param != param_end; ++param) {
-                    qtractorPlugin::Param *pParam = param.value();
-                    const float fValue
-                            = pVst2Effect->getParameter(pVst2Effect, pParam->index());
-                    if (pParam->value() != fValue) {
-                            pParam->setValue(fValue, bUpdate);
-                            ++nupdate;
-                    }
-            }
+    if(m_pEffect)
+    {
+        _is_from_custom_ui = !bUpdate;
+        
+        for (unsigned int i = 0; i < control_input.size(); ++i)
+        {
+            const float fValue = m_pEffect->getParameter(m_pEffect, i);
+            if(control_input[i].control_value() != fValue)
+                control_input[i].control_value(fValue);
+        }
     }
-
-    if (nupdate > 0)
-            updateFormDirtyCount();
-#endif
 }
 
 // Host to plugin
