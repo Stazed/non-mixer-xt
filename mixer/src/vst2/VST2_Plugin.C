@@ -926,14 +926,16 @@ void
 VST2_Plugin::updateParamValues ( bool bUpdate )
 {
     if(m_pEffect)
-    {
-        _is_from_custom_ui = !bUpdate;
-        
+    {   
         for (unsigned int i = 0; i < control_input.size(); ++i)
         {
-            const float fValue = m_pEffect->getParameter(m_pEffect, i);
+            const float fValue = m_pEffect->getParameter(m_pEffect, static_cast<int32_t>(i));
+
             if(control_input[i].control_value() != fValue)
+            {
+                _is_from_custom_ui = !bUpdate;
                 control_input[i].control_value(fValue);
+            }
         }
     }
 }
