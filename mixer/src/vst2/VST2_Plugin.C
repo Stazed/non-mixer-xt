@@ -100,6 +100,9 @@ VST2_Plugin::VST2_Plugin() :
     m_bConfigure(false),
     m_bEditor(false),
     _activated(false),
+    _position(0),
+    _bpm(120.0f),
+    _rolling(false),
     _audio_in_buffers(nullptr),
     _audio_out_buffers(nullptr)
 {
@@ -437,6 +440,8 @@ VST2_Plugin::process ( nframes_t nframes )
         if (m_pEffect == nullptr)
             return;
 
+        process_jack_transport( nframes );
+
         fMidiEventCount = 0;
         non_zeroStructs(fMidiEvents, kPluginMaxMidiEvents*2);
 
@@ -459,6 +464,8 @@ VST2_Plugin::process ( nframes_t nframes )
             m_pEffect->processReplacing(
                 m_pEffect, _audio_in_buffers,  _audio_out_buffers, nframes);
         }
+
+        fTimeInfo.samplePos += nframes;
     }
 }
 
@@ -791,8 +798,7 @@ static VstIntPtr VSTCALLBACK Vst2Plugin_HostCallback ( AEffect *effect,
 {
 	VstIntPtr ret = 0;
 	VST2_Plugin *pVst2Plugin = nullptr;
-	static VstTimeInfo s_vst2TimeInfo;
-//	qtractorSession *pSession = qtractorSession::getInstance();
+//	static VstTimeInfo s_vst2TimeInfo;
 
 	switch (opcode) {
 
@@ -828,31 +834,13 @@ static VstIntPtr VSTCALLBACK Vst2Plugin_HostCallback ( AEffect *effect,
 
 	case audioMasterGetTime:
 	//	DMESSAGE("audioMasterGetTime");
-#if 0
-		::memset(&s_vst2TimeInfo, 0, sizeof(s_vst2TimeInfo));
-		if (pSession) {
-			qtractorAudioEngine *pAudioEngine = pSession->audioEngine();
-			if (pAudioEngine) {
-				const qtractorAudioEngine::TimeInfo& timeInfo
-					= pAudioEngine->timeInfo();
-				s_vst2TimeInfo.samplePos = double(timeInfo.frame);
-				s_vst2TimeInfo.sampleRate = double(timeInfo.sampleRate);
-				s_vst2TimeInfo.flags = 0;
-				if (timeInfo.playing)
-					s_vst2TimeInfo.flags |= (kVstTransportChanged | kVstTransportPlaying);
-				s_vst2TimeInfo.flags |= kVstPpqPosValid;
-				s_vst2TimeInfo.ppqPos = double(timeInfo.beats);
-				s_vst2TimeInfo.flags |= kVstBarsValid;
-				s_vst2TimeInfo.barStartPos = double(timeInfo.barBeats);
-				s_vst2TimeInfo.flags |= kVstTempoValid;
-				s_vst2TimeInfo.tempo  = double(timeInfo.tempo);
-				s_vst2TimeInfo.flags |= kVstTimeSigValid;
-				s_vst2TimeInfo.timeSigNumerator = timeInfo.beatsPerBar;
-				s_vst2TimeInfo.timeSigDenominator = timeInfo.beatType;
-			}
-		}
-		ret = (VstIntPtr) &s_vst2TimeInfo;
-#endif
+                pVst2Plugin = VST2_Plugin::findPlugin(effect);
+		if (pVst2Plugin)
+                {
+                    VstTimeInfo& fTimeInfo = pVst2Plugin->get_time_info();
+                    ret = (intptr_t)&fTimeInfo;
+                }
+
 		break;
 
 	case audioMasterProcessEvents:
@@ -895,7 +883,6 @@ static VstIntPtr VSTCALLBACK Vst2Plugin_HostCallback ( AEffect *effect,
 		pVst2Plugin = VST2_Plugin::findPlugin(effect);
 		if (pVst2Plugin)
                 {
-                   // DMESSAGE("HOST CALLBACK = %s", pVst2Plugin->base_label());
                     ret = (VstIntPtr) pVst2Plugin->buffer_size();
 		}
 
@@ -1266,6 +1253,75 @@ VST2_Plugin::loaded ( void ) const
         return true;
 
     return false;
+}
+
+void
+VST2_Plugin::process_jack_transport ( uint32_t nframes )
+{
+    // Get Jack transport position
+    jack_position_t pos;
+    const bool rolling =
+        (chain()->client()->transport_query(&pos) == JackTransportRolling);
+
+    // If transport state is not as expected, then something has changed
+    const bool has_bbt = (pos.valid & JackPositionBBT);
+    const bool xport_changed =
+      (rolling != _rolling || pos.frame != _position ||
+       (has_bbt && pos.beats_per_minute != _bpm));
+    
+    fTimeInfo.flags = 0;
+
+    if ( xport_changed )
+    {
+        if ( has_bbt )
+        {
+            const double positionBeats = static_cast<double>(pos.frame)
+                            / (sample_rate() * 60 / pos.beats_per_minute);
+
+            const double ppqBar  = static_cast<double>(pos.beats_per_bar) * (pos.bar - 1);
+
+            fTimeInfo.flags |= kVstTransportChanged;
+            fTimeInfo.samplePos  = double(pos.frame);
+            fTimeInfo.sampleRate = sample_rate();
+
+            // PPQ Pos
+            fTimeInfo.ppqPos = positionBeats;
+            fTimeInfo.flags |= kVstPpqPosValid;
+
+            // Tempo
+            fTimeInfo.tempo  = pos.beats_per_minute;
+            fTimeInfo.flags |= kVstTempoValid;
+
+            // Bars
+            fTimeInfo.barStartPos = ppqBar;
+            fTimeInfo.flags |= kVstBarsValid;
+
+            // Time Signature
+            fTimeInfo.timeSigNumerator = static_cast<int32_t>(pos.beats_per_bar + 0.5f);
+            fTimeInfo.timeSigDenominator = static_cast<int32_t>(pos.beat_type + 0.5f);
+            fTimeInfo.flags |= kVstTimeSigValid;
+        }
+        else
+        {
+            // Tempo
+            fTimeInfo.tempo = 120.0;
+            fTimeInfo.flags |= kVstTempoValid;
+
+            // Time Signature
+            fTimeInfo.timeSigNumerator = 4;
+            fTimeInfo.timeSigDenominator = 4;
+            fTimeInfo.flags |= kVstTimeSigValid;
+
+            // Missing info
+            fTimeInfo.ppqPos = 0.0;
+            fTimeInfo.barStartPos = 0.0;
+        }
+    }
+
+    // Update transport state to expected values for next cycle
+    _position = rolling ? pos.frame + nframes : pos.frame;
+    _bpm      = has_bbt ? pos.beats_per_minute : _bpm;
+    _rolling  = rolling;
 }
 
 void

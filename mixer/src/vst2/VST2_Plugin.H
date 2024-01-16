@@ -89,6 +89,7 @@ public:
     void resizeEditor ( int w, int h );
 
     int ProcessEvents (void *ptr);
+    VstTimeInfo& get_time_info() {return fTimeInfo;}
 
 private:
 
@@ -134,6 +135,10 @@ private:
     bool m_bEditor;
     bool _activated;
 
+    uint32_t  _position;        ///< Transport position in frames
+    float     _bpm;             ///< Transport tempo in beats per minute
+    bool      _rolling;         ///< Transport speed (0=stop, 1=play)
+
     float ** _audio_in_buffers;
     float ** _audio_out_buffers;
 
@@ -157,6 +162,7 @@ private:
     void set_output_buffer ( int n, void *buf );
     bool loaded ( void ) const;
 
+    void process_jack_transport ( uint32_t nframes );
     void process_jack_midi_in ( uint32_t nframes, unsigned int port );
     void process_midi_in (unsigned char *data, unsigned int size,
 	unsigned long offset, unsigned short port );
