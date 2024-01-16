@@ -527,6 +527,9 @@ VST2_Plugin::process ( nframes_t nframes )
 bool
 VST2_Plugin::try_custom_ui()
 {
+    if(!m_bEditor)
+        return false;
+
     /* Toggle show and hide */
     if(_bEditorCreated)
     {
