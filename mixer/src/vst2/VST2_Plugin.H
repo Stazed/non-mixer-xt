@@ -31,13 +31,15 @@
 #include "CarlaLibUtils.hpp"
 #include "../Plugin_Module.H"
 #include "../x11/XTUtils.H"
+#include "../x11/X11PluginUI.H"
 
 typedef struct _AEffect AEffect;
 
 // Maximum pre-allocated events for some VST2
 constexpr const uint16_t kPluginMaxMidiEvents = 512;
 
-class VST2_Plugin : public Plugin_Module
+class VST2_Plugin : public Plugin_Module,
+        private X11PluginUI::Callback
 {
 public:
 
@@ -140,6 +142,11 @@ private:
     float     _bpm;             ///< Transport tempo in beats per minute
     bool      _rolling;         ///< Transport speed (0=stop, 1=play)
 
+     // GUI Editor stuff...
+    bool _bEditorCreated;
+    X11PluginUI *_X11_UI;
+    bool   _x_is_visible;
+
     float ** _audio_in_buffers;
     float ** _audio_out_buffers;
 
@@ -168,8 +175,16 @@ private:
     void process_midi_in (unsigned char *data, unsigned int size,
 	unsigned long offset, unsigned short port );
 
+    bool show_custom_ui();
+    bool hide_custom_ui();
+
+    void custom_update_ui_x();
+    static void custom_update_ui ( void * );
+
 protected:
 
+    void handlePluginUIClosed() override;
+    void handlePluginUIResized(const uint width, const uint height) override;
     bool vst2_canDo(const char *pszCanDo) const;
     // Save and restore
     void get ( Log_Entry &e ) const override;

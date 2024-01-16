@@ -79,6 +79,12 @@ const int effFlagsProgramChunks = 32;
 
 static const int32_t kVstMidiEventSize = static_cast<int32_t>(sizeof(VstMidiEvent));
 
+struct ERect {
+    int16_t top, left, bottom, right;
+};
+
+const float F_DEFAULT_MSECS = 0.03f;
+
 VST2_Plugin::VST2_Plugin() :
     Plugin_Module(),
     m_sFilename(),
@@ -103,6 +109,9 @@ VST2_Plugin::VST2_Plugin() :
     _position(0),
     _bpm(120.0f),
     _rolling(false),
+    _bEditorCreated(false),
+    _X11_UI(nullptr),
+    _x_is_visible(false),
     _audio_in_buffers(nullptr),
     _audio_out_buffers(nullptr)
 {
@@ -121,6 +130,9 @@ VST2_Plugin::VST2_Plugin() :
 VST2_Plugin::~VST2_Plugin()
 {
     log_destroy();
+
+    // close custom ui if it is up
+    _x_is_visible = false;
 
     deactivate();
 
@@ -514,8 +526,130 @@ VST2_Plugin::process ( nframes_t nframes )
 bool
 VST2_Plugin::try_custom_ui()
 {
-    return false;   // FIXME
+    /* Toggle show and hide */
+    if(_bEditorCreated)
+    {
+        if (_x_is_visible)
+        {
+            hide_custom_ui();
+            return true;
+        }
+        else
+        {
+            show_custom_ui();
+            return true;
+        }
+    }
+
+    intptr_t value = 0;
+
+    if (_X11_UI == nullptr)
+    {
+        _X11_UI = new X11PluginUI(this, false, false);
+        _X11_UI->setTitle(label());
+
+        value = (intptr_t)_X11_UI->getDisplay();
+
+        // NOTE: there are far too many broken VST2 plugins, don't bother checking return value
+        if (vst2_dispatch(effEditOpen, 0, value, _X11_UI->getPtr(), 0.0f) != 0 || true)
+        {
+            ERect* vstRect = nullptr;
+            vst2_dispatch(effEditGetRect, 0, 0, &vstRect, 0.0f);
+
+            if (vstRect != nullptr)
+            {
+                const int width(vstRect->right - vstRect->left);
+                const int height(vstRect->bottom - vstRect->top);
+
+               // CARLA_SAFE_ASSERT_INT2(width > 1 && height > 1, width, height);
+
+                if (width > 1 && height > 1)
+                    _X11_UI->setSize(static_cast<uint>(width), static_cast<uint>(height), true, true);
+            }
+        }
+        else
+        {
+            delete _X11_UI;
+            _X11_UI = nullptr;
+
+            DMESSAGE("Plugin refused to open its own UI");
+            return false;
+        }
+    }
+
+    _bEditorCreated = show_custom_ui();
+    return _bEditorCreated;
 }
+
+bool
+VST2_Plugin::show_custom_ui()
+{
+    if(_X11_UI)
+    {
+        _X11_UI->show();
+        _X11_UI->focus();
+
+        _x_is_visible = true;
+        Fl::add_timeout( F_DEFAULT_MSECS, &VST2_Plugin::custom_update_ui, this );
+        return true;
+    }
+
+    return false;
+}
+
+/**
+ Callback for custom ui idle interface
+ */
+void 
+VST2_Plugin::custom_update_ui ( void *v )
+{
+    ((VST2_Plugin*)v)->custom_update_ui_x();
+}
+
+/**
+ The idle callback to update_custom_ui()
+ */
+void
+VST2_Plugin::custom_update_ui_x()
+{
+    vst2_dispatch(effEditIdle, 0, 0, 0, 0.0f);
+
+    if(_x_is_visible)
+        _X11_UI->idle();
+
+    if(_x_is_visible)
+    {
+        Fl::repeat_timeout( F_DEFAULT_MSECS, &VST2_Plugin::custom_update_ui, this );
+    }
+    else
+    {
+        hide_custom_ui();
+    }
+}
+
+bool
+VST2_Plugin::hide_custom_ui()
+{
+    DMESSAGE("Closing Custom Interface");
+
+    Fl::remove_timeout(&VST2_Plugin::custom_update_ui, this);
+    vst2_dispatch(effEditClose, 0, 0, 0, 0.0f);
+
+    if (_X11_UI != nullptr)
+        _X11_UI->hide();
+
+    _x_is_visible = false;
+    _bEditorCreated = false;
+ 
+    if(_X11_UI != nullptr)
+    {
+        delete _X11_UI;
+        _X11_UI = nullptr;
+    }
+
+    return true;
+}
+
 
 bool
 VST2_Plugin::open_lib ( const std::string& sFilename )
@@ -698,6 +832,20 @@ VST2_Plugin::close_descriptor (void)
     m_bEditor  = false;
 }
 
+void
+VST2_Plugin::handlePluginUIClosed()
+{
+    _x_is_visible = false;
+}
+
+void
+VST2_Plugin::handlePluginUIResized(const uint width, const uint height)
+{
+    DMESSAGE("Handle Resized W = %d: H = %d", width, height);
+    return; // Not used
+}
+
+
 // VST2 flag inquirer.
 bool
 VST2_Plugin::vst2_canDo ( const char *pszCanDo ) const
@@ -811,14 +959,19 @@ VST2_Plugin::setParameter(uint32_t iIndex, float value)
 void
 VST2_Plugin::idleEditor (void)
 {
-    // FIXME
+    DMESSAGE("IDLE");   // What are we supposed to do here???
+
+    if (_x_is_visible)
+        vst2_dispatch(effEditIdle, 0, 0, 0, 0.0f);
+
 }
 
 // Our own editor widget size accessor.
 void
 VST2_Plugin::resizeEditor ( int w, int h )
 {
-    // FIXME
+    DMESSAGE("W = %d: H = %d", w, h);
+    _X11_UI->setSize(w, h, true, false);
 }
 
 
@@ -872,8 +1025,7 @@ static VstIntPtr VSTCALLBACK Vst2Plugin_HostCallback ( AEffect *effect,
 		pVst2Plugin = VST2_Plugin::findPlugin(effect);
 		if (pVst2Plugin) {
 			pVst2Plugin->updateParamValues(false);
-			pVst2Plugin->idleEditor();
-		//	QApplication::processEvents();
+			pVst2Plugin->idleEditor();      // WTF
 		}
 		break;
 
