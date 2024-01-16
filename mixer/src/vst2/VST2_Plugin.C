@@ -132,7 +132,8 @@ VST2_Plugin::~VST2_Plugin()
     log_destroy();
 
     // close custom ui if it is up
-    _x_is_visible = false;
+    if(_x_is_visible)
+        hide_custom_ui();
 
     deactivate();
 
