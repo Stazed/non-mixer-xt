@@ -1559,13 +1559,39 @@ VST2_Plugin::process_midi_in (unsigned char *data, unsigned int size,
         // channel key
         const int key = (data[i] & 0x7f);
 
+        // program change
+        // after-touch
+        if (status == 0xc0 || status == 0xd0)
+        {
+            if (fMidiEventCount >= kPluginMaxMidiEvents*2)
+                continue;
+
+            VstMidiEvent& vstMidiEvent(fMidiEvents[fMidiEventCount++]);
+            non_zeroStruct(vstMidiEvent);
+
+            vstMidiEvent.type        = kVstMidiType;
+            vstMidiEvent.byteSize    = kVstMidiEventSize;
+            vstMidiEvent.deltaFrames = static_cast<int32_t>(offset);
+            vstMidiEvent.midiData[0] = char(status | channel);
+            vstMidiEvent.midiData[1] = char(key);
+            continue;
+        }
+
+        // check data size (#1)
+        if (++i >= size)
+            break;
+
         // channel value (normalized)
         const int value = (data[i] & 0x7f);
 
         // note on
         if (status == 0x90)
         {
+            if (fMidiEventCount >= kPluginMaxMidiEvents*2)
+                continue;
+
             VstMidiEvent& vstMidiEvent(fMidiEvents[fMidiEventCount++]);
+            non_zeroStruct(vstMidiEvent);
 
             vstMidiEvent.type        = kVstMidiType;
             vstMidiEvent.byteSize    = kVstMidiEventSize;
@@ -1577,7 +1603,11 @@ VST2_Plugin::process_midi_in (unsigned char *data, unsigned int size,
         // note off
         if (status == 0x80)
         {
+            if (fMidiEventCount >= kPluginMaxMidiEvents*2)
+                continue;
+
             VstMidiEvent& vstMidiEvent(fMidiEvents[fMidiEventCount++]);
+            non_zeroStruct(vstMidiEvent);
 
             vstMidiEvent.type        = kVstMidiType;
             vstMidiEvent.byteSize    = kVstMidiEventSize;
@@ -1585,8 +1615,23 @@ VST2_Plugin::process_midi_in (unsigned char *data, unsigned int size,
             vstMidiEvent.midiData[1] = char(key);
             vstMidiEvent.midiData[2] = char(value);
         }
+        else
+        // Control Change
+        if (status == 0xb0)
+        {
+            if (fMidiEventCount >= kPluginMaxMidiEvents*2)
+                continue;
 
-        // FIXME other events
+            VstMidiEvent& vstMidiEvent(fMidiEvents[fMidiEventCount++]);
+            non_zeroStruct(vstMidiEvent);
+
+            vstMidiEvent.type        = kVstMidiType;
+            vstMidiEvent.byteSize    = kVstMidiEventSize;
+            vstMidiEvent.deltaFrames = static_cast<int32_t>(offset);
+            vstMidiEvent.midiData[0] = char(status | channel);
+            vstMidiEvent.midiData[1] = char(key);
+            vstMidiEvent.midiData[2] = char(value);
+        }
     }
 }
 
