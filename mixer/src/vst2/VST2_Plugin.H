@@ -34,6 +34,10 @@
 #include "../x11/X11PluginUI.H"
 #include "VST2_Preset.H"
 
+extern std::string project_directory;
+extern std::string export_import_strip;
+extern std::vector<std::string>remove_custom_data_directories;
+
 typedef struct _AEffect AEffect;
 
 // Maximum pre-allocated events for some VST2
@@ -112,6 +116,7 @@ private:
     AEffect      *m_pEffect;
     unsigned int  m_iFlagsEx;
     std::string   m_sName;
+    std::string   _project_file;
 
     uint32_t     fMidiEventCount;
     VstMidiEvent fMidiEvents[kPluginMaxMidiEvents*2];

@@ -291,10 +291,15 @@ bool VST2_Preset::load ( const std::string& sFilename )
     if (m_pVst2Plugin == nullptr)
         return false;
 
-    std::filesystem::path filePath = sFilename;
-    const std::string& sExt = filePath.extension();
-    const bool bFxBank = (sExt == ".fxb");
-    const bool bFxProg = (sExt == ".fxp");
+//    std::filesystem::path filePath = sFilename;
+//    const std::string& sExt = filePath.extension();
+//    const bool bFxBank = (sExt == ".fxb");
+//    const bool bFxProg = (sExt == ".fxp");
+
+    // Hard coded to bFxProg since that is what is hard code saved.
+    // What is best??   FIXME
+    const bool bFxBank = false;
+    const bool bFxProg = true;
 
     if (!bFxBank && !bFxProg)
         return false;
@@ -586,8 +591,13 @@ bool VST2_Preset::save ( const std::string& sFilename )
     std::filesystem::path filePath(sFilename);
     const std::string& sExt = filePath.extension();
 
-    const bool bFxBank = (sExt == ".fxb");
-    const bool bFxProg = (sExt == ".fxp");
+//    const bool bFxBank = (sExt == ".fxb");
+//    const bool bFxProg = (sExt == ".fxp");
+
+    // We are hard coding this to bFxProg since we have to pick one.
+    // Not sure which is best... FIXME find out.
+    const bool bFxBank = false;
+    const bool bFxProg = true;
 
     if (!bFxBank && !bFxProg)
         return false;
