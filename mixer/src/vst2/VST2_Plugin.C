@@ -1702,6 +1702,20 @@ VST2_Plugin::ProcessEvents (void *ptr)
 }
 
 void
+VST2_Plugin::save_VST2_plugin_state(const std::string &filename)
+{
+    VST2_Preset pSetSave(this);
+    pSetSave.save(filename);
+}
+
+void
+VST2_Plugin::restore_VST2_plugin_state(const std::string &filename)
+{
+    VST2_Preset pGetLoad(this);
+    pGetLoad.load(filename);
+}
+
+void
 VST2_Plugin::get ( Log_Entry &e ) const
 {
     // FIXME

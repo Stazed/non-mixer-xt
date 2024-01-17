@@ -100,6 +100,10 @@ public:
     AEffect *vst2_effect() const { return m_pEffect; }
     bool isConfigure() const { return m_bConfigure; }
 
+    // Save/Restore state
+    void save_VST2_plugin_state(const std::string &filename);
+    void restore_VST2_plugin_state(const std::string &filename);
+
 private:
 
     std::string   m_sFilename;

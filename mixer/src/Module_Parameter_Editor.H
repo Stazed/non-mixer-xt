@@ -87,7 +87,7 @@ class Module_Parameter_Editor : public Fl_Double_Window
     static void cb_preset_handle ( Fl_Widget *w, void *v );
     void set_preset_controls(int choice);
 #endif
-#if defined(LV2_SUPPORT) || defined(CLAP_SUPPORT) || defined(VST3_SUPPORT)
+#if defined(LV2_SUPPORT) || defined(CLAP_SUPPORT) || defined(VST2_SUPPORT) || defined(VST3_SUPPORT)
     static void cb_save_state_handle ( Fl_Widget *, void *v );
     void save_plugin_state(const std::string &filename);
     static void cb_restore_state_handle ( Fl_Widget *, void *v );

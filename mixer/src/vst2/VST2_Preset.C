@@ -140,7 +140,7 @@ bool VST2_Preset::load_bank_progs ( FILE& file )
     BankHeader bank_header;
     const int nread_bank = sizeof(bank_header);
     
-    if (fread((char *) &bank_header, nread_bank, 1, &file) < nread_bank)
+    if (fread((char *) &bank_header, nread_bank, 1, &file) < 1)
         return false;
 
  //   if (file.read((char *) &bank_header, nread_bank) < nread_bank)
@@ -159,7 +159,7 @@ bool VST2_Preset::load_bank_progs ( FILE& file )
         BaseHeader base_header;
         const int nread = sizeof(base_header);
         
-        if (fread((char *) &base_header, nread, 1, &file) < nread)
+        if (fread((char *) &base_header, nread, 1, &file) < 1)
             return false;
 
     //    if (file.read((char *) &base_header, nread) < nread)
@@ -202,7 +202,7 @@ bool VST2_Preset::load_prog_params ( FILE& file )
     ProgHeader prog_header;
     const int nread = sizeof(prog_header);
 
-    if (fread((char *) &prog_header, nread, 1, &file) < nread)
+    if (fread((char *) &prog_header, nread, 1, &file) < 1)
         return false;
 
  //   if (file.read((char *) &prog_header, nread) < nread)
@@ -220,7 +220,7 @@ bool VST2_Preset::load_prog_params ( FILE& file )
     const int nread_params = iNumParams * sizeof(float);
     float *params = new float [iNumParams];
     
-    if (fread((char *) params, nread_params, 1, &file) < nread_params)
+    if (fread((char *) params, nread_params, 1, &file) < 1)
         return false;
 
 //    if (file.read((char *) params, nread_params) < nread_params)
@@ -247,7 +247,7 @@ bool VST2_Preset::load_bank_chunk ( FILE& file )
     BankHeader bank_header;
     const int nread = sizeof(bank_header);
 
-    if (fread((char *) &bank_header, nread, 1, &file) < nread)
+    if (fread((char *) &bank_header, nread, 1, &file) < 1)
         return false;
 
  //   if (file.read((char *) &bank_header, nread) < nread)
@@ -270,7 +270,7 @@ bool VST2_Preset::load_prog_chunk ( FILE& file )
     ProgHeader prog_header;
     const int nread = sizeof(prog_header);
 
-    if( fread((char *) &prog_header, nread, 1, &file) < nread)
+    if( fread((char *) &prog_header, nread, 1, &file) < 1)
         return false;
 
  //   if (file.read((char *) &prog_header, nread) < nread)
@@ -285,7 +285,7 @@ bool VST2_Preset::load_chunk ( FILE& file, int preset )
     Chunk chunk;
     const int nread = sizeof(chunk.size);
 
-    if (fread((char *) &chunk.size, nread, 1, &file) < nread)
+    if (fread((char *) &chunk.size, nread, 1, &file) < 1)
         return false;
 
  //   if (file.read((char *) &chunk.size, nread) < nread)
@@ -297,7 +297,7 @@ bool VST2_Preset::load_chunk ( FILE& file, int preset )
     chunk.data = new char [ndata];
 
  //   if (file.read(chunk.data, ndata) < ndata)
-    if (fread(chunk.data, ndata, 1, &file) < ndata)
+    if (fread(chunk.data, ndata, 1, &file) < 1)
     {
         delete [] chunk.data;
         return false;
@@ -323,8 +323,8 @@ bool VST2_Preset::load ( const std::string& sFilename )
 
     std::filesystem::path filePath = sFilename;
     const std::string& sExt = filePath.extension();
-    const bool bFxBank = (sExt == "fxb");
-    const bool bFxProg = (sExt == "fxp");
+    const bool bFxBank = (sExt == ".fxb");
+    const bool bFxProg = (sExt == ".fxp");
     
 //    const QFileInfo fi(sFilename);
 //    const std::string& sExt = fi.suffix().toLower();
@@ -353,8 +353,9 @@ bool VST2_Preset::load ( const std::string& sFilename )
     BaseHeader base_header;
     const int nread_base = sizeof(base_header);
     
-    if (fread((char *) &base_header, nread_base, 1, fp) < nread_base)
+    if (fread((char *) &base_header, nread_base, 1, fp) < 1)
     {
+        DMESSAGE("Cant read base header");
         fclose(fp);
         return false;
     }
@@ -651,8 +652,9 @@ bool VST2_Preset::save ( const std::string& sFilename )
     
     std::filesystem::path filePath(sFilename);
     const std::string& sExt = filePath.extension();
-    const bool bFxBank = (sExt == "fxb");
-    const bool bFxProg = (sExt == "fxp");
+
+    const bool bFxBank = (sExt == ".fxb");
+    const bool bFxProg = (sExt == ".fxp");
 
 //    const QFileInfo fi(sFilename);
 //    const std::string& sExt = fi.suffix().toLower();
