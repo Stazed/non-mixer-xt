@@ -26,6 +26,7 @@
 
 #ifdef VST2_SUPPORT
 
+#include <filesystem> // C++17
 #include "VST2_Preset.H"
 #include "VST2_Plugin.H"
 
@@ -41,6 +42,13 @@
 #define chunkBankMagic		"FBCh"		// Bank (fxb) identifier for opaque chunk data.
 
 #define cMagic_u			0x4b6e6343  // Big-endian version of 'CcnK'
+
+typedef int32_t  VstInt32;
+
+// Some VeSTige missing opcodes and flags.
+const int effSetProgramName = 4;
+const int effGetChunk = 23;
+const int effSetChunk = 24;
 
 
 // Common bank/program header structure (fxb/fxp files)
@@ -131,8 +139,12 @@ bool VST2_Preset::load_bank_progs ( FILE& file )
 {
     BankHeader bank_header;
     const int nread_bank = sizeof(bank_header);
-    if (file.read((char *) &bank_header, nread_bank) < nread_bank)
-            return false;
+    
+    if (fread((char *) &bank_header, nread_bank, 1, &file) < nread_bank)
+        return false;
+
+ //   if (file.read((char *) &bank_header, nread_bank) < nread_bank)
+ //           return false;
 
     fx_endian_swap(bank_header.numPrograms);
     fx_endian_swap(bank_header.currentProgram);
@@ -140,42 +152,46 @@ bool VST2_Preset::load_bank_progs ( FILE& file )
     const int iNumPrograms = int(bank_header.numPrograms);
 //	const int iCurrentProgram = int(bank_header.currentProgram);
     const int iCurrentProgram
-            = m_pVst2Plugin->vst2_dispatch(0, effGetProgram, 0, 0, nullptr, 0.0f);
+            = m_pVst2Plugin->vst2_dispatch(effGetProgram, 0, 0, nullptr, 0.0f);
 
-    for (int iProgram = 0; iProgram < iNumPrograms; ++iProgram) {
+    for (int iProgram = 0; iProgram < iNumPrograms; ++iProgram)
+    {
+        BaseHeader base_header;
+        const int nread = sizeof(base_header);
+        
+        if (fread((char *) &base_header, nread, 1, &file) < nread)
+            return false;
 
-            BaseHeader base_header;
-            const int nread = sizeof(base_header);
-            if (file.read((char *) &base_header, nread) < nread)
-                    return false;
+    //    if (file.read((char *) &base_header, nread) < nread)
+    //            return false;
 
-    //	fx_endian_swap(base_header.chunkMagic);
-            fx_endian_swap(base_header.byteSize);
-    //	fxendian_swap(base_header.fxMagic);
-            fx_endian_swap(base_header.version);
-            fx_endian_swap(base_header.fxID);
-            fx_endian_swap(base_header.fxVersion);
+//	fx_endian_swap(base_header.chunkMagic);
+        fx_endian_swap(base_header.byteSize);
+//	fxendian_swap(base_header.fxMagic);
+        fx_endian_swap(base_header.version);
+        fx_endian_swap(base_header.fxID);
+        fx_endian_swap(base_header.fxVersion);
 
-            if (!fx_is_magic(base_header.chunkMagic, cMagic))
-                    return false;
+        if (!fx_is_magic(base_header.chunkMagic, cMagic))
+                return false;
 
-            for (unsigned short i = 0; i < m_pVst2Plugin->instances(); ++i)
-                    m_pVst2Plugin->vst2_dispatch(i, effSetProgram, 0, iProgram, nullptr, 0.0f);
+    //    for (unsigned short i = 0; i < m_pVst2Plugin->instances(); ++i)
+        m_pVst2Plugin->vst2_dispatch(effSetProgram, 0, iProgram, nullptr, 0.0f);
 
-            if (fx_is_magic(base_header.fxMagic, fMagic)) {
-                    if (!load_prog_params(file))
-                            return false;
-            }
-            else
-            if (fx_is_magic(base_header.fxMagic, chunkPresetMagic)) {
-                    if (!load_prog_chunk(file))
-                            return false;
-            }
-            else return false;
+        if (fx_is_magic(base_header.fxMagic, fMagic)) {
+                if (!load_prog_params(file))
+                        return false;
+        }
+        else
+        if (fx_is_magic(base_header.fxMagic, chunkPresetMagic)) {
+                if (!load_prog_chunk(file))
+                        return false;
+        }
+        else return false;
     }
 
-    for (unsigned short i = 0; i < m_pVst2Plugin->instances(); ++i)
-            m_pVst2Plugin->vst2_dispatch(i, effSetProgram, 0, iCurrentProgram, nullptr, 0.0f);
+    //for (unsigned short i = 0; i < m_pVst2Plugin->instances(); ++i)
+    m_pVst2Plugin->vst2_dispatch(effSetProgram, 0, iCurrentProgram, nullptr, 0.0f);
 
     return true;
 }
@@ -185,13 +201,17 @@ bool VST2_Preset::load_prog_params ( FILE& file )
 {
     ProgHeader prog_header;
     const int nread = sizeof(prog_header);
-    if (file.read((char *) &prog_header, nread) < nread)
-            return false;
+
+    if (fread((char *) &prog_header, nread, 1, &file) < nread)
+        return false;
+
+ //   if (file.read((char *) &prog_header, nread) < nread)
+ //           return false;
 
     fx_endian_swap(prog_header.numParams);
 
-    for (unsigned short i = 0; i < m_pVst2Plugin->instances(); ++i)
-            m_pVst2Plugin->vst2_dispatch(i, effSetProgramName, 0, 0, (void *) prog_header.prgName, 0.0f);
+  //  for (unsigned short i = 0; i < m_pVst2Plugin->instances(); ++i)
+    m_pVst2Plugin->vst2_dispatch(effSetProgramName, 0, 0, (void *) prog_header.prgName, 0.0f);
 
     const int iNumParams = int(prog_header.numParams);
     if (iNumParams < 1)
@@ -199,16 +219,22 @@ bool VST2_Preset::load_prog_params ( FILE& file )
 
     const int nread_params = iNumParams * sizeof(float);
     float *params = new float [iNumParams];
-    if (file.read((char *) params, nread_params) < nread_params)
-            return false;
+    
+    if (fread((char *) params, nread_params, 1, &file) < nread_params)
+        return false;
 
-    for (int iParam = 0; iParam < iNumParams; ++iParam) {
-            fx_endian_swap(params[iParam]);
-            for (unsigned short i = 0; i < m_pVst2Plugin->instances(); ++i) {
-                    AEffect *pVst2Effect = m_pVst2Plugin->vst2_effect(i);
-                    if (pVst2Effect)
-                            pVst2Effect->setParameter(pVst2Effect, iParam, params[iParam]);
-            }
+//    if (file.read((char *) params, nread_params) < nread_params)
+//            return false;
+
+    for (int iParam = 0; iParam < iNumParams; ++iParam)
+    {
+        fx_endian_swap(params[iParam]);
+       // for (unsigned short i = 0; i < m_pVst2Plugin->instances(); ++i)
+      //  {
+        AEffect *pVst2Effect = m_pVst2Plugin->vst2_effect();
+        if (pVst2Effect)
+            pVst2Effect->setParameter(pVst2Effect, iParam, params[iParam]);
+      //  }
     }
 
     delete [] params;
@@ -220,16 +246,20 @@ bool VST2_Preset::load_bank_chunk ( FILE& file )
 {
     BankHeader bank_header;
     const int nread = sizeof(bank_header);
-    if (file.read((char *) &bank_header, nread) < nread)
-            return false;
+
+    if (fread((char *) &bank_header, nread, 1, &file) < nread)
+        return false;
+
+ //   if (file.read((char *) &bank_header, nread) < nread)
+ //           return false;
 
     const int iCurrentProgram
-            = m_pVst2Plugin->vst2_dispatch(0, effGetProgram, 0, 0, nullptr, 0.0f);
+            = m_pVst2Plugin->vst2_dispatch(effGetProgram, 0, 0, nullptr, 0.0f);
 
     const bool bResult = load_chunk(file, 0);
 
-    for (unsigned short i = 0; i < m_pVst2Plugin->instances(); ++i)
-            m_pVst2Plugin->vst2_dispatch(i, effSetProgram, 0, iCurrentProgram, nullptr, 0.0f);
+  //  for (unsigned short i = 0; i < m_pVst2Plugin->instances(); ++i)
+    m_pVst2Plugin->vst2_dispatch(effSetProgram, 0, iCurrentProgram, nullptr, 0.0f);
 
     return bResult;
 }
@@ -239,8 +269,12 @@ bool VST2_Preset::load_prog_chunk ( FILE& file )
 {
     ProgHeader prog_header;
     const int nread = sizeof(prog_header);
-    if (file.read((char *) &prog_header, nread) < nread)
-            return false;
+
+    if( fread((char *) &prog_header, nread, 1, &file) < nread)
+        return false;
+
+ //   if (file.read((char *) &prog_header, nread) < nread)
+ //           return false;
 
     return load_chunk(file, 1);
 }
@@ -250,22 +284,30 @@ bool VST2_Preset::load_chunk ( FILE& file, int preset )
 {
     Chunk chunk;
     const int nread = sizeof(chunk.size);
-    if (file.read((char *) &chunk.size, nread) < nread)
-            return false;
+
+    if (fread((char *) &chunk.size, nread, 1, &file) < nread)
+        return false;
+
+ //   if (file.read((char *) &chunk.size, nread) < nread)
+ //           return false;
 
     fx_endian_swap(chunk.size);
 
     const int ndata = int(chunk.size);
     chunk.data = new char [ndata];
-    if (file.read(chunk.data, ndata) < ndata) {
-            delete [] chunk.data;
-            return false;
+
+ //   if (file.read(chunk.data, ndata) < ndata)
+    if (fread(chunk.data, ndata, 1, &file) < ndata)
+    {
+        delete [] chunk.data;
+        return false;
     }
 
-    for (unsigned short i = 0; i < m_pVst2Plugin->instances(); ++i) {
-            m_pVst2Plugin->vst2_dispatch(i, effSetChunk,
-                    preset, chunk.size,	(void *) chunk.data, 0.0f);
-    }
+ //   for (unsigned short i = 0; i < m_pVst2Plugin->instances(); ++i)
+ //   {
+    m_pVst2Plugin->vst2_dispatch(effSetChunk,
+            preset, chunk.size,	(void *) chunk.data, 0.0f);
+ //   }
 
     delete [] chunk.data;
     return true;
@@ -277,33 +319,54 @@ bool VST2_Preset::load_chunk ( FILE& file, int preset )
 bool VST2_Preset::load ( const std::string& sFilename )
 {
     if (m_pVst2Plugin == nullptr)
-            return false;
+        return false;
 
-    const QFileInfo fi(sFilename);
-    const std::string& sExt = fi.suffix().toLower();
+    std::filesystem::path filePath = sFilename;
+    const std::string& sExt = filePath.extension();
     const bool bFxBank = (sExt == "fxb");
     const bool bFxProg = (sExt == "fxp");
+    
+//    const QFileInfo fi(sFilename);
+//    const std::string& sExt = fi.suffix().toLower();
+ //   const bool bFxBank = (sExt == "fxb");
+ //   const bool bFxProg = (sExt == "fxp");
 
     if (!bFxBank && !bFxProg)
-            return false;
-    if (!fi.exists())
-            return false;
+        return false;
 
-    QFile file(sFilename);
+//    if (!fi.exists())
+ //       return false;
+    FILE *fp = NULL;
+    fp = fopen(sFilename.c_str(), "r");
 
-    if (!file.open(QIODevice::ReadOnly))
-            return false;
+    if (fp == NULL)
+    {
+       // fl_alert( "Cannot open file %s", sFilename.c_str());
+        return false;
+    }
+
+ //   QFile file(sFilename);
+
+ //   if (!file.open(QIODevice::ReadOnly))
+ //           return false;
 
     BaseHeader base_header;
     const int nread_base = sizeof(base_header);
-    if (file.read((char *) &base_header, nread_base) < nread_base) {
-            file.close();
-            return false;
+    
+    if (fread((char *) &base_header, nread_base, 1, fp) < nread_base)
+    {
+        fclose(fp);
+        return false;
     }
+    
+ //   if (file.read((char *) &base_header, nread_base) < nread_base) {
+ //           file.close();
+ //           return false;
+ //   }
 
-#ifdef CONFIG_DEBUG
-    qDebug("VST2_Preset::load(\"%s\")", sFilename.toUtf8().constData());
-#endif
+//#ifdef CONFIG_DEBUG
+    DMESSAGE("VST2_Preset::load(\"%s\")", sFilename.c_str());
+//#endif
 
 //	fx_endian_swap(base_header.chunkMagic);
     fx_endian_swap(base_header.byteSize);
@@ -314,50 +377,51 @@ bool VST2_Preset::load ( const std::string& sFilename )
 
     bool bResult = false;
 
-    if (!fx_is_magic(base_header.chunkMagic, cMagic)) {
-    #ifdef CONFIG_DEBUG
-            qDebug("VST2_Presetload() header.chunkMagic is not \"%s\".", cMagic);
-    #endif
+    if (!fx_is_magic(base_header.chunkMagic, cMagic))
+    {
+//    #ifdef CONFIG_DEBUG
+        DMESSAGE("VST2_Presetload() header.chunkMagic is not \"%s\".", cMagic);
+//    #endif
     }
     else
-    if (base_header.fxID != VstInt32(m_pVst2Plugin->uniqueID())) {
-    #ifdef CONFIG_DEBUG
-            qDebug("VST2_Preset::load() header.fxID != 0x%08lx.", m_pVst2Plugin->uniqueID());
-    #endif
+    if (base_header.fxID != VstInt32(m_pVst2Plugin->get_unique_id())) {
+//    #ifdef CONFIG_DEBUG
+        DMESSAGE("VST2_Preset::load() header.fxID != 0x%08lx.", m_pVst2Plugin->get_unique_id());
+//    #endif
     }
     else
     if (fx_is_magic(base_header.fxMagic, bankMagic)) {
-    #ifdef CONFIG_DEBUG
-            qDebug("VST2_Preset::load() header.fxMagic is \"%s\" (regular fxb)", bankMagic);
-    #endif
-            bResult = load_bank_progs(file);
+//    #ifdef CONFIG_DEBUG
+        DMESSAGE("VST2_Preset::load() header.fxMagic is \"%s\" (regular fxb)", bankMagic);
+//    #endif
+            bResult = load_bank_progs(*fp);
     }
     else
     if (fx_is_magic(base_header.fxMagic, chunkBankMagic)) {
-    #ifdef CONFIG_DEBUG
-            qDebug("VST2_Preset::load() header.fxMagic is \"%s\" (chunked fxb)", chunkBankMagic);
-    #endif
-            bResult = load_bank_chunk(file);
+//    #ifdef CONFIG_DEBUG
+        DMESSAGE("VST2_Preset::load() header.fxMagic is \"%s\" (chunked fxb)", chunkBankMagic);
+//    #endif
+            bResult = load_bank_chunk(*fp);
     }
     else
     if (fx_is_magic(base_header.fxMagic, fMagic)) {
-    #ifdef CONFIG_DEBUG
-            qDebug("VST2_Preset::load() header.fxMagic is \"%s\" (regular fxp)", fMagic);
-    #endif
-            bResult = load_prog_params(file);
+//    #ifdef CONFIG_DEBUG
+        DMESSAGE("VST2_Preset::load() header.fxMagic is \"%s\" (regular fxp)", fMagic);
+//    #endif
+            bResult = load_prog_params(*fp);
     }
     else
     if (fx_is_magic(base_header.fxMagic, chunkPresetMagic)) {
-    #ifdef CONFIG_DEBUG
-            qDebug("VST2_Preset::load() header.fxMagic is \"%s\" (chunked fxp)", chunkPresetMagic);
-    #endif
-            bResult = load_prog_chunk(file);
+//    #ifdef CONFIG_DEBUG
+        DMESSAGE("VST2_Preset::load() header.fxMagic is \"%s\" (chunked fxp)", chunkPresetMagic);
+//    #endif
+            bResult = load_prog_chunk(*fp);
     }
-    #ifdef CONFIG_DEBUG
-    else qDebug("VST2_Preset::load() header.fxMagic not recognized.");
-    #endif
+//    #ifdef CONFIG_DEBUG
+    else DMESSAGE("VST2_Preset::load() header.fxMagic not recognized.");
+//    #endif
 
-    file.close();
+    fclose(fp);
 
     // HACK: Make sure all displayed parameter values are in sync.
     m_pVst2Plugin->updateParamValues(false);
@@ -373,7 +437,7 @@ bool VST2_Preset::save_bank_progs ( FILE& file )
     if (m_pVst2Plugin == nullptr)
             return false;
 
-    AEffect *pVst2Effect = m_pVst2Plugin->vst2_effect(0);
+    AEffect *pVst2Effect = m_pVst2Plugin->vst2_effect();
     if (pVst2Effect == nullptr)
             return false;
 
@@ -382,9 +446,9 @@ bool VST2_Preset::save_bank_progs ( FILE& file )
             return false;
 
     const int iCurrentProgram
-            = m_pVst2Plugin->vst2_dispatch(0, effGetProgram, 0, 0, nullptr, 0.0f);
+            = m_pVst2Plugin->vst2_dispatch(effGetProgram, 0, 0, nullptr, 0.0f);
     const int iVst2Version
-            = m_pVst2Plugin->vst2_dispatch(0, effGetVstVersion, 0, 0, nullptr, 0.0f);
+            = m_pVst2Plugin->vst2_dispatch(effGetVstVersion, 0, 0, nullptr, 0.0f);
 
     BankHeader bank_header;
     ::memset(&bank_header, 0, sizeof(bank_header));
@@ -394,16 +458,16 @@ bool VST2_Preset::save_bank_progs ( FILE& file )
     fx_endian_swap(bank_header.numPrograms);
     fx_endian_swap(bank_header.currentProgram);
 
-    file.write((char *) &bank_header, sizeof(bank_header));
+    fwrite((char *) &bank_header, sizeof(bank_header), 1, &file);
+ //   file.write((char *) &bank_header, sizeof(bank_header));
 
-    const bool bChunked
-            = (m_pVst2Plugin->type())->isConfigure();
+    const bool bChunked = m_pVst2Plugin->isConfigure();
 
     bool bResult = false;
 
     for (int iProgram = 0; iProgram < iNumPrograms; ++iProgram) {
 
-            m_pVst2Plugin->vst2_dispatch(0, effSetProgram, 0, iProgram, nullptr, 0.0f);
+            m_pVst2Plugin->vst2_dispatch(effSetProgram, 0, iProgram, nullptr, 0.0f);
 
             BaseHeader base_header;
             ::memset(&base_header, 0, sizeof(base_header));
@@ -411,7 +475,7 @@ bool VST2_Preset::save_bank_progs ( FILE& file )
             base_header.byteSize = 0; // FIXME!
             base_header.fxMagic = *(VstInt32 *) (bChunked ? chunkPresetMagic : fMagic);
             base_header.version = 1;
-            base_header.fxID = m_pVst2Plugin->uniqueID();
+            base_header.fxID = m_pVst2Plugin->get_unique_id();
             base_header.fxVersion = iVst2Version;
 
             // Estimate size of this section...
@@ -436,7 +500,8 @@ bool VST2_Preset::save_bank_progs ( FILE& file )
             fx_endian_swap(base_header.fxID);
             fx_endian_swap(base_header.fxVersion);
 
-            file.write((char *) &base_header, sizeof(base_header));
+            fwrite((char *) &base_header, sizeof(base_header), 1, &file);
+       //     file.write((char *) &base_header, sizeof(base_header));
 
             if (bChunked) {
                     bResult = save_prog_chunk(file, chunk);
@@ -447,7 +512,7 @@ bool VST2_Preset::save_bank_progs ( FILE& file )
             }
     }
 
-    m_pVst2Plugin->vst2_dispatch(0, effSetProgram, 0, iCurrentProgram, nullptr, 0.0f);
+    m_pVst2Plugin->vst2_dispatch(effSetProgram, 0, iCurrentProgram, nullptr, 0.0f);
 
     return bResult;
 }
@@ -458,7 +523,7 @@ bool VST2_Preset::save_prog_params ( FILE& file )
     if (m_pVst2Plugin == nullptr)
             return false;
 
-    AEffect *pVst2Effect = m_pVst2Plugin->vst2_effect(0);
+    AEffect *pVst2Effect = m_pVst2Plugin->vst2_effect();
     if (pVst2Effect == nullptr)
             return false;
 
@@ -470,11 +535,12 @@ bool VST2_Preset::save_prog_params ( FILE& file )
     ::memset(&prog_header, 0, sizeof(prog_header));
     prog_header.numParams = iNumParams;
 
-    m_pVst2Plugin->vst2_dispatch(0, effGetProgramName, 0, 0, (void *) prog_header.prgName, 0.0f);
+    m_pVst2Plugin->vst2_dispatch(effGetProgramName, 0, 0, (void *) prog_header.prgName, 0.0f);
 
     fx_endian_swap(prog_header.numParams);
 
-    file.write((char *) &prog_header, sizeof(prog_header));
+    fwrite((char *) &prog_header, sizeof(prog_header), 1, &file);
+//    file.write((char *) &prog_header, sizeof(prog_header));
 
     float *params = new float [iNumParams];
     for (int iParam = 0; iParam < iNumParams; ++iParam) {
@@ -482,7 +548,8 @@ bool VST2_Preset::save_prog_params ( FILE& file )
             fx_endian_swap(params[iParam]);
     }
 
-    file.write((char *) params, iNumParams * sizeof(float));
+    fwrite((char *) params, iNumParams * sizeof(float), 1, &file);
+//    file.write((char *) params, iNumParams * sizeof(float));
     delete [] params;
 
     return true;
@@ -494,13 +561,13 @@ bool VST2_Preset::save_bank_chunk ( FILE& file, const Chunk& chunk )
     if (m_pVst2Plugin == nullptr)
             return false;
 
-    AEffect *pVst2Effect = m_pVst2Plugin->vst2_effect(0);
+    AEffect *pVst2Effect = m_pVst2Plugin->vst2_effect();
     if (pVst2Effect == nullptr)
             return false;
 
     const int iNumPrograms = pVst2Effect->numPrograms;
     const int iCurrentProgram
-            = m_pVst2Plugin->vst2_dispatch(0, effGetProgram, 0, 0, nullptr, 0.0f);
+            = m_pVst2Plugin->vst2_dispatch(effGetProgram, 0, 0, nullptr, 0.0f);
 
     BankHeader bank_header;
     ::memset(&bank_header, 0, sizeof(bank_header));
@@ -510,7 +577,8 @@ bool VST2_Preset::save_bank_chunk ( FILE& file, const Chunk& chunk )
     fx_endian_swap(bank_header.numPrograms);
     fx_endian_swap(bank_header.currentProgram);
 
-    file.write((char *) &bank_header, sizeof(bank_header));
+    fwrite((char *) &bank_header, sizeof(bank_header), 1, &file);
+ //   file.write((char *) &bank_header, sizeof(bank_header));
 
     return save_chunk(file, chunk);
 }
@@ -521,7 +589,7 @@ bool VST2_Preset::save_prog_chunk ( FILE& file, const Chunk& chunk )
     if (m_pVst2Plugin == nullptr)
             return false;
 
-    AEffect *pVst2Effect = m_pVst2Plugin->vst2_effect(0);
+    AEffect *pVst2Effect = m_pVst2Plugin->vst2_effect();
     if (pVst2Effect == nullptr)
             return false;
 
@@ -531,12 +599,13 @@ bool VST2_Preset::save_prog_chunk ( FILE& file, const Chunk& chunk )
     ::memset(&prog_header, 0, sizeof(prog_header));
     prog_header.numParams = iNumParams;
 
-    m_pVst2Plugin->vst2_dispatch(0, effGetProgramName,
+    m_pVst2Plugin->vst2_dispatch(effGetProgramName,
             0, 0, (void *) prog_header.prgName, 0.0f);
 
     fx_endian_swap(prog_header.numParams);
 
-    file.write((char *) &prog_header, sizeof(prog_header));
+    fwrite((char *) &prog_header, sizeof(prog_header), 1, &file);
+ //   file.write((char *) &prog_header, sizeof(prog_header));
 
     return save_chunk(file, chunk);
 }
@@ -549,8 +618,11 @@ bool VST2_Preset::save_chunk ( FILE& file, const Chunk& chunk )
     VstInt32 chunk_size = ndata;
     fx_endian_swap(chunk_size);
 
-    file.write((char *) &chunk_size, sizeof(chunk_size));
-    file.write((char *)  chunk.data, ndata);
+    fwrite((char *) &chunk_size, sizeof(chunk_size), 1, &file);
+    fwrite((char *)  chunk.data, ndata, 1, &file);
+    
+ //   file.write((char *) &chunk_size, sizeof(chunk_size));
+ //   file.write((char *)  chunk.data, ndata);
 
     return true;
 }
@@ -559,8 +631,9 @@ bool VST2_Preset::save_chunk ( FILE& file, const Chunk& chunk )
 bool VST2_Preset::get_chunk ( Chunk& chunk, int preset )
 {
     chunk.data = nullptr;
-    chunk.size = m_pVst2Plugin->vst2_dispatch(0,
-            effGetChunk, preset, 0, (void *) &chunk.data, 0.0f);
+    chunk.size = m_pVst2Plugin->vst2_dispatch(
+        effGetChunk, preset, 0, (void *) &chunk.data, 0.0f);
+
     return (chunk.size > 0 && chunk.data != nullptr);
 }
 
@@ -572,31 +645,45 @@ bool VST2_Preset::save ( const std::string& sFilename )
     if (m_pVst2Plugin == nullptr)
             return false;
 
-    AEffect *pVst2Effect = m_pVst2Plugin->vst2_effect(0);
+    AEffect *pVst2Effect = m_pVst2Plugin->vst2_effect();
     if (pVst2Effect == nullptr)
             return false;
-
-    const QFileInfo fi(sFilename);
-    const std::string& sExt = fi.suffix().toLower();
+    
+    std::filesystem::path filePath(sFilename);
+    const std::string& sExt = filePath.extension();
     const bool bFxBank = (sExt == "fxb");
     const bool bFxProg = (sExt == "fxp");
 
+//    const QFileInfo fi(sFilename);
+//    const std::string& sExt = fi.suffix().toLower();
+//    const bool bFxBank = (sExt == "fxb");
+ //   const bool bFxProg = (sExt == "fxp");
+
     if (!bFxBank && !bFxProg)
-            return false;
+        return false;
 
-    QFile file(sFilename);
+    FILE *fp = NULL;
+    fp = fopen(sFilename.c_str(), "w");
 
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate))
-            return false;
+    if (fp == NULL)
+    {
+       // fl_alert( "Cannot open file %s", sFilename.c_str());
+        return false;
+    }
+
+//    QFile file(sFilename);
+
+//    if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate))
+//            return false;
 
 #ifdef CONFIG_DEBUG
     qDebug("VST2_Preset::save(\"%s\")", sFilename.toUtf8().constData());
 #endif
 
     const bool bChunked
-            = (m_pVst2Plugin->type())->isConfigure();
+            = m_pVst2Plugin->isConfigure();
     const int iVst2Version
-            = m_pVst2Plugin->vst2_dispatch(0, effGetVstVersion, 0, 0, nullptr, 0.0f);
+            = m_pVst2Plugin->vst2_dispatch(effGetVstVersion, 0, 0, nullptr, 0.0f);
 
     BaseHeader base_header;
     ::memset(&base_header, 0, sizeof(base_header));
@@ -604,7 +691,7 @@ bool VST2_Preset::save ( const std::string& sFilename )
     base_header.byteSize = 0;	// FIXME: see below...
     base_header.fxMagic = 0;	//
     base_header.version = 1;
-    base_header.fxID = m_pVst2Plugin->uniqueID();
+    base_header.fxID = m_pVst2Plugin->get_unique_id();
     base_header.fxVersion = iVst2Version;
 
     // Estimate size of this section...
@@ -626,9 +713,14 @@ bool VST2_Preset::save ( const std::string& sFilename )
             }
     } else {
             char szName[24]; ::memset(szName, 0, sizeof(szName));
-            ::strncpy(szName, fi.baseName().toUtf8().constData(), sizeof(szName) - 1);
-            for (unsigned short i = 0; i < m_pVst2Plugin->instances(); ++i)
-                    m_pVst2Plugin->vst2_dispatch(i, effSetProgramName, 0, 0, (void *) szName, 0.0f);
+            
+            auto base = filePath.stem();
+            ::strncpy(szName, base.c_str(), sizeof(szName) - 1);
+          //  ::strncpy(szName, fi.baseName().toUtf8().constData(), sizeof(szName) - 1);
+            
+      //      for (unsigned short i = 0; i < m_pVst2Plugin->instances(); ++i)
+            m_pVst2Plugin->vst2_dispatch(effSetProgramName, 0, 0, (void *) szName, 0.0f);
+
             if (bChunked) {
                     get_chunk(chunk, 1);
                     base_header.byteSize += sizeof(chunk.size) + chunk.size;
@@ -648,22 +740,23 @@ bool VST2_Preset::save ( const std::string& sFilename )
     fx_endian_swap(base_header.fxID);
     fx_endian_swap(base_header.fxVersion);
 
-    file.write((char *) &base_header, sizeof(base_header));
+    fwrite((char *) &base_header, sizeof(base_header), 1, fp);
+ //   file.write((char *) &base_header, sizeof(base_header));
 
     bool bResult = false;
     if (bFxBank) {
             if (bChunked)
-                    bResult = save_bank_chunk(file, chunk);
+                    bResult = save_bank_chunk(*fp, chunk);
             else
-                    bResult = save_bank_progs(file);
+                    bResult = save_bank_progs(*fp);
     } else {
             if (bChunked)
-                    bResult = save_prog_chunk(file, chunk);
+                    bResult = save_prog_chunk(*fp, chunk);
             else
-                    bResult = save_prog_params(file);
+                    bResult = save_prog_params(*fp);
     }
 
-    file.close();
+    fclose(fp);
     return bResult;
 }
 

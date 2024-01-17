@@ -32,6 +32,7 @@
 #include "../Plugin_Module.H"
 #include "../x11/XTUtils.H"
 #include "../x11/X11PluginUI.H"
+#include "VST2_Preset.H"
 
 typedef struct _AEffect AEffect;
 
@@ -93,6 +94,11 @@ public:
     int ProcessEvents (void *ptr);
     VstTimeInfo& get_time_info() {return fTimeInfo;}
     unsigned long get_unique_id() {return m_iUniqueID;}
+
+    int vst2_dispatch(long opcode, long index, long value, void *ptr, float opt) const;
+    // Specific accessors.
+    AEffect *vst2_effect() const { return m_pEffect; }
+    bool isConfigure() const { return m_bConfigure; }
 
 private:
 
@@ -156,8 +162,6 @@ private:
     bool open_descriptor ( unsigned long iIndex );
     void close_descriptor (void);
     bool initialize_plugin();
-
-    int vst2_dispatch(long opcode, long index, long value, void *ptr, float opt) const;
 
     void create_audio_ports();
     void create_midi_ports();

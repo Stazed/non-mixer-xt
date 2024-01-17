@@ -69,11 +69,8 @@ enum qtractorVst2PluginFlagsEx
 };
 
 // Some VeSTige missing opcodes and flags.
-const int effSetProgramName = 4;
 const int effGetParamLabel = 6;
 const int effGetParamDisplay = 7;
-const int effGetChunk = 23;
-const int effSetChunk = 24;
 const int effGetProgramNameIndexed = 29;
 const int effFlagsProgramChunks = 32;
 
@@ -923,7 +920,7 @@ void
 VST2_Plugin::updateParamValue (
 	unsigned long iIndex, float fValue, bool bUpdate )
 {
-    if(iIndex >= 0 && iIndex < control_input.size())
+    if(iIndex < control_input.size())
     {
         _is_from_custom_ui = !bUpdate;
         control_input[iIndex].control_value(fValue);
