@@ -1161,64 +1161,64 @@ static VstIntPtr VSTCALLBACK Vst2Plugin_HostCallback ( AEffect *effect,
 
 #if 0 // !VST_FORCE_DEPRECATED
 	case audioMasterPinConnected:
-		VST2_HC_DEBUG("audioMasterPinConnected");
+		DMESSAGE("audioMasterPinConnected");
 		break;
 
 	// VST 2.0 opcodes...
 	case audioMasterWantMidi:
-		VST2_HC_DEBUG("audioMasterWantMidi");
+		DMESSAGE("audioMasterWantMidi");
 		break;
 
 	case audioMasterSetTime:
-		VST2_HC_DEBUG("audioMasterSetTime");
+		DMESSAGE("audioMasterSetTime");
 		break;
 
 	case audioMasterTempoAt:
-		VST2_HC_DEBUG("audioMasterTempoAt");
-		if (pSession)
-			ret = (VstIntPtr) (pSession->tempo() * 10000.0f);
+		DMESSAGE("audioMasterTempoAt");
+		//if (pSession)
+		//	ret = (VstIntPtr) (pSession->tempo() * 10000.0f);
 		break;
 
 	case audioMasterGetNumAutomatableParameters:
-		VST2_HC_DEBUG("audioMasterGetNumAutomatableParameters");
+		DMESSAGE("audioMasterGetNumAutomatableParameters");
 		break;
 
 	case audioMasterGetParameterQuantization:
-		VST2_HC_DEBUG("audioMasterGetParameterQuantization");
+		DMESSAGE("audioMasterGetParameterQuantization");
 		ret = 1; // full single float precision
 		break;
 
 	case audioMasterNeedIdle:
-		VST2_HC_DEBUG("audioMasterNeedIdle");
+		DMESSAGE("audioMasterNeedIdle");
 		break;
 
 	case audioMasterGetPreviousPlug:
-		VST2_HC_DEBUG("audioMasterGetPreviousPlug");
+		DMESSAGE("audioMasterGetPreviousPlug");
 		break;
 
 	case audioMasterGetNextPlug:
-		VST2_HC_DEBUG("audioMasterGetNextPlug");
+		DMESSAGE("audioMasterGetNextPlug");
 		break;
 
 	case audioMasterWillReplaceOrAccumulate:
-		VST2_HC_DEBUG("audioMasterWillReplaceOrAccumulate");
+		DMESSAGE("audioMasterWillReplaceOrAccumulate");
 		ret = 1;
 		break;
 
 	case audioMasterSetOutputSampleRate:
-		VST2_HC_DEBUG("audioMasterSetOutputSampleRate");
+		DMESSAGE("audioMasterSetOutputSampleRate");
 		break;
 
 	case audioMasterSetIcon:
-		VST2_HC_DEBUG("audioMasterSetIcon");
+		DMESSAGE("audioMasterSetIcon");
 		break;
 
 	case audioMasterOpenWindow:
-		VST2_HC_DEBUG("audioMasterOpenWindow");
+		DMESSAGE("audioMasterOpenWindow");
 		break;
 
 	case audioMasterCloseWindow:
-		VST2_HC_DEBUG("audioMasterCloseWindow");
+		DMESSAGE("audioMasterCloseWindow");
 		break;
 #endif
 
