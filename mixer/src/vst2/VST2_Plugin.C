@@ -220,9 +220,6 @@ VST2_Plugin::load_plugin ( Module::Picked picked )
     create_audio_ports();
     create_midi_ports();
     create_control_ports();
-    
-    vst2_dispatch(effSetSampleRate, 0, 0, nullptr, float(sample_rate()));
-    vst2_dispatch(effSetBlockSize,  0, buffer_size(), nullptr, 0.0f);
 
     activate();
 
@@ -323,21 +320,22 @@ VST2_Plugin::handle_chain_name_changed ( void )
 }
 
 void
-VST2_Plugin::handle_sample_rate_change ( nframes_t sample_rate )
+VST2_Plugin::handle_sample_rate_change ( nframes_t /*sample_rate*/ )
 {
-
+    deactivate();
+    activate();
 }
 
 void
-VST2_Plugin::resize_buffers ( nframes_t buffer_size )
+VST2_Plugin::resize_buffers ( nframes_t /*buffer_size*/ )
 {
-    Module::resize_buffers( buffer_size );
+    deactivate();
+    activate();
 }
 
 void
 VST2_Plugin::bypass ( bool v )
 {
-    // FIXME CHECK
     if ( v != bypass() )
     {
         if ( v )
@@ -1399,9 +1397,12 @@ VST2_Plugin::activate ( void )
     *_bypass = 0.0f;
 
     if ( ! _activated )
-    {
-        _activated = true;
+    {   
+        vst2_dispatch(effSetSampleRate, 0, 0, nullptr, float(sample_rate()));
+        vst2_dispatch(effSetBlockSize,  0, buffer_size(), nullptr, 0.0f);
+
         vst2_dispatch(effMainsChanged, 0, 1, nullptr, 0.0f);
+        _activated = true;
     }
 
     if ( chain() )
@@ -1552,7 +1553,7 @@ VST2_Plugin::process_jack_midi_in ( uint32_t nframes, unsigned int port )
 
 void
 VST2_Plugin::process_midi_in (unsigned char *data, unsigned int size,
-	unsigned long offset, unsigned short port )
+	unsigned long offset, unsigned short /*port*/ )
 {
     for (unsigned int i = 0; i < size; ++i)
     {
