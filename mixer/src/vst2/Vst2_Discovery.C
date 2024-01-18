@@ -368,7 +368,7 @@ void qtractor_vst2_scan::close_descriptor (void)
 
     DMESSAGE("close_descriptor()");
 
-    vst2_dispatch(effClose, 0, 0, 0, 0.0f);
+//    vst2_dispatch(effClose, 0, 0, 0, 0.0f);
 
     m_pEffect  = nullptr;
     m_iFlagsEx = 0;
@@ -385,7 +385,7 @@ void qtractor_vst2_scan::close (void)
 
     DMESSAGE("close()");
 
-    vst2_dispatch(effClose, 0, 0, 0, 0.0f);
+//    vst2_dispatch(effClose, 0, 0, 0, 0.0f);
 
 //    lib_close(m_pLibrary);
     m_pLibrary = nullptr;
