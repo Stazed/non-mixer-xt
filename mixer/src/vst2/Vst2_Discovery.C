@@ -197,6 +197,12 @@ bool qtractor_vst2_scan::open_descriptor ( unsigned long iIndex )
     if (m_pLibrary == nullptr)
         return false;
 
+    // Hack, some plugins -- pizmidi/midiConverter3.so have been known to somehow
+    // get stuck in loop, so gonna abandon it here if the iIndex gets absurd, instead
+    // of crashing, maybe...
+    if (iIndex > 1000)
+        return false;
+
     close_descriptor();
 
     DMESSAGE("open_descriptor - iIndex = (%lu)",  iIndex);
@@ -232,6 +238,7 @@ bool qtractor_vst2_scan::open_descriptor ( unsigned long iIndex )
     const int categ = vst2_dispatch(effGetPlugCategory, 0, 0, nullptr, 0.0f);
     if (categ == kPlugCategShell)
     {
+        DMESSAGE("GOT VST SHELL");
         int id = 0;
         char buf[40];
         unsigned long i = 0;
