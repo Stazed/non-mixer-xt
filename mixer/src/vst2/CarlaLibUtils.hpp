@@ -18,6 +18,8 @@
 #ifndef CARLA_LIB_UTILS_HPP_INCLUDED
 #define CARLA_LIB_UTILS_HPP_INCLUDED
 
+#ifdef VST2_SUPPORT
+
 #include "../x11/XTUtils.H"
 
 #ifdef CARLA_OS_WIN
@@ -138,5 +140,7 @@ void carla_zeroChars(char chars[], const std::size_t count) noexcept
 }
 
 // -----------------------------------------------------------------------
+
+#endif  // VST2_SUPPORT
 
 #endif // CARLA_LIB_UTILS_HPP_INCLUDED
