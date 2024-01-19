@@ -97,7 +97,7 @@ public:
 
     int ProcessEvents (void *ptr);
     VstTimeInfo& get_time_info() {return fTimeInfo;}
-    unsigned long get_unique_id() {return m_iUniqueID;}
+    int32_t get_unique_id() {return m_iUniqueID;}
 
     int vst2_dispatch(long opcode, long index, long value, void *ptr, float opt) const;
     // Specific accessors.
@@ -111,7 +111,7 @@ public:
 private:
 
     std::string   m_sFilename;
-    int           m_iUniqueID;
+    int32_t       m_iUniqueID;
     lib_t         m_pLibrary;
     AEffect      *m_pEffect;
     unsigned int  m_iFlagsEx;

@@ -832,7 +832,7 @@ VST2_Plugin::open_descriptor ( unsigned long iIndex )
         m_sName = szName;
     }
 
-    if( m_pEffect->uniqueID == (int) m_iUniqueID)
+    if( m_pEffect->uniqueID == m_iUniqueID)
         _found_plugin = true;
 
 #if 0
