@@ -487,7 +487,10 @@ VST2_Plugin::configure_midi_outputs ()
 nframes_t
 VST2_Plugin::get_module_latency ( void ) const
 {
-    return 0;   // FIXME
+    const VstInt32 *pInitialDelay
+		= (VstInt32 *) &(m_pEffect->empty3[0]);
+
+    return *pInitialDelay;
 }
 
 void
