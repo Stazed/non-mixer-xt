@@ -599,7 +599,7 @@ Module_Parameter_Editor::update_control_visibility ( void )
 
 #if defined(LV2_SUPPORT) || defined(CLAP_SUPPORT) || defined(VST2_SUPPORT) || defined(VST3_SUPPORT)
     if ( (_module->_plug_type == Type_LV2) || (_module->_plug_type == Type_CLAP) ||
-           (_module->_plug_type == Type_VST3) || (_module->_plug_type == Type_VST3))
+           (_module->_plug_type == Type_VST2) || (_module->_plug_type == Type_VST3))
     {
         /* When the scroller is not used, we need to expand width to account for 
            the preset, state save and restore button */
