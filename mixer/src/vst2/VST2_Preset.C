@@ -297,7 +297,6 @@ bool VST2_Preset::load ( const std::string& sFilename )
 //    const bool bFxProg = (sExt == ".fxp");
 
     // Hard coded to bFxProg since that is what is hard code saved.
-    // What is best??   FIXME
     const bool bFxBank = false;
     const bool bFxProg = true;
 
@@ -595,7 +594,10 @@ bool VST2_Preset::save ( const std::string& sFilename )
 //    const bool bFxProg = (sExt == ".fxp");
 
     // We are hard coding this to bFxProg since we have to pick one.
-    // Not sure which is best... FIXME find out.
+    // Not sure which is best... It looks like bFxProg is the early
+    // version and bFxBank is VST_2_4_EXTENSIONS. Just guessing that
+    // using the early version might apply to more plugins?? It seems
+    // to work for every thing so far...
     const bool bFxBank = false;
     const bool bFxProg = true;
 
