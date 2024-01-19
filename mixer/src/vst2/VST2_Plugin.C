@@ -91,6 +91,7 @@ VST2_Plugin::VST2_Plugin() :
     m_iFlagsEx(0),
     m_sName(),
     _project_file(),
+    _found_plugin(false),
     fMidiEventCount(0),
     fTimeInfo(),
     fEvents(),
@@ -200,13 +201,19 @@ VST2_Plugin::load_plugin ( Module::Picked picked )
     if (!open_lib(m_sFilename))
         return false;
 
-    if(!open_descriptor(0))     // FIXME index
-        return false;
-
-    if( m_pEffect->uniqueID != (int) m_iUniqueID)
+    _found_plugin = false;
+    unsigned long i = 0;
+    while (open_descriptor(i))
     {
-        DMESSAGE("Incorrect ID SB = %ul: IS = %d", m_iUniqueID, m_pEffect->uniqueID);
-        close_descriptor();
+        if(_found_plugin)
+            break;
+
+        ++i;
+    }
+
+    if (!_found_plugin)
+    {
+        DMESSAGE("Could not find %s: ID = (%i)", m_sFilename.c_str(), m_iUniqueID);
         return false;
     }
 
@@ -750,6 +757,17 @@ VST2_Plugin::open_descriptor ( unsigned long iIndex )
         {
             buf[0] = (char) 0;
             id = vst2_dispatch(effShellGetNextPlugin, 0, 0, (void *) buf, 0.0f);
+
+            if(m_iUniqueID != id)
+            {
+                continue;
+            }
+            else
+            {
+                _found_plugin = true;
+                break;
+            }
+
             if (id == 0 || !buf[0])
                 break;
         }
@@ -813,6 +831,9 @@ VST2_Plugin::open_descriptor ( unsigned long iIndex )
     {
         m_sName = szName;
     }
+
+    if( m_pEffect->uniqueID == (int) m_iUniqueID)
+        _found_plugin = true;
 
 #if 0
     // Specific inquiries...

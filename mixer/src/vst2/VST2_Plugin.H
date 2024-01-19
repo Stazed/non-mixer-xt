@@ -111,12 +111,13 @@ public:
 private:
 
     std::string   m_sFilename;
-    unsigned long m_iUniqueID;
+    int           m_iUniqueID;
     lib_t         m_pLibrary;
     AEffect      *m_pEffect;
     unsigned int  m_iFlagsEx;
     std::string   m_sName;
     std::string   _project_file;
+    bool _found_plugin;
 
     uint32_t     fMidiEventCount;
     VstMidiEvent fMidiEvents[kPluginMaxMidiEvents*2];
