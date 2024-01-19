@@ -17,7 +17,7 @@
 
 #pragma once
 
-#if defined(LV2_SUPPORT) || defined(CLAP_SUPPORT) || defined(VST3_SUPPORT)
+#if defined(LV2_SUPPORT) || defined(CLAP_SUPPORT) || defined(VST2_SUPPORT) || defined(VST3_SUPPORT)
 
 #include "../../../nonlib/debug.h"
 #include <cstring>
@@ -95,4 +95,4 @@ void carla_zeroPointers(T* ptrs[], const std::size_t count) noexcept
     std::memset(ptrs, 0, count*sizeof(T*));
 }
 
-#endif  // #if defined(LV2_SUPPORT) || defined(CLAP_SUPPORT) || defined(VST3_SUPPORT)
+#endif  // #if defined(LV2_SUPPORT) || defined(CLAP_SUPPORT) || defined(VST2_SUPPORT) || defined(VST3_SUPPORT)

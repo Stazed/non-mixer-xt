@@ -22,7 +22,7 @@
  * Created on November 20, 2023, 3:08 PM
  */
 
-#if defined(LV2_SUPPORT) || defined(CLAP_SUPPORT) || defined(VST3_SUPPORT)
+#if defined(LV2_SUPPORT) || defined(CLAP_SUPPORT) || defined(VST2_SUPPORT) || defined(VST3_SUPPORT)
 
 #include <unistd.h> // getpid()
 #include <X11/Xatom.h>
@@ -571,4 +571,4 @@ X11PluginUI::getChildWindow() const
     return ret;
 }
 
-#endif // defined(LV2_SUPPORT) || defined(CLAP_SUPPORT) || defined(VST3_SUPPORT)
+#endif // defined(LV2_SUPPORT) || defined(CLAP_SUPPORT) || defined(VST2_SUPPORT) || defined(VST3_SUPPORT)

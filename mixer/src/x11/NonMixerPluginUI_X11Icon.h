@@ -17,7 +17,7 @@
 
 #pragma once
 
-#if defined(LV2_SUPPORT) || defined(CLAP_SUPPORT) || defined(VST3_SUPPORT)
+#if defined(LV2_SUPPORT) || defined(CLAP_SUPPORT) || defined(VST2_SUPPORT) || defined(VST3_SUPPORT)
 
 static const unsigned long sNonMixerX11Icon[] = {
     16, 16,
@@ -179,4 +179,4 @@ static const unsigned long sNonMixerX11Icon[] = {
 
 static const int sNonMixerX11IconSize = 2 + 16 * 16 + 2 + 48 * 48;
 
-#endif  // #if defined(LV2_SUPPORT) || defined(CLAP_SUPPORT) || defined(VST3_SUPPORT)
+#endif  // #if defined(LV2_SUPPORT) || defined(CLAP_SUPPORT) || defined(VST2_SUPPORT) || defined(VST3_SUPPORT)
