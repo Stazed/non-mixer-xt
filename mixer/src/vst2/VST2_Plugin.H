@@ -166,6 +166,7 @@ private:
     float ** _audio_in_buffers;
     float ** _audio_out_buffers;
 
+    bool find_plugin_binary();
     bool open_lib ( const std::string& sFilename );
     void close_lib();
 

@@ -25,10 +25,12 @@
 
 #ifdef VST2_SUPPORT
 
+#include <filesystem>
 #include "VST2_Plugin.H"
 #include "../../../nonlib/dsp.h"
 #include "../Chain.H"
 #include "../Mixer_Strip.H"
+#include "Vst2_Discovery.H"
 
 #if !defined(__WIN32__) && !defined(_WIN32) && !defined(WIN32)
 #define __cdecl
@@ -197,6 +199,12 @@ VST2_Plugin::load_plugin ( Module::Picked picked )
 {
     m_sFilename = picked.s_plug_path;
     m_iUniqueID = picked.unique_id;
+
+    if(!find_plugin_binary())
+    {
+        MESSAGE("Could not find plugin binary %s", m_sFilename.c_str());
+        return false;
+    }
 
     if (!open_lib(m_sFilename))
         return false;
@@ -680,6 +688,56 @@ VST2_Plugin::hide_custom_ui()
     return true;
 }
 
+bool
+VST2_Plugin::find_plugin_binary()
+{
+    // First check the path from the snapshot
+    if ( std::filesystem::exists(m_sFilename) )
+        return true;
+
+    /*  We did not find the plugin from the snapshot path so lets try
+        a different path. The case is if the project was copied to a
+        different computer in which the plugins are installed in a different
+        location - i.e. - /usr/lib vs /usr/local/lib.
+    */
+
+    std::string file(m_sFilename);
+    std::string restore;
+    // Find the base plugin name
+    std::size_t found = file.find_last_of("/\\");
+    restore = file.substr(found);
+    DMESSAGE("Restore = %s", restore.c_str());
+
+    auto sp = vst2_discovery::installedVST2s();
+
+    for (const auto &q : sp)
+    {
+        std::string path = q.u8string();
+        found = path.find_last_of("/\\");
+        std::string base = path.substr(found);
+
+    //    DMESSAGE("Restore = %s: Base = %s", restore.c_str(), base.c_str());
+        // Compare the base names and if they match, then use the path
+        if (strcmp( restore.c_str(), base.c_str() ) == 0 )
+        {
+            if ( std::filesystem::exists(path) )
+            {
+                m_sFilename = path;
+                return true;    // We found it
+            }
+            else
+                return false;   // If it still does not exist then abandon
+        }
+        else
+        {
+            // keep trying until all available paths are checked
+            continue;
+        }
+    }
+
+    // We never found it
+    return false;
+}
 
 bool
 VST2_Plugin::open_lib ( const std::string& sFilename )
