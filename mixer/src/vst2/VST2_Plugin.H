@@ -97,11 +97,11 @@ public:
 
     int ProcessEvents (void *ptr);
     VstTimeInfo& get_time_info() {return fTimeInfo;}
-    int32_t get_unique_id() {return m_iUniqueID;}
+    int32_t get_unique_id() {return _iUniqueID;}
 
     int vst2_dispatch(long opcode, long index, long value, void *ptr, float opt) const;
     // Specific accessors.
-    AEffect *vst2_effect() const { return m_pEffect; }
+    AEffect *vst2_effect() const { return _pEffect; }
     bool isConfigure() const { return m_bConfigure; }
 
     // Save/Restore state
@@ -110,12 +110,12 @@ public:
 
 private:
 
-    std::string   m_sFilename;
-    int32_t       m_iUniqueID;
-    lib_t         m_pLibrary;
-    AEffect      *m_pEffect;
-    unsigned int  m_iFlagsEx;
-    std::string   m_sName;
+    std::string   _plugin_filename;
+    int32_t       _iUniqueID;
+    lib_t         _pLibrary;
+    AEffect      *_pEffect;
+    unsigned int  _iFlagsEx;
+    std::string   _sName;
     std::string   _project_file;
     bool _found_plugin;
 

@@ -86,12 +86,12 @@ const float F_DEFAULT_MSECS = 0.03f;
 
 VST2_Plugin::VST2_Plugin() :
     Plugin_Module(),
-    m_sFilename(),
-    m_iUniqueID(0),
-    m_pLibrary(nullptr),
-    m_pEffect(nullptr),
-    m_iFlagsEx(0),
-    m_sName(),
+    _plugin_filename(),
+    _iUniqueID(0),
+    _pLibrary(nullptr),
+    _pEffect(nullptr),
+    _iFlagsEx(0),
+    _sName(),
     _project_file(),
     _found_plugin(false),
     fMidiEventCount(0),
@@ -138,7 +138,7 @@ VST2_Plugin::~VST2_Plugin()
 
     deactivate();
 
-    g_vst2Plugins.erase (m_pEffect);    // erasing by key
+    g_vst2Plugins.erase (_pEffect);    // erasing by key
 
     if ( _audio_in_buffers )
     {
@@ -197,16 +197,16 @@ VST2_Plugin::~VST2_Plugin()
 bool
 VST2_Plugin::load_plugin ( Module::Picked picked )
 {
-    m_sFilename = picked.s_plug_path;
-    m_iUniqueID = picked.unique_id;
+    _plugin_filename = picked.s_plug_path;
+    _iUniqueID = picked.unique_id;
 
     if(!find_plugin_binary())
     {
-        MESSAGE("Could not find plugin binary %s", m_sFilename.c_str());
+        MESSAGE("Could not find plugin binary %s", _plugin_filename.c_str());
         return false;
     }
 
-    if (!open_lib(m_sFilename))
+    if (!open_lib(_plugin_filename))
         return false;
 
     _found_plugin = false;
@@ -221,13 +221,13 @@ VST2_Plugin::load_plugin ( Module::Picked picked )
 
     if (!_found_plugin)
     {
-        DMESSAGE("Could not find %s: ID = (%i)", m_sFilename.c_str(), m_iUniqueID);
+        DMESSAGE("Could not find %s: ID = (%i)", _plugin_filename.c_str(), _iUniqueID);
         return false;
     }
 
-    base_label(m_sName.c_str());
+    base_label(_sName.c_str());
 
-    std::pair<AEffect *, VST2_Plugin *> efct ( m_pEffect, this );
+    std::pair<AEffect *, VST2_Plugin *> efct ( _pEffect, this );
     g_vst2Plugins.insert(efct);
     
     initialize_plugin();
@@ -496,7 +496,7 @@ nframes_t
 VST2_Plugin::get_module_latency ( void ) const
 {
     const VstInt32 *pInitialDelay
-		= (VstInt32 *) &(m_pEffect->empty3[0]);
+		= (VstInt32 *) &(_pEffect->empty3[0]);
 
     return *pInitialDelay;
 }
@@ -520,7 +520,7 @@ VST2_Plugin::process ( nframes_t nframes )
     }
     else
     {
-        if (m_pEffect == nullptr)
+        if (_pEffect == nullptr)
             return;
 
         process_jack_transport( nframes );
@@ -542,10 +542,10 @@ VST2_Plugin::process ( nframes_t nframes )
         }
 
         // Make it run audio...
-        if (m_pEffect->flags & effFlagsCanReplacing)
+        if (_pEffect->flags & effFlagsCanReplacing)
         {
-            m_pEffect->processReplacing(
-                m_pEffect, _audio_in_buffers,  _audio_out_buffers, nframes);
+            _pEffect->processReplacing(
+                _pEffect, _audio_in_buffers,  _audio_out_buffers, nframes);
         }
 
         for ( unsigned int i = 0; i < midi_output.size(); ++i)
@@ -692,7 +692,7 @@ bool
 VST2_Plugin::find_plugin_binary()
 {
     // First check the path from the snapshot
-    if ( std::filesystem::exists(m_sFilename) )
+    if ( std::filesystem::exists(_plugin_filename) )
         return true;
 
     /*  We did not find the plugin from the snapshot path so lets try
@@ -701,7 +701,7 @@ VST2_Plugin::find_plugin_binary()
         location - i.e. - /usr/lib vs /usr/local/lib.
     */
 
-    std::string file(m_sFilename);
+    std::string file(_plugin_filename);
     std::string restore;
     // Find the base plugin name
     std::size_t found = file.find_last_of("/\\");
@@ -722,7 +722,7 @@ VST2_Plugin::find_plugin_binary()
         {
             if ( std::filesystem::exists(path) )
             {
-                m_sFilename = path;
+                _plugin_filename = path;
                 return true;    // We found it
             }
             else
@@ -744,9 +744,9 @@ VST2_Plugin::open_lib ( const std::string& sFilename )
 {
     close_lib();
 
-    m_pLibrary = lib_open(sFilename.c_str());
+    _pLibrary = lib_open(sFilename.c_str());
 
-    if (m_pLibrary == nullptr)
+    if (_pLibrary == nullptr)
     {
         DMESSAGE("Cannot Open %s", sFilename.c_str());
         return false;
@@ -760,30 +760,30 @@ VST2_Plugin::open_lib ( const std::string& sFilename )
 void
 VST2_Plugin::close_lib()
 {
-    if (m_pLibrary == nullptr)
+    if (_pLibrary == nullptr)
         return;
 
     DMESSAGE("close()");
 
     vst2_dispatch(effClose, 0, 0, 0, 0.0f);
 
-    m_pLibrary = nullptr;
+    _pLibrary = nullptr;
 }
 
 bool
 VST2_Plugin::open_descriptor ( unsigned long iIndex )
 {
-    if (m_pLibrary == nullptr)
+    if (_pLibrary == nullptr)
         return false;
 
     close_descriptor();
 
     DMESSAGE("open_descriptor - iIndex = (%lu)",  iIndex);
 
-    VST_GetPluginInstance pfnGetPluginInstance = lib_symbol<VST_GetPluginInstance>(m_pLibrary, "VSTPluginMain");
+    VST_GetPluginInstance pfnGetPluginInstance = lib_symbol<VST_GetPluginInstance>(_pLibrary, "VSTPluginMain");
 
     if (pfnGetPluginInstance == nullptr)
-        pfnGetPluginInstance = lib_symbol<VST_GetPluginInstance> (m_pLibrary, "main");
+        pfnGetPluginInstance = lib_symbol<VST_GetPluginInstance> (_pLibrary, "main");
 
     if (pfnGetPluginInstance == nullptr)
     {
@@ -791,19 +791,19 @@ VST2_Plugin::open_descriptor ( unsigned long iIndex )
         return false;
     }
 
-    m_pEffect = (*pfnGetPluginInstance)(Vst2Plugin_HostCallback);
+    _pEffect = (*pfnGetPluginInstance)(Vst2Plugin_HostCallback);
 
-    if (m_pEffect == nullptr)
+    if (_pEffect == nullptr)
     {
         DMESSAGE("plugin instance could not be created.");
         return false;
     }
 
     // Did VST plugin instantiated OK?
-    if (m_pEffect->magic != kEffectMagic)
+    if (_pEffect->magic != kEffectMagic)
     {
         DMESSAGE("Plugin is not a valid VST.");
-        m_pEffect = nullptr;
+        _pEffect = nullptr;
         return false;
     }
 
@@ -819,7 +819,7 @@ VST2_Plugin::open_descriptor ( unsigned long iIndex )
             buf[0] = (char) 0;
             id = vst2_dispatch(effShellGetNextPlugin, 0, 0, (void *) buf, 0.0f);
 
-            if(m_iUniqueID != id)
+            if(_iUniqueID != id)
             {
                 continue;
             }
@@ -836,40 +836,40 @@ VST2_Plugin::open_descriptor ( unsigned long iIndex )
         if (i < iIndex || id == 0 || !buf[0])
         {
             DMESSAGE("vst2_shell(%lu) plugin is not a valid VST.", iIndex);
-            m_pEffect = nullptr;
+            _pEffect = nullptr;
             return false;
         }
         // Make it known...
         g_iVst2ShellCurrentId = id;
         // Re-allocate the thing all over again...
 
-        pfnGetPluginInstance = lib_symbol<VST_GetPluginInstance>(m_pLibrary, "VSTPluginMain");
+        pfnGetPluginInstance = lib_symbol<VST_GetPluginInstance>(_pLibrary, "VSTPluginMain");
 
         if (pfnGetPluginInstance == nullptr)
-            pfnGetPluginInstance = lib_symbol<VST_GetPluginInstance> (m_pLibrary, "main");
+            pfnGetPluginInstance = lib_symbol<VST_GetPluginInstance> (_pLibrary, "main");
 
         if (pfnGetPluginInstance == nullptr)
         {
             DMESSAGE("error", "Not a VST plugin");
-            m_pEffect = nullptr;
+            _pEffect = nullptr;
             return false;
 	}
 
-        m_pEffect = (*pfnGetPluginInstance)(Vst2Plugin_HostCallback);
+        _pEffect = (*pfnGetPluginInstance)(Vst2Plugin_HostCallback);
 
         // Not needed anymore, hopefully...
         g_iVst2ShellCurrentId = 0;
         // Don't go further if failed...
-        if (m_pEffect == nullptr)
+        if (_pEffect == nullptr)
         {
             DMESSAGE("vst2_shell(%lu) plugin instance could not be created.", iIndex);
             return false;
         }
 
-        if (m_pEffect->magic != kEffectMagic)
+        if (_pEffect->magic != kEffectMagic)
         {
             DMESSAGE("vst2_shell(%lu) plugin is not a valid VST.",  iIndex);
-            m_pEffect = nullptr;
+            _pEffect = nullptr;
             return false;
         }
 
@@ -879,7 +879,7 @@ VST2_Plugin::open_descriptor ( unsigned long iIndex )
     // Not a VST Shell plugin...
     if (iIndex > 0)
     {
-        m_pEffect = nullptr;
+        _pEffect = nullptr;
         return false;
     }
 
@@ -890,29 +890,29 @@ VST2_Plugin::open_descriptor ( unsigned long iIndex )
     char szName[256]; ::memset(szName, 0, sizeof(szName));
     if (vst2_dispatch(effGetEffectName, 0, 0, (void *) szName, 0.0f))
     {
-        m_sName = szName;
+        _sName = szName;
     }
 
-    if( m_pEffect->uniqueID == m_iUniqueID)
+    if( _pEffect->uniqueID == _iUniqueID)
         _found_plugin = true;
 
 #if 0
     // Specific inquiries...
-    m_iFlagsEx = 0;
+    _iFlagsEx = 0;
 
-    if (vst2_canDo("sendVstEvents"))       m_iFlagsEx |= effFlagsExCanSendVstEvents;
-    if (vst2_canDo("sendVstMidiEvent"))    m_iFlagsEx |= effFlagsExCanSendVstMidiEvents;
-    if (vst2_canDo("sendVstTimeInfo"))     m_iFlagsEx |= effFlagsExCanSendVstTimeInfo;
-    if (vst2_canDo("receiveVstEvents"))    m_iFlagsEx |= effFlagsExCanReceiveVstEvents;
-    if (vst2_canDo("receiveVstMidiEvent")) m_iFlagsEx |= effFlagsExCanReceiveVstMidiEvents;
-    if (vst2_canDo("receiveVstTimeInfo"))  m_iFlagsEx |= effFlagsExCanReceiveVstTimeInfo;
-    if (vst2_canDo("offline"))             m_iFlagsEx |= effFlagsExCanProcessOffline;
-    if (vst2_canDo("plugAsChannelInsert")) m_iFlagsEx |= effFlagsExCanUseAsInsert;
-    if (vst2_canDo("plugAsSend"))          m_iFlagsEx |= effFlagsExCanUseAsSend;
-    if (vst2_canDo("mixDryWet"))           m_iFlagsEx |= effFlagsExCanMixDryWet;
-    if (vst2_canDo("midiProgramNames"))    m_iFlagsEx |= effFlagsExCanMidiProgramNames;
+    if (vst2_canDo("sendVstEvents"))       _iFlagsEx |= effFlagsExCanSendVstEvents;
+    if (vst2_canDo("sendVstMidiEvent"))    _iFlagsEx |= effFlagsExCanSendVstMidiEvents;
+    if (vst2_canDo("sendVstTimeInfo"))     _iFlagsEx |= effFlagsExCanSendVstTimeInfo;
+    if (vst2_canDo("receiveVstEvents"))    _iFlagsEx |= effFlagsExCanReceiveVstEvents;
+    if (vst2_canDo("receiveVstMidiEvent")) _iFlagsEx |= effFlagsExCanReceiveVstMidiEvents;
+    if (vst2_canDo("receiveVstTimeInfo"))  _iFlagsEx |= effFlagsExCanReceiveVstTimeInfo;
+    if (vst2_canDo("offline"))             _iFlagsEx |= effFlagsExCanProcessOffline;
+    if (vst2_canDo("plugAsChannelInsert")) _iFlagsEx |= effFlagsExCanUseAsInsert;
+    if (vst2_canDo("plugAsSend"))          _iFlagsEx |= effFlagsExCanUseAsSend;
+    if (vst2_canDo("mixDryWet"))           _iFlagsEx |= effFlagsExCanMixDryWet;
+    if (vst2_canDo("midiProgramNames"))    _iFlagsEx |= effFlagsExCanMidiProgramNames;
 
-    m_bEditor = (m_pEffect->flags & effFlagsHasEditor);
+    m_bEditor = (_pEffect->flags & effFlagsHasEditor);
 #endif
     return true;
 }
@@ -922,15 +922,15 @@ VST2_Plugin::open_descriptor ( unsigned long iIndex )
 void
 VST2_Plugin::close_descriptor (void)
 {
-    if (m_pEffect == nullptr)
+    if (_pEffect == nullptr)
         return;
 
     DMESSAGE("close_descriptor()");
 
     vst2_dispatch(effClose, 0, 0, 0, 0.0f);
 
-    m_pEffect  = nullptr;
-    m_iFlagsEx = 0;
+    _pEffect  = nullptr;
+    _iFlagsEx = 0;
     m_bEditor  = false;
 }
 
@@ -960,32 +960,32 @@ bool
 VST2_Plugin::initialize_plugin()
 {
     // Specific inquiries...
-    m_iFlagsEx = 0;
-//	if (vst2_canDo("sendVstEvents"))       m_iFlagsEx |= effFlagsExCanSendVstEvents;
-    if (vst2_canDo("sendVstMidiEvent"))    m_iFlagsEx |= effFlagsExCanSendVstMidiEvents;
-//	if (vst2_canDo("sendVstTimeInfo"))     m_iFlagsEx |= effFlagsExCanSendVstTimeInfo;
-//	if (vst2_canDo("receiveVstEvents"))    m_iFlagsEx |= effFlagsExCanReceiveVstEvents;
-    if (vst2_canDo("receiveVstMidiEvent")) m_iFlagsEx |= effFlagsExCanReceiveVstMidiEvents;
-//	if (vst2_canDo("receiveVstTimeInfo"))  m_iFlagsEx |= effFlagsExCanReceiveVstTimeInfo;
-//	if (vst2_canDo("offline"))             m_iFlagsEx |= effFlagsExCanProcessOffline;
-//	if (vst2_canDo("plugAsChannelInsert")) m_iFlagsEx |= effFlagsExCanUseAsInsert;
-//	if (vst2_canDo("plugAsSend"))          m_iFlagsEx |= effFlagsExCanUseAsSend;
-//	if (vst2_canDo("mixDryWet"))           m_iFlagsEx |= effFlagsExCanMixDryWet;
-//	if (vst2_canDo("midiProgramNames"))    m_iFlagsEx |= effFlagsExCanMidiProgramNames;
+    _iFlagsEx = 0;
+//	if (vst2_canDo("sendVstEvents"))       _iFlagsEx |= effFlagsExCanSendVstEvents;
+    if (vst2_canDo("sendVstMidiEvent"))    _iFlagsEx |= effFlagsExCanSendVstMidiEvents;
+//	if (vst2_canDo("sendVstTimeInfo"))     _iFlagsEx |= effFlagsExCanSendVstTimeInfo;
+//	if (vst2_canDo("receiveVstEvents"))    _iFlagsEx |= effFlagsExCanReceiveVstEvents;
+    if (vst2_canDo("receiveVstMidiEvent")) _iFlagsEx |= effFlagsExCanReceiveVstMidiEvents;
+//	if (vst2_canDo("receiveVstTimeInfo"))  _iFlagsEx |= effFlagsExCanReceiveVstTimeInfo;
+//	if (vst2_canDo("offline"))             _iFlagsEx |= effFlagsExCanProcessOffline;
+//	if (vst2_canDo("plugAsChannelInsert")) _iFlagsEx |= effFlagsExCanUseAsInsert;
+//	if (vst2_canDo("plugAsSend"))          _iFlagsEx |= effFlagsExCanUseAsSend;
+//	if (vst2_canDo("mixDryWet"))           _iFlagsEx |= effFlagsExCanMixDryWet;
+//	if (vst2_canDo("midiProgramNames"))    _iFlagsEx |= effFlagsExCanMidiProgramNames;
 
     // Compute and cache port counts...
-    m_iControlIns  = m_pEffect->numParams;
+    m_iControlIns  = _pEffect->numParams;
     m_iControlOuts = 0;
-    m_iAudioIns    = m_pEffect->numInputs;
-    m_iAudioOuts   = m_pEffect->numOutputs;
-    m_iMidiIns     = ((m_iFlagsEx & effFlagsExCanReceiveVstMidiEvents)
-            || (m_pEffect->flags & effFlagsIsSynth) ? 1 : 0);
-    m_iMidiOuts    = ((m_iFlagsEx & effFlagsExCanSendVstMidiEvents) ? 1 : 0);
+    m_iAudioIns    = _pEffect->numInputs;
+    m_iAudioOuts   = _pEffect->numOutputs;
+    m_iMidiIns     = ((_iFlagsEx & effFlagsExCanReceiveVstMidiEvents)
+            || (_pEffect->flags & effFlagsIsSynth) ? 1 : 0);
+    m_iMidiOuts    = ((_iFlagsEx & effFlagsExCanSendVstMidiEvents) ? 1 : 0);
 
     // Cache flags.
     m_bRealtime  = true;
-    m_bConfigure = (m_pEffect->flags & effFlagsProgramChunks);
-    m_bEditor    = (m_pEffect->flags & effFlagsHasEditor);
+    m_bConfigure = (_pEffect->flags & effFlagsProgramChunks);
+    m_bEditor    = (_pEffect->flags & effFlagsHasEditor);
 
     // HACK: Some native VST2 plugins with a GUI editor
     // need to skip explicit shared library unloading,
@@ -1001,13 +1001,13 @@ VST2_Plugin::initialize_plugin()
 int VST2_Plugin::vst2_dispatch (
 	long opcode, long index, long value, void *ptr, float opt ) const
 {
-    if (m_pEffect == nullptr)
+    if (_pEffect == nullptr)
             return 0;
 
  //   DMESSAGE("vst2_dispatch(%ld, %ld, %ld, %p, %g)",
  //           opcode, index, value, ptr, opt);
 
-    return m_pEffect->dispatcher(m_pEffect, opcode, index, value, ptr, opt);
+    return _pEffect->dispatcher(_pEffect, opcode, index, value, ptr, opt);
 }
 
 // Parameter update executive plugin to host
@@ -1035,11 +1035,11 @@ VST2_Plugin::updateParamValue (
 void
 VST2_Plugin::updateParamValues ( bool bUpdate )
 {
-    if(m_pEffect)
+    if(_pEffect)
     {   
         for (unsigned int i = 0; i < control_input.size(); ++i)
         {
-            const float fValue = m_pEffect->getParameter(m_pEffect, static_cast<int32_t>(i));
+            const float fValue = _pEffect->getParameter(_pEffect, static_cast<int32_t>(i));
             updateParamValue(i, fValue, bUpdate);
         }
     }
@@ -1049,9 +1049,9 @@ VST2_Plugin::updateParamValues ( bool bUpdate )
 void
 VST2_Plugin::setParameter(uint32_t iIndex, float value)
 {
-    if (m_pEffect)
+    if (_pEffect)
     {
-        m_pEffect->setParameter(m_pEffect, iIndex, value);
+        _pEffect->setParameter(_pEffect, iIndex, value);
     }
 }
 
@@ -1436,9 +1436,9 @@ VST2_Plugin::create_control_ports()
         }
 
         // ATTN: Set default value as initial one...
-        if (m_pEffect)
+        if (_pEffect)
         {
-            float value = (float) m_pEffect->getParameter(m_pEffect, iIndex);
+            float value = (float) _pEffect->getParameter(_pEffect, iIndex);
             if(p.hints.type == Port::Hints::LV2_INTEGER)
             {
                 value = (p.hints.maximum - p.hints.minimum) * value;
@@ -1550,7 +1550,7 @@ VST2_Plugin::set_output_buffer ( int n, void *buf )
 bool
 VST2_Plugin::loaded ( void ) const
 {
-    if ( m_pEffect )
+    if ( _pEffect )
         return true;
 
     return false;
@@ -1826,8 +1826,8 @@ VST2_Plugin::restore_VST2_plugin_state(const std::string &filename)
 void
 VST2_Plugin::get ( Log_Entry &e ) const
 {
-    e.add( ":vst2_plugin_path", m_sFilename.c_str() );
-    e.add( ":vst2_plugin_id", m_iUniqueID);
+    e.add( ":vst2_plugin_path", _plugin_filename.c_str() );
+    e.add( ":vst2_plugin_id", _iUniqueID);
  
     /* these help us display the module on systems which are missing this plugin */
     e.add( ":plugin_ins", _plugin_ins );
