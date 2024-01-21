@@ -96,7 +96,7 @@ public:
     void resizeEditor ( int w, int h );
 
     int ProcessEvents (void *ptr);
-    VstTimeInfo& get_time_info() {return fTimeInfo;}
+    VstTimeInfo& get_time_info() {return _fTimeInfo;}
     int32_t get_unique_id() {return _iUniqueID;}
 
     int vst2_dispatch(long opcode, long index, long value, void *ptr, float opt) const;
@@ -119,9 +119,9 @@ private:
     std::string   _project_file;
     bool _found_plugin;
 
-    uint32_t     fMidiEventCount;
-    VstMidiEvent fMidiEvents[kPluginMaxMidiEvents*2];
-    VstTimeInfo  fTimeInfo;
+    uint32_t     _fMidiEventCount;
+    VstMidiEvent _fMidiEvents[kPluginMaxMidiEvents*2];
+    VstTimeInfo  _fTimeInfo;
 
     struct FixedVstEvents {
         int32_t numEvents;
@@ -136,7 +136,7 @@ private:
         }
 
        // CARLA_DECLARE_NON_COPYABLE(FixedVstEvents);
-    } fEvents;
+    } _fEvents;
 
     // Cached port counts.
     unsigned short m_iControlIns;

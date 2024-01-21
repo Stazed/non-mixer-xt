@@ -94,9 +94,9 @@ VST2_Plugin::VST2_Plugin() :
     _sName(),
     _project_file(),
     _found_plugin(false),
-    fMidiEventCount(0),
-    fTimeInfo(),
-    fEvents(),
+    _fMidiEventCount(0),
+    _fTimeInfo(),
+    _fEvents(),
     m_iControlIns(0),
     m_iControlOuts(0),
     m_iAudioIns(0),
@@ -118,11 +118,11 @@ VST2_Plugin::VST2_Plugin() :
 {
     _plug_type = Type_VST2;
 
-    non_zeroStructs(fMidiEvents, kPluginMaxMidiEvents*2);
-    non_zeroStruct(fTimeInfo);
+    non_zeroStructs(_fMidiEvents, kPluginMaxMidiEvents*2);
+    non_zeroStruct(_fTimeInfo);
 
     for (ushort i=0; i < kPluginMaxMidiEvents*2; ++i)
-        fEvents.data[i] = (VstEvent*)&fMidiEvents[i];
+        _fEvents.data[i] = (VstEvent*)&_fMidiEvents[i];
 
 
     log_create();
@@ -525,8 +525,8 @@ VST2_Plugin::process ( nframes_t nframes )
 
         process_jack_transport( nframes );
 
-        fMidiEventCount = 0;
-        non_zeroStructs(fMidiEvents, kPluginMaxMidiEvents*2);
+        _fMidiEventCount = 0;
+        non_zeroStructs(_fMidiEvents, kPluginMaxMidiEvents*2);
 
         for( unsigned int i = 0; i < midi_input.size(); ++i )
         {
@@ -534,11 +534,11 @@ VST2_Plugin::process ( nframes_t nframes )
             process_jack_midi_in( nframes, i );
         }
 
-        if (fMidiEventCount > 0)
+        if (_fMidiEventCount > 0)
         {
-            fEvents.numEvents = static_cast<int32_t>(fMidiEventCount);
-            fEvents.reserved  = 0;
-            vst2_dispatch(effProcessEvents, 0, 0, &fEvents, 0.0f);
+            _fEvents.numEvents = static_cast<int32_t>(_fMidiEventCount);
+            _fEvents.reserved  = 0;
+            vst2_dispatch(effProcessEvents, 0, 0, &_fEvents, 0.0f);
         }
 
         // Make it run audio...
@@ -554,7 +554,7 @@ VST2_Plugin::process ( nframes_t nframes )
             process_jack_midi_out( nframes, i);
         }
 
-        fTimeInfo.samplePos += nframes;
+        _fTimeInfo.samplePos += nframes;
     }
 }
 
@@ -1133,8 +1133,8 @@ static VstIntPtr VSTCALLBACK Vst2Plugin_HostCallback ( AEffect *effect,
                 pVst2Plugin = VST2_Plugin::findPlugin(effect);
 		if (pVst2Plugin)
                 {
-                    VstTimeInfo& fTimeInfo = pVst2Plugin->get_time_info();
-                    ret = (intptr_t)&fTimeInfo;
+                    VstTimeInfo& _fTimeInfo = pVst2Plugin->get_time_info();
+                    ret = (intptr_t)&_fTimeInfo;
                 }
 
 		break;
@@ -1570,7 +1570,7 @@ VST2_Plugin::process_jack_transport ( uint32_t nframes )
       (rolling != _rolling || pos.frame != _position ||
        (has_bbt && pos.beats_per_minute != _bpm));
     
-    fTimeInfo.flags = 0;
+    _fTimeInfo.flags = 0;
 
     if ( xport_changed )
     {
@@ -1581,41 +1581,41 @@ VST2_Plugin::process_jack_transport ( uint32_t nframes )
 
             const double ppqBar  = static_cast<double>(pos.beats_per_bar) * (pos.bar - 1);
 
-            fTimeInfo.flags |= kVstTransportChanged;
-            fTimeInfo.samplePos  = double(pos.frame);
-            fTimeInfo.sampleRate = sample_rate();
+            _fTimeInfo.flags |= kVstTransportChanged;
+            _fTimeInfo.samplePos  = double(pos.frame);
+            _fTimeInfo.sampleRate = sample_rate();
 
             // PPQ Pos
-            fTimeInfo.ppqPos = positionBeats;
-            fTimeInfo.flags |= kVstPpqPosValid;
+            _fTimeInfo.ppqPos = positionBeats;
+            _fTimeInfo.flags |= kVstPpqPosValid;
 
             // Tempo
-            fTimeInfo.tempo  = pos.beats_per_minute;
-            fTimeInfo.flags |= kVstTempoValid;
+            _fTimeInfo.tempo  = pos.beats_per_minute;
+            _fTimeInfo.flags |= kVstTempoValid;
 
             // Bars
-            fTimeInfo.barStartPos = ppqBar;
-            fTimeInfo.flags |= kVstBarsValid;
+            _fTimeInfo.barStartPos = ppqBar;
+            _fTimeInfo.flags |= kVstBarsValid;
 
             // Time Signature
-            fTimeInfo.timeSigNumerator = static_cast<int32_t>(pos.beats_per_bar + 0.5f);
-            fTimeInfo.timeSigDenominator = static_cast<int32_t>(pos.beat_type + 0.5f);
-            fTimeInfo.flags |= kVstTimeSigValid;
+            _fTimeInfo.timeSigNumerator = static_cast<int32_t>(pos.beats_per_bar + 0.5f);
+            _fTimeInfo.timeSigDenominator = static_cast<int32_t>(pos.beat_type + 0.5f);
+            _fTimeInfo.flags |= kVstTimeSigValid;
         }
         else
         {
             // Tempo
-            fTimeInfo.tempo = 120.0;
-            fTimeInfo.flags |= kVstTempoValid;
+            _fTimeInfo.tempo = 120.0;
+            _fTimeInfo.flags |= kVstTempoValid;
 
             // Time Signature
-            fTimeInfo.timeSigNumerator = 4;
-            fTimeInfo.timeSigDenominator = 4;
-            fTimeInfo.flags |= kVstTimeSigValid;
+            _fTimeInfo.timeSigNumerator = 4;
+            _fTimeInfo.timeSigDenominator = 4;
+            _fTimeInfo.flags |= kVstTimeSigValid;
 
             // Missing info
-            fTimeInfo.ppqPos = 0.0;
-            fTimeInfo.barStartPos = 0.0;
+            _fTimeInfo.ppqPos = 0.0;
+            _fTimeInfo.barStartPos = 0.0;
         }
     }
 
@@ -1668,10 +1668,10 @@ VST2_Plugin::process_midi_in (unsigned char *data, unsigned int size,
         // after-touch
         if (status == 0xc0 || status == 0xd0)
         {
-            if (fMidiEventCount >= kPluginMaxMidiEvents*2)
+            if (_fMidiEventCount >= kPluginMaxMidiEvents*2)
                 continue;
 
-            VstMidiEvent& vstMidiEvent(fMidiEvents[fMidiEventCount++]);
+            VstMidiEvent& vstMidiEvent(_fMidiEvents[_fMidiEventCount++]);
             non_zeroStruct(vstMidiEvent);
 
             vstMidiEvent.type        = kVstMidiType;
@@ -1692,10 +1692,10 @@ VST2_Plugin::process_midi_in (unsigned char *data, unsigned int size,
         // note on
         if (status == 0x90)
         {
-            if (fMidiEventCount >= kPluginMaxMidiEvents*2)
+            if (_fMidiEventCount >= kPluginMaxMidiEvents*2)
                 continue;
 
-            VstMidiEvent& vstMidiEvent(fMidiEvents[fMidiEventCount++]);
+            VstMidiEvent& vstMidiEvent(_fMidiEvents[_fMidiEventCount++]);
             non_zeroStruct(vstMidiEvent);
 
             vstMidiEvent.type        = kVstMidiType;
@@ -1708,10 +1708,10 @@ VST2_Plugin::process_midi_in (unsigned char *data, unsigned int size,
         // note off
         if (status == 0x80)
         {
-            if (fMidiEventCount >= kPluginMaxMidiEvents*2)
+            if (_fMidiEventCount >= kPluginMaxMidiEvents*2)
                 continue;
 
-            VstMidiEvent& vstMidiEvent(fMidiEvents[fMidiEventCount++]);
+            VstMidiEvent& vstMidiEvent(_fMidiEvents[_fMidiEventCount++]);
             non_zeroStruct(vstMidiEvent);
 
             vstMidiEvent.type        = kVstMidiType;
@@ -1724,10 +1724,10 @@ VST2_Plugin::process_midi_in (unsigned char *data, unsigned int size,
         // Control Change
         if (status == 0xb0)
         {
-            if (fMidiEventCount >= kPluginMaxMidiEvents*2)
+            if (_fMidiEventCount >= kPluginMaxMidiEvents*2)
                 continue;
 
-            VstMidiEvent& vstMidiEvent(fMidiEvents[fMidiEventCount++]);
+            VstMidiEvent& vstMidiEvent(_fMidiEvents[_fMidiEventCount++]);
             non_zeroStruct(vstMidiEvent);
 
             vstMidiEvent.type        = kVstMidiType;
@@ -1751,12 +1751,12 @@ VST2_Plugin::process_jack_midi_out ( uint32_t nframes, unsigned int port )
         jack_midi_clear_buffer(buf);
         
         // reverse lookup MIDI events
-        for (uint32_t k = (kPluginMaxMidiEvents*2)-1; k >= fMidiEventCount; --k)
+        for (uint32_t k = (kPluginMaxMidiEvents*2)-1; k >= _fMidiEventCount; --k)
         {
-            if (fMidiEvents[k].type == 0)
+            if (_fMidiEvents[k].type == 0)
                 break;
 
-            const VstMidiEvent& vstMidiEvent(fMidiEvents[k]);
+            const VstMidiEvent& vstMidiEvent(_fMidiEvents[k]);
 
             CARLA_SAFE_ASSERT_CONTINUE(vstMidiEvent.deltaFrames >= 0);
             CARLA_SAFE_ASSERT_CONTINUE(vstMidiEvent.midiData[0] != 0);
@@ -1780,7 +1780,7 @@ VST2_Plugin::process_jack_midi_out ( uint32_t nframes, unsigned int port )
 int
 VST2_Plugin::ProcessEvents (void *ptr)
 {
-    if (fMidiEventCount >= kPluginMaxMidiEvents*2-1)
+    if (_fMidiEventCount >= kPluginMaxMidiEvents*2-1)
         return 0;
 
     if (const VstEvents* const vstEvents = (const VstEvents*)ptr)
@@ -1796,11 +1796,11 @@ VST2_Plugin::ProcessEvents (void *ptr)
                 continue;
 
             // reverse-find first free event, and put it there
-            for (uint32_t j=(kPluginMaxMidiEvents*2)-1; j >= fMidiEventCount; --j)
+            for (uint32_t j=(kPluginMaxMidiEvents*2)-1; j >= _fMidiEventCount; --j)
             {
-                if (fMidiEvents[j].type == 0)
+                if (_fMidiEvents[j].type == 0)
                 {
-                    std::memcpy(&fMidiEvents[j], vstMidiEvent, sizeof(VstMidiEvent));
+                    std::memcpy(&_fMidiEvents[j], vstMidiEvent, sizeof(VstMidiEvent));
                     break;
                 }
             }
