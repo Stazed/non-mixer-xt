@@ -102,7 +102,7 @@ public:
     int vst2_dispatch(long opcode, long index, long value, void *ptr, float opt) const;
     // Specific accessors.
     AEffect *vst2_effect() const { return _pEffect; }
-    bool isConfigure() const { return m_bConfigure; }
+    bool isConfigure() const { return _bConfigure; }
 
     // Save/Restore state
     void save_VST2_plugin_state(const std::string &filename);
@@ -139,19 +139,19 @@ private:
     } _fEvents;
 
     // Cached port counts.
-    unsigned short m_iControlIns;
-    unsigned short m_iControlOuts;
-    unsigned short m_iAudioIns;
-    unsigned short m_iAudioOuts;
-    unsigned short m_iMidiIns;
-    unsigned short m_iMidiOuts;
+    unsigned short _iControlIns;
+    unsigned short _iControlOuts;
+    unsigned short _iAudioIns;
+    unsigned short _iAudioOuts;
+    unsigned short _iMidiIns;
+    unsigned short _iMidiOuts;
 
-    VstParameterProperties m_props;
+    VstParameterProperties _param_props;
 
     // Cached flags.
-    bool m_bRealtime;
-    bool m_bConfigure;
-    bool m_bEditor;
+    bool _bRealtime;    // not used
+    bool _bConfigure;
+    bool _bEditor;
     bool _activated;
 
     uint32_t  _position;        ///< Transport position in frames

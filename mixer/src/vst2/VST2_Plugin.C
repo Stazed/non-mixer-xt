@@ -97,15 +97,15 @@ VST2_Plugin::VST2_Plugin() :
     _fMidiEventCount(0),
     _fTimeInfo(),
     _fEvents(),
-    m_iControlIns(0),
-    m_iControlOuts(0),
-    m_iAudioIns(0),
-    m_iAudioOuts(0),
-    m_iMidiIns(0),
-    m_iMidiOuts(0),
-    m_bRealtime(false),
-    m_bConfigure(false),
-    m_bEditor(false),
+    _iControlIns(0),
+    _iControlOuts(0),
+    _iAudioIns(0),
+    _iAudioOuts(0),
+    _iMidiIns(0),
+    _iMidiOuts(0),
+    _bRealtime(false),
+    _bConfigure(false),
+    _bEditor(false),
     _activated(false),
     _position(0),
     _bpm(120.0f),
@@ -561,7 +561,7 @@ VST2_Plugin::process ( nframes_t nframes )
 bool
 VST2_Plugin::try_custom_ui()
 {
-    if(!m_bEditor)
+    if(!_bEditor)
         return false;
 
     /* Toggle show and hide */
@@ -912,7 +912,7 @@ VST2_Plugin::open_descriptor ( unsigned long iIndex )
     if (vst2_canDo("mixDryWet"))           _iFlagsEx |= effFlagsExCanMixDryWet;
     if (vst2_canDo("midiProgramNames"))    _iFlagsEx |= effFlagsExCanMidiProgramNames;
 
-    m_bEditor = (_pEffect->flags & effFlagsHasEditor);
+    _bEditor = (_pEffect->flags & effFlagsHasEditor);
 #endif
     return true;
 }
@@ -931,7 +931,7 @@ VST2_Plugin::close_descriptor (void)
 
     _pEffect  = nullptr;
     _iFlagsEx = 0;
-    m_bEditor  = false;
+    _bEditor  = false;
 }
 
 void
@@ -974,24 +974,24 @@ VST2_Plugin::initialize_plugin()
 //	if (vst2_canDo("midiProgramNames"))    _iFlagsEx |= effFlagsExCanMidiProgramNames;
 
     // Compute and cache port counts...
-    m_iControlIns  = _pEffect->numParams;
-    m_iControlOuts = 0;
-    m_iAudioIns    = _pEffect->numInputs;
-    m_iAudioOuts   = _pEffect->numOutputs;
-    m_iMidiIns     = ((_iFlagsEx & effFlagsExCanReceiveVstMidiEvents)
+    _iControlIns  = _pEffect->numParams;
+    _iControlOuts = 0;
+    _iAudioIns    = _pEffect->numInputs;
+    _iAudioOuts   = _pEffect->numOutputs;
+    _iMidiIns     = ((_iFlagsEx & effFlagsExCanReceiveVstMidiEvents)
             || (_pEffect->flags & effFlagsIsSynth) ? 1 : 0);
-    m_iMidiOuts    = ((_iFlagsEx & effFlagsExCanSendVstMidiEvents) ? 1 : 0);
+    _iMidiOuts    = ((_iFlagsEx & effFlagsExCanSendVstMidiEvents) ? 1 : 0);
 
     // Cache flags.
-    m_bRealtime  = true;
-    m_bConfigure = (_pEffect->flags & effFlagsProgramChunks);
-    m_bEditor    = (_pEffect->flags & effFlagsHasEditor);
+    _bRealtime  = true;
+    _bConfigure = (_pEffect->flags & effFlagsProgramChunks);
+    _bEditor    = (_pEffect->flags & effFlagsHasEditor);
 
     // HACK: Some native VST2 plugins with a GUI editor
     // need to skip explicit shared library unloading,
     // on close, in order to avoid mysterious crashes
     // later on session and/or application exit.
-  //  if (m_bEditor) file()->setAutoUnload(false);
+  //  if (_bEditor) file()->setAutoUnload(false);
 
     return true;
 }
@@ -1343,14 +1343,14 @@ VST2_Plugin::create_audio_ports()
 {
     _plugin_ins = 0;
     _plugin_outs = 0;
-    for (int32_t i = 0; i < m_iAudioIns; ++i)
+    for (int32_t i = 0; i < _iAudioIns; ++i)
     {
         add_port( Port( this, Port::INPUT, Port::AUDIO, "input" ) );
         audio_input[i].hints.plug_port_index = i;
         _plugin_ins++;
     }
 
-    for (int32_t i = 0; i < m_iAudioOuts; ++i)
+    for (int32_t i = 0; i < _iAudioOuts; ++i)
     {
         add_port( Port( this, Port::OUTPUT, Port::AUDIO, "output" ) );
         audio_output[i].hints.plug_port_index = i;
@@ -1366,23 +1366,23 @@ VST2_Plugin::create_audio_ports()
 void
 VST2_Plugin::create_midi_ports()
 {
-    for (int32_t i = 0; i < m_iMidiIns; ++i)
+    for (int32_t i = 0; i < _iMidiIns; ++i)
     {
         add_port( Port( this, Port::INPUT, Port::MIDI, "midi_in" ) );
     }
 
-    for (int32_t i = 0; i < m_iMidiOuts; ++i)
+    for (int32_t i = 0; i < _iMidiOuts; ++i)
     {
         add_port( Port( this, Port::OUTPUT, Port::MIDI, "midi_out" ) );
     }
 
-    MESSAGE( "Plugin has %i MIDI ins and %i MIDI outs", m_iMidiIns, m_iMidiOuts);
+    MESSAGE( "Plugin has %i MIDI ins and %i MIDI outs", _iMidiIns, _iMidiOuts);
 }
 
 void
 VST2_Plugin::create_control_ports()
 {
-    for (unsigned long iIndex = 0; iIndex < m_iControlIns; ++iIndex)
+    for (unsigned long iIndex = 0; iIndex < _iControlIns; ++iIndex)
     {
         Port::Direction d = Port::INPUT;
 
@@ -1393,10 +1393,10 @@ VST2_Plugin::create_control_ports()
             ::snprintf(szName, sizeof(szName), "Param #%lu", iIndex + 1);
 
         bool have_props = false;
-        ::memset(&m_props, 0, sizeof(m_props));
-        if (vst2_dispatch(effGetParameterProperties, iIndex, 0, (void *) &m_props, 0.0f))
+        ::memset(&_param_props, 0, sizeof(_param_props));
+        if (vst2_dispatch(effGetParameterProperties, iIndex, 0, (void *) &_param_props, 0.0f))
         {
-            ::snprintf(szName, sizeof(szName), "%s", m_props.label);
+            ::snprintf(szName, sizeof(szName), "%s", _param_props.label);
             have_props = true;
         }
 
@@ -1405,8 +1405,8 @@ VST2_Plugin::create_control_ports()
         /* Used for OSC path creation unique symbol */
         std::string osc_symbol;
 
-        if(have_props && (m_props.shortLabel[0] != 0))
-            osc_symbol = strdup( m_props.shortLabel );
+        if(have_props && (_param_props.shortLabel[0] != 0))
+            osc_symbol = strdup( _param_props.shortLabel );
         else
             osc_symbol = strdup( szName );
 
@@ -1421,17 +1421,17 @@ VST2_Plugin::create_control_ports()
 
         if(have_props)
         {
-            if ((m_props.flags & kVstParameterUsesIntegerMinMax))
+            if ((_param_props.flags & kVstParameterUsesIntegerMinMax))
             {
                 p.hints.type = Port::Hints::LV2_INTEGER;
-                p.hints.minimum = (float(m_props.minInteger));
-                p.hints.maximum = (float(m_props.maxInteger));
+                p.hints.minimum = (float(_param_props.minInteger));
+                p.hints.maximum = (float(_param_props.maxInteger));
             }
         }
 
         if(have_props)
         {
-            if ((m_props.flags & kVstParameterIsSwitch))
+            if ((_param_props.flags & kVstParameterIsSwitch))
                 p.hints.type = Port::Hints::BOOLEAN;
         }
 
