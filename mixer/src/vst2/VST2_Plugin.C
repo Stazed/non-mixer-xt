@@ -1017,8 +1017,17 @@ VST2_Plugin::updateParamValue (
 {
     if(iIndex < control_input.size())
     {
-        _is_from_custom_ui = !bUpdate;
-        control_input[iIndex].control_value(fValue);
+        float value = fValue;
+        if(control_input[iIndex].hints.type == Port::Hints::LV2_INTEGER)
+            value = (control_input[iIndex].hints.maximum - control_input[iIndex].hints.minimum) * fValue;
+
+        DMESSAGE("Param value = %f", value);
+        
+        if(control_input[iIndex].control_value() != value)
+        {
+            _is_from_custom_ui = !bUpdate;
+            control_input[iIndex].control_value(value);
+        }
     }
 }
 
@@ -1031,12 +1040,7 @@ VST2_Plugin::updateParamValues ( bool bUpdate )
         for (unsigned int i = 0; i < control_input.size(); ++i)
         {
             const float fValue = m_pEffect->getParameter(m_pEffect, static_cast<int32_t>(i));
-
-            if(control_input[i].control_value() != fValue)
-            {
-                _is_from_custom_ui = !bUpdate;
-                control_input[i].control_value(fValue);
-            }
+            updateParamValue(i, fValue, bUpdate);
         }
     }
 }
@@ -1419,7 +1423,7 @@ VST2_Plugin::create_control_ports()
         {
             if ((m_props.flags & kVstParameterUsesIntegerMinMax))
             {
-                p.hints.type = Port::Hints::INTEGER;
+                p.hints.type = Port::Hints::LV2_INTEGER;
                 p.hints.minimum = (float(m_props.minInteger));
                 p.hints.maximum = (float(m_props.maxInteger));
             }
@@ -1434,7 +1438,13 @@ VST2_Plugin::create_control_ports()
         // ATTN: Set default value as initial one...
         if (m_pEffect)
         {
-            p.hints.default_value = (float) m_pEffect->getParameter(m_pEffect, iIndex);
+            float value = (float) m_pEffect->getParameter(m_pEffect, iIndex);
+            if(p.hints.type == Port::Hints::LV2_INTEGER)
+            {
+                value = (p.hints.maximum - p.hints.minimum) * value;
+            }
+            p.hints.default_value = value;
+            DMESSAGE("Default value %f", value);
         }
 
         float *control_value = new float;

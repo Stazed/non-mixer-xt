@@ -386,7 +386,7 @@ Module_Parameter_Editor::make_controls ( void )
 
             if ( p->hints.type & Module::Port::Hints::LOGARITHMIC )
                 o->log(true);
-#ifdef LV2_SUPPORT
+#if defined(LV2_SUPPORT) || defined(VST2_SUPPORT)
             if ( p->hints.type == Module::Port::Hints::LV2_INTEGER )
             {
                 o->precision(0);

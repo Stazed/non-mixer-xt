@@ -552,6 +552,12 @@ Module::handle_control_changed ( Module::Port *p )
 
             uint32_t iIndex = p->hints.plug_port_index;
             float value = p->control_value();
+            
+            if(p->hints.type == Port::Hints::LV2_INTEGER)
+            {
+                value = value / float(p->hints.maximum - p->hints.minimum);
+            }
+            
             DMESSAGE("VST2 Param ID = %d: Value = %f", iIndex, value);
             pm->setParameter(iIndex, value);
         }
