@@ -6,7 +6,7 @@ Screenshot
 
 ![screenshot](https://raw.github.com/Stazed/non-mixer-xt/main/mixer/doc/non-mixer-xt-1.0.0.png "Non-Mixer-XT Release 1.0.0")
 
-Non-Mixer-XT is a reboot of original Non-Mixer with eXTended LV2 support, CLAP support and VST3* support. LV2 support includes X11, ShowInterface and External custom UI support. In addition, MIDI support with JACK timebase support and much more. The generic parameter editor has been redesigned to accommodate larger LV2 plugins, preset support and state save and restore. With version 1.1.0, CLAP support was added. With version 1.2.0, VST3 support was added. Special thanks to Filipe Coelho from the Carla project, David Robillard from Jalv project, and Rui Nuno Capela from the Qtractor project.
+Non-Mixer-XT is a reboot of original Non-Mixer with eXTended LV2 support, CLAP, VST(2) support and VST3* support. LV2 support includes X11, ShowInterface and External custom UI support. In addition, MIDI support with JACK timebase support and much more. The generic parameter editor has been redesigned to accommodate larger LV2 plugins, preset support and state save and restore. With version 1.1.0, CLAP support was added. With version 1.2.0, VST3 support was added. With version 1.3.0, VST(2) support was added using vestige.h by Javier Serrano Polo. Special thanks to Filipe Coelho from the Carla project, David Robillard from Jalv project, and Rui Nuno Capela from the Qtractor project.
 
 
 Non-Mixer-XT build instructions:
@@ -86,6 +86,12 @@ then NativeOptimizations must be disabled:
 ```bash
     cmake -DNativeOptimizations=OFF ..
 ```
+To disable VST2 support:
+
+```bash
+    cmake -DEnableVST2Support=OFF ..
+```
+
 To disable VST3 support:
 
 ```bash
