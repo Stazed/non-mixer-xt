@@ -411,10 +411,11 @@ void Mixer::cb_menu(Fl_Widget* o) {
             "David Robillard for LV2 atom ports and MIDI\n"
             "event support from the Jalv project.\n"
             "Rui Nuno Capela for LV2 showInterface, external\n"
-            "UI, presets CLAP and VST3* support from the Qtractor project.\n"
+            "UI, presets CLAP, VST(2)** and VST3* support from the Qtractor project.\n"
             "Jean-Emmanuel Doucet - Extended OSC support.\n"
             "Non Mixer XT modifications by Stazed.\n\n"
-            "*VST is a trademark of Steinberg Media Technologies GmbH."
+            "*VST is a trademark of Steinberg Media Technologies GmbH.\n"
+            "**VST(2) support using vestige.h by Javier Serrano Polo"
         );
 
         /* The FL submodule label is set to timeline, so reset it here to the mixer */
