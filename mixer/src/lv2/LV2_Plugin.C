@@ -46,6 +46,39 @@ const std::vector<std::string> v_ui_types
     LV2_UI__Qt5UI,
     LV2_UI__UI      // This s/b last or all match and crash - ??? FIXME check
 };
+
+// URIs of X42 X11 embedded plugins that don't like suil_instance_free().
+// Really ugly HACK
+const std::vector<std::string> v_X42_embedded
+{
+    "http://gareus.org/oss/lv2/avldrums#BlackPearl",
+    "http://gareus.org/oss/lv2/avldrums#BlackPearlMulti",
+    "http://gareus.org/oss/lv2/avldrums#BlondeBop",
+    "http://gareus.org/oss/lv2/avldrums#BlondeBopMulti",
+    "http://gareus.org/oss/lv2/avldrums#BlondeBopHR",
+    "http://gareus.org/oss/lv2/avldrums#BlondeBopHRMulti",
+    "http://gareus.org/oss/lv2/avldrums#BuskmansHoliday",
+    "http://gareus.org/oss/lv2/stepseq#s8n8",
+    "http://gareus.org/oss/lv2/phaserotate",
+    "http://gareus.org/oss/lv2/phaserotate#stereo",
+    "http://gareus.org/oss/lv2/avldrums#RedZeppelin",
+    "http://gareus.org/oss/lv2/avldrums#RedZeppelinMulti",
+    "http://gareus.org/oss/lv2/sisco#Mono",
+    "http://gareus.org/oss/lv2/sisco#Stereo",
+    "http://gareus.org/oss/lv2/spectra#Mono",
+//    "http://gareus.org/oss/lv2/balance",      // This one works but does not fix others
+//    "http://gareus.org/oss/lv2/tuna#one",     // These fix the others!!!!
+//    "http://gareus.org/oss/lv2/tuna#two",     // ditto
+    "http://gareus.org/oss/lv2/fat1",
+    "http://gareus.org/oss/lv2/fat1#microtonal",
+    "http://gareus.org/oss/lv2/fat1#scales",
+    "http://gareus.org/oss/lv2/darc#mono",
+    "http://gareus.org/oss/lv2/darc#stereo",
+    "http://gareus.org/oss/lv2/dpl#mono",
+    "http://gareus.org/oss/lv2/dpl#stereo",
+    "http://gareus.org/oss/lv2/fil4#mono",
+    "http://gareus.org/oss/lv2/fil4#stereo"
+};
 #endif
 
 #ifdef PRESET_SUPPORT
@@ -552,9 +585,22 @@ LV2_Plugin::~LV2_Plugin ( )
         {
             // suil_instance_free() causes crash on X42 plugins when added second time.... WTF
             // and of course causes crash of others if not freed.... sigh!!
-            // So going with X42. The ones that crash are obscure or work with
-            // other plugin type. Maybe someday this can be resolved... FIXME.
-      //      suil_instance_free(_ui_instance);
+            // So to the HACK with it... We lookup the known bad URIs here and don't call
+            // suil_instance_free() on them... Maybe someday this will get resolved. FIXME.
+            bool b_x42_bad = false;
+            for (unsigned i = 0; i < v_X42_embedded.size(); ++i)
+            {
+                if ( ::strcmp(_idata->descriptor->URI, v_X42_embedded[i].c_str()) == 0 )
+                {
+                    DMESSAGE("URI - X42BAD = %s",_idata->descriptor->URI);
+                    b_x42_bad = true;
+                    break;
+                }
+            }
+            
+            if(!b_x42_bad)
+                suil_instance_free(_ui_instance);
+
             _ui_instance = NULL;
         }
         if(_ui_host)
@@ -2238,7 +2284,7 @@ LV2_Plugin::process_atom_out_events( uint32_t nframes, unsigned int port )
 
         if( (_ui_instance && _x_is_visible) || (_editor && _editor->visible()) )
         {
-            DMESSAGE("SEND to UI index = %d", atom_output[port].hints.plug_port_index);
+          //  DMESSAGE("SEND to UI index = %d", atom_output[port].hints.plug_port_index);
             write_atom_event(_plugin_to_ui, atom_output[port].hints.plug_port_index, size, type, body);
         }
     }
