@@ -550,7 +550,11 @@ LV2_Plugin::~LV2_Plugin ( )
     {
         if(_ui_instance)
         {
-            suil_instance_free(_ui_instance);
+            // suil_instance_free() causes crash on X42 plugins when added second time.... WTF
+            // and of course causes crash of others if not freed.... sigh!!
+            // So going with X42. The ones that crash are obscure or work with
+            // other plugin type. Maybe someday this can be resolved... FIXME.
+      //      suil_instance_free(_ui_instance);
             _ui_instance = NULL;
         }
         if(_ui_host)
@@ -963,7 +967,7 @@ LV2_Plugin::create_control_ports()
 
             add_port( p );
 
-            DMESSAGE( "Plugin has control port \"%s\" (default: %f)", rdfport.Name, p.hints.default_value );
+          //  DMESSAGE( "Plugin has control port \"%s\" (default: %f)", rdfport.Name, p.hints.default_value );
         }
     }
 
@@ -2494,6 +2498,7 @@ LV2_Plugin::custom_ui_instantiate()
         {
             native_ui_type = v_ui_types[0].c_str();
             _use_X11_interface = true;
+            MESSAGE("Using X11 Embedded UI");
         }
     }
 
