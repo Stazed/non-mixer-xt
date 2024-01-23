@@ -1531,7 +1531,7 @@ VST3_Plugin::process_jack_midi_in ( uint32_t nframes, unsigned int port )
             jack_midi_event_t ev;
             jack_midi_event_get(&ev, buf, i);
 
-            process_midi_in(ev.buffer, ev.size, ev.time, 0);
+            process_midi_in(ev.buffer, ev.size, ev.time, port);
         }
     }
 }
