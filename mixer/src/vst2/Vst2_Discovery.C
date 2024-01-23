@@ -120,7 +120,7 @@ typedef intptr_t VstIntPtr;
 
 typedef AEffect* (*VST_GetPluginInstance) (audioMasterCallback);
 
-static VstIntPtr VSTCALLBACK qtractor_vst2_scan_callback (AEffect *effect,
+static VstIntPtr VSTCALLBACK vst2_discovery_scan_callback (AEffect *effect,
 	VstInt32 opcode, VstInt32 index, VstIntPtr value, void *ptr, float opt);
 
 // Current working VST Shell identifier.
@@ -155,25 +155,25 @@ const int effFlagsProgramChunks = 32;
 
 
 //----------------------------------------------------------------------
-// class qtractor_vst2_scan -- VST2 plugin re bones) interface
+// class vst2_discovery_scan -- VST2 plugin re bones) interface
 //
 
 // Constructor.
-qtractor_vst2_scan::qtractor_vst2_scan (void)
+vst2_discovery_scan::vst2_discovery_scan (void)
 	: m_pLibrary(nullptr), m_pEffect(nullptr), m_iFlagsEx(0), m_bEditor(false)
 {
 }
 
 
 // destructor.
-qtractor_vst2_scan::~qtractor_vst2_scan (void)
+vst2_discovery_scan::~vst2_discovery_scan (void)
 {
     close();
 }
 
 
 // File loader.
-bool qtractor_vst2_scan::open ( const std::string& sFilename )
+bool vst2_discovery_scan::open ( const std::string& sFilename )
 {
     close();
 
@@ -192,7 +192,7 @@ bool qtractor_vst2_scan::open ( const std::string& sFilename )
 
 
 // Plugin loader.
-bool qtractor_vst2_scan::open_descriptor ( unsigned long iIndex )
+bool vst2_discovery_scan::open_descriptor ( unsigned long iIndex )
 {
     if (m_pLibrary == nullptr)
         return false;
@@ -218,7 +218,7 @@ bool qtractor_vst2_scan::open_descriptor ( unsigned long iIndex )
         return false;
     }
 
-    m_pEffect = (*pfnGetPluginInstance)(qtractor_vst2_scan_callback);
+    m_pEffect = (*pfnGetPluginInstance)(vst2_discovery_scan_callback);
 
     if (m_pEffect == nullptr)
     {
@@ -272,7 +272,7 @@ bool qtractor_vst2_scan::open_descriptor ( unsigned long iIndex )
             return false;
 	}
 
-        m_pEffect = (*pfnGetPluginInstance)(qtractor_vst2_scan_callback);
+        m_pEffect = (*pfnGetPluginInstance)(vst2_discovery_scan_callback);
 
         // Not needed anymore, hopefully...
         g_iVst2ShellCurrentId = 0;
@@ -368,7 +368,7 @@ bool qtractor_vst2_scan::open_descriptor ( unsigned long iIndex )
 
 
 // Plugin unloader.
-void qtractor_vst2_scan::close_descriptor (void)
+void vst2_discovery_scan::close_descriptor (void)
 {
     if (m_pEffect == nullptr)
         return;
@@ -385,7 +385,7 @@ void qtractor_vst2_scan::close_descriptor (void)
 
 
 // File unloader.
-void qtractor_vst2_scan::close (void)
+void vst2_discovery_scan::close (void)
 {
     if (m_pLibrary == nullptr)
         return;
@@ -402,7 +402,7 @@ void qtractor_vst2_scan::close (void)
 
 
 // Check wether plugin is loaded.
-bool qtractor_vst2_scan::isOpen (void) const
+bool vst2_discovery_scan::isOpen (void) const
 {
     if (m_pLibrary == nullptr)
         return false;
@@ -410,34 +410,34 @@ bool qtractor_vst2_scan::isOpen (void) const
     return true;
 }
 
-unsigned int qtractor_vst2_scan::uniqueID() const
+unsigned int vst2_discovery_scan::uniqueID() const
 	{ return (m_pEffect ? m_pEffect->uniqueID : 0); }
 
-int qtractor_vst2_scan::numPrograms() const
+int vst2_discovery_scan::numPrograms() const
 	{ return (m_pEffect ? m_pEffect->numPrograms : 0); }
-int qtractor_vst2_scan::numParams() const
+int vst2_discovery_scan::numParams() const
 	{ return (m_pEffect ? m_pEffect->numParams : 0); }
-int qtractor_vst2_scan::numInputs() const
+int vst2_discovery_scan::numInputs() const
 	{ return (m_pEffect ? m_pEffect->numInputs : 0); }
-int qtractor_vst2_scan::numOutputs() const
+int vst2_discovery_scan::numOutputs() const
 	{ return (m_pEffect ? m_pEffect->numOutputs : 0); }
 
-int qtractor_vst2_scan::numMidiInputs() const
+int vst2_discovery_scan::numMidiInputs() const
 	{ return (m_pEffect && (
 		(m_iFlagsEx & effFlagsExCanReceiveVstMidiEvents) ||
 		(m_pEffect->flags & effFlagsIsSynth) ? 1 : 0)); }
 
-int qtractor_vst2_scan::numMidiOutputs() const
+int vst2_discovery_scan::numMidiOutputs() const
 	{ return ((m_iFlagsEx & effFlagsExCanSendVstMidiEvents) ? 1 : 0); }
 
-bool qtractor_vst2_scan::hasEditor() const
+bool vst2_discovery_scan::hasEditor() const
 	{ return m_bEditor; }
-bool qtractor_vst2_scan::hasProgramChunks() const
+bool vst2_discovery_scan::hasProgramChunks() const
 	{ return (m_pEffect && (m_pEffect->flags & effFlagsProgramChunks)); }
 
 
 // VST host dispatcher.
-int qtractor_vst2_scan::vst2_dispatch (
+int vst2_discovery_scan::vst2_dispatch (
 	long opcode, long index, long value, void *ptr, float opt ) const
 {
     if (m_pEffect == nullptr)
@@ -451,7 +451,7 @@ int qtractor_vst2_scan::vst2_dispatch (
 
 
 // VST flag inquirer.
-bool qtractor_vst2_scan::vst2_canDo ( const char *pszCanDo ) const
+bool vst2_discovery_scan::vst2_canDo ( const char *pszCanDo ) const
 {
     return (vst2_dispatch(effCanDo, 0, 0, (void *) pszCanDo, 0.0f) > 0);
 }
@@ -460,7 +460,7 @@ bool qtractor_vst2_scan::vst2_canDo ( const char *pszCanDo ) const
 //----------------------------------------------------------------------
 // The magnificient host callback, which every VST plugin will call.
 
-static VstIntPtr VSTCALLBACK qtractor_vst2_scan_callback ( AEffect* effect,
+static VstIntPtr VSTCALLBACK vst2_discovery_scan_callback ( AEffect* effect,
 	VstInt32 opcode, VstInt32 index, VstIntPtr /*value*/, void */*ptr*/, float opt )
 {
     VstIntPtr ret = 0;
@@ -503,7 +503,7 @@ void vst2_discovery_scan_file ( const std::string& sFilename, std::list<Plugin_M
 {
     DMESSAGE("scan_file(\"%s\")", sFilename.c_str());
 
-    qtractor_vst2_scan plugin;
+    vst2_discovery_scan plugin;
 
     if (!plugin.open(sFilename))
             return;

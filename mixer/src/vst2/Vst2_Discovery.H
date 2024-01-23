@@ -54,15 +54,15 @@ std::vector<std::filesystem::path> validVST2SearchPaths();
 typedef struct _AEffect AEffect;
 
 
-class qtractor_vst2_scan
+class vst2_discovery_scan
 {
 public:
 
     // Constructor.
-    qtractor_vst2_scan();
+    vst2_discovery_scan();
 
     // destructor.
-    ~qtractor_vst2_scan();
+    ~vst2_discovery_scan();
 
     // File loader.
     bool open(const std::string& sFilename);
