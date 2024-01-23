@@ -37,7 +37,7 @@ using namespace Linux;
 namespace VST3IMPL
 {
 //----------------------------------------------------------------------
-// class qtractorVst3Plugin::ParamQueue -- VST3 plugin parameter queue impl.
+// class ParamQueue -- VST3 plugin parameter queue impl.
 //
 
 class ParamQueue : public Vst::IParamValueQueue
@@ -178,7 +178,7 @@ private:
 
 
 //----------------------------------------------------------------------
-// class qtractorVst3Plugin::ParamChanges -- VST3 plugin parameter changes impl.
+// class ParamChanges -- VST3 plugin parameter changes impl.
 //
 
 class ParamChanges : public Vst::IParameterChanges
@@ -284,7 +284,7 @@ private:
 };
 
 //----------------------------------------------------------------------
-// class qtractorVst3Plugin::EventList -- VST3 plugin event list impl.
+// class EventList -- VST3 plugin event list impl.
 //
 
 class EventList : public Vst::IEventList
