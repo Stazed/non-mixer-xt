@@ -238,6 +238,9 @@ VST2_Plugin::load_plugin ( Module::Picked picked )
 
     activate();
 
+    if(!_plugin_ins)
+        is_zero_input_synth(true);
+
     _use_custom_data = true;
 
     return true;
