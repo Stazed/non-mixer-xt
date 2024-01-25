@@ -31,6 +31,7 @@ option (EnableLV2Support "Enable LV2 plugin support" ON)
 option (EnableCLAPSupport "Enable CLAP plugin support" ON)
 option (EnableVST2Support "Enable VST(2) plugin support" ON)
 option (EnableVST3Support "Enable VST3 plugin support" ON)
+option (EnablePangoCairo "Optional: Enable PangoCairo needed by some plugins" ON)
 
 
 set(CMAKE_BUILD_TYPE "Release")
@@ -69,6 +70,15 @@ if(THREADS_HAVE_PTHREAD_ARG)
   set_property(TARGET non-mixer-xt PROPERTY COMPILE_OPTIONS "-pthread")
   set_property(TARGET non-mixer-xt PROPERTY INTERFACE_COMPILE_OPTIONS "-pthread")
 endif()
+
+#Being proactive here. Some plugins (X42 X11 embedded) will unload the pangocairo
+#library when the plugin is removed and then cannot find it on a second add causing
+#a freeze or crash. So this will make the library available to any plugin that needs
+#it. Though this should really be fixed by the plugin developer.
+if (EnablePangoCairo)
+    set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
+    find_package(PangoCairo REQUIRED)
+endif (EnablePangoCairo)
 
 pkg_check_modules(JACK REQUIRED jack>=0.115.6)
 pkg_check_modules(LIBLO liblo>=0.26 REQUIRED)
@@ -292,6 +302,10 @@ package_status(JACK_METADATA       "Jack metadata support. . . . . . . . . . . .
 package_status(JACK_LATENCY_RANGE  "Jack port latency range support. . . . . . . . . . . . .:"  )
 package_status(HAVE_BUILTIN_ALIGNED "Has builtin assume aligned . . . . . . . . . . . . . . .:"  )
 
+if (EnablePangoCairo)
+    package_status(PangoCairo_FOUND    "PangoCairo support . . . . . . . . . . . . . . . . . . .:" )
+endif(EnablePangoCairo)
+
 message (STATUS)
 message (STATUS                    "____________________ User Options________________________"  )
 package_status(EnableLADSPASupport "Build LADSPA support . . . . . . . . . . . . . . . . . .:"  )
@@ -299,6 +313,7 @@ package_status(EnableLV2Support    "Build LV2 support. . . . . . . . . . . . . .
 package_status(EnableCLAPSupport   "Build CLAP support . . . . . . . . . . . . . . . . . . .:"  )
 package_status(EnableVST2Support   "Build VST2 support . . . . . . . . . . . . . . . . . . .:"  )
 package_status(EnableVST3Support   "Build VST3 support . . . . . . . . . . . . . . . . . . .:"  )
+package_status(EnablePangoCairo    "Enable PangoCairo support. . . . . . . . . . . . . . . .:"  )
 package_status(EnableOptimizations "Use optimizations. . . . . . . . . . . . . . . . . . . .:"  )
 package_status(EnableSSE           "Use sse. . . . . . . . . . . . . . . . . . . . . . . . .:"  )
 package_status(EnableSSE2          "Use sse2 . . . . . . . . . . . . . . . . . . . . . . . .:"  )

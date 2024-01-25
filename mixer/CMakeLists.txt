@@ -83,6 +83,7 @@ set(ExternLibraries
     ${LILV_LIBRARIES}
     ${SUIL_LIBRARIES}
     ${ZIX_LIBRARIES}
+    ${PangoCairo_LIBRARIES}
     dl
     m
     lrdf
@@ -121,6 +122,7 @@ target_include_directories (
     ${LIBLO_INCLUDE_DIRS}
     ${ZIX_INCLUDE_DIRS}
     ${CLAP_INCLUDEDIR}
+    ${PangoCairo_INCLUDE_DIRS}
 )
 
 target_link_libraries (non-mixer-xt ${ExternLibraries})
