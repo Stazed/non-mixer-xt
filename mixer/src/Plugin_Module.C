@@ -141,10 +141,17 @@ Plugin_Module::can_support_inputs ( int n )
     }
     /* e.g. STEREO going into MONO */
     /* we'll run multiple instances of the plugin */
+    /* Only for LADSPA and LV2 */
     else if ( n > plugin_ins() &&
               ( plugin_ins() == 1 && plugin_outs() == 1 ) )
     {
-        return n;
+        if( (_plug_type == Type_CLAP) || (_plug_type == Type_VST2) ||
+               (_plug_type == Type_VST3) )
+        {
+            return -1;  // Don't support multiple instances
+        }
+        else    // LADSPA & LV2 can run multiple instance
+            return n;
     }
 
     return -1;
