@@ -15,17 +15,18 @@ Non-Mixer-XT build instructions:
 Dependencies :
 
 * ntk
-* lilv      (Optional LV2 support)
-* suil      (Optional LV2 support)
+* lilv        (Optional LV2 support)
+* suil        (Optional LV2 support)
 * liblo
 * liblo-dev
-* lv2       (Optional LV2 support)
-* lv2-dev   (Optional LV2 support)
-* ladspa    (Optional LADSPA support)
-* liblrdf   (Optional LADSPA support)
+* lv2         (Optional LV2 support)
+* lv2-dev     (Optional LV2 support)
+* ladspa      (Optional LADSPA support)
+* liblrdf     (Optional LADSPA support)
 * jack2
-* zix-0     (Optional LV2 support)
-* clap      (Optional CLAP support)
+* zix-0       (Optional LV2 support)
+* clap        (Optional CLAP support)
+* pangocairo  (optional needed by some plugins)
 
 Getting submodules (nonlib and FL):
 ---------------
