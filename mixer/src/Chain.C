@@ -68,6 +68,14 @@
 #include "clap/CLAP_Plugin.H"
 #endif
 
+#ifdef VST2_SUPPORT
+#include "vst2/VST2_Plugin.H"
+#endif
+
+#ifdef VST3_SUPPORT
+#include "vst3/VST3_Plugin.H"
+#endif
+
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Menu.H>
 #include <FL/fl_ask.H>
@@ -628,7 +636,7 @@ Chain::insert ( Module *m, Module *n )
             n->configure_inputs( 0 );
             modules_pack->add( n );
 
-#if defined(LV2_SUPPORT) || defined(CLAP_SUPPORT) || defined(VST3_SUPPORT)
+#if defined(LV2_SUPPORT) || defined(CLAP_SUPPORT) || defined(VST2_SUPPORT) || defined(VST3_SUPPORT)
             n->configure_midi_inputs();
             n->configure_midi_outputs();
 #endif
@@ -640,7 +648,7 @@ Chain::insert ( Module *m, Module *n )
             n->configure_inputs( module( modules() - 1 )->noutputs() );
             modules_pack->add( n );
     
-#if defined(LV2_SUPPORT) || defined(CLAP_SUPPORT) || defined(VST3_SUPPORT)
+#if defined(LV2_SUPPORT) || defined(CLAP_SUPPORT) || defined(VST2_SUPPORT) || defined(VST3_SUPPORT)
             n->configure_midi_inputs();
             n->configure_midi_outputs();
 
@@ -720,7 +728,7 @@ Chain::insert ( Module *m, Module *n )
                 goto err;
             }
 
-#if defined(LV2_SUPPORT) || defined(CLAP_SUPPORT) || defined(VST3_SUPPORT)
+#if defined(LV2_SUPPORT) || defined(CLAP_SUPPORT) || defined(VST2_SUPPORT) || defined(VST3_SUPPORT)
             n->configure_midi_inputs();
             n->configure_midi_outputs();
 
@@ -778,6 +786,22 @@ err:
         CLAP_Plugin *plug = static_cast<CLAP_Plugin *> (n);
         plug->note_input.clear();
         plug->note_output.clear();
+    }
+#endif
+#ifdef VST2_SUPPORT
+    if(n->_plug_type == Type_VST2)
+    {
+        VST2_Plugin *plug = static_cast<VST2_Plugin *> (n);
+        plug->midi_input.clear();
+        plug->midi_output.clear();
+    }
+#endif
+#ifdef VST3_SUPPORT
+    if(n->_plug_type == Type_VST3)
+    {
+        VST3_Plugin *plug = static_cast<VST3_Plugin *> (n);
+        plug->midi_input.clear();
+        plug->midi_output.clear();
     }
 #endif
 
