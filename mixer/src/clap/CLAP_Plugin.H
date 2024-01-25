@@ -363,7 +363,6 @@ protected:
     bool clapRegisterTimer(const uint32_t periodInMs, clap_id* const timerId);
     bool clapUnregisterTimer(const clap_id timerId);
 
-    bool plugin_instances ( unsigned int );
     void get ( Log_Entry &e ) const override;
     void set ( Log_Entry &e ) override;
 

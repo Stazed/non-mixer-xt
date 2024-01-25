@@ -519,7 +519,6 @@ VST3_Plugin::configure_inputs ( int n )
     }
 
     return true;
-
 }
 
 void

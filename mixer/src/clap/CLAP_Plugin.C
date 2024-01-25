@@ -307,18 +307,8 @@ CLAP_Plugin::setup_host ( clap_host *host, void *host_data )
 }
 
 bool
-CLAP_Plugin::plugin_instances ( unsigned int n )
-{
-    // Currently disabled
-    return false;
-}
-
-
-bool
 CLAP_Plugin::configure_inputs ( int n )
 {
- //   unsigned int inst = _idata->handle.size();
-    
     /* The synth case - no inputs and JACK module has one */
     if( ninputs() == 0 && n == 1)
     {
@@ -338,24 +328,6 @@ CLAP_Plugin::configure_inputs ( int n )
             for ( int i = n; i--; )
                 audio_input.push_back( Port( this, Port::INPUT, Port::AUDIO ) );
         }
-#if 0   // FIXME instances
-        else if ( n >= plugin_ins() &&
-                  ( plugin_ins() == 1 && plugin_outs() == 1 ) )
-        {
-            DMESSAGE( "Running multiple instances of plugin" );
-
-            audio_input.clear();
-            audio_output.clear();
-
-            for ( int i = n; i--; )
-            {
-                add_port( Port( this, Port::INPUT, Port::AUDIO ) );
-                add_port( Port( this, Port::OUTPUT, Port::AUDIO ) );
-            }
-
-            inst = n;
-        }
-#endif
         else if ( n == plugin_ins() )
         {
             DMESSAGE( "Plugin input configuration is a perfect match" );
@@ -367,26 +339,6 @@ CLAP_Plugin::configure_inputs ( int n )
         }
     }
 
-#if 0   // FIXME instances
-    if ( loaded() )
-    {
-        bool b = bypass();
-
-        if ( inst != _idata->handle.size() )
-        {
-            if ( !b )
-                deactivate();
-            
-            if ( plugin_instances( inst ) )
-                instances( inst );
-            else
-                return false;
-            
-            if ( !b )
-                activate();
-        }
-    }
-#endif
     return true;
 }
 
@@ -464,58 +416,12 @@ void
 CLAP_Plugin::set_input_buffer ( int n, void *buf )
 {
     _audio_in_buffers[n] = static_cast<float*>( buf );
-
-#if 0   // FIXME instances
-    void* h;
-
-    if ( instances() > 1 )
-    {
-        h = _idata->handle[n];
-        n = 0;
-    }
-    else
-    {
-        h = _idata->handle[0];
-    }
-
-    for ( unsigned int i = 0; i < _idata->lv2.rdf_data->PortCount; ++i )
-    {
-        if ( LV2_IS_PORT_INPUT( _idata->lv2.rdf_data->Ports[i].Types ) &&
-             LV2_IS_PORT_AUDIO( _idata->lv2.rdf_data->Ports[i].Types ) )
-        {
-            if ( n-- == 0 )
-                _idata->lv2.descriptor->connect_port( h, i, (float*)buf );
-        }
-    }
-#endif
 }
 
 void
 CLAP_Plugin::set_output_buffer ( int n, void *buf )
 {
     _audio_out_buffers[n] = static_cast<float*>( buf );
-
-#if 0   // FIXME instances
-    void* h;
-
-    if ( instances() > 1 )
-    {
-        h = _idata->handle[n];
-        n = 0;
-    }
-    else
-        h = _idata->handle[0];
-
-    for ( unsigned int i = 0; i < _idata->lv2.rdf_data->PortCount; ++i )
-    {
-        if ( LV2_IS_PORT_OUTPUT( _idata->lv2.rdf_data->Ports[i].Types ) &&
-            LV2_IS_PORT_AUDIO( _idata->lv2.rdf_data->Ports[i].Types ) )
-        {
-            if ( n-- == 0 )
-                _idata->lv2.descriptor->connect_port( h, i, (float*)buf );
-        }
-    }
-#endif
 }
 
 bool
@@ -1669,16 +1575,6 @@ CLAP_Plugin::activate ( void )
     if ( chain() )
         chain()->client()->lock();
 
-#if 0   // FIXME instances
-    if ( _idata->lv2.descriptor->activate )
-    {
-        for ( unsigned int i = 0; i < _idata->handle.size(); ++i )
-        {
-            _idata->lv2.descriptor->activate( _idata->handle[i] );
-        }
-    }
-#endif
-
     *_bypass = 0.0f;
 
     if ( ! _activated )
@@ -1715,16 +1611,6 @@ CLAP_Plugin::deactivate ( void )
         _activated = false;
         _plugin->deactivate(_plugin);
    }
-
-#if 0   // FIXME instances
-    if ( _idata->lv2.descriptor->deactivate )
-    {
-        for ( unsigned int i = 0; i < _idata->handle.size(); ++i )
-        {
-            _idata->lv2.descriptor->deactivate( _idata->handle[i] );
-        }
-    }
-#endif
 
     if ( chain() )
         chain()->client()->unlock();
