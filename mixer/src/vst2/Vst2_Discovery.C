@@ -126,6 +126,9 @@ static VstIntPtr VSTCALLBACK vst2_discovery_scan_callback (AEffect *effect,
 // Current working VST Shell identifier.
 static int g_iVst2ShellCurrentId = 0;
 
+#define STR_MAX 0xFF
+
+#if 0
 // Specific extended flags that saves us
 // from calling canDo() in audio callbacks.
 enum VST_FlagsEx
@@ -143,8 +146,6 @@ enum VST_FlagsEx
 	effFlagsExCanMidiProgramNames       = 1 << 10
 };
 
-#define STR_MAX 0xFF
-
 // Some VeSTige missing opcodes and flags.
 const int effSetProgramName = 4;
 const int effGetParamLabel = 6;
@@ -152,7 +153,7 @@ const int effGetParamDisplay = 7;
 const int effGetChunk = 23;
 const int effSetChunk = 24;
 const int effFlagsProgramChunks = 32;
-
+#endif
 
 //----------------------------------------------------------------------
 // class vst2_discovery_scan -- VST2 plugin re bones) interface
@@ -164,13 +165,11 @@ vst2_discovery_scan::vst2_discovery_scan (void)
 {
 }
 
-
 // destructor.
 vst2_discovery_scan::~vst2_discovery_scan (void)
 {
     close();
 }
-
 
 // File loader.
 bool vst2_discovery_scan::open ( const std::string& sFilename )
@@ -190,17 +189,10 @@ bool vst2_discovery_scan::open ( const std::string& sFilename )
     return true;
 }
 
-
 // Plugin loader.
 bool vst2_discovery_scan::open_descriptor ( unsigned long iIndex )
 {
     if (m_pLibrary == nullptr)
-        return false;
-
-    // Hack, some plugins -- pizmidi/midiConverter3.so have been known to somehow
-    // get stuck in loop, so gonna abandon it here if the iIndex gets absurd, instead
-    // of crashing, maybe...
-    if (iIndex > 1000)
         return false;
 
     close_descriptor();
@@ -366,7 +358,6 @@ bool vst2_discovery_scan::open_descriptor ( unsigned long iIndex )
     return true;
 }
 
-
 // Plugin unloader.
 void vst2_discovery_scan::close_descriptor (void)
 {
@@ -382,7 +373,6 @@ void vst2_discovery_scan::close_descriptor (void)
     m_bEditor  = false;
     m_sName.clear();
 }
-
 
 // File unloader.
 void vst2_discovery_scan::close (void)
@@ -400,7 +390,6 @@ void vst2_discovery_scan::close (void)
     m_bEditor = false;
 }
 
-
 // Check wether plugin is loaded.
 bool vst2_discovery_scan::isOpen (void) const
 {
@@ -413,14 +402,16 @@ bool vst2_discovery_scan::isOpen (void) const
 unsigned int vst2_discovery_scan::uniqueID() const
 	{ return (m_pEffect ? m_pEffect->uniqueID : 0); }
 
-int vst2_discovery_scan::numPrograms() const
-	{ return (m_pEffect ? m_pEffect->numPrograms : 0); }
-int vst2_discovery_scan::numParams() const
-	{ return (m_pEffect ? m_pEffect->numParams : 0); }
 int vst2_discovery_scan::numInputs() const
 	{ return (m_pEffect ? m_pEffect->numInputs : 0); }
 int vst2_discovery_scan::numOutputs() const
 	{ return (m_pEffect ? m_pEffect->numOutputs : 0); }
+
+#if 0
+int vst2_discovery_scan::numPrograms() const
+	{ return (m_pEffect ? m_pEffect->numPrograms : 0); }
+int vst2_discovery_scan::numParams() const
+	{ return (m_pEffect ? m_pEffect->numParams : 0); }
 
 int vst2_discovery_scan::numMidiInputs() const
 	{ return (m_pEffect && (
@@ -434,7 +425,7 @@ bool vst2_discovery_scan::hasEditor() const
 	{ return m_bEditor; }
 bool vst2_discovery_scan::hasProgramChunks() const
 	{ return (m_pEffect && (m_pEffect->flags & effFlagsProgramChunks)); }
-
+#endif
 
 // VST host dispatcher.
 int vst2_discovery_scan::vst2_dispatch (
@@ -498,7 +489,6 @@ static VstIntPtr VSTCALLBACK vst2_discovery_scan_callback ( AEffect* effect,
 //-------------------------------------------------------------------------
 // The VST plugin stance scan method.
 //
-
 void vst2_discovery_scan_file ( const std::string& sFilename, std::list<Plugin_Module::Plugin_Info> & vst2pr )
 {
     DMESSAGE("scan_file(\"%s\")", sFilename.c_str());
