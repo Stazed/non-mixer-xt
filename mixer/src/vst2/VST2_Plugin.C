@@ -1956,7 +1956,6 @@ VST2_Plugin::set ( Log_Entry &e )
     if ( !load_plugin( picked ) )
     {
         fl_alert( "Could not load VST(2) plugin %s", s_vst2_path.c_str() );
-        // What to do - inform the user and ask if they want to delete?
         return;
     }
 
