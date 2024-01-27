@@ -26,6 +26,7 @@
 #ifdef VST2_SUPPORT
 
 #include <filesystem>
+#include <FL/fl_ask.H>  // fl_alert()
 #include "VST2_Plugin.H"
 #include "../../../nonlib/dsp.h"
 #include "../Chain.H"
@@ -1954,6 +1955,7 @@ VST2_Plugin::set ( Log_Entry &e )
 
     if ( !load_plugin( picked ) )
     {
+        fl_alert( "Could not load VST(2) plugin %s", s_vst2_path.c_str() );
         // What to do - inform the user and ask if they want to delete?
         return;
     }

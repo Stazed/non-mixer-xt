@@ -25,6 +25,7 @@
 #ifdef LADSPA_SUPPORT
 
 #include <math.h>
+#include <FL/fl_ask.H>  // fl_alert()
 
 #include "../../../nonlib/dsp.h"
 
@@ -780,7 +781,12 @@ LADSPA_Plugin::set ( Log_Entry &e )
         if ( ! strcmp( s, ":plugin_id" ) )
         {
             Module::Picked picked = { Type_LADSPA, "", (unsigned long) atol ( v ), "" };
-            load_plugin( picked );
+
+            if(!load_plugin( picked ))
+            {
+                fl_alert( "Could not load LADSPA plugin %ld", atol ( v ) );
+                return;
+            }
         }
         else if ( ! strcmp( s, ":plugin_ins" ) )
         {

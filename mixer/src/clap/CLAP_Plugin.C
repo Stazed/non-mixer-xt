@@ -2597,7 +2597,7 @@ CLAP_Plugin::set ( Log_Entry &e )
 
     if ( !load_plugin( picked ) )
     {
-        // What to do - inform the user and ask if they want to delete?
+        fl_alert( "Could not load CLAP plugin %s", s_clap_path.c_str() );
         return;
     }
 

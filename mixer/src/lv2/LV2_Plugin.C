@@ -26,7 +26,7 @@
 
 #include "LV2_Plugin.H"
 #include <lv2/instance-access/instance-access.h>
-#include <unistd.h>    // usleep()
+#include <FL/fl_ask.H>  // fl_alert()
 
 #include "../Module_Parameter_Editor.H"
 #include "../../../nonlib/dsp.h"
@@ -3159,7 +3159,11 @@ LV2_Plugin::set ( Log_Entry &e )
             _loading_from_file = true;
 #endif
             Module::Picked picked = { Type_LV2, v, 0, "" };
-            load_plugin( picked );
+            if(!load_plugin( picked ))
+            {
+                fl_alert( "Could not load LV2 plugin %s", v );
+                return;
+            }
         }
         else if ( ! strcmp( s, ":plugin_ins" ) )
         {
