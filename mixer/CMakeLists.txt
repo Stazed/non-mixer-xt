@@ -39,6 +39,7 @@ set (ProgSources
     src/Spatializer_Module.C
     src/JACK_Module.C
     src/AUX_Module.C
+    src/Plugin_Scan.C
     src/ladspa/LADSPAInfo.C
     src/ladspa/LADSPA_Plugin.C
     src/lv2/LV2_Plugin.C

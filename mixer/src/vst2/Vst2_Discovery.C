@@ -489,7 +489,7 @@ static VstIntPtr VSTCALLBACK vst2_discovery_scan_callback ( AEffect* effect,
 //-------------------------------------------------------------------------
 // The VST plugin stance scan method.
 //
-void vst2_discovery_scan_file ( const std::string& sFilename, std::list<Plugin_Module::Plugin_Info> & vst2pr )
+void vst2_discovery_scan_file ( const std::string& sFilename, std::list<Plugin_Info> & vst2pr )
 {
     DMESSAGE("scan_file(\"%s\")", sFilename.c_str());
 
@@ -501,7 +501,7 @@ void vst2_discovery_scan_file ( const std::string& sFilename, std::list<Plugin_M
     unsigned long i = 0;
     while (plugin.open_descriptor(i))
     {
-        Plugin_Module::Plugin_Info pi("VST2");
+        Plugin_Info pi("VST2");
 
         pi.s_unique_id = "(null)";  // (null) since we have to have something for favorites save and scan
         pi.name = plugin.name();

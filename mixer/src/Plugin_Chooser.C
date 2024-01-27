@@ -32,7 +32,7 @@
 
 #include <algorithm>
 
-static    std::vector <Plugin_Module::Plugin_Info*> _plugin_rows;
+static    std::vector <Plugin_Info*> _plugin_rows;
 static int previous_favorites = 1;
 static int plugin_type = 0;
 static std::string search_name;
@@ -149,9 +149,9 @@ Plugin_Chooser::search ( const char *name, const char *author, const char *categ
 {
     _plugin_rows.clear();
 
-    for ( std::list<Plugin_Module::Plugin_Info>::iterator i = _plugins.begin(); i != _plugins.end(); ++i )
+    for ( std::list<Plugin_Info>::iterator i = _plugins.begin(); i != _plugins.end(); ++i )
     {
-        Plugin_Module::Plugin_Info *p = &(*i);
+        Plugin_Info *p = &(*i);
 
         if ( strcasestr( p->name.c_str(), name ) &&
              strcasestr( p->author.c_str(), author ) )
@@ -441,7 +441,7 @@ Plugin_Chooser::load_favorites ( void )
 
     while ( 3 == fscanf( fp, "%m[^:]:%lu:%m[^]\n]\n", &type, &id, &c_unique_id ) )
     {
-        for ( std::list<Plugin_Module::Plugin_Info>::iterator i = _plugins.begin();
+        for ( std::list<Plugin_Info>::iterator i = _plugins.begin();
               i != _plugins.end();
               ++i )
         {
@@ -512,7 +512,7 @@ Plugin_Chooser::save_favorites ( void )
     if ( !fp )
         return;
     
-    for ( std::list<Plugin_Module::Plugin_Info>::iterator i = _plugins.begin();
+    for ( std::list<Plugin_Info>::iterator i = _plugins.begin();
           i != _plugins.end();
           ++i )
     {
@@ -532,7 +532,7 @@ Plugin_Chooser::load_categories ( void )
 
     std::list<std::string> categories;
 
-    for ( std::list<Plugin_Module::Plugin_Info>::iterator i = _plugins.begin();
+    for ( std::list<Plugin_Info>::iterator i = _plugins.begin();
           i != _plugins.end();
           ++i )
     {
@@ -564,7 +564,7 @@ Plugin_Chooser::Plugin_Chooser ( int X,int Y,int W,int H, const char *L )
 {
     set_modal();
 
-    _plugins = Plugin_Module::get_all_plugins();
+    _plugins = Plugin_Scan::get_all_plugins();
 
     {
         Plugin_Chooser_UI *o = ui = new Plugin_Chooser_UI(X,Y,W,H);

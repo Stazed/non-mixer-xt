@@ -1760,6 +1760,8 @@ LV2_Plugin::init ( void )
 {
     _plug_type = Type_LV2;
 
+    Lv2WorldClass::getInstance().initIfNeeded(/*::getenv("LV2_PATH")*/);
+
     _idata = new ImplementationData();
 
     _idata->options.maxBufferSize = buffer_size();

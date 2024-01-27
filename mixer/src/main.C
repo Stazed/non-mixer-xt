@@ -323,15 +323,6 @@ main ( int argc, char **argv )
     
     Fl::unlock();   // Don't forget this!!!!
 
-    /* Gets the list of all available plugins for the plugin chooser */
-    Plugin_Module::spawn_discover_thread();
-    /* We need to make sure the discover thread is complete before loading any
-       projects, via NSM or command line. Failure to fully complete the discover
-       before project loading causes intermittent segfault as the required class
-       LADSPAInfo may not be fully instantiated. */
-    MESSAGE( "Waiting for plugins..." );
-    Plugin_Module::join_discover_thread();  // wait here until discover thread completes
-
     mixer->init_osc( osc_port );
         
     if ( nsm_url )

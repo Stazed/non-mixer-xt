@@ -30,7 +30,7 @@
 #include <filesystem>
 #include <vector>
 
-#include "../Plugin_Module.H"
+#include "../Plugin_Scan.H"
 
 namespace vst3_discovery
 {
@@ -137,7 +137,7 @@ private:
 #endif
 };
 
-void vst3_discovery_scan_file ( const std::string& sFilename, std::list<Plugin_Module::Plugin_Info> & vst3pr );
+void vst3_discovery_scan_file ( const std::string& sFilename, std::list<Plugin_Info> & vst3pr );
 
 }   // namespace vst3_discovery
 

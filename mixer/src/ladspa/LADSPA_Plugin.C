@@ -340,12 +340,11 @@ void
 LADSPA_Plugin::init ( void )
 {
     _plug_type = Type_LADSPA;
+    
+    if(!ladspainfo)
+        ladspainfo = new LADSPAInfo();  // FIXME duplicate with Plugin_Scan
 
-    set_ladspainfo();
-
-    ladspainfo = _ladspainfo;
-
-    _idata = new ImplementationData();
+    _idata = new LADSPA_Plugin::ImplementationData();
 }
 
 bool

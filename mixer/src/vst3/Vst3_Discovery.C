@@ -757,7 +757,7 @@ void vst3_discovery_scan::clear (void)
 // vst3_discovery_scan_file - The main scan procedure.
 //
 
-void vst3_discovery_scan_file ( const std::string& sFilename, std::list<Plugin_Module::Plugin_Info> & vst3pr )
+void vst3_discovery_scan_file ( const std::string& sFilename, std::list<Plugin_Info> & vst3pr )
 {
     vst3_discovery_scan plugin;
 
@@ -772,7 +772,7 @@ void vst3_discovery_scan_file ( const std::string& sFilename, std::list<Plugin_M
     unsigned long i = 0;
     while (plugin.open_descriptor(i))
     {
-        Plugin_Module::Plugin_Info pi("VST3");
+        Plugin_Info pi("VST3");
 
         pi.name = plugin.name();
         pi.author = plugin.vendor();

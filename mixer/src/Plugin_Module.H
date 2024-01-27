@@ -23,49 +23,9 @@
 
 #include "../../nonlib/Loggable.H"
 
-#ifdef LADSPA_SUPPORT
-#include "ladspa/LADSPAInfo.h"
-#endif
-
 class Fl_Menu_Button;
-class Thread;
 
 class Plugin_Module : public Module {
-
-    static Thread *plugin_discover_thread;
-
-public:
-
-    class Plugin_Info
-    {
-    public:
-        std::string s_unique_id;
-        unsigned long id;
-        std::string plug_path;  // CLAP & VST3 binary path
-        std::string name;
-        std::string author;
-        std::string category;
-        int audio_inputs;
-        int audio_outputs;
-        const std::string type;
-        bool favorite;
-
-        Plugin_Info ( const std::string &s_type ) :  // LADSPA, LV2, CLAP, VST2, VST3
-            s_unique_id("(null)"),  // (null) since we have to have something for favorites save and scan
-            id(0),
-            plug_path(),
-            name(),
-            author(),
-            category("Unclassified"),
-            audio_inputs(0),
-            audio_outputs(0),
-            type(s_type),
-            favorite(false) {}
-
-        bool operator< ( const Plugin_Info &rhs ) {
-            return strcmp( name.c_str(), rhs.name.c_str() ) < 1;
-        }
-    };
 
 private:
 
@@ -80,16 +40,12 @@ private:
         }
 
 public:
-#ifdef LADSPA_SUPPORT
-    LADSPAInfo *_ladspainfo;
-#endif
 
     int _plugin_ins;
     int _plugin_outs;
     bool _crosswire;
 
 private:
-    static void *discover_thread ( void * );
 
     void connect_ports ( void );
 
@@ -98,26 +54,6 @@ public:
     virtual bool load_plugin ( Module::Picked /* picked */ ) {return false;};
 
     virtual void update ( void ) override;
-
-    static std::list<Plugin_Info> get_all_plugins ( void );
-#ifdef LADSPA_SUPPORT
-    void scan_LADSPA_plugins( std::list<Plugin_Info> & pr );
-#endif
-#ifdef LV2_SUPPORT
-    void scan_LV2_plugins( std::list<Plugin_Info> & pr );
-#endif
-#ifdef CLAP_SUPPORT
-    void scan_CLAP_plugins( std::list<Plugin_Info> & pr );
-#endif
-#ifdef VST2_SUPPORT
-    void scan_VST2_plugins( std::list<Plugin_Info> & pr );
-#endif
-#ifdef VST3_SUPPORT
-    void scan_VST3_plugins( std::list<Plugin_Info> & pr );
-#endif
-
-    static void spawn_discover_thread ( void );
-    static void join_discover_thread ( void );
 
     Plugin_Module ( );
     virtual ~Plugin_Module();
@@ -143,9 +79,6 @@ public:
 protected:
 
     std::string get_custom_data_location(const std::string &path);
-#ifdef LADSPA_SUPPORT
-    void set_ladspainfo( void );
-#endif
 
     volatile nframes_t _latency;
     void init ( void ) override;

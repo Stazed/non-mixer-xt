@@ -20,7 +20,7 @@
 #pragma once
 
 #include <FL/Fl_Double_Window.H>
-#include "Plugin_Module.H"
+#include "Plugin_Scan.H"
 #include <vector>
 
 extern const int MAX_PORTS;
@@ -30,7 +30,7 @@ class Plugin_Chooser : public Fl_Double_Window
 {
     Plugin_Chooser_UI *ui;
     
-    std::list <Plugin_Module::Plugin_Info> _plugins;
+    std::list <Plugin_Info> _plugins;
     
     static void cb_handle ( Fl_Widget *w, void *v );
     void cb_handle ( Fl_Widget *w );

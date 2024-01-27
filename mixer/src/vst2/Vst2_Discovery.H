@@ -34,7 +34,7 @@
 
 #include "vestige/vestige.h"
 #include "CarlaLibUtils.hpp"
-#include "../Plugin_Module.H"
+#include "../Plugin_Scan.H"
 
 namespace vst2_discovery
 {
@@ -111,7 +111,7 @@ private:
     std::string   m_sCategory;
 };
 
-void vst2_discovery_scan_file ( const std::string& sFilename, std::list<Plugin_Module::Plugin_Info> & vst2pr );
+void vst2_discovery_scan_file ( const std::string& sFilename, std::list<Plugin_Info> & vst2pr );
     
 }   // namespace vst2_discovvery
 

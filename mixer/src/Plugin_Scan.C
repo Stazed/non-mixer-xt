@@ -24,17 +24,17 @@ static LADSPAInfo *ladspainfo;
 
 #ifdef CLAP_SUPPORT
     #include "clap/Clap_Discovery.H"
-    static std::list<Plugin_Module::Plugin_Info> clap_PI_cache;
+    static std::list<Plugin_Info> clap_PI_cache;
 #endif
 
 #ifdef VST2_SUPPORT
     #include "vst2/Vst2_Discovery.H"
-    static std::list<Plugin_Module::Plugin_Info> vst2_PI_cache;
+    static std::list<Plugin_Info> vst2_PI_cache;
 #endif
 
 #ifdef VST3_SUPPORT
     #include "vst3/Vst3_Discovery.H"
-    static std::list<Plugin_Module::Plugin_Info> vst3_PI_cache;
+    static std::list<Plugin_Info> vst3_PI_cache;
 #endif
 
 Plugin_Scan::Plugin_Scan()
@@ -79,7 +79,7 @@ Plugin_Scan::scan_LADSPA_plugins( std::list<Plugin_Info> & pr )
 {
     if ( !ladspainfo )
     {
-        ladspainfo = new LADSPAInfo();
+        ladspainfo = new LADSPAInfo();  // FIXME duplicate with LADSPA_Plugin
     }
 
     std::vector<LADSPAInfo::PluginInfo> plugins = ladspainfo->GetPluginInfo();
