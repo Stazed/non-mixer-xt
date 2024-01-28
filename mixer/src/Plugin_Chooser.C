@@ -32,6 +32,9 @@
 
 #include <algorithm>
 
+// All plugins - defined in Plugin_Scan.C
+extern std::list<Plugin_Info> g_plugin_cache;
+
 static    std::vector <Plugin_Info*> _plugin_rows;
 static int previous_favorites = 1;
 static int plugin_type = 0;
@@ -564,7 +567,10 @@ Plugin_Chooser::Plugin_Chooser ( int X,int Y,int W,int H, const char *L )
 {
     set_modal();
 
-    _plugins = Plugin_Scan::get_all_plugins();
+    if ( !g_plugin_cache.empty() )
+    {
+        _plugins.insert(std::end(_plugins), std::begin(g_plugin_cache), std::end(g_plugin_cache));
+    }
 
     {
         Plugin_Chooser_UI *o = ui = new Plugin_Chooser_UI(X,Y,W,H);

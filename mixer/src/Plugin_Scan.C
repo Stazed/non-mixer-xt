@@ -13,6 +13,9 @@
 
 #include "Plugin_Scan.H"
 
+// Global cache of all plugins scanned
+std::list<Plugin_Info> g_plugin_cache;
+
 #ifdef LADSPA_SUPPORT
 #define HAVE_LIBLRDF 1
 static LADSPAInfo *ladspainfo = nullptr;
@@ -58,10 +61,14 @@ Plugin_Scan::get_ladspainfo()
     return ladspainfo;
 }
 
-/* return a list of available plugins */
-std::list<Plugin_Info>
+/* Set global list of available plugins */
+void
 Plugin_Scan::get_all_plugins ( void )
 {
+    // Did we already scan? If so then don't do it again.
+    if ( !g_plugin_cache.empty() )
+        return;
+
     std::list<Plugin_Info> pr;
 
     Plugin_Scan pm;
@@ -83,7 +90,11 @@ Plugin_Scan::get_all_plugins ( void )
 
     pr.sort();
 
-    return pr;
+    // Set the global cache
+    if ( !pr.empty() )
+    {
+        g_plugin_cache.insert(std::end(g_plugin_cache), std::begin(pr), std::end(pr));
+    }
 }
 
 #ifdef LADSPA_SUPPORT

@@ -55,7 +55,8 @@ class Plugin_Scan
 {
 public:
 
-    static std::list<Plugin_Info> get_all_plugins ( void );
+    void get_all_plugins ( void );
+
 #ifdef LADSPA_SUPPORT
     void scan_LADSPA_plugins( std::list<Plugin_Info> & pr );
 #endif

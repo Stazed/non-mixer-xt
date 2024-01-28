@@ -1201,6 +1201,9 @@ Module::insert_menu_cb ( const Fl_Menu_ *menu )
         mod = new Mono_Pan_Module();
     else if ( !strcmp( s_picked, "Plugin" ))
     {
+        Plugin_Scan scanner;
+        scanner.get_all_plugins();
+
         Picked picked = Plugin_Chooser::plugin_chooser( this->ninputs() );
 
         switch ( picked.plugin_type )
