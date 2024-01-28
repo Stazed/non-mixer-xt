@@ -54,9 +54,9 @@ static LADSPAInfo *ladspainfo = nullptr;
     #include "vst3/Vst3_Discovery.H"
     static std::list<Plugin_Info> vst3_PI_cache;
 #endif
-    
+
 static Fl_Window * g_scanner_window = 0;
-    
+
 static void scanner_timeout(void*)
 {
     g_scanner_window->redraw();
@@ -84,6 +84,7 @@ Plugin_Scan::~Plugin_Scan()
 void 
 Plugin_Scan::close_scanner_window()
 {
+    Fl::remove_timeout(scanner_timeout);
     g_scanner_window->hide();
     delete g_scanner_window;
     g_scanner_window = 0;
