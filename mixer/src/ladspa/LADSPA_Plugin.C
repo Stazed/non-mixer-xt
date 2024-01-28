@@ -31,6 +31,7 @@
 
 #include "../Chain.H"
 #include "LADSPA_Plugin.H"
+#include "../Plugin_Scan.H"
 
 #define HAVE_LIBLRDF 1
 #include "LADSPAInfo.h"
@@ -61,7 +62,7 @@ LADSPA_Plugin::~LADSPA_Plugin ( )
     plugin_instances( 0 );
 }
 
-static LADSPAInfo *ladspainfo;
+static LADSPAInfo *ladspainfo = nullptr;
 
 bool
 LADSPA_Plugin::load_plugin(Module::Picked picked)
@@ -340,9 +341,19 @@ void
 LADSPA_Plugin::init ( void )
 {
     _plug_type = Type_LADSPA;
-    
+
+    // To avoid rescanning plugins if plugin chooser already scanned.
     if(!ladspainfo)
-        ladspainfo = new LADSPAInfo();  // FIXME duplicate with Plugin_Scan
+    {
+        Plugin_Scan scanner;
+        if(!scanner.get_ladspainfo())               // if we did not already scan
+        {
+            ladspainfo = new LADSPAInfo();          // then scan
+            scanner.set_ladspainfo(ladspainfo);     // and give it to the scanner
+        }
+        else
+            ladspainfo = scanner.get_ladspainfo();  // the scanner already scanned, so use that
+    }
 
     _idata = new LADSPA_Plugin::ImplementationData();
 }

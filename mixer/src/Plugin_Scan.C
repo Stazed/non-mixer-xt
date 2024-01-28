@@ -15,7 +15,7 @@
 
 #ifdef LADSPA_SUPPORT
 #define HAVE_LIBLRDF 1
-static LADSPAInfo *ladspainfo;
+static LADSPAInfo *ladspainfo = nullptr;
 #endif
 
 #ifdef LV2_SUPPORT
@@ -43,6 +43,19 @@ Plugin_Scan::Plugin_Scan()
 
 Plugin_Scan::~Plugin_Scan()
 {
+}
+
+// For the LADSPA_Plugin class to avoid rescanning
+void
+Plugin_Scan::set_ladspainfo( LADSPAInfo * linfo )
+{
+    ladspainfo = linfo;
+}
+
+LADSPAInfo *
+Plugin_Scan::get_ladspainfo()
+{
+    return ladspainfo;
 }
 
 /* return a list of available plugins */
@@ -79,7 +92,7 @@ Plugin_Scan::scan_LADSPA_plugins( std::list<Plugin_Info> & pr )
 {
     if ( !ladspainfo )
     {
-        ladspainfo = new LADSPAInfo();  // FIXME duplicate with LADSPA_Plugin
+        ladspainfo = new LADSPAInfo();
     }
 
     std::vector<LADSPAInfo::PluginInfo> plugins = ladspainfo->GetPluginInfo();
