@@ -14,6 +14,8 @@
 #pragma once
 
 #include <cstring>
+#include <string>
+#include <list>
 
 #ifdef LADSPA_SUPPORT
 #include "ladspa/LADSPAInfo.h"

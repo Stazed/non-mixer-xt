@@ -12,6 +12,7 @@
  */
 
 #include "Plugin_Scan.H"
+#include "../../nonlib/debug.h"
 
 // Global cache of all plugins scanned
 std::list<Plugin_Info> g_plugin_cache;
@@ -48,6 +49,7 @@ Plugin_Scan::~Plugin_Scan()
 {
 }
 
+#ifdef LADSPA_SUPPORT
 // For the LADSPA_Plugin class to avoid rescanning
 void
 Plugin_Scan::set_ladspainfo( LADSPAInfo * linfo )
@@ -60,6 +62,7 @@ Plugin_Scan::get_ladspainfo()
 {
     return ladspainfo;
 }
+#endif
 
 /* Set global list of available plugins */
 void
