@@ -11,6 +11,9 @@
  * Created on January 27, 2024, 4:53 PM
  */
 
+#include <FL/Fl.H>
+#include <FL/Fl_Box.H>
+#include <FL/Fl_Window.H>
 #include "Plugin_Scan.H"
 #include "../../nonlib/debug.h"
 
@@ -40,13 +43,39 @@ static LADSPAInfo *ladspainfo = nullptr;
     #include "vst3/Vst3_Discovery.H"
     static std::list<Plugin_Info> vst3_PI_cache;
 #endif
-
-Plugin_Scan::Plugin_Scan()
+    
+static Fl_Window * g_scanner_window = 0;
+    
+static void scanner_timeout(void*)
 {
+    g_scanner_window->redraw();
+    g_scanner_window->show();
+}
+
+Plugin_Scan::Plugin_Scan() :
+    _box(nullptr)
+{
+    g_scanner_window = new Fl_Window(600,100,"Scanning Plugins");
+    _box = new Fl_Box(20,10,560,80,"Scanning");
+    _box->box(FL_UP_BOX);
+    _box->labelsize(14);
+    _box->labelfont(FL_BOLD+FL_ITALIC);
+    _box->labeltype(FL_SHADOW_LABEL);
+    _box->show();
+    g_scanner_window->end();
+    g_scanner_window->set_modal();
 }
 
 Plugin_Scan::~Plugin_Scan()
 {
+}
+
+void 
+Plugin_Scan::close_scanner_window()
+{
+    g_scanner_window->hide();
+    delete g_scanner_window;
+    g_scanner_window = 0;
 }
 
 #ifdef LADSPA_SUPPORT
@@ -71,6 +100,8 @@ Plugin_Scan::get_all_plugins ( void )
     // Did we already scan? If so then don't do it again.
     if ( !g_plugin_cache.empty() )
         return;
+
+    Fl::add_timeout(0.03, scanner_timeout);
 
     std::list<Plugin_Info> pr;
 
@@ -98,6 +129,8 @@ Plugin_Scan::get_all_plugins ( void )
     {
         g_plugin_cache.insert(std::end(g_plugin_cache), std::begin(pr), std::end(pr));
     }
+
+    close_scanner_window();
 }
 
 #ifdef LADSPA_SUPPORT
@@ -125,6 +158,13 @@ Plugin_Scan::scan_LADSPA_plugins( std::list<Plugin_Info> & pr )
         pi.audio_outputs = i->AudioOutputs;
         pi.category = "Unclassified";
         pr.push_back( pi );
+        
+        if(_box)
+        {
+            _box->copy_label(pi.name.c_str());
+            _box->redraw();
+            Fl::check();
+        }
     }
 
     /* Set the plugin category since the above scan does not set it */
@@ -318,6 +358,13 @@ Plugin_Scan::scan_LV2_plugins( std::list<Plugin_Info> & pr )
         }
 
         pr.push_back( pi );
+        
+        if(_box)
+        {
+            _box->copy_label(pi.name.c_str());
+            _box->redraw();
+            Fl::check();
+        }
     }
 }
 #endif  // LV2_SUPPORT
@@ -367,6 +414,13 @@ Plugin_Scan::scan_CLAP_plugins( std::list<Plugin_Info> & pr )
             DMESSAGE("Plugin factory has no plugins = %s: Count = %d", q.u8string().c_str(), plugin_count);
             entry->deinit();
             continue;
+        }
+
+        if(_box)
+        {
+            _box->copy_label(q.u8string().c_str());
+            _box->redraw();
+            Fl::check();
         }
 
         for (uint32_t pl = 0; pl < plugin_count; ++pl)
@@ -461,6 +515,12 @@ Plugin_Scan::scan_VST2_plugins( std::list<Plugin_Info> & pr )
 
     for (const auto &q : sp)
     {
+        if(_box)
+        {
+            _box->copy_label(q.u8string().c_str());
+            _box->redraw();
+            Fl::check();
+        }
         vst2_discovery::vst2_discovery_scan_file( q.u8string().c_str(), vst2_PI_cache);
     }
 
@@ -486,6 +546,12 @@ Plugin_Scan::scan_VST3_plugins( std::list<Plugin_Info> & pr )
 
     for (const auto &q : sp)
     {
+        if(_box)
+        {
+            _box->copy_label(q.u8string().c_str());
+            _box->redraw();
+            Fl::check();
+        }
         vst3_discovery::vst3_discovery_scan_file( q.u8string().c_str(), vst3_PI_cache);
     }
 

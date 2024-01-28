@@ -66,7 +66,7 @@
 
 #include "time.h"
 
-
+extern std::list<Plugin_Info> g_plugin_cache;
 extern char *clipboard_dir;
 nframes_t Module::_buffer_size = 0;
 nframes_t Module::_sample_rate = 0;
@@ -1201,8 +1201,11 @@ Module::insert_menu_cb ( const Fl_Menu_ *menu )
         mod = new Mono_Pan_Module();
     else if ( !strcmp( s_picked, "Plugin" ))
     {
-        Plugin_Scan scanner;
-        scanner.get_all_plugins();
+        if (g_plugin_cache.empty())
+        {
+            Plugin_Scan scanner;
+            scanner.get_all_plugins();
+        }
 
         Picked picked = Plugin_Chooser::plugin_chooser( this->ninputs() );
 

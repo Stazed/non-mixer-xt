@@ -16,6 +16,7 @@
 #include <cstring>
 #include <string>
 #include <list>
+#include <FL/Fl_Box.H>
 
 #ifdef LADSPA_SUPPORT
 #include "ladspa/LADSPAInfo.h"
@@ -59,6 +60,8 @@ public:
 
     void get_all_plugins ( void );
 
+    void close_scanner_window();
+
 #ifdef LADSPA_SUPPORT
     void scan_LADSPA_plugins( std::list<Plugin_Info> & pr );
 #endif
@@ -84,5 +87,8 @@ public:
     virtual ~Plugin_Scan();
 private:
 
+    Fl_Box *_box;
+
+    void show_scanner_window();
 };
 
