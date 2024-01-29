@@ -2352,7 +2352,7 @@ CLAP_Plugin::is_audio_thread()
 // Host LOG callbacks...
 void
 CLAP_Plugin::host_log (
-	const clap_host *host, clap_log_severity severity, const char *msg )
+	const clap_host * /*host*/, clap_log_severity severity, const char *msg )
 {
     switch (severity)
     {
