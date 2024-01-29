@@ -22,6 +22,7 @@
 
 #include <stdint.h>
 #include <stdlib.h>
+#include <vector>
 
 // Base Types
 typedef const char* LV2_URI;
