@@ -66,12 +66,11 @@ static void scanner_timeout(void*)
 Plugin_Scan::Plugin_Scan() :
     _box(nullptr)
 {
-    g_scanner_window = new Fl_Window(600,100,"Scanning Plugins");
-    _box = new Fl_Box(20,10,560,80,"Scanning");
+    g_scanner_window = new Fl_Window(600,60,"Scanning Plugins");
+    _box = new Fl_Box(20,10,560,40,"Scanning");
     _box->box(FL_UP_BOX);
-    _box->labelsize(14);
-    _box->labelfont(FL_BOLD+FL_ITALIC);
-    _box->labeltype(FL_SHADOW_LABEL);
+    _box->labelsize(12);
+    _box->labelfont(FL_BOLD);
     _box->show();
     g_scanner_window->end();
     g_scanner_window->set_modal();
