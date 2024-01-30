@@ -103,7 +103,9 @@ CLAP_Plugin::~CLAP_Plugin()
     Fl::remove_timeout(&CLAP_Plugin::parameter_update, this);
 
     clearParamInfos();
-    _plugin->deactivate(_plugin);
+
+    if(_plugin)
+        _plugin->deactivate(_plugin);
 
     if ( _gui )
     {
