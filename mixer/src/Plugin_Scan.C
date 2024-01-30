@@ -126,15 +126,6 @@ Plugin_Scan::get_all_plugins ( bool rescan )
     if(rescan)  // force rescan of all plugins and save to file
     {
         g_plugin_cache.clear();
-#ifdef CLAP_SUPPORT
-        clap_PI_cache.clear();
-#endif
-#ifdef VST2_SUPPORT
-        vst2_PI_cache.clear();
-#endif
-#ifdef VST3_SUPPORT
-        vst3_PI_cache.clear();
-#endif
     }
     else        // try the file cache first
     {
@@ -161,13 +152,13 @@ Plugin_Scan::get_all_plugins ( bool rescan )
     pm.scan_LV2_plugins( pr, rescan );      // Scan LV2
 #endif
 #ifdef CLAP_SUPPORT
-    pm.scan_CLAP_plugins( pr );     // Scan CLAP
+    pm.scan_CLAP_plugins( pr, rescan );     // Scan CLAP
 #endif
 #ifdef VST2_SUPPORT
-    pm.scan_VST2_plugins( pr );     // Scan VST2
+    pm.scan_VST2_plugins( pr, rescan );     // Scan VST2
 #endif
 #ifdef VST3_SUPPORT
-    pm.scan_VST3_plugins( pr );     // Scan VST3
+    pm.scan_VST3_plugins( pr, rescan );     // Scan VST3
 #endif
 
     pr.sort();
@@ -423,8 +414,13 @@ Plugin_Scan::scan_LV2_plugins( std::list<Plugin_Info> & pr, bool rescan )
 
 #ifdef CLAP_SUPPORT
 void
-Plugin_Scan::scan_CLAP_plugins( std::list<Plugin_Info> & pr )
+Plugin_Scan::scan_CLAP_plugins( std::list<Plugin_Info> & pr, bool rescan )
 {
+    if(rescan)
+    {
+        clap_PI_cache.clear();
+    }
+
     if ( !clap_PI_cache.empty() )
     {
         pr.insert(std::end(pr), std::begin(clap_PI_cache), std::end(clap_PI_cache));
@@ -555,8 +551,13 @@ Plugin_Scan::scan_CLAP_plugins( std::list<Plugin_Info> & pr )
 
 #ifdef VST2_SUPPORT
 void
-Plugin_Scan::scan_VST2_plugins( std::list<Plugin_Info> & pr )
+Plugin_Scan::scan_VST2_plugins( std::list<Plugin_Info> & pr, bool rescan )
 {
+    if(rescan)
+    {
+        vst2_PI_cache.clear();
+    }
+
     if ( !vst2_PI_cache.empty() )
     {
         pr.insert(std::end(pr), std::begin(vst2_PI_cache), std::end(vst2_PI_cache));
@@ -586,8 +587,13 @@ Plugin_Scan::scan_VST2_plugins( std::list<Plugin_Info> & pr )
 
 #ifdef VST3_SUPPORT
 void
-Plugin_Scan::scan_VST3_plugins( std::list<Plugin_Info> & pr )
+Plugin_Scan::scan_VST3_plugins( std::list<Plugin_Info> & pr, bool rescan )
 {
+    if(rescan)
+    {
+        vst3_PI_cache.clear();
+    }
+
     if ( !vst3_PI_cache.empty() )
     {
         pr.insert(std::end(pr), std::begin(vst3_PI_cache), std::end(vst3_PI_cache));

@@ -80,13 +80,13 @@ public:
     void scan_LV2_plugins( std::list<Plugin_Info> & pr, bool rescan );
 #endif
 #ifdef CLAP_SUPPORT
-    void scan_CLAP_plugins( std::list<Plugin_Info> & pr );
+    void scan_CLAP_plugins( std::list<Plugin_Info> & pr, bool rescan );
 #endif
 #ifdef VST2_SUPPORT
-    void scan_VST2_plugins( std::list<Plugin_Info> & pr );
+    void scan_VST2_plugins( std::list<Plugin_Info> & pr, bool rescan );
 #endif
 #ifdef VST3_SUPPORT
-    void scan_VST3_plugins( std::list<Plugin_Info> & pr );
+    void scan_VST3_plugins( std::list<Plugin_Info> & pr, bool rescan );
 #endif
 
 #ifdef LADSPA_SUPPORT
