@@ -155,10 +155,10 @@ Plugin_Scan::get_all_plugins ( bool rescan )
 
     Plugin_Scan pm;
 #ifdef LADSPA_SUPPORT
-    pm.scan_LADSPA_plugins( pr );   // Scan LADSPA
+    pm.scan_LADSPA_plugins( pr, rescan );   // Scan LADSPA
 #endif
 #ifdef LV2_SUPPORT
-    pm.scan_LV2_plugins( pr );      // Scan LV2
+    pm.scan_LV2_plugins( pr, rescan );      // Scan LV2
 #endif
 #ifdef CLAP_SUPPORT
     pm.scan_CLAP_plugins( pr );     // Scan CLAP
@@ -184,12 +184,15 @@ Plugin_Scan::get_all_plugins ( bool rescan )
 
 #ifdef LADSPA_SUPPORT
 void
-Plugin_Scan::scan_LADSPA_plugins( std::list<Plugin_Info> & pr )
+Plugin_Scan::scan_LADSPA_plugins( std::list<Plugin_Info> & pr, bool rescan )
 {
     if ( !ladspainfo )
     {
         ladspainfo = new LADSPAInfo();
     }
+    
+    if(rescan)
+        ladspainfo->RescanPlugins();
 
     std::vector<LADSPAInfo::PluginInfo> plugins = ladspainfo->GetPluginInfo();
 
@@ -235,9 +238,9 @@ Plugin_Scan::scan_LADSPA_plugins( std::list<Plugin_Info> & pr )
 
 #ifdef LV2_SUPPORT
 void
-Plugin_Scan::scan_LV2_plugins( std::list<Plugin_Info> & pr )
+Plugin_Scan::scan_LV2_plugins( std::list<Plugin_Info> & pr, bool rescan )
 {
-    Lv2WorldClass::getInstance().initIfNeeded(/*::getenv("LV2_PATH")*/);
+    Lv2WorldClass::getInstance().initIfNeeded(rescan);
     struct catagory_match
     {
         std::string cat_type;

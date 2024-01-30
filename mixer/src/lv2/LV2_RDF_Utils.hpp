@@ -357,12 +357,17 @@ public:
         return lv2World;
     }
 
-    void initIfNeeded(/*const char* const LV2_PATH*/)
+    void initIfNeeded(bool needsRescan)
     {
-        if (/*LV2_PATH == NULL || LV2_PATH[0] == '\0' ||*/ ! needsInit)
+        // needsRescan is for forced rescan, otherwise we go with previous needsInit
+        // which will be set to false after initial scan
+        if(needsRescan)
+            needsInit = true;
+
+        if ( !needsInit ) // don't rescan
             return;
 
-        needsInit = false;
+        needsInit = false;  // don't rescan next call unless needsRescan requested
         Lilv::World::load_all(/*LV2_PATH*/);
     }
 

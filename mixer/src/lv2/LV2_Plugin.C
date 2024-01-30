@@ -1760,7 +1760,7 @@ LV2_Plugin::init ( void )
 {
     _plug_type = Type_LV2;
 
-    Lv2WorldClass::getInstance().initIfNeeded(/*::getenv("LV2_PATH")*/);
+    Lv2WorldClass::getInstance().initIfNeeded(false);   // false means don't force rescan if already done
 
     _idata = new ImplementationData();
 
