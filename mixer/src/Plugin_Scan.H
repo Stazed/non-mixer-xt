@@ -36,6 +36,7 @@
 class Plugin_Info
 {
 public:
+    const std::string type;
     std::string s_unique_id;
     unsigned long id;
     std::string plug_path;  // CLAP & VST3 binary path
@@ -44,19 +45,18 @@ public:
     std::string category;
     int audio_inputs;
     int audio_outputs;
-    const std::string type;
     bool favorite;
 
     Plugin_Info ( const std::string &s_type ) :  // LADSPA, LV2, CLAP, VST2, VST3
+        type(s_type),
         s_unique_id("(null)"),  // (null) since we have to have something for favorites save and scan
         id(0),
-        plug_path(),
-        name(),
-        author(),
+        plug_path("(null)"),
+        name("(null)"),
+        author("(null)"),
         category("Unclassified"),
         audio_inputs(0),
         audio_outputs(0),
-        type(s_type),
         favorite(false) {}
 
     bool operator< ( const Plugin_Info &rhs ) {
@@ -69,7 +69,7 @@ class Plugin_Scan
 {
 public:
 
-    void get_all_plugins ( void );
+    void get_all_plugins ( bool rescan );
 
     void close_scanner_window();
 
@@ -101,5 +101,7 @@ private:
     Fl_Box *_box;
 
     void show_scanner_window();
+    bool load_plugin_cache ( void );
+    void save_plugin_cache ( void );
 };
 

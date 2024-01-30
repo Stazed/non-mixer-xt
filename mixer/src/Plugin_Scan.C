@@ -63,6 +63,21 @@ static void scanner_timeout(void*)
     g_scanner_window->show();
 }
 
+extern char *user_config_dir;
+
+static FILE *open_plugin_cache( const char *mode )
+{
+    char *path;
+
+    asprintf( &path, "%s/%s", user_config_dir, "plugin_cache" );
+
+    FILE *fp = fopen( path, mode );
+        
+    free( path );
+
+    return fp;
+}
+
 Plugin_Scan::Plugin_Scan() :
     _box(nullptr)
 {
@@ -106,11 +121,33 @@ Plugin_Scan::get_ladspainfo()
 
 /* Set global list of available plugins */
 void
-Plugin_Scan::get_all_plugins ( void )
+Plugin_Scan::get_all_plugins ( bool rescan )
 {
-    // Did we already scan? If so then don't do it again.
-    if ( !g_plugin_cache.empty() )
-        return;
+    if(rescan)  // force rescan of all plugins and save to file
+    {
+        g_plugin_cache.clear();
+#ifdef CLAP_SUPPORT
+        clap_PI_cache.clear();
+#endif
+#ifdef VST2_SUPPORT
+        vst2_PI_cache.clear();
+#endif
+#ifdef VST3_SUPPORT
+        vst3_PI_cache.clear();
+#endif
+    }
+    else        // try the file cache first
+    {
+        if(g_plugin_cache.empty())
+        {
+            if(load_plugin_cache())
+                return;     // loaded cache from file if we have it
+
+            // we did not have file cache so do the whole scan
+        }
+        else
+            return; //  we already scanned and have the cache
+    }
 
     Fl::add_timeout(0.03, scanner_timeout);
 
@@ -139,6 +176,7 @@ Plugin_Scan::get_all_plugins ( void )
     if ( !pr.empty() )
     {
         g_plugin_cache.insert(std::end(g_plugin_cache), std::begin(pr), std::end(pr));
+        save_plugin_cache();
     }
 
     close_scanner_window();
@@ -572,4 +610,76 @@ Plugin_Scan::scan_VST3_plugins( std::list<Plugin_Info> & pr )
         return;
     }
 }
+
+bool
+Plugin_Scan::load_plugin_cache ( void )
+{
+    FILE *fp = open_plugin_cache( "r" );
+    
+    if ( !fp )
+    {
+        return false;
+    }
+
+    char *c_type;
+    char *c_unique_id;
+    unsigned long u_id;
+    char *c_plug_path;
+    char *c_name;
+    char *c_author;
+    char *c_category;
+    int i_audio_inputs;
+    int i_audio_outputs;
+
+    g_plugin_cache.clear();
+
+    while ( 9 == fscanf( fp, "%m[^|]|%m[^|]|%lu|%m[^|]|%m[^|]|%m[^|]|%m[^|]|%d|%d\n]\n",
+            &c_type, &c_unique_id, &u_id, &c_plug_path, &c_name, &c_author,
+            &c_category, &i_audio_inputs, &i_audio_outputs ) )
+    {
+        Plugin_Info pi(c_type);
+        pi.s_unique_id = c_unique_id;
+        pi.id = u_id;
+        pi.plug_path = c_plug_path;
+        pi.name = c_name;
+        pi.author = c_author;
+        pi.category = c_category;
+        pi.audio_inputs = i_audio_inputs;
+        pi.audio_outputs = i_audio_outputs;
+        
+        g_plugin_cache.push_back(pi);
+
+        free(c_type);
+        free(c_unique_id);
+        free(c_plug_path);
+        free(c_name);
+        free(c_author);
+        free(c_category);
+    }
+
+    fclose(fp);
+
+    return true;
+}
+
+void
+Plugin_Scan::save_plugin_cache ( void )
+{
+    FILE *fp = open_plugin_cache( "w" );
+    
+    if ( !fp )
+        return;
+    
+    for ( std::list<Plugin_Info>::iterator i = g_plugin_cache.begin();
+          i != g_plugin_cache.end();
+          ++i )
+    {
+        fprintf( fp, "%s|%s|%lu|%s|%s|%s|%s|%d|%d\n", i->type.c_str(), i->s_unique_id.c_str(), i->id,
+                i->plug_path.c_str(), i->name.c_str(), i->author.c_str(), i->category.c_str(),
+                i->audio_inputs, i->audio_outputs);
+    }
+    
+    fclose( fp );
+}
+
 #endif  // VST3_SUPPORT

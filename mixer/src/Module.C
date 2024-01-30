@@ -1204,7 +1204,7 @@ Module::insert_menu_cb ( const Fl_Menu_ *menu )
         if (g_plugin_cache.empty())
         {
             Plugin_Scan scanner;
-            scanner.get_all_plugins();
+            scanner.get_all_plugins(true);     // false = do not rescan
         }
 
         Picked picked = Plugin_Chooser::plugin_chooser( this->ninputs() );
