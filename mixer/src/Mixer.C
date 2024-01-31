@@ -407,7 +407,7 @@ void Mixer::cb_menu(Fl_Widget* o) {
         ab.title->label( "Non Mixer XT" );
 
         ab.copyright->label( "Copyright (C) 2008-2021 Jonathan Moore Liles\n"
-                             "Copyright (C) 2022-2023 Stazed" );
+                             "Copyright (C) 2022-2024 Stazed" );
         ab.credits->labelsize(14);
         ab.credits->label(
             "Legacy Non Mixer by Jonathan Moore Liles.\n"
