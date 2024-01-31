@@ -310,7 +310,12 @@ void Mixer::cb_menu(Fl_Widget* o) {
     }
     else if ( !strcmp( picked, "&Mixer/&Import Strip" ) )
     {
-        const char *s = fl_file_chooser( "Import strip filename:", "*.strip", NULL, 0 );
+        char *path = read_line( user_config_dir, "default_path");
+
+        const char *s = fl_file_chooser( "Import strip filename:", "*.strip", path, 0 );
+
+        if(path)
+            free(path);
 
         if ( s )
         {

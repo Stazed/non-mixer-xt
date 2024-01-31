@@ -37,6 +37,7 @@
 
 #include "../../nonlib/dsp.h"
 #include "../../nonlib/debug.h"
+#include "../../nonlib/file.h"
 #include "../../FL/test_press.H"
 #include "../../FL/Fl_Flowpack.H"
 #include "../../FL/focus_frame.H"
@@ -61,6 +62,7 @@
 
 extern Mixer *mixer;
 extern char *clipboard_dir;
+extern char *user_config_dir;
 
 
 /* add a new mixer strip (with default configuration) */
@@ -915,8 +917,12 @@ Mixer_Strip::menu_cb ( const Fl_Menu_ *m )
     }
     else if ( !strcmp( picked, "/Export Strip" ) )
     {
+        char *path = read_line( user_config_dir, "default_path");
         char *suggested_name;
-        asprintf( &suggested_name, "%s.strip", name() );
+        asprintf( &suggested_name, "%s%s.strip", path, name() );
+
+        if(path)
+            free(path);
 
 #define EXT ".strip"
         char *stripname = fl_file_chooser( "Export strip to filename:", "(*" EXT")", suggested_name, 0 );
