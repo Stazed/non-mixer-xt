@@ -37,7 +37,9 @@
 #include "pluginterfaces/vst/ivsteditcontroller.h"
 #include "pluginterfaces/gui/iplugview.h"
 
-#if defined(__x86_64) || defined(__x86_64__) || defined(__amd64)
+#if defined(__aarch64__) || defined(__arm64__)
+  #define V3_ARCHITECTURE "aarch64"
+#elif defined(__x86_64) || defined(__x86_64__) || defined(__amd64)
   #define V3_ARCHITECTURE "x86_64"
 #endif
 
