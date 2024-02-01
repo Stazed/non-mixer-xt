@@ -61,6 +61,8 @@ enum Plugin_Index
     // VST2
 };
 
+const uint32_t C_MAX_UINT32 = 4294967295;
+
 class Module : public Fl_Group, public Loggable {
 
     int _instances;
@@ -209,7 +211,7 @@ public:
                 invisible_with_signals(false),
                 plug_port_index(0)
 #if defined CLAP_SUPPORT || defined(VST3_SUPPORT)
-                ,parameter_id(4294967295)   // set to max value rather than 0 because we ran into
+                ,parameter_id(C_MAX_UINT32) // set to max value rather than 0 because we ran into
                                             // a parameter VST3 that was 0 and this was default for
                                             // the bypass port. Kept turning the plugin on and off...
 #endif
