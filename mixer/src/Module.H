@@ -208,8 +208,10 @@ public:
                 visible(true),
                 invisible_with_signals(false),
                 plug_port_index(0)
-#ifdef CLAP_SUPPORT
-                ,parameter_id(0)
+#if defined CLAP_SUPPORT || defined(VST3_SUPPORT)
+                ,parameter_id(4294967295)   // set to max value rather than 0 because we ran into
+                                            // a parameter VST3 that was 0 and this was default for
+                                            // the bypass port. Kept turning the plugin on and off...
 #endif
                 { }
         };

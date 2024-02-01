@@ -2117,7 +2117,7 @@ VST3_Plugin::activate ( void )
 {
     if ( !loaded() )
         return;
-    
+
     if (_bProcessing)
         return;
 
