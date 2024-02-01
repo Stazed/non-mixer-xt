@@ -209,7 +209,7 @@ public:
                 dimensions(1),
                 visible(true),
                 invisible_with_signals(false),
-                plug_port_index(0)
+                plug_port_index(C_MAX_UINT32)
 #if defined CLAP_SUPPORT || defined(VST3_SUPPORT)
                 ,parameter_id(C_MAX_UINT32) // set to max value rather than 0 because we ran into
                                             // a parameter VST3 that was 0 and this was default for
