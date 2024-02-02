@@ -1199,9 +1199,9 @@ Module::insert_menu_cb ( const Fl_Menu_ *menu )
         mod = new Meter_Module();
     else if ( !strcmp( s_picked, "Mono Pan" ))
         mod = new Mono_Pan_Module();
-    else if ( (!strcmp( s_picked, "Plugin" )) || (!strcmp( s_picked, "Plugin(Rescan)" )) )
+    else if ( (!strcmp( s_picked, "Plugin" )) || (!strcmp( s_picked, "Plugin (rescan)" )) )
     {
-        if(!strcmp( s_picked, "Plugin(Rescan)" ))
+        if(!strcmp( s_picked, "Plugin (rescan)" ))
         {
             Plugin_Scan scanner;
             scanner.get_all_plugins(true);      // true = rescan
@@ -1401,7 +1401,7 @@ Module::menu ( void ) const
         insert_menu->add( "Aux", 0, 0 );
         insert_menu->add( "Spatializer", 0, 0 );
         insert_menu->add( "Plugin", 0, 0 );
-        insert_menu->add( "Plugin(Rescan)", 0, 0 );
+        insert_menu->add( "Plugin (rescan)", 0, 0 );
 
         insert_menu->callback( &Module::insert_menu_cb, (void*)this );
     }
