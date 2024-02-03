@@ -74,6 +74,8 @@ public:
     std::vector<Port> midi_input;
     std::vector<Port> midi_output;
 
+    std::vector<std::string> _PresetList;
+
     VST2_Plugin();
     virtual ~VST2_Plugin();
 
@@ -91,6 +93,9 @@ public:
 
     // Host to plugin
     void setParameter(uint32_t iIndex, float value);
+
+    // Set Program
+    void setProgram(int choice);
 
     void idleEditor (void);
     void resizeEditor ( int w, int h );
@@ -177,6 +182,7 @@ private:
     void create_audio_ports();
     void create_midi_ports();
     void create_control_ports();
+    void get_presets();
     void activate ( void );
     void deactivate ( void );
     void add_port ( const Port &p ) override;

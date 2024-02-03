@@ -72,6 +72,7 @@ enum qtractorVst2PluginFlagsEx
 };
 
 // Some VeSTige missing opcodes and flags.
+const int effSetProgramName = 4;
 const int effGetParamLabel = 6;
 const int effGetParamDisplay = 7;
 const int effGetProgramNameIndexed = 29;
@@ -236,6 +237,11 @@ VST2_Plugin::load_plugin ( Module::Picked picked )
     create_audio_ports();
     create_midi_ports();
     create_control_ports();
+
+    get_presets();
+    // get_presets() may have to cycle through the preset to get the name
+    // so we re-set to the default here just in case.
+    vst2_dispatch(effSetProgram, 0, 0, 0, 0.0f);
 
     activate();
 
@@ -1474,6 +1480,21 @@ VST2_Plugin::create_control_ports()
     pb.connect_to( _bypass );
     add_port( pb );
     }
+}
+
+void
+VST2_Plugin::get_presets()
+{
+    VST2_Preset pPresets(this);
+
+    if(!pPresets.get_program_names(_PresetList))
+        _PresetList.clear();
+}
+
+void
+VST2_Plugin::setProgram(int choice)
+{
+    vst2_dispatch(effSetProgram, 0, choice, 0, 0.0f);
 }
 
 void

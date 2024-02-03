@@ -43,6 +43,8 @@ public:
     bool load(const std::string& sFilename);
     bool save(const std::string& sFilename);
 
+    bool get_program_names(std::vector<std::string>  &v_program_names);
+
 protected:
 
     // Forward decls.

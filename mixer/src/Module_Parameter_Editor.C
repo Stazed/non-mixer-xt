@@ -114,7 +114,7 @@ Module_Parameter_Editor::Module_Parameter_Editor ( Module *module ) :
             
             if( !pm->_PresetList.empty() )
             {
-                { Fl_Choice *o = LV2_presets_choice = new Fl_Choice( 5, 0, 200, 24 );
+                { Fl_Choice *o = _presets_choice_button = new Fl_Choice( 5, 0, 200, 24 );
                     for(unsigned i = 0; i < pm->_PresetList.size(); ++i)
                     {
                         std::string temp = pm->_PresetList[i].Label;
@@ -142,6 +142,43 @@ Module_Parameter_Editor::Module_Parameter_Editor ( Module *module ) :
             }
         }
 #endif  // LV2_SUPPORT
+
+#ifdef VST2_SUPPORT
+        if (_module->_plug_type == Type_VST2)
+        {
+            VST2_Plugin *pm = static_cast<VST2_Plugin *> (_module);
+            
+            if( !pm->_PresetList.empty() )
+            {
+                { Fl_Choice *o = _presets_choice_button = new Fl_Choice( 5, 0, 200, 24 );
+                    for(unsigned i = 0; i < pm->_PresetList.size(); ++i)
+                    {
+                        std::string temp = pm->_PresetList[i];
+
+                        /* FLTK assumes '/' to be sub-menu, so we have to search the Label and escape it */
+                        for (unsigned ii = 0; ii < temp.size(); ++ii)
+                        {
+                            if ( temp[ii] == '/' )
+                            {
+                                temp.insert(ii, "\\");
+                                ++ii;
+                                continue;
+                            }
+                        }
+
+                        o->add( temp.c_str() );
+                    }
+
+                    o->label( "Presets" );
+                    o->align(FL_ALIGN_RIGHT);
+                    o->value( 0 );
+                    o->when( FL_WHEN_CHANGED|FL_WHEN_NOT_CHANGED );
+                    o->callback( cb_preset_handle,  this );
+                }
+            }
+        }
+#endif  // VST2_SUPPORT
+
 #if defined(LV2_SUPPORT) || defined(CLAP_SUPPORT) || defined(VST2_SUPPORT) || defined(VST3_SUPPORT)
         if ((_module->_plug_type == Type_LV2) || (_module->_plug_type == Type_CLAP) 
                 || _module->_plug_type == Type_VST2 || _module->_plug_type == Type_VST3)
@@ -571,12 +608,20 @@ Module_Parameter_Editor::make_controls ( void )
     update_control_visibility();
 }
 
-#ifdef LV2_SUPPORT
+#if defined LV2_SUPPORT || defined VST2_SUPPORT
 void
 Module_Parameter_Editor::set_preset_controls(int choice)
 {
-    LV2_Plugin *pm = static_cast<LV2_Plugin *> (_module);
-    pm->update_control_parameters(choice);
+    if(_module->_plug_type == Type_LV2)
+    {
+        LV2_Plugin *pm = static_cast<LV2_Plugin *> (_module);
+        pm->update_control_parameters(choice);
+    }
+    else if(_module->_plug_type == Type_VST2)
+    {
+        VST2_Plugin *pm = static_cast<VST2_Plugin *> (_module);
+        pm->setProgram(choice);
+    }
 }
 #endif
 
@@ -700,7 +745,7 @@ Module_Parameter_Editor::cb_mode_handle ( Fl_Widget *, void *v )
     ((Module_Parameter_Editor*)v)->make_controls();
 }
 
-#ifdef LV2_SUPPORT
+#if defined LV2_SUPPORT || defined VST2_SUPPORT
 void
 Module_Parameter_Editor::cb_preset_handle ( Fl_Widget *w, void *v )
 {

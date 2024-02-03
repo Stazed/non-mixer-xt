@@ -27,6 +27,7 @@
 #ifdef VST2_SUPPORT
 
 #include <filesystem> // C++17
+#include <vector>
 #include "VST2_Preset.H"
 #include "VST2_Plugin.H"
 
@@ -47,9 +48,11 @@ typedef int32_t  VstInt32;
 
 // Some VeSTige missing opcodes and flags.
 const int effSetProgramName = 4;
+const int effGetProgramNameIndexed = 29;
 const int effGetChunk = 23;
 const int effSetChunk = 24;
 
+#define STR_MAX 0xFF    // 255 binary
 
 // Common bank/program header structure (fxb/fxp files)
 //
@@ -692,6 +695,39 @@ bool VST2_Preset::save ( const std::string& sFilename )
 
     fclose(fp);
     return bResult;
+}
+
+bool
+VST2_Preset::get_program_names(std::vector<std::string>  &v_program_names)
+{
+    if (m_pVst2Plugin == nullptr)
+        return false;
+
+    AEffect *pVst2Effect = m_pVst2Plugin->vst2_effect();
+    if (pVst2Effect == nullptr)
+        return false;
+
+    for (int32_t i = 0; i < pVst2Effect->numPrograms; ++i)
+    {
+        char strBuf[STR_MAX+1] = { '\0' };
+
+        std::string menu_name = std::to_string(i);
+        menu_name += " ";
+
+        if (m_pVst2Plugin->vst2_dispatch(effGetProgramNameIndexed, i, 0, strBuf, 0.0f) == 0)
+        {
+            // We reset later to default
+            m_pVst2Plugin->vst2_dispatch(effSetProgram, 0, i, 0, 0.0f);
+            m_pVst2Plugin->vst2_dispatch(effGetProgramName, 0, 0, strBuf, 0.0f);
+        }
+
+        menu_name += strBuf;
+        v_program_names.push_back(menu_name);
+
+        DMESSAGE("PRG NAME = %s", menu_name.c_str());
+    }
+
+    return true;
 }
 
 #endif //  VST2_SUPPORT

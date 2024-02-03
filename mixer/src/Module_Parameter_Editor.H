@@ -82,7 +82,7 @@ class Module_Parameter_Editor : public Fl_Double_Window
     static void cb_value_handle ( Fl_Widget *w, void *v );
     static void cb_panner_value_handle ( Fl_Widget *w, void *v );
     static void cb_mode_handle ( Fl_Widget *w, void *v );
-#ifdef LV2_SUPPORT
+#if defined LV2_SUPPORT || defined VST2_SUPPORT
     static void cb_enumeration_handle ( Fl_Widget *w, void *v );
     static void cb_preset_handle ( Fl_Widget *w, void *v );
     void set_preset_controls(int choice);
@@ -112,8 +112,8 @@ class Module_Parameter_Editor : public Fl_Double_Window
     SpectrumView *spectrum_view;
     Fl_Scroll *control_scroll;
     Fl_Flowpack *control_pack;
-#ifdef LV2_SUPPORT
-    Fl_Choice *LV2_presets_choice;
+#if defined LV2_SUPPORT || defined VST2_SUPPORT
+    Fl_Choice *_presets_choice_button;
 #endif
     bool _resized;
     int _min_width;
