@@ -1814,8 +1814,11 @@ VST3_Plugin::initialize_plugin()
                             if (unitInfos->getProgramName(
                                             programListInfo.id, k, name) == kResultOk)
                             {
-                                _PresetList.push_back(utf16_to_utf8(name));
-                                DMESSAGE("Program name1 = %s", utf16_to_utf8(name).c_str() );
+                                std::string s_name = std::to_string(k);
+                                s_name += " ";
+                                s_name += utf16_to_utf8(name);
+                                _PresetList.push_back(s_name);
+                                DMESSAGE("Program name 1 = %s", s_name.c_str() );
                             }
                         }
                         break;
@@ -1835,8 +1838,11 @@ VST3_Plugin::initialize_plugin()
                 if (controller->getParamStringByValue(
                                 m_programParamInfo.id, value, name) == kResultOk)
                 {
-                    _PresetList.push_back(utf16_to_utf8(name));
-                    DMESSAGE("Program name2 = %s", utf16_to_utf8(name).c_str() );
+                    std::string s_name = std::to_string(k);
+                    s_name += " ";
+                    s_name += utf16_to_utf8(name);
+                    _PresetList.push_back(s_name);
+                    DMESSAGE("Program name 2 = %s", s_name.c_str() );
                 }
             }
         }
