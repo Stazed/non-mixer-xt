@@ -1774,7 +1774,8 @@ VST3_Plugin::initialize_plugin()
                     if (controller->getParameterInfo(i, paramInfo) == kResultOk) {
                             if (m_programParamInfo.unitId != Vst::UnitID(-1))
                                     continue;
-                            if (paramInfo.flags & Vst::ParameterInfo::kIsProgramChange)
+                            if (paramInfo.flags & Vst::ParameterInfo::kIsProgramChange &&
+                                    !(paramInfo.flags & Vst::ParameterInfo::kIsHidden))
                                     m_programParamInfo = paramInfo;
                     }
             }
