@@ -105,8 +105,6 @@ Module_Parameter_Editor::Module_Parameter_Editor ( Module *module ) :
     _min_width = 30 + fl_width( module->label() );
     
     { Fl_Group *g = new Fl_Group( 0, 0, w(), 25 );
-
-        // TODO other types
 #ifdef LV2_SUPPORT
         if (_module->_plug_type == Type_LV2)
         {
@@ -117,7 +115,12 @@ Module_Parameter_Editor::Module_Parameter_Editor ( Module *module ) :
                 { Fl_Choice *o = _presets_choice_button = new Fl_Choice( 5, 0, 200, 24 );
                     for(unsigned i = 0; i < pm->_PresetList.size(); ++i)
                     {
-                        std::string temp = pm->_PresetList[i].Label;
+                        // index the label to ensure unique name since FLTK assumes
+                        // any duplicate names are the same item and will not create
+                        // a new one.
+                        std::string temp = std::to_string(i);
+                        temp += " - ";
+                        temp += pm->_PresetList[i].Label;
 
                         /* FLTK assumes '/' to be sub-menu, so we have to search the Label and escape it */
                         for (unsigned ii = 0; ii < temp.size(); ++ii)

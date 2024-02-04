@@ -1815,7 +1815,7 @@ VST3_Plugin::initialize_plugin()
                                             programListInfo.id, k, name) == kResultOk)
                             {
                                 std::string s_name = std::to_string(k);
-                                s_name += " ";
+                                s_name += " - ";
                                 s_name += utf16_to_utf8(name);
                                 _PresetList.push_back(s_name);
                                 DMESSAGE("Program name 1 = %s", s_name.c_str() );
@@ -1839,7 +1839,7 @@ VST3_Plugin::initialize_plugin()
                                 m_programParamInfo.id, value, name) == kResultOk)
                 {
                     std::string s_name = std::to_string(k);
-                    s_name += " ";
+                    s_name += " - ";
                     s_name += utf16_to_utf8(name);
                     _PresetList.push_back(s_name);
                     DMESSAGE("Program name 2 = %s", s_name.c_str() );

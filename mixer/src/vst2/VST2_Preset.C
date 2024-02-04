@@ -712,7 +712,7 @@ VST2_Preset::get_program_names(std::vector<std::string>  &v_program_names)
         char strBuf[STR_MAX+1] = { '\0' };
 
         std::string menu_name = std::to_string(i);
-        menu_name += " ";
+        menu_name += " - ";
 
         if (m_pVst2Plugin->vst2_dispatch(effGetProgramNameIndexed, i, 0, strBuf, 0.0f) == 0)
         {
