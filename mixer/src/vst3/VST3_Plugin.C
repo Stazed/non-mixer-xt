@@ -1764,7 +1764,7 @@ VST3_Plugin::initialize_plugin()
     }
 
     _pProcessor = FUnknownPtr<Vst::IAudioProcessor> (component);
-#if 0
+#if 1
     if (controller)
     {
             const int32 nparams = controller->getParameterCount();
@@ -1779,7 +1779,7 @@ VST3_Plugin::initialize_plugin()
                     }
             }
             if (m_programParamInfo.unitId != Vst::UnitID(-1)) {
-                    Vst::IUnitInfo *unitInfos = pType->impl()->unitInfos();
+                    Vst::IUnitInfo *unitInfos = m_unitInfos;
                     if (unitInfos) {
                             const int32 nunits = unitInfos->getUnitCount();
                             for (int32 i = 0; i < nunits; ++i) {
@@ -1800,14 +1800,15 @@ VST3_Plugin::initialize_plugin()
                                                     Vst::String128 name;
                                                     if (unitInfos->getProgramName(
                                                                     programListInfo.id, k, name) == kResultOk)
-                                                            m_programs.append(fromTChar(name));
+                                                            _PresetList.push_back(utf16_to_utf8(name));
+                                                    DMESSAGE("Program name1 = %s", utf16_to_utf8(name).c_str() );
                                             }
                                             break;
                                     }
                             }
                     }
             }
-            if (m_programs.isEmpty() && m_programParamInfo.stepCount > 0) {
+            if (_PresetList.empty() && m_programParamInfo.stepCount > 0) {
                     const int32 nprograms = m_programParamInfo.stepCount + 1;
                     for (int32 k = 0; k < nprograms; ++k) {
                             const Vst::ParamValue value
@@ -1816,7 +1817,8 @@ VST3_Plugin::initialize_plugin()
                             Vst::String128 name;
                             if (controller->getParamStringByValue(
                                             m_programParamInfo.id, value, name) == kResultOk)
-                                    m_programs.append(fromTChar(name));
+                                    _PresetList.push_back(utf16_to_utf8(name));
+                            DMESSAGE("Program name2 = %s", utf16_to_utf8(name).c_str() );
                     }
             }
     }
@@ -1850,12 +1852,11 @@ VST3_Plugin::initialize_plugin()
 void
 VST3_Plugin::clear_plugin()
 {
-#if 0
     ::memset(&m_programParamInfo, 0, sizeof(Vst::ParameterInfo));
     m_programParamInfo.id = Vst::kNoParamId;
     m_programParamInfo.unitId = Vst::UnitID(-1);
-    m_programs.clear();
-#endif
+    _PresetList.clear();
+
     _mMidiMap.clear();
 }
 
@@ -2314,6 +2315,15 @@ VST3_Plugin::getState ( void** const dataPtr )
     }
 
     return 0;
+}
+
+void
+VST3_Plugin::setProgram(int choice)
+{
+    float tmp = float(choice);
+    float value = tmp / float(m_programParamInfo.stepCount);
+    
+    updateParam(m_programParamInfo.id, value);
 }
 
 void
