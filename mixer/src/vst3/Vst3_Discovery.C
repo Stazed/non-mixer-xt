@@ -41,6 +41,8 @@
   #define V3_ARCHITECTURE "aarch64"
 #elif defined(__x86_64) || defined(__x86_64__) || defined(__amd64)
   #define V3_ARCHITECTURE "x86_64"
+#else
+ #define V3_ARCHITECTURE "unknown"
 #endif
 
 # define CARLA_OS_SEP_STR   "/"
