@@ -360,7 +360,7 @@ Chain::schedule_feedback ( void )
 
 /* remove a module from the chain. this isn't guaranteed to succeed,
  * because removing the module might result in an invalid routing */
-void
+bool
 Chain::remove ( Module *m )
 {
     int i = modules_pack->find( m );
@@ -375,6 +375,7 @@ Chain::remove ( Module *m )
         if(!m->is_zero_input_synth())
         {
             fl_alert( "Can't remove module at this point because the resultant chain is invalid" );
+            return false;
         }
         else
         {
@@ -403,6 +404,8 @@ Chain::remove ( Module *m )
     configure_ports();
 
     client()->unlock();
+
+    return true;
 }
 
 /* determine number of output ports, signal if changed.  */

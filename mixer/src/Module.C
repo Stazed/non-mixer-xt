@@ -1358,8 +1358,8 @@ Module::menu_cb ( const Fl_Menu_ *m )
     {
         if ( copy() )
         {
-            chain()->remove( this );
-            Fl::delete_widget( this );
+            if(chain()->remove( this ))
+                Fl::delete_widget( this );
         }
     }
     else if ( ! strcmp( picked, "Copy" ) )
@@ -1985,7 +1985,7 @@ Module::command_remove ( void )
         fl_alert( "Default modules may not be deleted." );
     else
     {
-        chain()->remove( this );
-        Fl::delete_widget( this );
+        if(chain()->remove( this ))
+            Fl::delete_widget( this );
     }
 }

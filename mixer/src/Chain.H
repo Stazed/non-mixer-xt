@@ -116,7 +116,7 @@ public:
     int modules ( void ) const { return modules_pack ? modules_pack->children() : 0; }
     Module *module ( int n ) const { return (Module*)modules_pack->child( n ); }
     void remove ( Controller_Module *m );
-    void remove ( Module *m );
+    bool remove ( Module *m );
     bool add ( Module *m );
     bool add ( Controller_Module *m );
     bool insert ( Module *m, Module *n );
