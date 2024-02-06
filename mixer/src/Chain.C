@@ -381,7 +381,9 @@ Chain::remove ( Module *m )
         {
             /* When we add a zero input synth, we set the jack port outs to zero. So now to make the
                chain valid we reset the jack outs to 1. The only time that JACK == 0 is when we have
-               a zero input synth */
+               a zero input synth. For clarity, removing a zero input synth would never invalidate
+               the chain. But can_configure_outputs() will return false which is how we got here. So
+               set the jack outs to 1 and continue with removal. */
             if(module( i - 1 )->is_jack_module() )
             {
                 Module *jm = module( i - 1 );
