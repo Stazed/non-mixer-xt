@@ -35,6 +35,7 @@
 #include "../../FL/Fl_Value_SliderX.H"
 #include "../../FL/test_press.H"
 #include "../../FL/menu_popup.H"
+#include "../../nonlib/file.h"
 #include "../../nonlib/debug.h"
 
 #include <FL/Fl_Scroll.H>
@@ -61,6 +62,8 @@
 #if defined(LV2_SUPPORT) || defined(CLAP_SUPPORT) || defined(VST2_SUPPORT) || defined(VST3_SUPPORT)
 #include <FL/Fl_File_Chooser.H>
 #endif
+
+extern char *user_config_dir;
 
 bool
 Module_Parameter_Editor::is_probably_eq ( void )
@@ -802,8 +805,7 @@ Module_Parameter_Editor::cb_preset_handle ( Fl_Widget *w, void *v )
 void
 Module_Parameter_Editor::cb_save_state_handle ( Fl_Widget *, void *v )
 {
-    /* TODO Set file chooser location based on ... */
-    std::string file_chooser_location = "";
+    char *path = read_line( user_config_dir, "default_path");
 
     /* File chooser window title */
     std::string title = "State Save";
@@ -814,7 +816,7 @@ Module_Parameter_Editor::cb_save_state_handle ( Fl_Widget *, void *v )
     if ( ((Module_Parameter_Editor*)v)->_module->_plug_type == Type_CLAP )
     {
 #define EXT ".state"
-    filename = fl_file_chooser(title.c_str(), "(*" EXT")", file_chooser_location.c_str (), 0);
+    filename = fl_file_chooser(title.c_str(), "(*" EXT")", path, 0);
 
     if (filename == NULL)
         return;
@@ -826,14 +828,14 @@ Module_Parameter_Editor::cb_save_state_handle ( Fl_Widget *, void *v )
 #ifdef LV2_SUPPORT
     if ( ((Module_Parameter_Editor*)v)->_module->_plug_type == Type_LV2 )
     {
-        filename = fl_file_chooser(title.c_str(), "", file_chooser_location.c_str(), 0);
+        filename = fl_file_chooser(title.c_str(), "", path, 0);
     }
 #endif
 #ifdef VST2_SUPPORT
     if ( ((Module_Parameter_Editor*)v)->_module->_plug_type == Type_VST2 )
     {
 #define EXT ".fxp"
-    filename = fl_file_chooser(title.c_str(), "(*" EXT")", file_chooser_location.c_str (), 0);
+    filename = fl_file_chooser(title.c_str(), "(*" EXT")", path, 0);
 
     if (filename == NULL)
         return;
@@ -846,7 +848,7 @@ Module_Parameter_Editor::cb_save_state_handle ( Fl_Widget *, void *v )
     if ( ((Module_Parameter_Editor*)v)->_module->_plug_type == Type_VST3 )
     {
 #define EXT ".state"
-    filename = fl_file_chooser(title.c_str(), "(*" EXT")", file_chooser_location.c_str (), 0);
+    filename = fl_file_chooser(title.c_str(), "(*" EXT")", path, 0);
 
     if (filename == NULL)
         return;
@@ -855,6 +857,9 @@ Module_Parameter_Editor::cb_save_state_handle ( Fl_Widget *, void *v )
 #undef EXT
     }
 #endif  // VST3_SUPPORT
+
+    if(path)
+        free(path);
 
     if (filename == NULL)
         return;
@@ -903,8 +908,7 @@ Module_Parameter_Editor::save_plugin_state(const std::string &filename)
 void
 Module_Parameter_Editor::cb_restore_state_handle ( Fl_Widget *, void *v )
 {
-    /* TODO Set file chooser location based on ... */
-    std::string file_chooser_location = "";
+    char *path = read_line( user_config_dir, "default_path");
 
     /* File chooser window title */
     std::string title = "State Restore";
@@ -914,27 +918,31 @@ Module_Parameter_Editor::cb_restore_state_handle ( Fl_Widget *, void *v )
 #ifdef CLAP_SUPPORT
     if ( ((Module_Parameter_Editor*)v)->_module->_plug_type == Type_CLAP )
     {
-        directory = fl_file_chooser(title.c_str(), "*.state", file_chooser_location.c_str(), 0);
+        directory = fl_file_chooser(title.c_str(), "*.state", path, 0);
     }
 #endif
 #ifdef LV2_SUPPORT
     if (((Module_Parameter_Editor*)v)->_module->_plug_type == Type_LV2 )
     {
-        directory = fl_dir_chooser(title.c_str(), file_chooser_location.c_str(), 0);
+        directory = fl_dir_chooser(title.c_str(), path, 0);
     }
 #endif
 #ifdef VST2_SUPPORT
     if ( ((Module_Parameter_Editor*)v)->_module->_plug_type == Type_VST2 )
     {
-        directory = fl_file_chooser(title.c_str(), "*.fxp", file_chooser_location.c_str(), 0);
+        directory = fl_file_chooser(title.c_str(), "*.fxp", path, 0);
     }
 #endif
 #ifdef VST3_SUPPORT
     if (((Module_Parameter_Editor*)v)->_module->_plug_type == Type_VST3 )
     {
-        directory = fl_file_chooser(title.c_str(), "*.state", file_chooser_location.c_str(), 0);
+        directory = fl_file_chooser(title.c_str(), "*.state", path, 0);
     }
 #endif
+
+    if(path)
+        free(path);
+
     if (directory == NULL)
         return;
 
