@@ -105,6 +105,7 @@ VST2_Plugin::VST2_Plugin() :
     _iAudioOuts(0),
     _iMidiIns(0),
     _iMidiOuts(0),
+    _param_props(),
     _bRealtime(false),
     _bConfigure(false),
     _bEditor(false),
