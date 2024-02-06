@@ -213,7 +213,10 @@ bool VST2_Preset::load_prog_params ( FILE& file )
     float *params = new float [iNumParams];
     
     if (fread((char *) params, nread_params, 1, &file) < 1)
+    {
+        delete [] params;
         return false;
+    }
 
     for (int iParam = 0; iParam < iNumParams; ++iParam)
     {
