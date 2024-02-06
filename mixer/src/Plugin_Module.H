@@ -73,6 +73,8 @@ public:
 
     void resize_buffers ( nframes_t buffer_size ) override;
 
+    virtual void clear_midi_vectors() override {};
+
     LOG_CREATE_FUNC( Plugin_Module );
     MODULE_CLONE_FUNC( Plugin_Module );
 

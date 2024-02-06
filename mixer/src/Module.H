@@ -730,6 +730,7 @@ public:
 
     virtual void freeze_ports ( void );
     virtual void thaw_ports ( void );
+    virtual void clear_midi_vectors() {};
 
     void destroy_connected_controller_module();
 

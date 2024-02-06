@@ -772,37 +772,8 @@ err:
     ins and outs above since they do not have JACK ports. Since the failure
     above meant we don't have JACK ports created for MIDI, we clear any MIDI
     vectors here so the JACK port deletion does not get called on NULL ports and crash */
-#ifdef LV2_SUPPORT
-    if(n->_plug_type == Type_LV2)
-    {
-        LV2_Plugin *plug = static_cast<LV2_Plugin *> (n);
-        plug->atom_input.clear();
-        plug->atom_output.clear();
-    }
-#endif
-#ifdef CLAP_SUPPORT
-    if(n->_plug_type == Type_CLAP)
-    {
-        CLAP_Plugin *plug = static_cast<CLAP_Plugin *> (n);
-        plug->note_input.clear();
-        plug->note_output.clear();
-    }
-#endif
-#ifdef VST2_SUPPORT
-    if(n->_plug_type == Type_VST2)
-    {
-        VST2_Plugin *plug = static_cast<VST2_Plugin *> (n);
-        plug->midi_input.clear();
-        plug->midi_output.clear();
-    }
-#endif
-#ifdef VST3_SUPPORT
-    if(n->_plug_type == Type_VST3)
-    {
-        VST3_Plugin *plug = static_cast<VST3_Plugin *> (n);
-        plug->midi_input.clear();
-        plug->midi_output.clear();
-    }
+#if defined(LV2_SUPPORT) || defined(CLAP_SUPPORT) || defined(VST2_SUPPORT) || defined(VST3_SUPPORT)
+    n->clear_midi_vectors();
 #endif
 
     client()->unlock();

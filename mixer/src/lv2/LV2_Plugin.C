@@ -1422,6 +1422,13 @@ LV2_Plugin::thaw_ports ( void )
 #endif  // LV2_WORKER_SUPPORT
 }
 
+void
+LV2_Plugin::clear_midi_vectors()
+{
+    atom_input.clear();
+    atom_output.clear();
+}
+
 bool
 LV2_Plugin::plugin_instances ( unsigned int n )
 {

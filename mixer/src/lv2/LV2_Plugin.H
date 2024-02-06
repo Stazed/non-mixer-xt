@@ -86,6 +86,7 @@ public:
 
     void freeze_ports ( void ) override;
     void thaw_ports ( void ) override;
+    void clear_midi_vectors() override;
 
 #ifdef PRESET_SUPPORT
     std::vector<LV2_RDF_Preset> _PresetList;

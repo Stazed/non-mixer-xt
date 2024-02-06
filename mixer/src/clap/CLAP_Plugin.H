@@ -65,6 +65,7 @@ public:
 
     void freeze_ports ( void ) override;
     void thaw_ports ( void ) override;
+    void clear_midi_vectors() override;
     
     void configure_midi_inputs () override;
     void configure_midi_outputs () override;

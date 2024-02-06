@@ -667,6 +667,13 @@ VST3_Plugin::thaw_ports ( void )
 }
 
 void
+VST3_Plugin::clear_midi_vectors()
+{
+    midi_input.clear();
+    midi_output.clear();
+}
+
+void
 VST3_Plugin::configure_midi_inputs ()
 {
     if(!midi_input.size())

@@ -818,6 +818,13 @@ CLAP_Plugin::thaw_ports ( void )
 }
 
 void
+CLAP_Plugin::clear_midi_vectors()
+{
+    note_input.clear();
+    note_output.clear();
+}
+
+void
 CLAP_Plugin::configure_midi_inputs ()
 {
     if(!note_input.size())
