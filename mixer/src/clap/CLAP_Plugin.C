@@ -2028,7 +2028,8 @@ CLAP_Plugin::custom_update_ui_x()
         if (currentTimeInMs > timer.lastCallTimeInMs + timer.periodInMs)
         {
             timer.lastCallTimeInMs = currentTimeInMs;
-            _timer_support->on_timer(_plugin, timer.clapId);
+            if(Thread::is( "UI" ))
+                _timer_support->on_timer(_plugin, timer.clapId);
         }
     }
 
