@@ -1490,64 +1490,12 @@ Module::handle ( int m )
     {
         case FL_KEYBOARD:
         {
-            /* For LV2 we show the custom UI if available with the space bar. The generic
+            /* For LV2/CLAP/VST we show the custom UI if available with the space bar. The generic
                UI is shown with CTRL space. If no custom UI then either space or CTRL space opens
                the generic UI. */
             if ( !( Fl::event_key(FL_Control_L) ) &&  !( Fl::event_key(FL_Control_R) ) && (Fl::event_key(32)) ) // 32 == space bar
             {
-#ifdef LV2_SUPPORT
-                if(_plug_type == Type_LV2)
-                {
-                    LV2_Plugin *pm = static_cast<LV2_Plugin *> (this);
-                    if(!pm->try_custom_ui())
-                    {
-                        command_open_parameter_editor();
-                    }
-                    else    // set the dirty flag if we opened the custom UI
-                    {
-                        set_dirty();
-                    }
-                }
-                else
-#endif
-#ifdef CLAP_SUPPORT
-                if(_plug_type == Type_CLAP)
-                {
-                    CLAP_Plugin *pm = static_cast<CLAP_Plugin *> (this);
-                    if(!pm->try_custom_ui())
-                    {
-                        command_open_parameter_editor();
-                    }
-                }
-                else
-#endif
-#ifdef VST2_SUPPORT
-                if(_plug_type == Type_VST2)
-                {
-                    VST2_Plugin *pm = static_cast<VST2_Plugin *> (this);
-                    if(!pm->try_custom_ui())
-                    {
-                        command_open_parameter_editor();
-                    }
-                }
-                else
-#endif
-#ifdef VST3_SUPPORT
-                if(_plug_type == Type_VST3)
-                {
-                    VST3_Plugin *pm = static_cast<VST3_Plugin *> (this);
-                    if(!pm->try_custom_ui())
-                    {
-                        command_open_parameter_editor();
-                    }
-                }
-                else
-#endif
-                // LADSPA and internal
-                {
-                    command_open_parameter_editor();
-                }
-
+                open_plugin_ui();
                 return 1;
             }
 
@@ -1582,58 +1530,7 @@ Module::handle ( int m )
             }
             else if ( e & FL_BUTTON1 )
             {
-#ifdef LV2_SUPPORT
-                if(_plug_type == Type_LV2)
-                {
-                    LV2_Plugin *pm = static_cast<LV2_Plugin *> (this);
-                    if(!pm->try_custom_ui())
-                    {
-                        command_open_parameter_editor();
-                    }
-                    else    // set the dirty flag if we opened the custom UI
-                    {
-                        set_dirty();
-                    }
-                }
-                else
-#endif  
-#ifdef CLAP_SUPPORT
-                if(_plug_type == Type_CLAP)
-                {
-                    CLAP_Plugin *pm = static_cast<CLAP_Plugin *> (this);
-                    if(!pm->try_custom_ui())
-                    {
-                        command_open_parameter_editor();
-                    }
-                }
-                else
-#endif
-#ifdef VST2_SUPPORT
-                if(_plug_type == Type_VST2)
-                {
-                    VST2_Plugin *pm = static_cast<VST2_Plugin *> (this);
-                    if(!pm->try_custom_ui())
-                    {
-                        command_open_parameter_editor();
-                    }
-                }
-                else
-#endif
-#ifdef VST3_SUPPORT
-                if(_plug_type == Type_VST3)
-                {
-                    VST3_Plugin *pm = static_cast<VST3_Plugin *> (this);
-                    if(!pm->try_custom_ui())
-                    {
-                        command_open_parameter_editor();
-                    }
-                }
-                else
-#endif
-                {
-                    command_open_parameter_editor();
-                }
-
+                open_plugin_ui();
                 return 1;
             }
             else if ( e & FL_BUTTON3 && e & FL_CTRL )
@@ -1997,6 +1894,75 @@ Module::command_open_parameter_editor ( void )
 
         _editor->show();
         set_dirty();
+    }
+}
+
+void
+Module::open_plugin_ui()
+{
+#ifdef LV2_SUPPORT
+    if(_plug_type == Type_LV2)
+    {
+        LV2_Plugin *pm = static_cast<LV2_Plugin *> (this);
+        if(!pm->try_custom_ui())
+        {
+            command_open_parameter_editor();
+        }
+        else    // set the dirty flag if we opened the custom UI
+        {
+            set_dirty();
+        }
+    }
+    else
+#endif
+#ifdef CLAP_SUPPORT
+    if(_plug_type == Type_CLAP)
+    {
+        CLAP_Plugin *pm = static_cast<CLAP_Plugin *> (this);
+        if(!pm->try_custom_ui())
+        {
+            command_open_parameter_editor();
+        }
+        else    // set the dirty flag if we opened the custom UI
+        {
+            set_dirty();
+        }
+    }
+    else
+#endif
+#ifdef VST2_SUPPORT
+    if(_plug_type == Type_VST2)
+    {
+        VST2_Plugin *pm = static_cast<VST2_Plugin *> (this);
+        if(!pm->try_custom_ui())
+        {
+            command_open_parameter_editor();
+        }
+        else    // set the dirty flag if we opened the custom UI
+        {
+            set_dirty();
+        }
+    }
+    else
+#endif
+#ifdef VST3_SUPPORT
+    if(_plug_type == Type_VST3)
+    {
+        VST3_Plugin *pm = static_cast<VST3_Plugin *> (this);
+        if(!pm->try_custom_ui())
+        {
+            command_open_parameter_editor();
+        }
+        else    // set the dirty flag if we opened the custom UI
+        {
+            set_dirty();
+        }
+    }
+    else
+#endif
+    // LADSPA and internal
+    {
+        command_open_parameter_editor();
     }
 }
 

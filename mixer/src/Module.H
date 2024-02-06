@@ -741,6 +741,7 @@ public:
     static void sample_rate ( nframes_t srate ) { _sample_rate = srate; }
 
     void command_open_parameter_editor();
+    void open_plugin_ui();
     virtual void command_activate ( void );
     virtual void command_deactivate ( void );
     virtual void command_remove ( void );
