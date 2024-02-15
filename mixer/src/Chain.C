@@ -889,6 +889,10 @@ Chain::build_process_queue ( void )
     /* connect all the ports to the buffers */
     for ( int i = 0; i < modules(); ++i )
     {
+        // This can happen when a zero input synth cannot be loaded.
+        // We give users a warning but this causes crash so lets not do that.
+        if(scratch_port.size() == 0)
+            break;
 
         Module *m = module( i );
         
