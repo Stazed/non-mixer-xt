@@ -3,7 +3,7 @@
 cmake_minimum_required(VERSION 3.5.1)
 project (non-mixer-xt)
 
-set (PACKAGE_VERSION "1.3.1")
+set (PACKAGE_VERSION "1.3.2")
 
 set (CMAKE_SKIP_RULE_DEPENDENCY OFF)
 
