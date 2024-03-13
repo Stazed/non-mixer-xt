@@ -55,13 +55,13 @@ Output parameters of plugins (e.g. a compressor's gain reduction) are not shown 
 
 ### Signals under NSM
 
-When Non-Mixer-XT is managed by a Non Session Manager, signal paths are all prepended with `Non-Mixer-XT.clientID`:
+When Non-Mixer-XT is managed by a Non Session Manager, signal paths are all prepended with `/Non-Mixer-XT.clientID`:
 
 ```
-Non-Mixer-XT.clientID/strip/[STRIP_NAME]/[MODULE_NAME]/[PARAMETER_NAME]
+/Non-Mixer-XT.clientID/strip/[STRIP_NAME]/[MODULE_NAME]/[PARAMETER_NAME]
 ```
 
-The absence of leading slash is not a typing error. It does not comply with the OSC specification but is supported in some implementations such as liblo. This may change in a future version.
+Liblo release 0.32 now requires a leading slash which was not needed in previous versions.
 
 ## Commands
 
