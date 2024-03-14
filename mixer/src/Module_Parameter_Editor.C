@@ -673,7 +673,7 @@ Module_Parameter_Editor::set_preset_controls(int choice)
 #endif
 
 void 
-Module_Parameter_Editor::update_control_visibility ( void )
+Module_Parameter_Editor::update_control_visibility ( bool b_resize )
 {
     for ( unsigned int i = 0; i < _module->control_input.size(); ++i )
     {
@@ -709,12 +709,19 @@ Module_Parameter_Editor::update_control_visibility ( void )
     
     if(_use_scroller)
     {
-        control_scroll->scroll_to(control_scroll->xposition(), control_scroll->yposition() -17);
+        if(!b_resize)
+            control_scroll->scroll_to(control_scroll->xposition(), control_scroll->yposition() -17);
     }
 
-    size( width, height );
-    size_range( width, height, width, height );
+    if(!b_resize)
+    {
+        size( width, height );
 
+        if(_use_scroller)
+            size_range( width, height, width, 0 );  // allow vertical resizing
+        else
+            size_range( width, height, width, height ); // no resizing
+    }
 }
 
 #ifdef LV2_SUPPORT
@@ -1083,11 +1090,23 @@ Module_Parameter_Editor::refresh_file_button_label(int index)
 #endif
 
 void
-Module_Parameter_Editor::reload ( void )
+Module_Parameter_Editor::reload ( bool b_resize )
 {
 //    make_controls();
-    update_control_visibility();
+    update_control_visibility(b_resize);
     redraw();
+}
+
+void
+Module_Parameter_Editor::resize(int X, int Y, int W, int H)
+{
+    if(_use_scroller)
+    {
+        control_scroll->resize(0, 0, 500, H - 100);
+        reload(true);
+    }
+
+    Fl_Double_Window::resize(X, Y, W, H);
 }
 
 #ifdef LV2_SUPPORT

@@ -77,7 +77,7 @@ class Module_Parameter_Editor : public Fl_Double_Window
 
     };
 
-    void update_control_visibility ( void );
+    void update_control_visibility ( bool b_resize = false );
     static void cb_button_handle ( Fl_Widget *w, void *v );
     static void cb_value_handle ( Fl_Widget *w, void *v );
     static void cb_panner_value_handle ( Fl_Widget *w, void *v );
@@ -132,7 +132,8 @@ class Module_Parameter_Editor : public Fl_Double_Window
 
 public:
 
-    void reload ( void );
+    void reload ( bool b_resize = false );
+    void resize(int,int,int,int);
     void handle_control_changed ( Module::Port *p );
 #ifdef LV2_SUPPORT
     void refresh_file_button_label(int index);
