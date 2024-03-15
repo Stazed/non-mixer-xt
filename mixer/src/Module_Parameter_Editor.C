@@ -718,9 +718,14 @@ Module_Parameter_Editor::update_control_visibility ( bool b_resize )
         size( width, height );
 
         if(_use_scroller)
-            size_range( width, height, width, 0 );  // allow vertical resizing
+        {
+            if(!spectrum_view->parent()->visible())
+                size_range( width, height, 0, 0 );      // allow vertical & horizontal resizing
+            else
+                size_range( width, height, width, 0 );  // allow vertical resizing only
+        }
         else
-            size_range( width, height, width, height ); // no resizing
+            size_range( width, height, width, height ); // no resizing in no scroller
     }
 }
 
@@ -1102,7 +1107,22 @@ Module_Parameter_Editor::resize(int X, int Y, int W, int H)
 {
     if(_use_scroller)
     {
-        control_scroll->resize(0, 0, 500, H - 100);
+        if(!spectrum_view->parent()->visible())   // if no spectrum_view, then resize vertical and horizontal
+        {
+            control_scroll->resize(0, 0, W - 60, H - 100);
+
+            for (int i = 0; i < control_scroll->children() - 2; ++i)    // -2 skip scrollbars
+            {
+                Fl_Widget *w = control_scroll->child(i);
+
+                w->resize(w->x(), w->y(), W - 400, w->h()); // W-400: leave room for scrollbar & label
+            }
+        }
+        else    // have spectrum, only allow vertical resize
+        {
+            control_scroll->resize(0, 0, 500, H - 100);
+        }
+
         reload(true);
     }
 
