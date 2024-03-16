@@ -865,6 +865,9 @@ VST3_Plugin::set_control_value(unsigned long port_index, float value, bool updat
 void
 VST3_Plugin::updateParam(Vst::ParamID id, float fValue)
 {
+    if(isnan(fValue))
+        return;
+
     Vst::IEditController *controller = _pController;
     if (!controller)
         return;
