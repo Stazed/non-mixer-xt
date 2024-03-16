@@ -2355,9 +2355,10 @@ VST3_Plugin::getState ( void** const dataPtr )
 void
 VST3_Plugin::setProgram(int choice)
 {
-    float tmp = float(choice);
-    float value = tmp / float(m_programParamInfo.stepCount);
-    
+    float value = float(choice);
+    if(m_programParamInfo.stepCount)
+        value = float(choice) / float(m_programParamInfo.stepCount);
+
     updateParam(m_programParamInfo.id, value);
 }
 
