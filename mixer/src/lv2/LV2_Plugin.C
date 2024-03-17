@@ -710,10 +710,22 @@ LV2_Plugin::load_plugin ( Module::Picked picked )
         }
     }
 
+#ifdef LV2_WORKER_SUPPORT
+    /* We need to set port properties after instances are created or
+       the properties are not available for query from the plugin */
+    for (unsigned int i = 0; i < atom_input.size(); ++i)
+    {
+        set_lv2_port_properties( &atom_input[i], true );
+    }
+    
+    for (unsigned int i = 0; i < atom_output.size(); ++i)
+    {
+        set_lv2_port_properties( &atom_output[i], false );
+    }
+    
     /* Read the zix buffer sent from the plugin and sends to the UI.
        This needs to have a separate timeout from custom ui since it
        can also apply to generic UI events.*/
-#ifdef LV2_WORKER_SUPPORT
     Fl::add_timeout( 0.03f, &update_ui, this );
 #endif
 
@@ -1058,16 +1070,6 @@ LV2_Plugin::create_atom_ports()
             }
         }
 #endif
-    }
-
-    for (unsigned int i = 0; i < atom_input.size(); ++i)
-    {
-        set_lv2_port_properties( &atom_input[i], true );
-    }
-    
-    for (unsigned int i = 0; i < atom_output.size(); ++i)
-    {
-        set_lv2_port_properties( &atom_output[i], false );
     }
 }
 
