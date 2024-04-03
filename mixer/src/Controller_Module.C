@@ -806,7 +806,7 @@ Controller_Module::peer_callback( OSC::Signal *sig,  OSC::Signal::State /*state*
 
         unescape_url( path );
 
-        asprintf( &s, "%s/%s", peer_prefix, path );
+        asprintf( &s, "%s%s", peer_prefix, path );
 
         peer_menu->add( s, 0, NULL, static_cast<void*>( sig ), 0 );
 
@@ -860,10 +860,10 @@ Controller_Module::add_osc_connections_to_menu ( Fl_Menu_Button *, const char *p
                 unescape_url( path );
 
                 char *ns;
-                asprintf( &ns, "%s/%s", a_peer_prefix, path );
-            
+                asprintf( &ns, "%s%s", a_peer_prefix, path );
+
                 peer_menu->add( ns, 0, NULL, const_cast<char*>(*s), 0 );
-    
+
                 free( path );
 //            free(*s);
             }

@@ -395,8 +395,15 @@ Module::Port::osc_number_path ( void )
     char *client_name;
     char *strip_name;
 
-    if ( 3 != sscanf( _scaled_signal->path(), "%m[^/]/strip/%m[^/]/%m[^\n]", &client_name, &strip_name, &rem ) )
+    std::string s_scaled_signal_path = _scaled_signal->path();
+
+    // remove leading '/' so sscanf below will work - necessary since liblo now requires leading '/'
+    s_scaled_signal_path.erase(0, 1);
+
+    if ( 3 != sscanf( s_scaled_signal_path.c_str(), "%m[^/]/strip/%m[^/]/%m[^\n]", &client_name, &strip_name, &rem ) )
+    {
         return NULL;
+    }
 
     free( strip_name );
 
