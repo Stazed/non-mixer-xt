@@ -590,6 +590,10 @@ Module_Parameter_Editor::make_controls ( void )
                 w->hide();
                 continue;
             }
+            else
+            {
+                module->_b_have_visible_atom_control_port = true;
+            }
 
             if (_use_scroller)
             {
@@ -696,7 +700,13 @@ Module_Parameter_Editor::update_control_visibility ( bool b_resize )
         /* When the scroller is not used, we need to expand width to account for 
            the preset, state save and restore button */
         if(!_use_scroller)
+        {
             width = control_pack->w() + 225;
+            // The case in which there are only atom control ports, the control pack
+            // w() will still be too small because the atom ports are smaller buttons
+            // and not sliders.
+            width = width < 485 ? 485 : width;
+        }
     }
 #endif
 

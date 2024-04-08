@@ -144,6 +144,7 @@ public:
     };
 
 #ifdef LV2_SUPPORT
+    bool _b_have_visible_atom_control_port;
     struct EnumeratorScalePoints
     {
         std::string Label;

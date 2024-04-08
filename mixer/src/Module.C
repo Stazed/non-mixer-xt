@@ -90,6 +90,9 @@ Module::Module ( int W, int H, const char *L ) :
     _is_from_custom_ui(false),
     _is_removed(false),
     _use_custom_data(false)
+#ifdef LV2_SUPPORT
+    ,_b_have_visible_atom_control_port(false)
+#endif
 {
     Module::init();
 }
@@ -1902,6 +1905,20 @@ Module::command_open_parameter_editor ( void )
         _editor->show();
         set_dirty();
     }
+#ifdef LV2_SUPPORT
+    else if (_plug_type == Type_LV2)
+    {
+        LV2_Plugin *pm = static_cast<LV2_Plugin *> (this);
+        if(!pm->_PresetList.empty() || _b_have_visible_atom_control_port)
+        {
+            DMESSAGE( "Opening module parameters for \"%s\"", label() );
+            _editor = new Module_Parameter_Editor( this );
+
+            _editor->show();
+            set_dirty();
+        }
+    }
+#endif
 }
 
 void
