@@ -701,11 +701,7 @@ Module_Parameter_Editor::update_control_visibility ( bool b_resize )
            the preset, state save and restore button */
         if(!_use_scroller)
         {
-            width = control_pack->w() + 225;
-            // The case in which there are only atom control ports, the control pack
-            // w() will still be too small because the atom ports are smaller buttons
-            // and not sliders.
-            width = width < 485 ? 485 : width;
+            width = 485;
         }
     }
 #endif
