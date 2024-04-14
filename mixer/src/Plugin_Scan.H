@@ -75,6 +75,9 @@ public:
 
 #ifdef LADSPA_SUPPORT
     void scan_LADSPA_plugins( std::list<Plugin_Info> & pr, bool rescan );
+
+    void set_ladspainfo( LADSPAInfo * linfo );
+    LADSPAInfo * get_ladspainfo();
 #endif
 #ifdef LV2_SUPPORT
     void scan_LV2_plugins( std::list<Plugin_Info> & pr, bool rescan );
@@ -87,11 +90,6 @@ public:
 #endif
 #ifdef VST3_SUPPORT
     void scan_VST3_plugins( std::list<Plugin_Info> & pr, bool rescan );
-#endif
-
-#ifdef LADSPA_SUPPORT
-    void set_ladspainfo( LADSPAInfo * linfo );
-    LADSPAInfo * get_ladspainfo();
 #endif
 
     Plugin_Scan();

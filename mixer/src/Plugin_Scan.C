@@ -619,6 +619,7 @@ Plugin_Scan::scan_VST3_plugins( std::list<Plugin_Info> & pr, bool rescan )
         return;
     }
 }
+#endif  // VST3_SUPPORT
 
 bool
 Plugin_Scan::load_plugin_cache ( void )
@@ -691,4 +692,3 @@ Plugin_Scan::save_plugin_cache ( void )
     fclose( fp );
 }
 
-#endif  // VST3_SUPPORT
