@@ -118,25 +118,7 @@ Module_Parameter_Editor::Module_Parameter_Editor ( Module *module ) :
                 { Fl_Choice *o = _presets_choice_button = new Fl_Choice( 5, 0, 200, 24 );
                     for(unsigned i = 0; i < pm->_PresetList.size(); ++i)
                     {
-                        // index the label to ensure unique name since FLTK assumes
-                        // any duplicate names are the same item and will not create
-                        // a new one.
-                        std::string temp = std::to_string(i);
-                        temp += " - ";
-                        temp += pm->_PresetList[i].Label;
-
-                        /* FLTK assumes '/' to be sub-menu, so we have to search the Label and escape it */
-                        for (unsigned ii = 0; ii < temp.size(); ++ii)
-                        {
-                            if ( temp[ii] == '/' )
-                            {
-                                temp.insert(ii, "\\");
-                                ++ii;
-                                continue;
-                            }
-                        }
-
-                        o->add( temp.c_str() );
+                        o->add( pm->_PresetList[i].Label.c_str() );
                     }
 
                     o->label( "Presets" );
@@ -144,6 +126,30 @@ Module_Parameter_Editor::Module_Parameter_Editor ( Module *module ) :
                     o->value( 0 );
                     o->when( FL_WHEN_CHANGED|FL_WHEN_NOT_CHANGED );
                     o->callback( cb_preset_handle,  this );
+
+                    /* The presets that have submenus are indexed by NTK including NULL labels. 
+                       We want the index based on valid selection items which does not include
+                       NULL labels or FL_SUBMENU. So we create a map with the NTK menu index
+                       as the key and the preset_index as incremented for each actual menu item.
+                       The cb_preset_handle then uses the NTK menu value which == key to find
+                       the preset_index to query the actual LV2 preset. */
+                    int preset_index = 0;
+                    for ( int key = 0; key < o->size(); key++ )
+                    {
+                        const Fl_Menu_Item &item = o->menu()[key];       // get each item
+
+                        std::pair<int, int> prm ( key, preset_index );
+                        _mPreset_index.insert(prm);
+
+                        if(item.label() && !((item.flags & FL_SUBMENU)))
+                            preset_index++;
+
+                        DMESSAGE("item #%d -- label=%s, value=%s type=%s",
+                            key,
+                            item.label() ? item.label() : "(Null)",          // menu terminators have NULL labels
+                            (item.flags & FL_MENU_VALUE) ? "set" : "clear",  // value of toggle or radio items
+                            (item.flags & FL_SUBMENU) ? "Submenu" : "Item"); // see if item is a submenu or actual item
+                    }
                 }
             }
         }
@@ -815,7 +821,25 @@ void
 Module_Parameter_Editor::cb_preset_handle ( Fl_Widget *w, void *v )
 {
     Fl_Choice *m = static_cast<Fl_Choice*>( w );
-    ((Module_Parameter_Editor*)v)->set_preset_controls( (int) m->value());
+
+    int index = (int) m->value();   // VST2 & VST3
+
+    if ( ((Module_Parameter_Editor*)v)->_module->_plug_type == Type_LV2 )
+    {
+        std::unordered_map<int, int> preset_index = ((Module_Parameter_Editor*)v)->_mPreset_index;
+
+        std::unordered_map<int, int>::const_iterator got
+            = preset_index.find ((int) m->value());
+
+        if ( got == preset_index.end() )
+        {
+            return;
+        }
+
+        index = got->second;
+    }
+
+    ((Module_Parameter_Editor*)v)->set_preset_controls( index);
 }
 #endif
 

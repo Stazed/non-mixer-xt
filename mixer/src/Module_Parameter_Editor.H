@@ -129,6 +129,7 @@ class Module_Parameter_Editor : public Fl_Double_Window
     std::vector<Fl_Widget*> atom_port_controller;
 
     Fl_Menu_Button &menu ( void ) const;
+    std::unordered_map<int, int> _mPreset_index;
 
 public:
 
