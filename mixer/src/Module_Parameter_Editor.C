@@ -348,10 +348,11 @@ Module_Parameter_Editor::make_controls ( void )
     
 #ifdef FLTK_SUPPORT
     Fl_Color fc = FL_CYAN;
+    Fl_Color bc = FL_LIGHT3;
 #else
-     Fl_Color fc = fl_color_add_alpha( FL_CYAN, 200 );
-#endif
+    Fl_Color fc = fl_color_add_alpha( FL_CYAN, 200 );
     Fl_Color bc = FL_BACKGROUND_COLOR;
+#endif
 
     controls_by_port.resize( module->control_input.size() );
     

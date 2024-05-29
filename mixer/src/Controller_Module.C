@@ -907,7 +907,21 @@ Controller_Module::draw ( void )
     if ( learn_mode() )
     {
 #ifdef FLTK_SUPPORT
-        fl_rectf( x(),y(),w(),h(),
+        // Since we don't have alpha transparency for FLTK, just draw 3 pixel outline,
+        // each rectangle is one pixel
+        fl_rect( x(),y(),w(),h(),
+		      this == _learning_control
+		      ? FL_RED
+		      : FL_GREEN
+		      );
+        
+        fl_rect( x()+1,y()+1,w()-1,h()-1,
+		      this == _learning_control
+		      ? FL_RED
+		      : FL_GREEN
+		      );
+        
+        fl_rect( x()-1,y()-1,w()+1,h()+1,
 		      this == _learning_control
 		      ? FL_RED
 		      : FL_GREEN
