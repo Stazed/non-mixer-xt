@@ -906,12 +906,20 @@ Controller_Module::draw ( void )
 
     if ( learn_mode() )
     {
+#ifdef FLTK_SUPPORT
+        fl_rectf( x(),y(),w(),h(),
+		      this == _learning_control
+		      ? FL_RED
+		      : FL_GREEN
+		      );
+#else
 	fl_rectf( x(),y(),w(),h(),
 		  fl_color_add_alpha(
 		      this == _learning_control
 		      ? FL_RED
 		      : FL_GREEN,
 		      60 ) );
+#endif
     }
 }
 

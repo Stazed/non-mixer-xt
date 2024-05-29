@@ -198,7 +198,11 @@ JACK_Module::draw ( void )
     if ( this == receptive_to_drop )
     {
         Fl_Widget *o = input_connection_handle;
+#ifdef FLTK_SUPPORT
+        fl_draw_box( FL_OVAL_BOX, o->x(), o->y(), o->w(), o->h(),  FL_GREEN);
+#else
         fl_draw_box( FL_OVAL_BOX, o->x(), o->y(), o->w(), o->h(), fl_color_add_alpha( FL_GREEN, 127 ) );
+#endif
     }
 }
 
@@ -337,7 +341,18 @@ JACK_Module::update_connection_status ( void )
         n = 15;
 
     if ( n > 0 )
+#ifdef FLTK_SUPPORT
+    {
+        // The connection_display->incr_height() for NTK is 12, the text size for FLTK is 10, so we add +2
+        size( w(), 26 + ( n * ( connection_display->textsize() + 2 ) ) );
+        DMESSAGE("textsize = %d", connection_display->textsize());
+    }
+#else
+    {
         size( w(), 26 + ( n * ( connection_display->incr_height() ) ) );
+        DMESSAGE("connection_display->incr_height()= %d" ,  connection_display->incr_height() );
+    }
+#endif
     else
         size( w(), 24 );
         

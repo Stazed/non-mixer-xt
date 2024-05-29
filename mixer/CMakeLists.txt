@@ -74,21 +74,9 @@ set (ProgSources
     src/x11/X11PluginUI.C
 )
 
-set(ExternLibraries
-    ${NTK_IMAGES_LIBRARIES}
-    ${NTK_LIBRARIES}
-    ${JACK_LINK_LIBRARIES}
-    ${CMAKE_THREAD_LIBS_INIT}
-    ${X11_LIBRARIES}
-    ${LIBLO_LIBRARIES}
-    ${LILV_LIBRARIES}
-    ${SUIL_LIBRARIES}
-    ${ZIX_LIBRARIES}
-    ${PangoCairo_LIBRARIES}
-    dl
-    m
-    lrdf
-)
+if(BuildFLTK)
+    set (FLTK_ToolTip  ../FL/Fl_Tooltip.cxx)
+endif(BuildFLTK)
 
 if (CONFIG_VST3SDK)
   add_definitions(-DRELEASE)
@@ -105,26 +93,76 @@ endif ()
 
 add_executable (non-mixer-xt
     ${ProgSources}
+    ${FLTK_ToolTip}
     ${VST3SDK_SOURCES}
     src/main.C)
+
+if(BuildFLTK)
+    set(ExternLibraries
+        ${FLTK_LIBRARIES}
+        ${FLTK_IMAGES_LIBRARY}
+        ${JACK_LINK_LIBRARIES}
+        ${CMAKE_THREAD_LIBS_INIT}
+        ${X11_LIBRARIES}
+        ${LIBLO_LIBRARIES}
+        ${LILV_LIBRARIES}
+        ${SUIL_LIBRARIES}
+        ${ZIX_LIBRARIES}
+        ${PangoCairo_LIBRARIES}
+        dl
+        m
+        lrdf
+    )
+
+    target_include_directories (
+        non-mixer-xt PRIVATE
+        ${FLTK_INCLUDE_DIR}
+        ${JACK_INCLUDE_DIRS}
+        ${LRDF_INCLUDE_DIRS}
+        ${LILV_INCLUDE_DIRS}
+        ${SUIL_INCLUDE_DIRS}
+        ${X11_INCLUDE_DIRS}
+        ${LIBLO_INCLUDE_DIRS}
+        ${ZIX_INCLUDE_DIRS}
+        ${CLAP_INCLUDEDIR}
+        ${PangoCairo_INCLUDE_DIRS}
+    )
+#NTK
+else(BuildFLTK)
+    set(ExternLibraries
+        ${NTK_IMAGES_LIBRARIES}
+        ${NTK_LIBRARIES}
+        ${JACK_LINK_LIBRARIES}
+        ${CMAKE_THREAD_LIBS_INIT}
+        ${X11_LIBRARIES}
+        ${LIBLO_LIBRARIES}
+        ${LILV_LIBRARIES}
+        ${SUIL_LIBRARIES}
+        ${ZIX_LIBRARIES}
+        ${PangoCairo_LIBRARIES}
+        dl
+        m
+        lrdf
+    )
+
+    target_include_directories (
+        non-mixer-xt PRIVATE
+        ${NTK_INCLUDE_DIRS}
+        ${JACK_INCLUDE_DIRS}
+        ${LRDF_INCLUDE_DIRS}
+        ${LILV_INCLUDE_DIRS}
+        ${SUIL_INCLUDE_DIRS}
+        ${X11_INCLUDE_DIRS}
+        ${LIBLO_INCLUDE_DIRS}
+        ${ZIX_INCLUDE_DIRS}
+        ${CLAP_INCLUDEDIR}
+        ${PangoCairo_INCLUDE_DIRS}
+    )
+endif(BuildFLTK)
 
 if (EnableVST3Support AND CONFIG_VST3SDK)
     target_include_directories (non-mixer-xt PRIVATE ${CONFIG_VST3SDK})
 endif()
-
-target_include_directories (
-    non-mixer-xt PRIVATE
-    ${NTK_INCLUDE_DIRS}
-    ${JACK_INCLUDE_DIRS}
-    ${LRDF_INCLUDE_DIRS}
-    ${LILV_INCLUDE_DIRS}
-    ${SUIL_INCLUDE_DIRS}
-    ${X11_INCLUDE_DIRS}
-    ${LIBLO_INCLUDE_DIRS}
-    ${ZIX_INCLUDE_DIRS}
-    ${CLAP_INCLUDEDIR}
-    ${PangoCairo_INCLUDE_DIRS}
-)
 
 target_link_libraries (non-mixer-xt ${ExternLibraries})
 install (TARGETS non-mixer-xt RUNTIME DESTINATION bin)
@@ -140,23 +178,44 @@ set (MapSources
 )
 
 add_executable (midi-mapper-xt ${MapSources} src/midi-mapper.C)
-target_include_directories (midi-mapper-xt PRIVATE
-    ${NTK_INCLUDE_DIRS}
-    ${JACK_INCLUDE_DIRS}
-    ${LRDF_INCLUDE_DIRS}
-    ${JACK_INCLUDE_DIRS}
-    ${LIBLO_INCLUDE_DIRS}
-)
-target_link_libraries(midi-mapper-xt PRIVATE
-    ${LIBLO_LIBRARIES}
-    ${NTK_IMAGES_LIBRARIES}
-    ${NTK_LIBRARIES}
-    ${JACK_LINK_LIBRARIES}
-    ${CMAKE_THREAD_LIBS_INIT}
-    dl
-    m
-    lrdf
-)
+
+if(BuildFLTK)
+    target_include_directories (midi-mapper-xt PRIVATE
+        ${FLTK_INCLUDE_DIRS}
+        ${JACK_INCLUDE_DIRS}
+        ${LRDF_INCLUDE_DIRS}
+        ${JACK_INCLUDE_DIRS}
+        ${LIBLO_INCLUDE_DIRS}
+    )
+    target_link_libraries(midi-mapper-xt PRIVATE
+        ${LIBLO_LIBRARIES}
+        ${FLTK_LIBRARIES}
+        ${JACK_LINK_LIBRARIES}
+        ${CMAKE_THREAD_LIBS_INIT}
+        dl
+        m
+        lrdf
+    )
+# NTK
+else(BuildFLTK)
+    target_include_directories (midi-mapper-xt PRIVATE
+        ${NTK_INCLUDE_DIRS}
+        ${JACK_INCLUDE_DIRS}
+        ${LRDF_INCLUDE_DIRS}
+        ${JACK_INCLUDE_DIRS}
+        ${LIBLO_INCLUDE_DIRS}
+    )
+    target_link_libraries(midi-mapper-xt PRIVATE
+        ${LIBLO_LIBRARIES}
+        ${NTK_IMAGES_LIBRARIES}
+        ${NTK_LIBRARIES}
+        ${JACK_LINK_LIBRARIES}
+        ${CMAKE_THREAD_LIBS_INIT}
+        dl
+        m
+        lrdf
+    )
+endif(BuildFLTK)
 
 install (TARGETS midi-mapper-xt RUNTIME DESTINATION bin)
 

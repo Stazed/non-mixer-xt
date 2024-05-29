@@ -710,9 +710,9 @@ int
 Module::Port::osc_control_change_exact ( float v, void *user_data )
 {
     Module::Port *p = (Module::Port*)user_data;
-
-    Fl::lock();
-
+#ifndef FLTK_SUPPORT
+    Fl::lock(); // This freezes FLTK when OSC sends message
+#endif
     float f = v;
 
     if ( p->hints.ranged )
@@ -730,23 +730,35 @@ Module::Port::osc_control_change_exact ( float v, void *user_data )
 
 
     p->control_value( f );
-
-    Fl::unlock();
-
+#ifndef FLTK_SUPPORT
+    Fl::unlock();   // This freezes FLTK when OSC sends message
+#endif
 //    mixer->osc_endpoint->send( lo_message_get_source( msg ), "/reply", path, f );
 
     return 0;
 }
-
+/**
+ * The function called when OSC message (parameter change) is sent from controller, i.e. generic or
+ * from non-timeline-xt or midi-mapper-xt to be scaled to range.
+ * 
+ * @param v
+ *      The port parameter value change in range from 0.0 to 1.0 float to be scaled
+ * 
+ * @param user_data
+ *      The port to be changed, a plugin parameter, slider etc.
+ * 
+ * @return 
+ *      Always returns 0.
+ */
 int 
 Module::Port::osc_control_change_cv ( float v, void *user_data )
 {
     Module::Port *p = (Module::Port*)user_data;
 
     float f = v;
-
-    Fl::lock();
-
+#ifndef FLTK_SUPPORT
+    Fl::lock();     // This freezes FLTK when OSC sends message
+#endif
     // clamp value to control voltage range.
     if ( f > 1.0 )
         f = 1.0;
@@ -767,8 +779,9 @@ Module::Port::osc_control_change_cv ( float v, void *user_data )
     }
 
     p->control_value( f );
-
-    Fl::unlock();
+#ifndef FLTK_SUPPORT
+    Fl::unlock();   // This freezes FLTK when OSC sends message
+#endif
 //    mixer->osc_endpoint->send( lo_message_get_source( msg ), "/reply", path, f );
 
     return 0;

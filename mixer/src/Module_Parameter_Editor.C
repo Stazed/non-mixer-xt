@@ -231,7 +231,11 @@ Module_Parameter_Editor::Module_Parameter_Editor ( Module *module ) :
         if ((_module->_plug_type == Type_LV2) || (_module->_plug_type == Type_CLAP) 
                 || _module->_plug_type == Type_VST2 || _module->_plug_type == Type_VST3)
         {
+#ifdef FLTK_SUPPORT
+            Fl_Color fc = FL_CYAN;
+#else
             Fl_Color fc = fl_color_add_alpha( FL_CYAN, 200 );
+#endif
 
             { Fl_Button *o = new Fl_Button( 275, 0, 100, 24, "Save State" );
                 o->selection_color( fc );
@@ -342,7 +346,11 @@ Module_Parameter_Editor::make_controls ( void )
     _radius_port_number = -1;
     float radius_value = 0.0f;
     
-    Fl_Color fc = fl_color_add_alpha( FL_CYAN, 200 );
+#ifdef FLTK_SUPPORT
+    Fl_Color fc = FL_CYAN;
+#else
+     Fl_Color fc = fl_color_add_alpha( FL_CYAN, 200 );
+#endif
     Fl_Color bc = FL_BACKGROUND_COLOR;
 
     controls_by_port.resize( module->control_input.size() );
