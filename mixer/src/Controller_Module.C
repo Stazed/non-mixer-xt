@@ -915,13 +915,13 @@ Controller_Module::draw ( void )
 		      : FL_GREEN
 		      );
         
-        fl_rect( x()+1,y()+1,w()-1,h()-1,
+        fl_rect( x()+1,y()+1,w()-2,h()-2,
 		      this == _learning_control
 		      ? FL_RED
 		      : FL_GREEN
 		      );
         
-        fl_rect( x()-1,y()-1,w()+1,h()+1,
+        fl_rect( x()-1,y()-1,w()+2,h()+2,
 		      this == _learning_control
 		      ? FL_RED
 		      : FL_GREEN
