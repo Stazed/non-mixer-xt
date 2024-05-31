@@ -921,7 +921,7 @@ Controller_Module::draw ( void )
 		      : FL_GREEN
 		      );
         
-        fl_rect( x()-1,y()-1,w()+2,h()+2,
+        fl_rect( x()+2,y()+2,w()-4,h()-4,
 		      this == _learning_control
 		      ? FL_RED
 		      : FL_GREEN
@@ -975,6 +975,7 @@ Controller_Module::handle ( int m )
                     DMESSAGE( "Will learn %s", path );
 
                     mixer->osc_endpoint->learn( path, Controller_Module::learning_callback, this );
+                    mixer->redraw();
                 }
 
                 return 1;
