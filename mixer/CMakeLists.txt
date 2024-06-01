@@ -108,8 +108,7 @@ add_executable (non-mixer-xt
 
 if(BuildFLTK)
     set(ExternLibraries
-        ${FLTK_LIBRARIES}
-        ${FLTK_IMAGES_LIBRARY}
+        ${FONTCONFIG_LIBRARIES}
         ${JACK_LINK_LIBRARIES}
         ${CMAKE_THREAD_LIBS_INIT}
         ${X11_LIBRARIES}
@@ -118,6 +117,13 @@ if(BuildFLTK)
         ${SUIL_LIBRARIES}
         ${ZIX_LIBRARIES}
         ${PangoCairo_LIBRARIES}
+        ${XFT_LIBRARIES}
+        ${XRENDER_LIBRARIES}
+        ${XINERAMA_LIBRARIES}
+        Xcursor
+        Xfixes
+        jpeg
+        png
         dl
         m
         lrdf
@@ -125,16 +131,18 @@ if(BuildFLTK)
 
     target_include_directories (
         non-mixer-xt PRIVATE
-        ${FLTK_INCLUDE_DIR}
+        ${FONTCONFIG_INCLUDE_DIRS}
         ${JACK_INCLUDE_DIRS}
         ${LRDF_INCLUDE_DIRS}
         ${LILV_INCLUDE_DIRS}
         ${SUIL_INCLUDE_DIRS}
-        ${X11_INCLUDE_DIRS}
         ${LIBLO_INCLUDE_DIRS}
         ${ZIX_INCLUDE_DIRS}
         ${CLAP_INCLUDEDIR}
         ${PangoCairo_INCLUDE_DIRS}
+        ${XFT_INCLUDE_DIRS}
+        ${XRENDER_INCLUDE_DIRS}
+        ${XINERAMA_INCLUDE_DIRS}
     )
 #NTK
 else(BuildFLTK)
@@ -173,7 +181,12 @@ if (EnableVST3Support AND CONFIG_VST3SDK)
     target_include_directories (non-mixer-xt PRIVATE ${CONFIG_VST3SDK})
 endif()
 
-target_link_libraries (non-mixer-xt ${ExternLibraries})
+if(BuildFLTK)
+    target_link_libraries (non-mixer-xt ${ExternLibraries} libfltk.a libfltk_images.a)
+else(BuildFLTK)
+    target_link_libraries (non-mixer-xt ${ExternLibraries})
+endif(BuildFLTK)
+
 install (TARGETS non-mixer-xt RUNTIME DESTINATION bin)
 
 set (MapSources
