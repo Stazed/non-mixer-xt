@@ -44,7 +44,7 @@
 
 #ifdef FLTK_SUPPORT
     #include "../../FL/Fl_Tooltip.H"
-    // FIXME for theme chooser
+    #include "../../FL/Fl_Theme_Chooser.H"
 #else
     #include <FL/Fl_Theme_Chooser.H>
 #endif
@@ -399,11 +399,7 @@ void Mixer::cb_menu(Fl_Widget* o) {
     }
     else if (! strcmp( picked, "&View/&Theme") )
     {
-#ifdef FLTK_SUPPORT
-        // FIXME
-#else
         fl_theme_chooser();
-#endif
     }
     else if ( ! strcmp( picked, "&Mixer/Toggle &Fader View" ) )
     {

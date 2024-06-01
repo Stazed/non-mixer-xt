@@ -81,6 +81,10 @@
 #include "FL/x.H"
 #include "FL/Fl_PNG_Image.H"
 
+#ifdef FLTK_SUPPORT
+#include "../../FL/themes.H"
+#endif
+
 /* TODO: put these in a header */
 #define USER_CONFIG_DIR ".non-mixer-xt/"
 
@@ -359,6 +363,10 @@ main ( int argc, char **argv )
 
     Fl::add_timeout( 0.1f, check_sigterm );
     Fl::dnd_text_ops( 0 );
+
+#ifdef FLTK_SUPPORT
+    fl_register_themes();
+#endif
 
     if ( ! no_ui && !nsm_url)
     {

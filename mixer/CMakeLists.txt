@@ -75,7 +75,16 @@ set (ProgSources
 )
 
 if(BuildFLTK)
-    set (FLTK_ToolTip  ../FL/Fl_Tooltip.cxx)
+    set(FLTK_specific
+        ../FL/Fl_Tooltip.cxx
+        ../FL/Fl_Panzoomer.C
+        ../FL/Fl_Theme_Chooser.cxx
+        ../FL/Fl_Theme.cxx
+        ../FL/Clean_Theme.cxx
+        ../FL/Crystal_Theme.cxx
+        ../FL/Gleam_Theme.cxx
+        ../FL/themes.cxx
+    )
 endif(BuildFLTK)
 
 if (CONFIG_VST3SDK)
@@ -93,7 +102,7 @@ endif ()
 
 add_executable (non-mixer-xt
     ${ProgSources}
-    ${FLTK_ToolTip}
+    ${FLTK_specific}
     ${VST3SDK_SOURCES}
     src/main.C)
 
