@@ -3,7 +3,7 @@
 cmake_minimum_required(VERSION 3.5.1)
 project (non-mixer-xt)
 
-set (PACKAGE_VERSION "1.3.3")
+set (PACKAGE_VERSION "2.0.0")
 
 set (CMAKE_SKIP_RULE_DEPENDENCY OFF)
 
@@ -26,7 +26,7 @@ option (EnableOptimizations "Enable optimizations" ON)
 option (EnableSSE "Enable SSE (default=automatic check)" ON)
 option (EnableSSE2 "Enable SSE2 (default=automatic check)" ON)
 option (NativeOptimizations "Enable native CPU optimizations" ON)
-option (BuildFLTK "Use FLTK toolkit for build" OFF)
+option (BuildFLTK "Use FLTK toolkit for build" ON)
 option (EnableLADSPASupport "Enable LADSPA plugin support" ON)
 option (EnableLV2Support "Enable LV2 plugin support" ON)
 option (EnableCLAPSupport "Enable CLAP plugin support" ON)

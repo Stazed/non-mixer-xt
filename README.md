@@ -8,13 +8,22 @@ Screenshot
 
 Non-Mixer-XT is a reboot of original Non-Mixer with eXTended LV2 support, CLAP, VST(2) support and VST3* support. LV2 support includes X11, ShowInterface and External custom UI support. In addition, MIDI support with JACK timebase support and much more. The generic parameter editor has been redesigned to accommodate larger LV2 plugins, preset support and state save and restore. With version 1.1.0, CLAP support was added. With version 1.2.0, VST3 support was added. With version 1.3.0, VST(2) support was added using vestige.h by Javier Serrano Polo. Special thanks to Filipe Coelho from the Carla project, David Robillard from Jalv project, and Rui Nuno Capela from the Qtractor project.
 
+Beginning with Release 2.0.0, the default build will use FLTK instead of NTK libraries.
 
 Non-Mixer-XT build instructions:
 --------------------------------
 
 Dependencies :
 
+For fltk build:
+* fltk
+* fltk-dev
+* fltk-static
+
+For NTK build:
 * ntk
+
+
 * lilv        (Optional LV2 support)
 * suil        (Optional LV2 support)
 * liblo
@@ -23,7 +32,7 @@ Dependencies :
 * lv2-dev     (Optional LV2 support)
 * ladspa      (Optional LADSPA support)
 * liblrdf     (Optional LADSPA support)
-* jack2
+* jack2       (Need development packages also)
 * zix-0       (Optional LV2 support)
 * clap        (Optional CLAP support)
 * pangocairo  (optional needed by some plugins)
@@ -79,6 +88,15 @@ To uninstall:
 
 ```bash
     sudo make uninstall
+```
+
+To build with NTK:
+```bash
+    mkdir build
+    cd build
+    cmake -DBuildFLTK=OFF ..
+    make
+    sudo make install
 ```
 
 For package maintainers, if you are building generic binary packages to be used on different architectures,
