@@ -120,6 +120,7 @@ if(BuildFLTK)
         ${XFT_LIBRARIES}
         ${XRENDER_LIBRARIES}
         ${XINERAMA_LIBRARIES}
+        fontconfig
         Xcursor
         Xfixes
         jpeg
