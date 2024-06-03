@@ -19,6 +19,9 @@ For fltk build:
 * fltk
 * fltk-dev
 * fltk-static
+Please note that the FLTK build uses static linking. Some distributions have a separate package for the fltk static linking. For example:
+    OpenSuse static package is named fltk-devel-static, and Fedora is named fltk-static.
+    Other distributions like Arch, Debian and Ubuntu will install the static library with the development package.
 
 For NTK build:
 * ntk
