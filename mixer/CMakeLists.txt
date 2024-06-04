@@ -188,7 +188,7 @@ endif()
 if(EnableNTK)
     target_link_libraries (non-mixer-xt ${ExternLibraries})
 else(EnableNTK) #FLTK
-    target_link_libraries (non-mixer-xt ${ExternLibraries} libfltk.a libfltk_images.a)
+    target_link_libraries (non-mixer-xt ${ExternLibraries} ${FLTK_STATIC} ${FLTK_STATIC_IMAGES})
 endif(EnableNTK)
 
 install (TARGETS non-mixer-xt RUNTIME DESTINATION bin)

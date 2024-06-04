@@ -89,6 +89,8 @@ if(EnableNTK)
     pkg_check_modules(NTK_IMAGES ntk_images REQUIRED)
 else(EnableNTK) #FLTK Build
     SET(FLTK_SKIP_OPENGL TRUE)
+    find_library(FLTK_STATIC libfltk.a REQUIRED)
+    find_library(FLTK_STATIC_IMAGES libfltk_images.a REQUIRED)
     find_package(FLTK REQUIRED)
     if(FLTK_FOUND)
         mark_as_advanced(FORCE FLTK_BASE_LIBRARY)
