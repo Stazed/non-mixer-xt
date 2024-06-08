@@ -18,16 +18,18 @@ Dependencies :
 For fltk build:
 * fltk
 * fltk-dev
-* fltk-static
-Please note that the FLTK build uses static linking. Some distributions have a separate package for the fltk static linking.
-For example:
-    OpenSuse static package is named fltk-devel-static, and Fedora is named fltk-static.
+* fltk-static.<br/>
+
+Please note that the FLTK build uses static linking. Some distributions have a separate package for the fltk static linking. <br/>
+
+For example:<br/>
+    OpenSuse static package is named fltk-devel-static, and Fedora is named fltk-static.<br/>
     Other distributions like Arch, Debian and Ubuntu will install the static library with the development package.
 
 For NTK build:
 * ntk
 
-
+Other Dependencies:
 * lilv        (Optional LV2 support)
 * suil        (Optional LV2 support)
 * liblo
