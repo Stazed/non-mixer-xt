@@ -104,7 +104,6 @@ else(EnableNTK) #FLTK Build
         mark_as_advanced(FORCE FLTK_MATH_LIBRARY)
         add_definitions(-D'FLTK_SUPPORT=1')
     endif(FLTK_FOUND)
-    find_package(X11 REQUIRED)
     pkg_check_modules(XFIXES REQUIRED xfixes)
     pkg_check_modules(XINERAMA REQUIRED xinerama)
     pkg_check_modules(FONTCONFIG REQUIRED fontconfig>=0.22)
