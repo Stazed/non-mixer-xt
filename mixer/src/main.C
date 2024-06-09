@@ -86,7 +86,7 @@
 #endif
 
 /* TODO: put these in a header */
-#define USER_CONFIG_DIR ".non-mixer-xt/"
+#define USER_CONFIG_DIR "non-mixer-xt/"
 
 const double NSM_CHECK_INTERVAL = 0.25f;
 
@@ -111,7 +111,7 @@ const int MAX_PORTS = 34;   // extern
 static int
 ensure_dirs ( void )
 {
-    asprintf( &user_config_dir, "%s/%s", getenv( "HOME" ), USER_CONFIG_DIR );
+    asprintf( &user_config_dir, "%s/.config/%s", getenv( "HOME" ), USER_CONFIG_DIR );
     asprintf( &clipboard_dir, "%s/%s",user_config_dir, "clipboard" );
 
     int r = mkdir( user_config_dir, 0777 );
@@ -365,7 +365,7 @@ main ( int argc, char **argv )
     Fl::dnd_text_ops( 0 );
 
 #ifdef FLTK_SUPPORT
-    fl_register_themes();
+    fl_register_themes(USER_CONFIG_DIR);
 #endif
 
     if ( ! no_ui && !nsm_url)
