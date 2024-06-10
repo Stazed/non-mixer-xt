@@ -756,9 +756,9 @@ Module::Port::osc_control_change_cv ( float v, void *user_data )
     Module::Port *p = (Module::Port*)user_data;
 
     float f = v;
-#ifndef FLTK_SUPPORT
-    Fl::lock();     // This freezes FLTK when OSC sends message
-#endif
+
+    Fl::lock();
+
     // clamp value to control voltage range.
     if ( f > 1.0 )
         f = 1.0;
@@ -779,9 +779,9 @@ Module::Port::osc_control_change_cv ( float v, void *user_data )
     }
 
     p->control_value( f );
-#ifndef FLTK_SUPPORT
-    Fl::unlock();   // This freezes FLTK when OSC sends message
-#endif
+
+    Fl::unlock();
+
 //    mixer->osc_endpoint->send( lo_message_get_source( msg ), "/reply", path, f );
 
     return 0;

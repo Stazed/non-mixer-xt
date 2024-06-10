@@ -295,6 +295,7 @@ main ( int argc, char **argv )
         fl_register_images();
     }
 
+    // "The main thread must call lock() to initialize the threading support in FLTK."
     Fl::lock();
 
     const char *nsm_url = getenv( "NSM_URL" );
@@ -324,8 +325,10 @@ main ( int argc, char **argv )
         }
                       
     }
-    
-    Fl::unlock();   // Don't forget this!!!!
+
+    // This unlock will freeze child locks in FLTK at least... It seemed to be needed for NTK???
+    // But docs say this is only for unlocking child locks not the main lock used above for initializing.
+    // Fl::unlock();
 
     mixer->init_osc( osc_port );
         
