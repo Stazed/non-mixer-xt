@@ -274,8 +274,6 @@ void Mixer::cb_menu(Fl_Widget* o) {
 
         const char *name = fl_dir_chooser( "Open Project", path );
 
-        free( path );
-
         mixer->hide();
 
         if(name)
@@ -286,6 +284,26 @@ void Mixer::cb_menu(Fl_Widget* o) {
             fl_alert( "Error opening project: %s", Project::errstr( err ) );
             project_directory = "";
         }
+        else    // got a good project so set default path if not already set or is different
+        {
+            std::string s_name(name);
+            std::size_t found = s_name.find_last_of("/\\");
+
+            std::string s_base_dir = s_name.substr(0, found);
+
+            if( path )
+            {
+                // If the path to opened project is different from default, then update the default path
+                if( strcmp( path, s_base_dir.c_str() ) )
+                {
+                    write_line( user_config_dir, "default_path", s_base_dir.c_str() );
+                }
+            }
+            else    // No path previously set, so set it now
+                write_line( user_config_dir, "default_path", s_base_dir.c_str() );
+        }
+
+        free( path );
 
         update_menu();
 
