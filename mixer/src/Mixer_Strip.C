@@ -545,7 +545,8 @@ Mixer_Strip::update ( void )
         if ( ( _dsp_load_index++ % 10 ) == 0 )
         {
             float l = group()->dsp_load();
-   
+            if ( l > 1.0) { l = 1.0; } /* prevents strange colors at high dsp load */
+
             dsp_load_progress->value( l );
 
             {
@@ -553,11 +554,17 @@ Mixer_Strip::update ( void )
                 snprintf( pat, sizeof(pat), "%.1f%%", l * 100.0f );
                 dsp_load_progress->copy_tooltip( pat );
             }
-            
-            if ( l <= 0.15f )
-                dsp_load_progress->color2( fl_rgb_color( 127,127,127 ) );
-            else
-                dsp_load_progress->color2( FL_RED );
+
+            /*
+             for gradients see http://www.winti.de/php/farben/
+             r: 0 .. 240
+             g: 192 .. 0
+             b: 0
+             */
+            int r = (int)   0 + (240 -   0) * l;
+            int g = (int) 192 + (0   - 192) * l;
+            int b = 0;
+            dsp_load_progress->color2( fl_rgb_color( r,g,b ) );
         }
     }
 }
@@ -583,7 +590,7 @@ Mixer_Strip::init ( )
             o->tooltip( "Drag and drop to move strip" );
         }
 	
-	{ Fl_Progress* o = dsp_load_progress = new Fl_Progress(61, 183, 45, 14, "group dsp");
+	{ Non_Fl_Progress* o = dsp_load_progress = new Non_Fl_Progress(61, 183, 45, 14, "group dsp");
 	    o->box(FL_BORDER_BOX);
 	    o->type(FL_HORIZONTAL);
 	    /* o->labelsize( 9 ); */
