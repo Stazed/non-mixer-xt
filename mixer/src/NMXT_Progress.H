@@ -15,7 +15,7 @@
 /* Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 /*******************************************************************************/
 /* 
- * File:   Non_Fl_Progress.H
+ * File:   NMXT_Progress.H
  * Author: sspresto
  *
  * Created on June 22, 2024, 11:44 AM
@@ -26,15 +26,15 @@
  * see https://groups.google.com/g/fltkgeneral/c/XtXU92TkDm0
  */
 
-#ifndef NON_FL_PROGRESS_H
-#define NON_FL_PROGRESS_H
+#ifndef NMXT_PROGRESS_H
+#define NMXT_PROGRESS_H
 
 #include <FL/Fl_Progress.H>
 
-class Non_Fl_Progress : public Fl_Progress
+class NMXT_Progress : public Fl_Progress
 {
     public:
-    Non_Fl_Progress(int x, int y, int w, int h, const char *l = 0) :
+    NMXT_Progress(int x, int y, int w, int h, const char *l = 0) :
         Fl_Progress(x, y, w, h, l) {}
     
 
@@ -46,5 +46,5 @@ class Non_Fl_Progress : public Fl_Progress
 
 };
 
-#endif /* NON_FL_PROGRESS_H */
+#endif /* NMXT_PROGRESS_H */
 

@@ -36,7 +36,7 @@
 #include <FL/Fl_Button.H>
 #include <FL/Fl_Value_Slider.H>
 #include <FL/Fl_Counter.H>
-#include "Non_Fl_Progress.H"
+#include "NMXT_Progress.H"
 
 
 class Chain;
@@ -124,7 +124,7 @@ private:
     Controller_Module *spatialization_controller;
     Meter_Indicator_Module *meter_indicator;
 
-    Non_Fl_Progress *dsp_load_progress;
+    NMXT_Progress *dsp_load_progress;
 
     Fl_Box *color_box;
 

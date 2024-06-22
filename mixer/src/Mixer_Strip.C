@@ -550,8 +550,8 @@ Mixer_Strip::update ( void )
             dsp_load_progress->value( l );
 
             {
-                char pat[20];
-                snprintf( pat, sizeof(pat), "%.1f%%", l * 100.0f );
+                char pat[30];
+                snprintf( pat, sizeof(pat), "DSP Load %.1f%%", l * 100.0f );
                 dsp_load_progress->copy_tooltip( pat );
             }
 
@@ -590,7 +590,7 @@ Mixer_Strip::init ( )
             o->tooltip( "Drag and drop to move strip" );
         }
 	
-	{ Non_Fl_Progress* o = dsp_load_progress = new Non_Fl_Progress(61, 183, 45, 14, "group dsp");
+	{ NMXT_Progress* o = dsp_load_progress = new NMXT_Progress(61, 183, 45, 14, "group dsp");
 	    o->box(FL_BORDER_BOX);
 	    o->type(FL_HORIZONTAL);
 	    /* o->labelsize( 9 ); */
