@@ -637,7 +637,6 @@ Mixer::Mixer ( int X, int Y, int W, int H, const char *L ) :
             o->labelfont( FL_HELVETICA_ITALIC );
             o->label( 0 );
             o->align( FL_ALIGN_INSIDE | FL_ALIGN_CENTER );
-            o->labeltype( FL_SHADOW_LABEL );
             Fl_Group::current()->resizable( o );
         }
         { sm_blinker = new Fl_Button( ( X + W) - 37, Y + 4, 35, 15, "SM");
