@@ -926,7 +926,7 @@ Mixer_Strip::menu_cb ( const Fl_Menu_ *m )
     {
         char *path = read_line( user_config_dir, "default_path");
         char *suggested_name;
-        asprintf( &suggested_name, "%s%s.strip", path, name() );
+        asprintf( &suggested_name, "%s/%s.strip", path, name() );
 
         if(path)
             free(path);
