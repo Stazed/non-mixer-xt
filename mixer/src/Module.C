@@ -710,9 +710,9 @@ int
 Module::Port::osc_control_change_exact ( float v, void *user_data )
 {
     Module::Port *p = (Module::Port*)user_data;
-#ifndef FLTK_SUPPORT
-    Fl::lock(); // This freezes FLTK when OSC sends message
-#endif
+
+    Fl::lock();
+
     float f = v;
 
     if ( p->hints.ranged )
@@ -730,9 +730,9 @@ Module::Port::osc_control_change_exact ( float v, void *user_data )
 
 
     p->control_value( f );
-#ifndef FLTK_SUPPORT
-    Fl::unlock();   // This freezes FLTK when OSC sends message
-#endif
+
+    Fl::unlock();
+
 //    mixer->osc_endpoint->send( lo_message_get_source( msg ), "/reply", path, f );
 
     return 0;
