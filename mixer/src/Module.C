@@ -496,13 +496,16 @@ Module::handle_control_changed ( Module::Port *p )
         _editor->handle_control_changed ( p );
 
     // redraw if bypass state changed
-    if (bypassable() && p == &control_input[control_input.size() - 1])
+    if (bypassable() && !control_input.empty())
     {
-        if ( !strcmp( "dsp/bypass", p->name()) )
+        if(p == &control_input[control_input.size() - 1])
         {
-            redraw();
-            p->schedule_feedback();
-            return;
+            if ( !strcmp( "dsp/bypass", p->name()) )
+            {
+                redraw();
+                p->schedule_feedback();
+                return;
+            }
         }
     }
 
