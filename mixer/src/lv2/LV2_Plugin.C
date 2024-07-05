@@ -2485,7 +2485,7 @@ LV2_Plugin::custom_ui_instantiate()
     _all_uis = lilv_plugin_get_uis(_lilv_plugin);
 
     _use_showInterface = false;
-    const char* native_ui_type;
+    const char* native_ui_type = NULL;
 
     /* Try showInterface first */
     for(unsigned int i = 0; i < v_ui_types.size(); ++i)
