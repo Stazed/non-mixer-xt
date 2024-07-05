@@ -383,11 +383,11 @@ Module::Port::disconnect_from_strip ( const Mixer_Strip *o )
 const char *
 Module::Port::osc_number_path ( void )
 {
-    if ( ! _scaled_signal )
+    if ( ! _scaled_signal || !_scaled_signal->path() )
         return NULL;
 
     int n = _module->chain()->strip()->number();
-    
+
     if ( _by_number_path && n == _by_number_number )
         return _by_number_path;
 
