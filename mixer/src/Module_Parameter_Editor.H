@@ -32,6 +32,7 @@ class SpectrumView;
 
 #include <vector>
 #include <list>
+#include <unordered_map>
 
 #ifdef LV2_SUPPORT
 #include "lv2/LV2_Plugin.H"

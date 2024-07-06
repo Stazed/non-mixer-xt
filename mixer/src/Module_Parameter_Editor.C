@@ -673,21 +673,27 @@ Module_Parameter_Editor::make_controls ( void )
 void
 Module_Parameter_Editor::set_preset_controls(int choice)
 {
+#ifdef LV2_SUPPORT
     if(_module->_plug_type == Type_LV2)
     {
         LV2_Plugin *pm = static_cast<LV2_Plugin *> (_module);
         pm->update_control_parameters(choice);
     }
-    else if(_module->_plug_type == Type_VST2)
+#endif
+#ifdef VST2_SUPPORT
+    if(_module->_plug_type == Type_VST2)
     {
         VST2_Plugin *pm = static_cast<VST2_Plugin *> (_module);
         pm->setProgram(choice);
     }
-    else if(_module->_plug_type == Type_VST3)
+#endif
+#ifdef VST3_SUPPORT
+    if(_module->_plug_type == Type_VST3)
     {
         VST3_Plugin *pm = static_cast<VST3_Plugin *> (_module);
         pm->setProgram(choice);
     }
+#endif
 }
 #endif
 
