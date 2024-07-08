@@ -329,6 +329,7 @@ VST3_Plugin::~VST3_Plugin()
         hide_custom_ui();
 
     deactivate();
+    close_descriptor();
 
     _pProcessor = nullptr;
     _pHandler = nullptr;
@@ -390,12 +391,12 @@ VST3_Plugin::~VST3_Plugin()
 
     midi_output.clear();
     midi_input.clear();
-    _pHostContext->clear();
 
     if ( _last_chunk )
         std::free(_last_chunk);
 
     delete _pRunloop;
+    delete _pHostContext;
 
     /* This is the case when the user manually removes a Plugin. We set the
      _is_removed = true, and add any custom data directory to the remove directories
@@ -409,10 +410,6 @@ VST3_Plugin::~VST3_Plugin()
             remove_custom_data_directories.push_back(_project_file);
         }
     }
-
-    // Causes mumap_chunk(): invalid pointer
-    //if(_pHostContext)
-    //    delete _pHostContext;
 }
 
 bool
