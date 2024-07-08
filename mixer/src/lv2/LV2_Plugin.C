@@ -2487,31 +2487,32 @@ LV2_Plugin::custom_ui_instantiate()
     _use_showInterface = false;
     const char* native_ui_type = NULL;
 
-    /* Try showInterface first */
-    for(unsigned int i = 0; i < v_ui_types.size(); ++i)
+    /* try to find an embeddable X11 UI first */
+    _lilv_user_interface = try_X11_ui(v_ui_types[0].c_str());
+    if(_lilv_user_interface)
     {
-        _lilv_user_interface = try_showInterface_ui(v_ui_types[i].c_str());
-        if(_lilv_user_interface)
+        native_ui_type = v_ui_types[0].c_str();
+        _use_X11_interface = true;
+        MESSAGE("Using X11 Embedded UI");
+    }
+
+    /* Try showInterface */
+    if(!_lilv_user_interface)
+    {
+        for(unsigned int i = 0; i < v_ui_types.size(); ++i)
         {
-            _use_showInterface = true;
-            native_ui_type = v_ui_types[i].c_str();
-            MESSAGE("Using Show Interface = %s", v_ui_types[i].c_str());
-            break;
+            _lilv_user_interface = try_showInterface_ui(v_ui_types[i].c_str());
+            if(_lilv_user_interface)
+            {
+                _use_showInterface = true;
+                native_ui_type = v_ui_types[i].c_str();
+                MESSAGE("Using Show Interface = %s", v_ui_types[i].c_str());
+                break;
+            }
         }
     }
 
-    /* We didn't find showInterface so try to find an embeddable X11 UI */
-    if(!_use_showInterface)
-    {
-        _lilv_user_interface = try_X11_ui(v_ui_types[0].c_str());
-        if(_lilv_user_interface)
-        {
-            native_ui_type = v_ui_types[0].c_str();
-            _use_X11_interface = true;
-            MESSAGE("Using X11 Embedded UI");
-        }
-    }
-
+    /* Still nothing so try External */
     if(!_lilv_user_interface)
     {
 #ifdef LV2_EXTERNAL_UI
