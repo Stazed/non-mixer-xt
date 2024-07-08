@@ -113,7 +113,7 @@ class Module_Parameter_Editor : public Fl_Double_Window
     SpectrumView *spectrum_view;
     Fl_Scroll *control_scroll;
     Fl_Flowpack *control_pack;
-#if defined LV2_SUPPORT || defined VST2_SUPPORT
+#if defined LV2_SUPPORT || defined VST2_SUPPORT || defined VST3_SUPPORT
     Fl_Choice *_presets_choice_button;
 #endif
     bool _resized;
