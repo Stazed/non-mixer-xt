@@ -161,7 +161,8 @@ Meter_Module::configure_inputs ( int n )
             audio_output.back().disconnect();
             audio_output.pop_back();
 
-	    smoothing.pop_back();
+            // causing segfault because it is never smoothing.back(), this is never used
+//	    smoothing.pop_back();
         }
     }
 

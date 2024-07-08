@@ -31,7 +31,8 @@ class Meter_Module : public Module
 {
     Fl_Scalepack *dpm_pack;
 
-    std::vector <Value_Smoothing_Filter> smoothing;
+    // This cannot be correct, only usage 'smoothing.pop_back();' in Meter_Module.C line 164.
+ //   std::vector <Value_Smoothing_Filter> smoothing;
     
     volatile float *control_value;
     volatile float *peaks;
