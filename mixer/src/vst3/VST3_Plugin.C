@@ -396,7 +396,9 @@ VST3_Plugin::~VST3_Plugin()
         std::free(_last_chunk);
 
     delete _pRunloop;
-    delete _pHostContext;
+
+    // Causes memap chunk double free
+//    delete _pHostContext;
 
     /* This is the case when the user manually removes a Plugin. We set the
      _is_removed = true, and add any custom data directory to the remove directories
