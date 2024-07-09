@@ -32,6 +32,9 @@
 
 #include "../Plugin_Scan.H"
 
+// The controller stuff seems to cause segfaults with some plugins
+//#define VST3_CONTROLLER 1
+
 namespace vst3_discovery
 {
 /*
@@ -72,7 +75,7 @@ public:
     void close();
 
     // Properties.
-#if 0
+#ifdef VST3_CONTROLLER
     bool isOpen() const;
 #endif
     // Properties.
@@ -92,7 +95,7 @@ public:
         { return m_iAudioIns; }
     int audioOuts() const
         { return m_iAudioOuts; }
-#if 0
+#ifdef VST3_CONTROLLER
     int controlIns() const
         { return m_iControlIns; }
     int controlOuts() const
@@ -128,7 +131,7 @@ private:
     std::string   m_iUniqueID;
     int           m_iAudioIns;
     int           m_iAudioOuts;
-#if 0
+#ifdef VST3_CONTROLLER
     int           m_iControlIns;
     int           m_iControlOuts;
     int           m_iMidiIns;

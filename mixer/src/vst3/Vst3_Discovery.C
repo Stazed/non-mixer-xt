@@ -454,7 +454,7 @@ public:
                     close_descriptor();
                     return false;
                 }
-#if 0
+#ifdef VST3_CONTROLLER
                 Vst::IEditController *controller = nullptr;
                 if (m_component->queryInterface(
                                 Vst::IEditController::iid,
@@ -505,7 +505,7 @@ public:
 
     void close_descriptor ()
     {
-#if 0
+#ifdef VST3_CONTROLLER
         if (m_component && m_controller)
         {
             FUnknownPtr<Vst::IConnectionPoint> component_cp(m_component);
@@ -551,7 +551,7 @@ public:
     // Accessors.
     Vst::IComponent *component() const
         { return m_component; }
-#if 0
+#ifdef VST3_CONTROLLER
     Vst::IEditController *controller() const
         { return m_controller; }
 #endif
@@ -598,7 +598,7 @@ private:
     PFactoryInfo m_factoryInfo;
 
     IPtr<Vst::IComponent> m_component;
-#if 0
+#ifdef VST3_CONTROLLER
     IPtr<Vst::IEditController> m_controller;
 #endif
 };
@@ -654,7 +654,7 @@ bool vst3_discovery_scan::open_descriptor ( unsigned long iIndex )
     m_iAudioIns  = m_pImpl->numChannels(Vst::kAudio, Vst::kInput);
     m_iAudioOuts = m_pImpl->numChannels(Vst::kAudio, Vst::kOutput);
 
-#if 0
+#ifdef VST3_CONTROLLER
     m_iMidiIns   = m_pImpl->numChannels(Vst::kEvent, Vst::kInput);
     m_iMidiOuts  = m_pImpl->numChannels(Vst::kEvent, Vst::kOutput);
 
@@ -729,7 +729,7 @@ void vst3_discovery_scan::close (void)
     m_pImpl->close();
 }
 
-#if 0
+#ifdef VST3_CONTROLLER
 // Properties.
 bool vst3_discovery_scan::isOpen (void) const
 {
@@ -747,7 +747,7 @@ void vst3_discovery_scan::clear (void)
     m_iUniqueID    = "";
     m_iAudioIns    = 0;
     m_iAudioOuts   = 0;
-#if 0
+#ifdef VST3_CONTROLLER
     m_iControlIns  = 0;
     m_iControlOuts = 0;
     m_iMidiIns     = 0;
