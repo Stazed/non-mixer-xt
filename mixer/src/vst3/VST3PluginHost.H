@@ -356,9 +356,10 @@ public:
 
     tresult PLUGIN_API setString (AttrID aid, const Vst::TChar *string) override
     {
+        size_t szof = (Steinberg::strlen16(string) + 1) * sizeof(Steinberg::Vst::TChar);
         removeAttrID(aid);
 
-        std::pair<std::string, Attribute *> prm ( aid, new Attribute( string, utf16_to_utf8(string).length() ) );
+        std::pair<std::string, Attribute *> prm ( aid, new Attribute( string, szof ) );
             m_list.insert(prm);
 
         return kResultTrue;
