@@ -380,7 +380,8 @@ public:
         {
             uint32 size2 = 0;
             const Vst::TChar *string2 = attr->stringValue(size2);
-            ::memcpy(string, string2, (size < size2 ? size: size2) * sizeof(Vst::TChar));
+            ::memcpy(string, string2, size < size2 ? size: size2);
+            
             return kResultTrue;
         }
         return kResultFalse;
