@@ -208,7 +208,7 @@ public:
             : m_size(size), m_type(kString)
     {
         m_v.stringValue = new Vst::TChar[size];
-        ::memcpy(m_v.stringValue, value, size * sizeof (Vst::TChar));
+        ::memcpy(m_v.stringValue, value, size);
     }
 
     Attribute (const void *value, uint32 size)
