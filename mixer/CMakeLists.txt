@@ -249,7 +249,6 @@ install (TARGETS midi-mapper-xt RUNTIME DESTINATION bin)
 set (ScanSources
     src/Plugin_Scan.C
     src/ladspa/LADSPAInfo.C
-    src/ladspa/LADSPA_Plugin.C
     src/clap/Clap_Discovery.C
     src/vst2/Vst2_Discovery.C
     src/vst3/Vst3_Discovery.C
@@ -258,19 +257,35 @@ set (ScanSources
 
 add_executable (nmxt-plugin-scan ${ScanSources} ${VST3SDK_SOURCES} src/nmxt-plugin-scan.C)
 
-target_include_directories (nmxt-plugin-scan PRIVATE
-        ${FLTK_INCLUDE_DIRS}
-        ${LRDF_INCLUDE_DIRS}
-        ${LILV_INCLUDE_DIRS}
-        ${SUIL_INCLUDE_DIRS}
-)
+if(EnableNTK)
+    target_include_directories (nmxt-plugin-scan PRIVATE
+            ${NTK_INCLUDE_DIRS}
+            ${LRDF_INCLUDE_DIRS}
+            ${LILV_INCLUDE_DIRS}
+            ${SUIL_INCLUDE_DIRS}
+    )
 
-target_link_libraries(nmxt-plugin-scan PRIVATE
-        ${FLTK_LIBRARIES}
-        ${LILV_LIBRARIES}
-        ${SUIL_LIBRARIES}
-        lrdf
-)
+    target_link_libraries(nmxt-plugin-scan PRIVATE
+            ${NTK_LIBRARIES}
+            ${LILV_LIBRARIES}
+            ${SUIL_LIBRARIES}
+            lrdf
+    )
+else(EnableNTK)
+    target_include_directories (nmxt-plugin-scan PRIVATE
+            ${FLTK_INCLUDE_DIRS}
+            ${LRDF_INCLUDE_DIRS}
+            ${LILV_INCLUDE_DIRS}
+            ${SUIL_INCLUDE_DIRS}
+    )
+
+    target_link_libraries(nmxt-plugin-scan PRIVATE
+            ${FLTK_LIBRARIES}
+            ${LILV_LIBRARIES}
+            ${SUIL_LIBRARIES}
+            lrdf
+    )
+endif(EnableNTK)
 
 if (EnableVST3Support AND CONFIG_VST3SDK)
     target_include_directories (nmxt-plugin-scan PRIVATE ${CONFIG_VST3SDK})
