@@ -85,8 +85,7 @@
 #include "../../FL/themes.H"
 #endif
 
-/* TODO: put these in a header */
-#define USER_CONFIG_DIR "non-mixer-xt/"
+#define USER_CONFIG_DIR NMXT_CONFIG_DIRECTORY
 
 const double NSM_CHECK_INTERVAL = 0.25f;
 
