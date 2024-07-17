@@ -58,8 +58,8 @@ set (BuildOptionsBasic
 )
 
 set (BuildOptionsDebug
-#    "-std=c++17 -Wno-cast-function-type -O0 -g3 -ggdb -Wall -Wextra -Wpointer-arith"
-    "-std=c++17 -Wno-cast-function-type -Wno-unused-result -O0 -g3 -ggdb -Wall -Wextra -Wpointer-arith -fomit-frame-pointer -ffast-math -pipe -flto=auto -ffat-lto-objects -fexceptions -g -grecord-gcc-switches -pipe -Wall -Werror=format-security -Wp,-U_FORTIFY_SOURCE,-D_FORTIFY_SOURCE=3 -Wp,-D_GLIBCXX_ASSERTIONS -m64 -march=x86-64 -mtune=generic -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer"
+    "-std=c++17 -Wno-cast-function-type -O0 -g3 -ggdb -Wall -Wextra -Wpointer-arith"
+#    "-std=c++17 -Wno-cast-function-type -Wno-unused-result -O3 -g3 -ggdb -Wall -Wextra -Wpointer-arith -fomit-frame-pointer -ffast-math -pipe -flto=auto -ffat-lto-objects -fexceptions -g -grecord-gcc-switches -pipe -Wall -Werror=format-security -Wp,-U_FORTIFY_SOURCE,-D_FORTIFY_SOURCE=3 -Wp,-D_GLIBCXX_ASSERTIONS -m64 -march=x86-64 -mtune=generic -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer"
     CACHE STRING "Debug build flags"
 )
 
