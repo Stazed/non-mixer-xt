@@ -1,0 +1,66 @@
+/*******************************************************************************/
+/*                                                                             */
+/* This program is free software; you can redistribute it and/or modify it     */
+/* under the terms of the GNU General Public License as published by the       */
+/* Free Software Foundation; either version 2 of the License, or (at your      */
+/* option) any later version.                                                  */
+/*                                                                             */
+/* This program is distributed in the hope that it will be useful, but WITHOUT */
+/* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or       */
+/* FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for   */
+/* more details.                                                               */
+/*                                                                             */
+/* You should have received a copy of the GNU General Public License along     */
+/* with This program; see the file COPYING.  If not,write to the Free Software */
+/* Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+/*******************************************************************************/
+
+/* 
+ * File:   nmxt-plugin-scan.C
+ * Author: sspresto
+ *
+ * Created on July 16, 2024, 5:40 PM
+ */
+
+#include <stdio.h>
+#include <stdlib.h>
+
+#include <FL/Fl.H>
+#include <FL/Fl_Window.H>
+#include <FL/Fl_Box.H>
+
+#include "Plugin_Scan.H"
+#include "../../nonlib/debug.h"
+
+
+#define USER_CONFIG_DIR NMXT_CONFIG_DIRECTORY
+
+char *user_config_dir;
+
+static int
+ensure_dirs ( void )
+{
+    asprintf( &user_config_dir, "%s/.config/%s", getenv( "HOME" ), USER_CONFIG_DIR );
+
+    int r = mkdir( user_config_dir, 0777 );
+
+    return r == 0 || errno == EEXIST;
+}
+
+
+int main(int argc, char** argv)
+{
+    if(!ensure_dirs())
+    {
+        WARNING("Warning! Cannot create/open user config directory! Scanning aborted...");
+        return (EXIT_SUCCESS);
+    }
+
+    Plugin_Scan scanner;
+    scanner.get_all_plugins(true);      // true = rescan
+
+    MESSAGE("Scan successfully completed...");
+
+    return (EXIT_SUCCESS);
+}
+

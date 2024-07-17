@@ -245,5 +245,39 @@ endif(EnableNTK)
 
 install (TARGETS midi-mapper-xt RUNTIME DESTINATION bin)
 
+
+set (ScanSources
+    src/Plugin_Scan.C
+    src/ladspa/LADSPAInfo.C
+    src/ladspa/LADSPA_Plugin.C
+    src/clap/Clap_Discovery.C
+    src/vst2/Vst2_Discovery.C
+    src/vst3/Vst3_Discovery.C
+    ../nonlib/debug.C
+)
+
+add_executable (nmxt-plugin-scan ${ScanSources} ${VST3SDK_SOURCES} src/nmxt-plugin-scan.C)
+
+target_include_directories (nmxt-plugin-scan PRIVATE
+        ${FLTK_INCLUDE_DIRS}
+        ${LRDF_INCLUDE_DIRS}
+        ${LILV_INCLUDE_DIRS}
+        ${SUIL_INCLUDE_DIRS}
+)
+
+target_link_libraries(nmxt-plugin-scan PRIVATE
+        ${FLTK_LIBRARIES}
+        ${LILV_LIBRARIES}
+        ${SUIL_LIBRARIES}
+        lrdf
+)
+
+if (EnableVST3Support AND CONFIG_VST3SDK)
+    target_include_directories (nmxt-plugin-scan PRIVATE ${CONFIG_VST3SDK})
+endif()
+
+install (TARGETS nmxt-plugin-scan RUNTIME DESTINATION bin)
+
+
 install (FILES non-mixer-xt.desktop.in
     DESTINATION share/applications RENAME non-mixer-xt.desktop)
