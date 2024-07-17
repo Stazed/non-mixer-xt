@@ -1225,17 +1225,25 @@ Module::insert_menu_cb ( const Fl_Menu_ *menu )
         mod = new Meter_Module();
     else if ( !strcmp( s_picked, "Mono Pan" ))
         mod = new Mono_Pan_Module();
-    else if ( (!strcmp( s_picked, "Plugin" )) || (!strcmp( s_picked, "Plugin (rescan)" )) )
+    else if ( !strcmp( s_picked, "Scan for plugins" )) 
     {
-        if(!strcmp( s_picked, "Plugin (rescan)" ))
+        // Clear the cache vector so it will get re-loaded after the scan
+        g_plugin_cache.clear();
+
+        system("nmxt-plugin-scan");
+        return;
+    }
+    else if ( !strcmp( s_picked, "Plugin" ))
+    {
+        if (g_plugin_cache.empty())
         {
             Plugin_Scan scanner;
-            scanner.get_all_plugins(true);      // true = rescan
-        }
-        else if (g_plugin_cache.empty())
-        {
-            Plugin_Scan scanner;
-            scanner.get_all_plugins(false);     // false = do not rescan
+
+            if(!scanner.load_plugin_cache())
+            {
+                fl_alert( "Plugin Cache not found, please run 'Scan for plugins'");
+                return;
+            }
         }
 
         Picked picked = Plugin_Chooser::plugin_chooser( this->ninputs() );
@@ -1427,7 +1435,7 @@ Module::menu ( void ) const
         insert_menu->add( "Aux", 0, 0 );
         insert_menu->add( "Spatializer", 0, 0 );
         insert_menu->add( "Plugin", 0, 0 );
-        insert_menu->add( "Plugin (rescan)", 0, 0 );
+        insert_menu->add( "Scan for plugins", 0, 0 );
 
         insert_menu->callback( &Module::insert_menu_cb, (void*)this );
     }

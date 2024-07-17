@@ -92,6 +92,8 @@ public:
     void scan_VST3_plugins( std::list<Plugin_Info> & pr, bool rescan );
 #endif
 
+    bool load_plugin_cache ( void );
+
     Plugin_Scan();
     virtual ~Plugin_Scan();
 private:
@@ -99,7 +101,6 @@ private:
     Fl_Box *_box;
 
     void show_scanner_window();
-    bool load_plugin_cache ( void );
     void save_plugin_cache ( void );
 };
 

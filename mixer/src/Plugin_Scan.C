@@ -88,6 +88,7 @@ Plugin_Scan::Plugin_Scan() :
     _box->labelfont(FL_BOLD);
     _box->show();
     g_scanner_window->end();
+    g_scanner_window->border(0);
     g_scanner_window->set_modal();
 }
 
