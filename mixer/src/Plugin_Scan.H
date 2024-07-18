@@ -57,15 +57,12 @@ public:
     void scan_VST3_plugins( std::list<Plugin_Info> & pr, std::string vst3_path );
 #endif
 
-    bool load_plugin_cache ( void );
-
     Plugin_Scan();
     virtual ~Plugin_Scan();
 private:
 
     Fl_Box *_box;
 
-    void show_scanner_window();
     void save_plugin_cache ( void );
 };
 

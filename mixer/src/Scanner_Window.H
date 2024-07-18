@@ -38,6 +38,7 @@ public:
 
     void get_all_plugins ();
     void close_scanner_window();
+    bool load_plugin_cache ( void );
 private:
 
     Fl_Box *_box;

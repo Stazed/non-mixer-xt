@@ -57,6 +57,19 @@ static void scanner_timeout(void*)
 
 extern char *user_config_dir;
 
+static FILE *open_plugin_cache( const char *mode )
+{
+    char *path;
+
+    asprintf( &path, "%s/%s", user_config_dir, "plugin_cache" );
+
+    FILE *fp = fopen( path, mode );
+        
+    free( path );
+
+    return fp;
+}
+
 Scanner_Window::Scanner_Window() :
     _box(nullptr)
 {
@@ -89,7 +102,7 @@ Scanner_Window::get_all_plugins ()
 {
     // Remove any previous temp cache since we append to it
     char *path;
-    asprintf( &path, "%s/%s", user_config_dir, "plugin_cache_temp" );
+    asprintf( &path, "%s/%s", user_config_dir, "plugin_cache" );
 
     std::string remove_temp = "exec rm -r '";
     remove_temp += path;
@@ -99,7 +112,7 @@ Scanner_Window::get_all_plugins ()
     free( path );
 
     Fl::add_timeout(0.03, scanner_timeout);
-
+#ifdef LADSPA_SUPPORT
     if(_box)
     {
         _box->copy_label("Scanning LADSPA Plugins");
@@ -108,7 +121,9 @@ Scanner_Window::get_all_plugins ()
     }
 
     system("nmxt-plugin-scan LADSPA");
+#endif
 
+#ifdef LV2_SUPPORT
     if(_box)
     {
         _box->copy_label("Scanning LV2 Plugins");
@@ -117,13 +132,13 @@ Scanner_Window::get_all_plugins ()
     }
 
     system("nmxt-plugin-scan LV2");
+#endif
 
+#ifdef CLAP_SUPPORT
     auto clap_sp = clap_discovery::installedCLAPs();   // This to get paths
 
     for (const auto &q : clap_sp)
     {
-       // DMESSAGE("CLAP PLUG PATHS %s", q.u8string().c_str());
-
         if(_box)
         {
             _box->copy_label(q.u8string().c_str());
@@ -136,7 +151,9 @@ Scanner_Window::get_all_plugins ()
 
         system(s_command.c_str());
     }
+#endif
 
+#ifdef VST2_SUPPORT
     auto vst2_sp = vst2_discovery::installedVST2s();   // This to get paths
 
     for (const auto &q : vst2_sp)
@@ -153,7 +170,9 @@ Scanner_Window::get_all_plugins ()
 
         system(s_command.c_str());
     }
+#endif
 
+#ifdef VST3_SUPPORT
     auto vst3_sp = vst3_discovery::installedVST3s();   // This to get paths
 
     for (const auto &q : vst3_sp)
@@ -170,6 +189,60 @@ Scanner_Window::get_all_plugins ()
 
         system(s_command.c_str());
     }
+#endif
 
     close_scanner_window();
+}
+
+bool
+Scanner_Window::load_plugin_cache ( void )
+{
+    FILE *fp = open_plugin_cache( "r" );
+    
+    if ( !fp )
+    {
+        return false;
+    }
+
+    char *c_type;
+    char *c_unique_id;
+    unsigned long u_id;
+    char *c_plug_path;
+    char *c_name;
+    char *c_author;
+    char *c_category;
+    int i_audio_inputs;
+    int i_audio_outputs;
+
+    g_plugin_cache.clear();
+
+    while ( 9 == fscanf( fp, "%m[^|]|%m[^|]|%lu|%m[^|]|%m[^|]|%m[^|]|%m[^|]|%d|%d\n]\n",
+            &c_type, &c_unique_id, &u_id, &c_plug_path, &c_name, &c_author,
+            &c_category, &i_audio_inputs, &i_audio_outputs ) )
+    {
+        Plugin_Info pi(c_type);
+        pi.s_unique_id = c_unique_id;
+        pi.id = u_id;
+        pi.plug_path = c_plug_path;
+        pi.name = c_name;
+        pi.author = c_author;
+        pi.category = c_category;
+        pi.audio_inputs = i_audio_inputs;
+        pi.audio_outputs = i_audio_outputs;
+        
+        g_plugin_cache.push_back(pi);
+
+        free(c_type);
+        free(c_unique_id);
+        free(c_plug_path);
+        free(c_name);
+        free(c_author);
+        free(c_category);
+    }
+
+    fclose(fp);
+    
+    g_plugin_cache.sort();
+
+    return true;
 }

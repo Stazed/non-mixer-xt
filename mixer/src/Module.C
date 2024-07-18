@@ -1234,14 +1234,13 @@ Module::insert_menu_cb ( const Fl_Menu_ *menu )
         Scanner_Window scanner;
         scanner.get_all_plugins();
 
-      //  system("nmxt-plugin-scan");
         return;
     }
     else if ( !strcmp( s_picked, "Plugin" ))
     {
         if (g_plugin_cache.empty())
         {
-            Plugin_Scan scanner;
+            Scanner_Window scanner;
 
             if(!scanner.load_plugin_cache())
             {

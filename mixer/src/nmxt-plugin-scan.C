@@ -87,7 +87,7 @@ int main(int /*argc*/, char** argv)
     DMESSAGE( "TYPE = %s: PATH = %s", s_type.c_str(), s_path.c_str());
 
     Plugin_Scan scanner;
-    scanner.get_all_plugins(s_type, s_path);      // true = rescan
+    scanner.get_all_plugins(s_type, s_path);
 
     return (EXIT_SUCCESS);
 }

@@ -62,7 +62,7 @@ static FILE *open_plugin_cache( const char *mode )
 {
     char *path;
 
-    asprintf( &path, "%s/%s", user_config_dir, "plugin_cache_temp" );
+    asprintf( &path, "%s/%s", user_config_dir, "plugin_cache" );
 
     FILE *fp = fopen( path, mode );
         
@@ -84,7 +84,6 @@ Plugin_Scan::~Plugin_Scan()
 void
 Plugin_Scan::get_all_plugins ( std::string s_type, std::string s_path )
 {
-
     std::list<Plugin_Info> pr;
 
     Plugin_Scan pm;
@@ -109,9 +108,7 @@ Plugin_Scan::get_all_plugins ( std::string s_type, std::string s_path )
         pm.scan_VST3_plugins( pr, s_path );     // Scan VST3
 #endif
 
-    pr.sort();
-
-    // Set the global cache
+    // Append to the plugin_cache file
     if ( !pr.empty() )
     {
         plugin_cache.insert(std::end(plugin_cache), std::begin(pr), std::end(pr));
@@ -489,57 +486,6 @@ Plugin_Scan::scan_VST3_plugins( std::list<Plugin_Info> & pr, std::string vst3_pa
     }
 }
 #endif  // VST3_SUPPORT
-
-bool
-Plugin_Scan::load_plugin_cache ( void )
-{
-    FILE *fp = open_plugin_cache( "r" );
-    
-    if ( !fp )
-    {
-        return false;
-    }
-
-    char *c_type;
-    char *c_unique_id;
-    unsigned long u_id;
-    char *c_plug_path;
-    char *c_name;
-    char *c_author;
-    char *c_category;
-    int i_audio_inputs;
-    int i_audio_outputs;
-
-    plugin_cache.clear();
-
-    while ( 9 == fscanf( fp, "%m[^|]|%m[^|]|%lu|%m[^|]|%m[^|]|%m[^|]|%m[^|]|%d|%d\n]\n",
-            &c_type, &c_unique_id, &u_id, &c_plug_path, &c_name, &c_author,
-            &c_category, &i_audio_inputs, &i_audio_outputs ) )
-    {
-        Plugin_Info pi(c_type);
-        pi.s_unique_id = c_unique_id;
-        pi.id = u_id;
-        pi.plug_path = c_plug_path;
-        pi.name = c_name;
-        pi.author = c_author;
-        pi.category = c_category;
-        pi.audio_inputs = i_audio_inputs;
-        pi.audio_outputs = i_audio_outputs;
-        
-        plugin_cache.push_back(pi);
-
-        free(c_type);
-        free(c_unique_id);
-        free(c_plug_path);
-        free(c_name);
-        free(c_author);
-        free(c_category);
-    }
-
-    fclose(fp);
-
-    return true;
-}
 
 void
 Plugin_Scan::save_plugin_cache ( void )
