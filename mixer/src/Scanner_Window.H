@@ -15,60 +15,34 @@
 /* Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 /*******************************************************************************/
 
+
 /* 
- * File:   Plugin_Scan.H
+ * File:   Scanner_Window.H
  * Author: sspresto
  *
- * Created on January 27, 2024, 4:53 PM
+ * Created on July 17, 2024, 10:43 PM
  */
 
 #pragma once
 
-#include <cstring>
-#include <string>
 #include <list>
 #include <FL/Fl_Box.H>
 
-#ifdef LADSPA_SUPPORT
-#include "ladspa/LADSPAInfo.h"
-#endif
-
 #include "Plugin_Info.H"
 
-class Plugin_Scan
+class Scanner_Window
 {
 public:
+    Scanner_Window();
+    virtual ~Scanner_Window();
 
-    void get_all_plugins (std::string s_type, std::string s_path);
-
-#ifdef LADSPA_SUPPORT
-    void scan_LADSPA_plugins( std::list<Plugin_Info> & pr);
-
-    void set_ladspainfo( LADSPAInfo * linfo );
-    LADSPAInfo * get_ladspainfo();
-#endif
-#ifdef LV2_SUPPORT
-    void scan_LV2_plugins( std::list<Plugin_Info> & pr );
-#endif
-#ifdef CLAP_SUPPORT
-    void scan_CLAP_plugins( std::list<Plugin_Info> & pr, std::string clap_path );
-#endif
-#ifdef VST2_SUPPORT
-    void scan_VST2_plugins( std::list<Plugin_Info> & pr, std::string vst2_path );
-#endif
-#ifdef VST3_SUPPORT
-    void scan_VST3_plugins( std::list<Plugin_Info> & pr, std::string vst3_path );
-#endif
-
-    bool load_plugin_cache ( void );
-
-    Plugin_Scan();
-    virtual ~Plugin_Scan();
+    void get_all_plugins ();
+    void close_scanner_window();
 private:
 
     Fl_Box *_box;
-
     void show_scanner_window();
-    void save_plugin_cache ( void );
+
 };
+
 

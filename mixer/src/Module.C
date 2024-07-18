@@ -1055,6 +1055,7 @@ Module::draw_box ( int tx, int ty, int tw, int th )
 }
 
 #include "SpectrumView.H"
+#include "Scanner_Window.H"
 #include <FL/Fl_Double_Window.H>
 
 
@@ -1230,7 +1231,10 @@ Module::insert_menu_cb ( const Fl_Menu_ *menu )
         // Clear the cache vector so it will get re-loaded after the scan
         g_plugin_cache.clear();
 
-        system("nmxt-plugin-scan");
+        Scanner_Window scanner;
+        scanner.get_all_plugins();
+
+      //  system("nmxt-plugin-scan");
         return;
     }
     else if ( !strcmp( s_picked, "Plugin" ))

@@ -49,7 +49,7 @@ ensure_dirs ( void )
 }
 
 
-int main(int /*argc*/, char** /*argv*/)
+int main(int /*argc*/, char** argv)
 {
     if(!ensure_dirs())
     {
@@ -57,10 +57,37 @@ int main(int /*argc*/, char** /*argv*/)
         return (EXIT_SUCCESS);
     }
 
-    Plugin_Scan scanner;
-    scanner.get_all_plugins(true);      // true = rescan
+    std::string s_name = "";
+    std::string s_type = "";
+    std::string s_path = "";
 
-    MESSAGE("Scan successfully completed...");
+    int count = 0;
+
+    while ( *argv )
+    {
+        if(count == 0)
+        {
+            count++;
+            s_name = *argv++;
+            continue;      
+        }
+        else if(count == 1)
+        {
+            count++;
+            s_type = *argv++;
+            continue;
+        }
+        else if(count == 2)
+        {
+            s_path = *argv++;
+            continue;
+        }
+    }
+
+    DMESSAGE( "TYPE = %s: PATH = %s", s_type.c_str(), s_path.c_str());
+
+    Plugin_Scan scanner;
+    scanner.get_all_plugins(s_type, s_path);      // true = rescan
 
     return (EXIT_SUCCESS);
 }

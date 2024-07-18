@@ -29,7 +29,7 @@
 #include "../../nonlib/debug.h"
 
 // Global cache of all plugins scanned
-std::list<Plugin_Info> g_plugin_cache;
+std::list<Plugin_Info> plugin_cache;
 
 #ifdef LADSPA_SUPPORT
 #define HAVE_LIBLRDF 1
@@ -55,13 +55,6 @@ static LADSPAInfo *ladspainfo = nullptr;
     static std::list<Plugin_Info> vst3_PI_cache;
 #endif
 
-static Fl_Window * g_scanner_window = 0;
-
-static void scanner_timeout(void*)
-{
-    g_scanner_window->redraw();
-    g_scanner_window->show();
-}
 
 extern char *user_config_dir;
 
@@ -69,7 +62,7 @@ static FILE *open_plugin_cache( const char *mode )
 {
     char *path;
 
-    asprintf( &path, "%s/%s", user_config_dir, "plugin_cache" );
+    asprintf( &path, "%s/%s", user_config_dir, "plugin_cache_temp" );
 
     FILE *fp = fopen( path, mode );
         
@@ -78,32 +71,14 @@ static FILE *open_plugin_cache( const char *mode )
     return fp;
 }
 
-Plugin_Scan::Plugin_Scan() :
-    _box(nullptr)
+Plugin_Scan::Plugin_Scan()
 {
-    g_scanner_window = new Fl_Window(600,60,"Scanning Plugins");
-    _box = new Fl_Box(20,10,560,40,"Scanning");
-    _box->box(FL_UP_BOX);
-    _box->labelsize(12);
-    _box->labelfont(FL_BOLD);
-    _box->show();
-    g_scanner_window->end();
-    g_scanner_window->border(0);
-    g_scanner_window->set_modal();
 }
 
 Plugin_Scan::~Plugin_Scan()
 {
 }
 
-void 
-Plugin_Scan::close_scanner_window()
-{
-    Fl::remove_timeout(scanner_timeout);
-    g_scanner_window->hide();
-    delete g_scanner_window;
-    g_scanner_window = 0;
-}
 
 #ifdef LADSPA_SUPPORT
 // For the LADSPA_Plugin class to avoid rescanning
@@ -122,44 +97,31 @@ Plugin_Scan::get_ladspainfo()
 
 /* Set global list of available plugins */
 void
-Plugin_Scan::get_all_plugins ( bool rescan )
+Plugin_Scan::get_all_plugins ( std::string s_type, std::string s_path )
 {
-    if(rescan)  // force rescan of all plugins and save to file
-    {
-        g_plugin_cache.clear();
-    }
-    else        // try the file cache first
-    {
-        if(g_plugin_cache.empty())
-        {
-            if(load_plugin_cache())
-                return;     // loaded cache from file if we have it
-
-            // we did not have file cache so do the whole scan
-        }
-        else
-            return; //  we already scanned and have the cache
-    }
-
-    Fl::add_timeout(0.03, scanner_timeout);
 
     std::list<Plugin_Info> pr;
 
     Plugin_Scan pm;
 #ifdef LADSPA_SUPPORT
-    pm.scan_LADSPA_plugins( pr, rescan );   // Scan LADSPA
+    if( strcmp (s_type.c_str(), "LADSPA") == 0)
+        pm.scan_LADSPA_plugins( pr );   // Scan LADSPA
 #endif
 #ifdef LV2_SUPPORT
-    pm.scan_LV2_plugins( pr, rescan );      // Scan LV2
+    if( strcmp (s_type.c_str(), "LV2") == 0)
+        pm.scan_LV2_plugins( pr );      // Scan LV2
 #endif
 #ifdef CLAP_SUPPORT
-    pm.scan_CLAP_plugins( pr, rescan );     // Scan CLAP
+    if( strcmp (s_type.c_str(), "CLAP") == 0)
+        pm.scan_CLAP_plugins( pr, s_path );     // Scan CLAP
 #endif
 #ifdef VST2_SUPPORT
-    pm.scan_VST2_plugins( pr, rescan );     // Scan VST2
+    if( strcmp (s_type.c_str(), "VST2") == 0)
+        pm.scan_VST2_plugins( pr, s_path );     // Scan VST2
 #endif
 #ifdef VST3_SUPPORT
-    pm.scan_VST3_plugins( pr, rescan );     // Scan VST3
+    if( strcmp (s_type.c_str(), "VST3") == 0)
+        pm.scan_VST3_plugins( pr, s_path );     // Scan VST3
 #endif
 
     pr.sort();
@@ -167,24 +129,21 @@ Plugin_Scan::get_all_plugins ( bool rescan )
     // Set the global cache
     if ( !pr.empty() )
     {
-        g_plugin_cache.insert(std::end(g_plugin_cache), std::begin(pr), std::end(pr));
+        plugin_cache.insert(std::end(plugin_cache), std::begin(pr), std::end(pr));
         save_plugin_cache();
     }
-
-    close_scanner_window();
 }
 
 #ifdef LADSPA_SUPPORT
 void
-Plugin_Scan::scan_LADSPA_plugins( std::list<Plugin_Info> & pr, bool rescan )
+Plugin_Scan::scan_LADSPA_plugins( std::list<Plugin_Info> & pr )
 {
     if ( !ladspainfo )
     {
         ladspainfo = new LADSPAInfo();
     }
     
-    if(rescan)
-        ladspainfo->RescanPlugins();
+    ladspainfo->RescanPlugins();
 
     std::vector<LADSPAInfo::PluginInfo> plugins = ladspainfo->GetPluginInfo();
 
@@ -202,13 +161,6 @@ Plugin_Scan::scan_LADSPA_plugins( std::list<Plugin_Info> & pr, bool rescan )
         pi.audio_outputs = i->AudioOutputs;
         pi.category = "Unclassified";
         pr.push_back( pi );
-        
-        if(_box)
-        {
-            _box->copy_label(pi.name.c_str());
-            _box->redraw();
-            Fl::check();
-        }
     }
 
     /* Set the plugin category since the above scan does not set it */
@@ -230,9 +182,9 @@ Plugin_Scan::scan_LADSPA_plugins( std::list<Plugin_Info> & pr, bool rescan )
 
 #ifdef LV2_SUPPORT
 void
-Plugin_Scan::scan_LV2_plugins( std::list<Plugin_Info> & pr, bool rescan )
+Plugin_Scan::scan_LV2_plugins( std::list<Plugin_Info> & pr )
 {
-    Lv2WorldClass::getInstance().initIfNeeded(rescan);
+    Lv2WorldClass::getInstance().initIfNeeded(true);
     struct catagory_match
     {
         std::string cat_type;
@@ -402,145 +354,115 @@ Plugin_Scan::scan_LV2_plugins( std::list<Plugin_Info> & pr, bool rescan )
         }
 
         pr.push_back( pi );
-        
-        if(_box)
-        {
-            _box->copy_label(pi.name.c_str());
-            _box->redraw();
-            Fl::check();
-        }
     }
 }
 #endif  // LV2_SUPPORT
 
 #ifdef CLAP_SUPPORT
 void
-Plugin_Scan::scan_CLAP_plugins( std::list<Plugin_Info> & pr, bool rescan )
+Plugin_Scan::scan_CLAP_plugins( std::list<Plugin_Info> & pr, std::string clap_path )
 {
-    if(rescan)
-    {
-        clap_PI_cache.clear();
-    }
+    // DMESSAGE("CLAP PLUG PATHS %s", q.u8string().c_str());
+     auto entry = clap_discovery::entryFromCLAPPath(clap_path);
 
-    if ( !clap_PI_cache.empty() )
-    {
-        pr.insert(std::end(pr), std::begin(clap_PI_cache), std::end(clap_PI_cache));
-        return;
-    }
+     if (!entry)
+     {
+         DMESSAGE("Clap_entry returned a nullptr = %s", clap_path.c_str());
+         return;
+     }
 
-    auto sp = clap_discovery::installedCLAPs();   // This to get paths
+     if ( !entry->init(clap_path.c_str()) )  // This could be bundle
+     {
+         DMESSAGE("Could not initialize entry = %s", clap_path.c_str());
+         return;
+     }
 
-    for (const auto &q : sp)
-    {
-       // DMESSAGE("CLAP PLUG PATHS %s", q.u8string().c_str());
-        auto entry = clap_discovery::entryFromCLAPPath(q);
+     auto fac = static_cast<const clap_plugin_factory_t *>( entry->get_factory(CLAP_PLUGIN_FACTORY_ID) );
 
-        if (!entry)
-        {
-            DMESSAGE("Clap_entry returned a nullptr = %s", q.u8string().c_str());
-            continue;
-        }
+     if ( !fac )
+     {
+         DMESSAGE("Plugin factory is null %s", clap_path.c_str());
+         entry->deinit();
+         return;
+     }
 
-        if ( !entry->init(q.u8string().c_str()) )  // This could be bundle
-        {
-            DMESSAGE("Could not initialize entry = %s", q.u8string().c_str());
-            continue;
-        }
+     auto plugin_count = fac->get_plugin_count(fac);     // how many in the bundle
 
-        auto fac = static_cast<const clap_plugin_factory_t *>( entry->get_factory(CLAP_PLUGIN_FACTORY_ID) );
-        
-        if ( !fac )
-        {
-            DMESSAGE("Plugin factory is null %s", q.u8string().c_str());
-            entry->deinit();
-            continue;
-        }
-        
-        auto plugin_count = fac->get_plugin_count(fac);     // how many in the bundle
+     if (plugin_count <= 0)
+     {
+         DMESSAGE("Plugin factory has no plugins = %s: Count = %d", clap_path.c_str(), plugin_count);
+         entry->deinit();
+         return;
+     }
 
-        if (plugin_count <= 0)
-        {
-            DMESSAGE("Plugin factory has no plugins = %s: Count = %d", q.u8string().c_str(), plugin_count);
-            entry->deinit();
-            continue;
-        }
+     for (uint32_t pl = 0; pl < plugin_count; ++pl)
+     {
+         auto desc = fac->get_plugin_descriptor(fac, pl);
 
-        if(_box)
-        {
-            _box->copy_label(q.u8string().c_str());
-            _box->redraw();
-            Fl::check();
-        }
+         Plugin_Info pi("CLAP");
 
-        for (uint32_t pl = 0; pl < plugin_count; ++pl)
-        {
-            auto desc = fac->get_plugin_descriptor(fac, pl);
+         pi.name         = desc->name;
+         pi.s_unique_id  = desc->id;
+         pi.author       = desc->vendor;
+         pi.id           = 0;
+         pi.plug_path    = clap_path.c_str();
+         pi.category     = clap_discovery::get_plugin_category(desc->features);
+         // desc->version;
+         // desc->description;
 
-            Plugin_Info pi("CLAP");
+         // Now lets make an instance to query ports
+         auto host = clap_discovery::createCLAPInfoHost();
+         clap_discovery::getHostConfig()->announceQueriedExtensions = false;
+         auto inst = fac->create_plugin(fac, host, desc->id);
 
-            pi.name         = desc->name;
-            pi.s_unique_id  = desc->id;
-            pi.author       = desc->vendor;
-            pi.id           = 0;
-            pi.plug_path    = q.u8string().c_str();
-            pi.category     = clap_discovery::get_plugin_category(desc->features);
-            // desc->version;
-            // desc->description;
+         if (!inst)
+         {
+             DMESSAGE("CLAP Plugin instance is null: %s", desc->name);
+             continue;
+         }
 
-            // Now lets make an instance to query ports
-            auto host = clap_discovery::createCLAPInfoHost();
-            clap_discovery::getHostConfig()->announceQueriedExtensions = false;
-            auto inst = fac->create_plugin(fac, host, desc->id);
+         if( !inst->init(inst) )
+         {
+             DMESSAGE("CLAP unable to initialize plugin: %s", desc->name);
+             inst->destroy(inst);
+             continue;
+         }
 
-            if (!inst)
-            {
-                DMESSAGE("CLAP Plugin instance is null: %s", desc->name);
-                continue;
-            }
+         const clap_plugin_audio_ports_t *audio_ports
+                     = static_cast<const clap_plugin_audio_ports_t *> (
+                             inst->get_extension(inst, CLAP_EXT_AUDIO_PORTS));
 
-            if( !inst->init(inst) )
-            {
-                DMESSAGE("CLAP unable to initialize plugin: %s", desc->name);
-                inst->destroy(inst);
-                continue;
-            }
+         if (audio_ports && audio_ports->count && audio_ports->get)
+         {
+             clap_audio_port_info info;
+             const uint32_t nins = audio_ports->count(inst, true);
+             for (uint32_t i = 0; i < nins; ++i)
+             {
+                 ::memset(&info, 0, sizeof(info));
+                 if (audio_ports->get(inst, i, true, &info))
+                 {
+                     pi.audio_inputs += info.channel_count;
+                 }
+             }
 
-            const clap_plugin_audio_ports_t *audio_ports
-			= static_cast<const clap_plugin_audio_ports_t *> (
-				inst->get_extension(inst, CLAP_EXT_AUDIO_PORTS));
+             const uint32_t nouts = audio_ports->count(inst, false);
+             for (uint32_t i = 0; i < nouts; ++i)
+             {
+                 ::memset(&info, 0, sizeof(info));
+                 if (audio_ports->get(inst, i, false, &info))
+                 {
+                     pi.audio_outputs += info.channel_count;
+                 }
+             }
+         }
 
-            if (audio_ports && audio_ports->count && audio_ports->get)
-            {
-                clap_audio_port_info info;
-                const uint32_t nins = audio_ports->count(inst, true);
-                for (uint32_t i = 0; i < nins; ++i)
-                {
-                    ::memset(&info, 0, sizeof(info));
-                    if (audio_ports->get(inst, i, true, &info))
-                    {
-                        pi.audio_inputs += info.channel_count;
-                    }
-                }
+         inst->destroy(inst);
 
-                const uint32_t nouts = audio_ports->count(inst, false);
-                for (uint32_t i = 0; i < nouts; ++i)
-                {
-                    ::memset(&info, 0, sizeof(info));
-                    if (audio_ports->get(inst, i, false, &info))
-                    {
-                        pi.audio_outputs += info.channel_count;
-                    }
-                }
-            }
+         clap_PI_cache.push_back( pi );
 
-            inst->destroy(inst);
-
-            clap_PI_cache.push_back( pi );
-
-        //    DMESSAGE("Name = %s: Path = %s: ID = %d: Audio Ins = %d: Audio Outs = %d",
-        //            pi.name.c_str(), pi.plug_path.c_str(), pi.id, pi.audio_inputs, pi.audio_outputs);
-        }
-    }
+     //    DMESSAGE("Name = %s: Path = %s: ID = %d: Audio Ins = %d: Audio Outs = %d",
+     //            pi.name.c_str(), pi.plug_path.c_str(), pi.id, pi.audio_inputs, pi.audio_outputs);
+     }
 
     if ( !clap_PI_cache.empty() )
     {
@@ -552,32 +474,13 @@ Plugin_Scan::scan_CLAP_plugins( std::list<Plugin_Info> & pr, bool rescan )
 
 #ifdef VST2_SUPPORT
 void
-Plugin_Scan::scan_VST2_plugins( std::list<Plugin_Info> & pr, bool rescan )
+Plugin_Scan::scan_VST2_plugins( std::list<Plugin_Info> & pr, std::string vst2_path )
 {
-    if(rescan)
-    {
-        vst2_PI_cache.clear();
-    }
 
-    if ( !vst2_PI_cache.empty() )
-    {
-        pr.insert(std::end(pr), std::begin(vst2_PI_cache), std::end(vst2_PI_cache));
-        return;
-    }
+    vst2_PI_cache.clear();
 
-    auto sp = vst2_discovery::installedVST2s();   // This to get paths
-
-    for (const auto &q : sp)
-    {
-        if(_box)
-        {
-            _box->copy_label(q.u8string().c_str());
-            _box->redraw();
-            Fl::check();
-        }
-        vst2_discovery::vst2_discovery_scan_file( q.u8string().c_str(), vst2_PI_cache);
-    }
-
+    vst2_discovery::vst2_discovery_scan_file( vst2_path.c_str(), vst2_PI_cache);
+ 
     if ( !vst2_PI_cache.empty() )
     {
         pr.insert(std::end(pr), std::begin(vst2_PI_cache), std::end(vst2_PI_cache));
@@ -588,31 +491,11 @@ Plugin_Scan::scan_VST2_plugins( std::list<Plugin_Info> & pr, bool rescan )
 
 #ifdef VST3_SUPPORT
 void
-Plugin_Scan::scan_VST3_plugins( std::list<Plugin_Info> & pr, bool rescan )
+Plugin_Scan::scan_VST3_plugins( std::list<Plugin_Info> & pr, std::string vst3_path )
 {
-    if(rescan)
-    {
-        vst3_PI_cache.clear();
-    }
+    vst3_PI_cache.clear();
 
-    if ( !vst3_PI_cache.empty() )
-    {
-        pr.insert(std::end(pr), std::begin(vst3_PI_cache), std::end(vst3_PI_cache));
-        return;
-    }
-
-    auto sp = vst3_discovery::installedVST3s();   // This to get paths
-
-    for (const auto &q : sp)
-    {
-        if(_box)
-        {
-            _box->copy_label(q.u8string().c_str());
-            _box->redraw();
-            Fl::check();
-        }
-        vst3_discovery::vst3_discovery_scan_file( q.u8string().c_str(), vst3_PI_cache);
-    }
+    vst3_discovery::vst3_discovery_scan_file( vst3_path.c_str(), vst3_PI_cache);
 
     if ( !vst3_PI_cache.empty() )
     {
@@ -642,7 +525,7 @@ Plugin_Scan::load_plugin_cache ( void )
     int i_audio_inputs;
     int i_audio_outputs;
 
-    g_plugin_cache.clear();
+    plugin_cache.clear();
 
     while ( 9 == fscanf( fp, "%m[^|]|%m[^|]|%lu|%m[^|]|%m[^|]|%m[^|]|%m[^|]|%d|%d\n]\n",
             &c_type, &c_unique_id, &u_id, &c_plug_path, &c_name, &c_author,
@@ -658,7 +541,7 @@ Plugin_Scan::load_plugin_cache ( void )
         pi.audio_inputs = i_audio_inputs;
         pi.audio_outputs = i_audio_outputs;
         
-        g_plugin_cache.push_back(pi);
+        plugin_cache.push_back(pi);
 
         free(c_type);
         free(c_unique_id);
@@ -676,13 +559,13 @@ Plugin_Scan::load_plugin_cache ( void )
 void
 Plugin_Scan::save_plugin_cache ( void )
 {
-    FILE *fp = open_plugin_cache( "w" );
+    FILE *fp = open_plugin_cache( "a" );
     
     if ( !fp )
         return;
     
-    for ( std::list<Plugin_Info>::iterator i = g_plugin_cache.begin();
-          i != g_plugin_cache.end();
+    for ( std::list<Plugin_Info>::iterator i = plugin_cache.begin();
+          i != plugin_cache.end();
           ++i )
     {
         fprintf( fp, "%s|%s|%lu|%s|%s|%s|%s|%d|%d\n", i->type.c_str(), i->s_unique_id.c_str(), i->id,

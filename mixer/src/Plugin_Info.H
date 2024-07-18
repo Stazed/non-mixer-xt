@@ -15,60 +15,45 @@
 /* Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 /*******************************************************************************/
 
+
 /* 
- * File:   Plugin_Scan.H
+ * File:   Plugin_Info.H
  * Author: sspresto
  *
- * Created on January 27, 2024, 4:53 PM
+ * Created on July 17, 2024, 11:07 PM
  */
 
 #pragma once
 
-#include <cstring>
 #include <string>
-#include <list>
-#include <FL/Fl_Box.H>
 
-#ifdef LADSPA_SUPPORT
-#include "ladspa/LADSPAInfo.h"
-#endif
-
-#include "Plugin_Info.H"
-
-class Plugin_Scan
+class Plugin_Info
 {
 public:
+    const std::string type;
+    std::string s_unique_id;
+    unsigned long id;
+    std::string plug_path;  // CLAP & VST3 binary path
+    std::string name;
+    std::string author;
+    std::string category;
+    int audio_inputs;
+    int audio_outputs;
+    bool favorite;
 
-    void get_all_plugins (std::string s_type, std::string s_path);
+    Plugin_Info ( const std::string &s_type ) :  // LADSPA, LV2, CLAP, VST2, VST3
+        type(s_type),
+        s_unique_id("(null)"),  // (null) since we have to have something for favorites save and scan
+        id(0),
+        plug_path("(null)"),
+        name("(null)"),
+        author("(null)"),
+        category("Unclassified"),
+        audio_inputs(0),
+        audio_outputs(0),
+        favorite(false) {}
 
-#ifdef LADSPA_SUPPORT
-    void scan_LADSPA_plugins( std::list<Plugin_Info> & pr);
-
-    void set_ladspainfo( LADSPAInfo * linfo );
-    LADSPAInfo * get_ladspainfo();
-#endif
-#ifdef LV2_SUPPORT
-    void scan_LV2_plugins( std::list<Plugin_Info> & pr );
-#endif
-#ifdef CLAP_SUPPORT
-    void scan_CLAP_plugins( std::list<Plugin_Info> & pr, std::string clap_path );
-#endif
-#ifdef VST2_SUPPORT
-    void scan_VST2_plugins( std::list<Plugin_Info> & pr, std::string vst2_path );
-#endif
-#ifdef VST3_SUPPORT
-    void scan_VST3_plugins( std::list<Plugin_Info> & pr, std::string vst3_path );
-#endif
-
-    bool load_plugin_cache ( void );
-
-    Plugin_Scan();
-    virtual ~Plugin_Scan();
-private:
-
-    Fl_Box *_box;
-
-    void show_scanner_window();
-    void save_plugin_cache ( void );
+    bool operator< ( const Plugin_Info &rhs ) {
+        return strcmp( name.c_str(), rhs.name.c_str() ) < 1;
+    }
 };
-

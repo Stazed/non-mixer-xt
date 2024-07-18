@@ -133,12 +133,12 @@ validCLAPSearchPaths()
     return res;
 }
 
-const clap_plugin_entry_t *entryFromCLAPPath(const std::filesystem::path &p)
+const clap_plugin_entry_t *entryFromCLAPPath(const std::string  &p)
 {
     void *handle;
     int *iptr;
 
-    handle = dlopen(p.u8string().c_str(), RTLD_LOCAL | RTLD_LAZY);
+    handle = dlopen(p.c_str(), RTLD_LOCAL | RTLD_LAZY);
     if (!handle)
     {
         DMESSAGE("dlopen failed on Linux: %s", dlerror());

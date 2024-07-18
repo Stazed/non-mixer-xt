@@ -49,7 +49,7 @@ std::vector<std::filesystem::path> validCLAPSearchPaths();
  * clap and resolve the clap_plugin_entry_t *, which can return
  * null in the case of an invalid CLAP file.
  */
-const clap_plugin_entry_t *entryFromCLAPPath(const std::filesystem::path &p);
+const clap_plugin_entry_t *entryFromCLAPPath(const std::string &p);
 
 struct HostConfig
 {

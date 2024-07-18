@@ -70,6 +70,7 @@ set (ProgSources
     src/Group.C
     src/SpectrumView.C
     src/Spatialization_Console.C
+    src/Scanner_Window.C
     src/lv2/lv2_evbuf.c
     src/x11/X11PluginUI.C
 )
