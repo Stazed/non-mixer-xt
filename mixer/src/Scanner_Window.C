@@ -81,6 +81,7 @@ Scanner_Window::Scanner_Window() :
     _box->labelfont(FL_BOLD);
     _box->show();
     _cancel_button = new Fl_Button(600, 10, 50, 40, "Cancel");
+    _cancel_button->type(1);
     _cancel_button->labelsize(12);
     _cancel_button->labelfont(FL_BOLD);
     _cancel_button->color(FL_RED);
