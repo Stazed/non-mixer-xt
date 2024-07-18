@@ -342,17 +342,9 @@ LADSPA_Plugin::init ( void )
 {
     _plug_type = Type_LADSPA;
 
-    // To avoid rescanning plugins if plugin chooser already scanned.
     if(!ladspainfo)
     {
-        Plugin_Scan scanner;
-        if(!scanner.get_ladspainfo())               // if we did not already scan
-        {
-            ladspainfo = new LADSPAInfo();          // then scan
-            scanner.set_ladspainfo(ladspainfo);     // and give it to the scanner
-        }
-        else
-            ladspainfo = scanner.get_ladspainfo();  // the scanner already scanned, so use that
+        ladspainfo = new LADSPAInfo();
     }
 
     _idata = new LADSPA_Plugin::ImplementationData();

@@ -80,21 +80,6 @@ Plugin_Scan::~Plugin_Scan()
 }
 
 
-#ifdef LADSPA_SUPPORT
-// For the LADSPA_Plugin class to avoid rescanning
-void
-Plugin_Scan::set_ladspainfo( LADSPAInfo * linfo )
-{
-    ladspainfo = linfo;
-}
-
-LADSPAInfo *
-Plugin_Scan::get_ladspainfo()
-{
-    return ladspainfo;
-}
-#endif
-
 /* Set global list of available plugins */
 void
 Plugin_Scan::get_all_plugins ( std::string s_type, std::string s_path )
