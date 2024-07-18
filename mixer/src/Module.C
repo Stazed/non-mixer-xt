@@ -1228,11 +1228,14 @@ Module::insert_menu_cb ( const Fl_Menu_ *menu )
         mod = new Mono_Pan_Module();
     else if ( !strcmp( s_picked, "Scan for plugins" )) 
     {
-        // Clear the cache vector so it will get re-loaded after the scan
-        g_plugin_cache.clear();
-
         Scanner_Window scanner;
-        scanner.get_all_plugins();
+
+        if(scanner.get_all_plugins())
+        {
+            // Clear the cache vector so it will get re-loaded after the scan
+            // if they did not cancel
+            g_plugin_cache.clear();
+        }
 
         return;
     }

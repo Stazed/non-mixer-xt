@@ -71,14 +71,21 @@ static FILE *open_plugin_cache( const char *mode )
 }
 
 Scanner_Window::Scanner_Window() :
-    _box(nullptr)
+    _box(nullptr),
+    _cancel_button(nullptr)
 {
-    g_scanner_window = new Fl_Window(600,60,"Scanning Plugins");
+    g_scanner_window = new Fl_Window(670,60,"Scanning Plugins");
     _box = new Fl_Box(20,10,560,40,"Scanning");
     _box->box(FL_UP_BOX);
     _box->labelsize(12);
     _box->labelfont(FL_BOLD);
     _box->show();
+    _cancel_button = new Fl_Button(600, 10, 50, 40, "Cancel");
+    _cancel_button->labelsize(12);
+    _cancel_button->labelfont(FL_BOLD);
+    _cancel_button->color(FL_RED);
+    _cancel_button->show();
+
     g_scanner_window->end();
     g_scanner_window->set_modal();
 }
@@ -97,7 +104,7 @@ Scanner_Window::close_scanner_window()
     g_scanner_window = 0;
 }
 
-void
+bool
 Scanner_Window::get_all_plugins ()
 {
     // Remove any previous temp cache since we append to it
@@ -121,6 +128,13 @@ Scanner_Window::get_all_plugins ()
     }
 
     system("nmxt-plugin-scan LADSPA");
+    
+    if(_cancel_button->value())
+    {
+        close_scanner_window();
+        return false;
+    }
+        
 #endif
 
 #ifdef LV2_SUPPORT
@@ -133,6 +147,12 @@ Scanner_Window::get_all_plugins ()
 
     system("nmxt-plugin-scan LV2");
 #endif
+    
+    if(_cancel_button->value())
+    {
+        close_scanner_window();
+        return false;
+    }
 
 #ifdef CLAP_SUPPORT
     auto clap_sp = clap_discovery::installedCLAPs();   // This to get paths
@@ -146,10 +166,17 @@ Scanner_Window::get_all_plugins ()
             Fl::check();
         }
 
-        std::string s_command = "nmxt-plugin-scan CLAP ";
+        std::string s_command = "nmxt-plugin-scan CLAP '";
         s_command += q.u8string().c_str();
+        s_command += "'";
 
         system(s_command.c_str());
+        
+        if(_cancel_button->value())
+        {
+            close_scanner_window();
+            return false;
+        }
     }
 #endif
 
@@ -165,10 +192,17 @@ Scanner_Window::get_all_plugins ()
             Fl::check();
         }
 
-        std::string s_command = "nmxt-plugin-scan VST2 ";
+        std::string s_command = "nmxt-plugin-scan VST2 '";
         s_command += q.u8string().c_str();
+        s_command += "'";
 
         system(s_command.c_str());
+        
+        if(_cancel_button->value())
+        {
+            close_scanner_window();
+            return false;
+        }
     }
 #endif
 
@@ -184,14 +218,22 @@ Scanner_Window::get_all_plugins ()
             Fl::check();
         }
 
-        std::string s_command = "nmxt-plugin-scan VST3 ";
+        std::string s_command = "nmxt-plugin-scan VST3 '";
         s_command += q.u8string().c_str();
+        s_command += "'";
 
         system(s_command.c_str());
+
+        if(_cancel_button->value())
+        {
+            close_scanner_window();
+            return false;
+        }
     }
 #endif
 
     close_scanner_window();
+    return true;
 }
 
 bool

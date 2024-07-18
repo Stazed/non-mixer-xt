@@ -27,6 +27,7 @@
 
 #include <list>
 #include <FL/Fl_Box.H>
+#include <FL/Fl_Button.H>
 
 #include "Plugin_Info.H"
 
@@ -36,12 +37,13 @@ public:
     Scanner_Window();
     virtual ~Scanner_Window();
 
-    void get_all_plugins ();
+    bool get_all_plugins ();
     void close_scanner_window();
     bool load_plugin_cache ( void );
 private:
 
     Fl_Box *_box;
+    Fl_Button *_cancel_button;
     void show_scanner_window();
 
 };
