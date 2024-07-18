@@ -49,10 +49,19 @@ std::list<Plugin_Info> g_plugin_cache;
 
 static Fl_Window * g_scanner_window = 0;
 
+static void window_cb ( Fl_Widget *, void * ) 
+{
+    // don't allow user to close the window with X box because scan will
+    // continue and we lose the modal. Make them use the cancel button.
+    return;
+}
+
 static void scanner_timeout(void*)
 {
     g_scanner_window->redraw();
     g_scanner_window->show();
+
+    Fl::repeat_timeout( 0.03f, &scanner_timeout );
 }
 
 extern char *user_config_dir;
@@ -87,6 +96,7 @@ Scanner_Window::Scanner_Window() :
     _cancel_button->color(FL_RED);
     _cancel_button->show();
 
+    g_scanner_window->callback(window_cb);
     g_scanner_window->end();
     g_scanner_window->set_modal();
 }
@@ -99,7 +109,7 @@ Scanner_Window::~Scanner_Window()
 void 
 Scanner_Window::close_scanner_window()
 {
-    Fl::remove_timeout(scanner_timeout);
+    Fl::remove_timeout(&scanner_timeout);
     g_scanner_window->hide();
     delete g_scanner_window;
     g_scanner_window = 0;
@@ -119,7 +129,8 @@ Scanner_Window::get_all_plugins ()
 
     free( path );
 
-    Fl::add_timeout(0.03, scanner_timeout);
+    Fl::add_timeout(0.03f, &scanner_timeout);
+
 #ifdef LADSPA_SUPPORT
     if(_box)
     {
