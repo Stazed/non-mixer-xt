@@ -109,7 +109,7 @@ Scanner_Window::get_all_plugins ()
 {
     // Remove any previous temp cache since we append to it
     char *path;
-    asprintf( &path, "%s/%s", user_config_dir, "plugin_cache" );
+    asprintf( &path, "%s/%s", user_config_dir, "plugin_cache_temp" );
 
     std::string remove_temp = "exec rm -r '";
     remove_temp += path;
@@ -233,6 +233,20 @@ Scanner_Window::get_all_plugins ()
 #endif
 
     close_scanner_window();
+
+    // Rename temp cache to real cache if we did not cancel
+    char *path_temp;
+    asprintf( &path_temp, "%s/%s", user_config_dir, "plugin_cache_temp" );
+    
+    char *path_real;
+    asprintf( &path_real, "%s/%s", user_config_dir, "plugin_cache" );
+    
+    if(rename( path_temp, path_real ))
+        WARNING("Rename of temporary cache file failed");
+
+    free(path_temp);
+    free(path_real);
+
     return true;
 }
 
