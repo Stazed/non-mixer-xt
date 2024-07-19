@@ -131,41 +131,6 @@ Scanner_Window::get_all_plugins ()
 
     Fl::add_timeout(0.03f, &scanner_timeout);
 
-#ifdef LADSPA_SUPPORT
-    if(_box)
-    {
-        _box->copy_label("Scanning LADSPA Plugins");
-        _box->redraw();
-        Fl::check();
-    }
-
-    system("nmxt-plugin-scan LADSPA");
-    
-    if(_cancel_button->value())
-    {
-        close_scanner_window();
-        return false;
-    }
-        
-#endif
-
-#ifdef LV2_SUPPORT
-    if(_box)
-    {
-        _box->copy_label("Scanning LV2 Plugins");
-        _box->redraw();
-        Fl::check();
-    }
-
-    system("nmxt-plugin-scan LV2");
-#endif
-    
-    if(_cancel_button->value())
-    {
-        close_scanner_window();
-        return false;
-    }
-
 #ifdef CLAP_SUPPORT
     auto clap_sp = clap_discovery::installedCLAPs();   // This to get paths
 
@@ -189,6 +154,40 @@ Scanner_Window::get_all_plugins ()
             close_scanner_window();
             return false;
         }
+    }
+#endif
+
+#ifdef LADSPA_SUPPORT
+    if(_box)
+    {
+        _box->copy_label("Scanning LADSPA Plugins");
+        _box->redraw();
+        Fl::check();
+    }
+
+    system("nmxt-plugin-scan LADSPA");
+    
+    if(_cancel_button->value())
+    {
+        close_scanner_window();
+        return false;
+    }
+#endif
+
+#ifdef LV2_SUPPORT
+    if(_box)
+    {
+        _box->copy_label("Scanning LV2 Plugins");
+        _box->redraw();
+        Fl::check();
+    }
+
+    system("nmxt-plugin-scan LV2");
+
+    if(_cancel_button->value())
+    {
+        close_scanner_window();
+        return false;
     }
 #endif
 
