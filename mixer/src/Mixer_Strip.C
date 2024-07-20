@@ -630,7 +630,7 @@ Mixer_Strip::init ( )
                 o->type( Fl_Pack::HORIZONTAL );
 		o->spacing(2);
                 { Fl_Flip_Button* o = width_button = new Fl_Flip_Button(61, 183, 45, 22, "[]/[-]");
-                    o->type(1);
+                    o->type(FL_TOGGLE_BUTTON);
                     o->tooltip( "Switch between wide and narrow views" );
                     o->labelfont( FL_COURIER_BOLD );
                     o->labelsize(10);
@@ -640,7 +640,7 @@ Mixer_Strip::init ( )
 
                 { Fl_Button* o = close_button = new Fl_Button(7, 143, 35, 25, "X");
                     o->tooltip( "Remove strip" );
-                    o->type(0);
+                    o->type(FL_NORMAL_BUTTON);
                     o->labelfont( FL_COURIER_BOLD );
                     o->selection_color( FL_RED );
                     o->labelsize(10);
@@ -664,7 +664,7 @@ Mixer_Strip::init ( )
 		o->spacing(2);
                 { Fl_Flip_Button* o = tab_button = new Fl_Flip_Button(61, 183, 45, 22, "Fadr/Signl");
                     o->tooltip( "Switch between fader and signal views" );
-                    o->type(1);
+                    o->type(FL_TOGGLE_BUTTON);
                     o->labelsize( 10 );
                     o->callback( ((Fl_Callback*)cb_handle), this );
                     o->when(FL_WHEN_RELEASE);

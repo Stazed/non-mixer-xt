@@ -125,7 +125,7 @@ Chain::Chain ( ) : Fl_Group( 0, 0, 100, 100, "")
     align( FL_ALIGN_TOP );
 
     { Fl_Flip_Button* o  = tab_button = new Fl_Flip_Button( X, Y, W, 16, "chain/controls");
-        o->type(1);
+        o->type(FL_TOGGLE_BUTTON);
         o->labelsize( 12 );
         o->callback( cb_handle, this );
     }
