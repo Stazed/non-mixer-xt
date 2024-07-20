@@ -29,8 +29,9 @@
 
 #include <filesystem>
 #include <vector>
+#include <list>
 
-#include "../Plugin_Scan.H"
+#include "../Plugin_Info.H"
 
 // The controller stuff seems to cause segfaults with some plugins
 //#define VST3_CONTROLLER 1

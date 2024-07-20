@@ -31,7 +31,6 @@
 
 #include "../Chain.H"
 #include "LADSPA_Plugin.H"
-#include "../Plugin_Scan.H"
 
 #define HAVE_LIBLRDF 1
 #include "LADSPAInfo.h"

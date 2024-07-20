@@ -20,7 +20,7 @@
 #pragma once
 
 #include <FL/Fl_Double_Window.H>
-#include "Plugin_Scan.H"
+#include "Plugin_Info.H"
 #include <vector>
 
 extern const int MAX_PORTS;

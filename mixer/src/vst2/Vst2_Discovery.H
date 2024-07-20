@@ -31,10 +31,11 @@
 #include <string>
 #include <vector>
 #include <filesystem>
+#include <list>
 
 #include "vestige/vestige.h"
 #include "CarlaLibUtils.hpp"
-#include "../Plugin_Scan.H"
+#include "../Plugin_Info.H"
 
 namespace vst2_discovery
 {
