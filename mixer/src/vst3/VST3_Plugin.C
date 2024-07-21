@@ -1006,19 +1006,22 @@ VST3_Plugin::closeEditor (void)
     if (_pEditorFrame != nullptr)
         _pEditorFrame->hide();
 
-    IPlugView *plugView = _iPlugView;
-    if (plugView && plugView->removed() != kResultOk)
+    if ( _iPlugView )
     {
-        DMESSAGE(" *** Failed to remove/detach window.");
+        IPlugView *plugView = _iPlugView;
+        if (plugView && plugView->removed() != kResultOk)
+        {
+            DMESSAGE(" *** Failed to remove/detach window.");
+        }
+
+        _iPlugView = nullptr;
     }
 
     if (_pEditorFrame)
     {
-        delete _pEditorFrame;
+       // delete _pEditorFrame; // causes X errors, looks like the plugin should delete?
         _pEditorFrame = nullptr;
     }
-
-    _iPlugView = nullptr;
 
     _pRunloop->stop();
 }
