@@ -70,7 +70,7 @@ static FILE *open_plugin_cache( const char *mode )
 {
     char *path;
 
-    asprintf( &path, "%s/%s", user_config_dir, "plugin_cache" );
+    asprintf( &path, "%s/%s", user_config_dir, PLUGIN_CACHE );
 
     FILE *fp = fopen( path, mode );
         
@@ -239,10 +239,10 @@ Scanner_Window::get_all_plugins ()
 
     // Rename temp cache to real cache if we did not cancel
     char *path_temp;
-    asprintf( &path_temp, "%s/%s", user_config_dir, "plugin_cache_temp" );
+    asprintf( &path_temp, "%s/%s", user_config_dir, PLUGIN_CACHE_TEMP );
     
     char *path_real;
-    asprintf( &path_real, "%s/%s", user_config_dir, "plugin_cache" );
+    asprintf( &path_real, "%s/%s", user_config_dir, PLUGIN_CACHE );
     
     if(rename( path_temp, path_real ))
         WARNING("Rename of temporary cache file failed");
@@ -310,7 +310,7 @@ void
 Scanner_Window::remove_temporary_cache()
 {
     char *path;
-    asprintf( &path, "%s/%s", user_config_dir, "plugin_cache_temp" );
+    asprintf( &path, "%s/%s", user_config_dir, PLUGIN_CACHE_TEMP );
 
     if( remove( path ) )
     {

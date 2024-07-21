@@ -62,7 +62,7 @@ static FILE *open_plugin_cache( const char *mode )
 {
     char *path;
 
-    asprintf( &path, "%s/%s", user_config_dir, "plugin_cache_temp" );
+    asprintf( &path, "%s/%s", user_config_dir, PLUGIN_CACHE_TEMP );
 
     FILE *fp = fopen( path, mode );
         

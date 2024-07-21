@@ -27,6 +27,9 @@
 
 #include <string>
 
+const char PLUGIN_CACHE[] = "plugin_cache";
+const char PLUGIN_CACHE_TEMP[] = "plugin_cache_temp";
+
 class Plugin_Info
 {
 public:
