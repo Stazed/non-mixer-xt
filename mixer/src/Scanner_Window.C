@@ -118,16 +118,8 @@ Scanner_Window::close_scanner_window()
 bool
 Scanner_Window::get_all_plugins ()
 {
-    // Remove any previous temp cache since we append to it
-    char *path;
-    asprintf( &path, "%s/%s", user_config_dir, "plugin_cache_temp" );
-
-    std::string remove_temp = "exec rm -r '";
-    remove_temp += path;
-    remove_temp += "'";
-    system(remove_temp.c_str());
-
-    free( path );
+    // if present remove any previous temp cache since we append to it
+    remove_temporary_cache();
 
     Fl::add_timeout(0.03f, &scanner_timeout);
 
@@ -151,7 +143,7 @@ Scanner_Window::get_all_plugins ()
         
         if(_cancel_button->value())
         {
-            close_scanner_window();
+            cancel_scanning();
             return false;
         }
     }
@@ -169,7 +161,7 @@ Scanner_Window::get_all_plugins ()
     
     if(_cancel_button->value())
     {
-        close_scanner_window();
+        cancel_scanning();
         return false;
     }
 #endif
@@ -186,7 +178,7 @@ Scanner_Window::get_all_plugins ()
 
     if(_cancel_button->value())
     {
-        close_scanner_window();
+        cancel_scanning();
         return false;
     }
 #endif
@@ -211,7 +203,7 @@ Scanner_Window::get_all_plugins ()
         
         if(_cancel_button->value())
         {
-            close_scanner_window();
+            cancel_scanning();
             return false;
         }
     }
@@ -237,7 +229,7 @@ Scanner_Window::get_all_plugins ()
 
         if(_cancel_button->value())
         {
-            close_scanner_window();
+            cancel_scanning();
             return false;
         }
     }
@@ -312,4 +304,26 @@ Scanner_Window::load_plugin_cache ( void )
     g_plugin_cache.sort();
 
     return true;
+}
+
+void
+Scanner_Window::remove_temporary_cache()
+{
+    char *path;
+    asprintf( &path, "%s/%s", user_config_dir, "plugin_cache_temp" );
+
+    if( remove( path ) )
+    {
+        // most of the time the temp file will be renamed, so fail is expected
+        // WARNING("Could not remove plugin_cache_temp file, does not exist");
+    }
+
+    free( path );
+}
+
+void
+Scanner_Window::cancel_scanning()
+{
+    remove_temporary_cache();
+    close_scanner_window();
 }
