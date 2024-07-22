@@ -35,6 +35,7 @@
 #include <sys/stat.h>
 #include <dirent.h>
 #include <dlfcn.h>
+#include <filesystem>
 
 #include <ladspa.h>
 
@@ -77,12 +78,44 @@ LADSPAInfo::RescanPlugins(void)
 		if (ladspa_path) {
 			ScanPathList(ladspa_path, &LADSPAInfo::ExaminePluginLibrary);
 
-		} else {
+		} else
+                {
+                    cerr << "WARNING: LADSPA_PATH environment variable not set" << endl;
+                    cerr << "         Assuming /usr/lib/ladspa:/usr/local/lib/ladspa" << endl;
+                    cerr << "         /usr/lib64/ladspa:/usr/local/lib64/ladspa" << endl;
 
-			cerr << "WARNING: LADSPA_PATH environment variable not set" << endl;
-			cerr << "         Assuming /usr/lib/ladspa:/usr/local/lib/ladspa" << endl;
+                    // usual defaults
+                    std::string s_path = "/usr/lib/ladspa:/usr/local/lib/ladspa";
 
-			ScanPathList("/usr/lib/ladspa:/usr/local/lib/ladspa", &LADSPAInfo::ExaminePluginLibrary);
+                    // some distros make /usr/lib64 a symlink to /usr/lib so don't include it
+                    // or we get duplicates.
+                    if(std::filesystem::is_symlink("/usr/lib64"))
+                    {
+                        if(!strcmp(std::filesystem::read_symlink("/usr/lib64").c_str(), "/usr/lib"))
+                        {
+                            s_path += ":/usr/lib64/ladspa"; // symlink but NOT to /usr/lib so include it
+                        }
+                    }
+                    else
+                    {
+                       s_path += ":/usr/lib64/ladspa";      // not a symlink
+                    }
+
+                    // some distros make /usr/local/lib64 a symlink to /usr/local/lib so don't include it
+                    // or we get duplicates.
+                    if(std::filesystem::is_symlink("/us/local/lib64"))
+                    {
+                        if(!strcmp(std::filesystem::read_symlink("/usr/local/lib64").c_str(), "/usr/local/lib"))
+                        {
+                            s_path += ":/usr/local/lib64/ladspa";   // symlink but NOT to /usr/local/lib so include
+                        }
+                    }
+                    else
+                    {
+                        s_path += ":/usr/local/lib64/ladspa";       // not a symlink
+                    }
+
+                    ScanPathList(s_path.c_str(), &LADSPAInfo::ExaminePluginLibrary);
 		}
 	}
 

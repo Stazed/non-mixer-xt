@@ -122,10 +122,8 @@ Plugin_Scan::scan_LADSPA_plugins( std::list<Plugin_Info> & pr )
 {
     if ( !ladspainfo )
     {
-        ladspainfo = new LADSPAInfo();
+        ladspainfo = new LADSPAInfo();  // This will call RescanPlugins();
     }
-    
-    ladspainfo->RescanPlugins();
 
     std::vector<LADSPAInfo::PluginInfo> plugins = ladspainfo->GetPluginInfo();
 
