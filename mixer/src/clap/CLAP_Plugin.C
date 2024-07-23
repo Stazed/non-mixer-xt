@@ -468,9 +468,9 @@ CLAP_Plugin::process_reset()
     _process.frames_count = buffer_size();
     _process.steady_time = 0;
 
-    _latency = get_module_latency();
-
     activate();
+
+    _latency = get_module_latency();
 
     return true;
 }
@@ -2382,7 +2382,7 @@ CLAP_Plugin::host_log (
             WARNING("CLAP_log: Fatal: %s", msg);
             break;
     case CLAP_LOG_HOST_MISBEHAVING:
-            WARNING("CALP_log: Host misbehaving: %s", msg);
+            WARNING("CLAP_log: Host misbehaving: %s", msg);
             break;
     default:
             DMESSAGE("CLAP_log: Unknown: %s", msg);
