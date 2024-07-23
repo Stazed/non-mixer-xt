@@ -128,7 +128,7 @@ static int g_iVst2ShellCurrentId = 0;
 
 #define STR_MAX 0xFF
 
-#if 0
+#ifdef VST2_CONTROLLER
 // Specific extended flags that saves us
 // from calling canDo() in audio callbacks.
 enum VST_FlagsEx
@@ -337,7 +337,7 @@ bool vst2_discovery_scan::open_descriptor ( unsigned long iIndex )
         break;
     }
 
-#if 0
+#ifdef VST2_CONTROLLER
     // Specific inquiries...
     m_iFlagsEx = 0;
 
@@ -407,7 +407,7 @@ int vst2_discovery_scan::numInputs() const
 int vst2_discovery_scan::numOutputs() const
 	{ return (m_pEffect ? m_pEffect->numOutputs : 0); }
 
-#if 0
+#ifdef VST2_CONTROLLER
 int vst2_discovery_scan::numPrograms() const
 	{ return (m_pEffect ? m_pEffect->numPrograms : 0); }
 int vst2_discovery_scan::numParams() const

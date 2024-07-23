@@ -37,6 +37,12 @@
 #include "CarlaLibUtils.hpp"
 #include "../Plugin_Info.H"
 
+/**
+ * The controller stuff is only necessary for querying parameters, UI and MIDI which
+ * we currently do not need.
+ */
+//#define VST2_CONTROLLER 1
+
 namespace vst2_discovery
 {
 
@@ -80,16 +86,17 @@ public:
 
     unsigned int uniqueID() const;
 
-    int numPrograms() const;
-    int numParams() const;
     int numInputs() const;
     int numOutputs() const;
 
+#ifdef VST2_CONTROLLER
+    int numPrograms() const;
+    int numParams() const;
     int numMidiInputs() const;
     int numMidiOutputs() const;
-
     bool hasEditor() const;
     bool hasProgramChunks() const;
+#endif
 
     // VST2 host dispatcher.
     int vst2_dispatch(
