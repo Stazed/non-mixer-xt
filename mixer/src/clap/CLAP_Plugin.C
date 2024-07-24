@@ -1276,9 +1276,6 @@ CLAP_Plugin::getParameter ( clap_id id ) const
 
     if (_plugin && _params && _params->get_value)
     {
-#if 1
-        _params->get_value(_plugin, id, &value);
-#else
         std::unordered_map<clap_id, const clap_param_info *>::const_iterator got
             = _param_infos.find (id);
 
@@ -1292,8 +1289,8 @@ CLAP_Plugin::getParameter ( clap_id id ) const
 
         if (param_info)
             _params->get_value(_plugin, param_info->id, &value);
-#endif
     }
+
     return value;
 }
 
