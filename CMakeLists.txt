@@ -3,7 +3,7 @@
 cmake_minimum_required(VERSION 3.5.1)
 project (non-mixer-xt)
 
-set (PACKAGE_VERSION "2.0.2")
+set (PACKAGE_VERSION "2.0.3")
 
 set (CMAKE_SKIP_RULE_DEPENDENCY OFF)
 
@@ -89,6 +89,7 @@ pkg_check_modules(LIBLO liblo>=0.26 REQUIRED)
 if(EnableNTK)
     pkg_check_modules(NTK ntk REQUIRED)
     pkg_check_modules(NTK_IMAGES ntk_images REQUIRED)
+    add_definitions(-D'BUILD_TYPE="Built with NTK Library"')
 else(EnableNTK) #FLTK Build
     SET(FLTK_SKIP_OPENGL TRUE)
     find_library(FLTK_STATIC libfltk.a REQUIRED)
@@ -111,6 +112,7 @@ else(EnableNTK) #FLTK Build
     pkg_check_modules(FONTCONFIG REQUIRED fontconfig>=0.22)
     pkg_check_modules(XFT REQUIRED xft)
     pkg_check_modules(XRENDER REQUIRED xrender)
+    add_definitions(-D'BUILD_TYPE="Built with FLTK static library"')
 endif(EnableNTK)
 
 if (EnableLADSPASupport)
@@ -257,6 +259,8 @@ else (BuildForDebug)
     endif(EnableOptimizations)
 endif (BuildForDebug)
 
+add_definitions(-D'BUILD_TYPE_CMAKE="${CMAKE_BUILD_TYPE}"')
+
 add_subdirectory(mixer)
 add_subdirectory(mixer/icons)
 add_subdirectory(mixer/doc)
@@ -266,7 +270,7 @@ add_subdirectory(mixer/pixmaps)
 ##Summarize The Full Configuration
 message(STATUS)
 message(STATUS "=========================================================")
-message(STATUS "Build Configuration for non-mixer-xt -${PACKAGE_VERSION} for ${CMAKE_SYSTEM_NAME}")
+message(STATUS "Build Configuration for non-mixer-xt-${PACKAGE_VERSION} for ${CMAKE_SYSTEM_NAME}")
 message(STATUS "=========================================================")
 message(STATUS)
 

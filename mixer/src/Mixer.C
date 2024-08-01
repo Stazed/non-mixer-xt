@@ -427,7 +427,12 @@ void Mixer::cb_menu(Fl_Widget* o) {
     {
         About_Dialog ab( PIXMAP_PATH "/non-mixer-xt/icon-256x256.png" );
 
-        ab.logo_box->label( VERSION );
+        std::string s_logo = BUILD_TYPE_CMAKE;
+        s_logo += " ";
+        s_logo += VERSION;
+        s_logo += "\n";
+        s_logo += BUILD_TYPE;
+        ab.logo_box->label( s_logo.c_str() );
 
         ab.title->label( "Non Mixer XT" );
 
@@ -435,7 +440,7 @@ void Mixer::cb_menu(Fl_Widget* o) {
                              "Copyright (C) 2022-2024 Stazed" );
         ab.credits->labelsize(14);
         ab.credits->label(
-            "Legacy Non Mixer by Jonathan Moore Liles.\n"
+            "Legacy Non-Mixer by Jonathan Moore Liles.\n"
             "Filipe Coelho - initial LV2 implementation, X11 embedded,\n"
             "CLAP timer, stream read and write from the Carla project.\n"
             "David Robillard for LV2 atom ports and MIDI\n"
@@ -443,7 +448,7 @@ void Mixer::cb_menu(Fl_Widget* o) {
             "Rui Nuno Capela for LV2 showInterface, external\n"
             "UI, presets CLAP, VST(2)** and VST3* support from the Qtractor project.\n"
             "Jean-Emmanuel Doucet - Extended OSC support.\n"
-            "Non Mixer XT modifications by Stazed.\n\n"
+            "Non-Mixer-XT modifications by Stazed.\n\n"
             "*VST is a trademark of Steinberg Media Technologies GmbH.\n"
             "**VST(2) support using vestige.h by Javier Serrano Polo"
         );
