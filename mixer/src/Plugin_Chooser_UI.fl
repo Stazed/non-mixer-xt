@@ -1,15 +1,15 @@
 # data file for the Fltk User Interface Designer (fluid)
-version 1.0300 
-header_name {.H} 
+version 1.0309
+header_name {.H}
 code_name {.C}
 decl {\#include "../../FL/Fl_Scalepack.H"} {public global
-} 
+}
 
 decl {\#include <FL/Fl_Table_Row.H>} {public global
-} 
+}
 
 widget_class Plugin_Chooser_UI {
-  label {Plugin Selector} open selected
+  label {Plugin Selector} open
   xywh {0 29 1920 1050} type Double hide resizable size_range {740 0 740 0}
 } {
   Fl_Group {} {open
@@ -65,16 +65,16 @@ widget_class Plugin_Chooser_UI {
       xywh {20 -48 34 18}
     }
     MenuItem {} {
+      label CLAP selected
+      xywh {20 -48 34 18}
+    }
+    MenuItem {} {
       label LADSPA
       xywh {0 -68 34 18}
     }
     MenuItem {} {
       label LV2
       xywh {10 -58 34 18}
-    }
-    MenuItem {} {
-      label CLAP
-      xywh {20 -48 34 18}
     }
     MenuItem {} {
       label VST2
@@ -85,4 +85,4 @@ widget_class Plugin_Chooser_UI {
       xywh {40 -28 34 18}
     }
   }
-} 
+}
