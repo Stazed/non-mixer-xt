@@ -42,6 +42,9 @@ Other Dependencies:
 * zix-0       (Optional LV2 support)
 * clap        (Optional CLAP support)
 * pangocairo  (optional needed by some plugins)
+* xfixes      (Need development packages also)
+* xinerama    (Need development packages also)
+* xcursor     (Need development packages also)
 
 Getting submodules (nonlib and FL):
 ---------------
