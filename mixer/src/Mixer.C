@@ -61,6 +61,7 @@
 #include "Controller_Module.H"
 #include "NSM.H"
 #include "Chain.H"
+#include "Scanner_Window.H"
 
 /* const double FEEDBACK_UPDATE_FREQ = 1.0f; */
 const double FEEDBACK_UPDATE_FREQ = 1.0f / 30.0f;
@@ -70,7 +71,7 @@ static bool is_startup = true;
 extern char *user_config_dir;
 extern char *instance_name;
 
-
+extern std::list<Plugin_Info> g_plugin_cache;
 extern NSM_Client *nsm;
 extern std::vector<std::string>remove_custom_data_directories;
 
@@ -423,6 +424,19 @@ void Mixer::cb_menu(Fl_Widget* o) {
     {
         command_toggle_fader_view();
     }
+    else if ( ! strcmp( picked, "&Mixer/&Scan for plugins" ) )
+    {
+        Scanner_Window scanner;
+
+        if(scanner.get_all_plugins())
+        {
+            // Clear the cache vector so it will get re-loaded after the scan
+            // if they did not cancel
+            g_plugin_cache.clear();
+        }
+
+        return;
+    }
     else if ( ! strcmp( picked, "&Help/&About" ) )
     {
         About_Dialog ab( PIXMAP_PATH "/non-mixer-xt/icon-256x256.png" );
@@ -624,6 +638,7 @@ Mixer::Mixer ( int X, int Y, int W, int H, const char *L ) :
             o->add( "&Project/&Quit", FL_CTRL + 'q', 0, 0 );
             o->add( "&Mixer/&Add Strip", 'a', 0, 0 );
             o->add( "&Mixer/Add &N Strips" );
+            o->add( "&Mixer/&Scan for plugins", FL_ALT + 's', 0, 0 );
             o->add( "&Mixer/&Import Strip" );
             o->add( "&Mixer/Paste", FL_CTRL + 'v', 0, 0 );
             o->add( "&Mixer/&Spatialization Console", FL_F + 8, 0, 0, FL_MENU_TOGGLE );
