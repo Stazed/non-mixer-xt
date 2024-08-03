@@ -37,11 +37,7 @@
 #include "CarlaLibUtils.hpp"
 #include "../Plugin_Info.H"
 
-/**
- * The controller stuff is only necessary for querying parameters, UI and MIDI which
- * we currently do not need.
- */
-//#define VST2_CONTROLLER 1
+#define VST2_CONTROLLER 1
 
 namespace vst2_discovery
 {

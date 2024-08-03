@@ -42,6 +42,8 @@ public:
     std::string category;
     int audio_inputs;
     int audio_outputs;
+    int midi_inputs;
+    int midi_outputs;
     bool favorite;
 
     Plugin_Info ( const std::string &s_type ) :  // LADSPA, LV2, CLAP, VST2, VST3
@@ -54,6 +56,8 @@ public:
         category("Unclassified"),
         audio_inputs(0),
         audio_outputs(0),
+        midi_inputs(0),
+        midi_outputs(0),
         favorite(false) {}
 
     bool operator< ( const Plugin_Info &rhs ) {

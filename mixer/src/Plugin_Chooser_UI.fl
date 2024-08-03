@@ -25,7 +25,7 @@ widget_class Plugin_Chooser_UI {
     }
   }
   Fl_Group {} {open
-    xywh {5 29 725 77} box UP_FRAME
+    xywh {5 29 825 77} box UP_FRAME
     code0 {o->resizable(0);}
   } {
     Fl_Input name_input {
@@ -38,11 +38,11 @@ widget_class Plugin_Chooser_UI {
     }
     Fl_Value_Input outputs_input {
       label {Outputs:}
-      xywh {693 70 30 24} labelsize 12
+      xywh {730 70 30 24} labelsize 12
     }
     Fl_Value_Input inputs_input {
       label {Inputs:}
-      xywh {693 39 30 24} labelsize 12
+      xywh {730 39 30 24} labelsize 12
     }
     Fl_Choice category_choice {
       label {Category:} open
@@ -57,15 +57,15 @@ widget_class Plugin_Chooser_UI {
     } {}
   }
   Fl_Choice type_choice {
-    label {Type:} open
-    xywh {530 70 95 24} down_box BORDER_BOX labelsize 12 textsize 12
+    label {Type:} open selected
+    xywh {475 70 95 24} down_box BORDER_BOX labelsize 12 textsize 12
   } {
     MenuItem {} {
       label ALL
       xywh {20 -48 34 18}
     }
     MenuItem {} {
-      label CLAP selected
+      label CLAP
       xywh {20 -48 34 18}
     }
     MenuItem {} {

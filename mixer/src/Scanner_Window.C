@@ -287,12 +287,14 @@ Scanner_Window::load_plugin_cache ( void )
     char *c_category;
     int i_audio_inputs;
     int i_audio_outputs;
+    int i_midi_inputs;
+    int i_midi_outputs;
 
     g_plugin_cache.clear();
 
-    while ( 9 == fscanf( fp, "%m[^|]|%m[^|]|%lu|%m[^|]|%m[^|]|%m[^|]|%m[^|]|%d|%d\n]\n",
+    while ( 11 == fscanf( fp, "%m[^|]|%m[^|]|%lu|%m[^|]|%m[^|]|%m[^|]|%m[^|]|%d|%d|%d|%d\n]\n",
             &c_type, &c_unique_id, &u_id, &c_plug_path, &c_name, &c_author,
-            &c_category, &i_audio_inputs, &i_audio_outputs ) )
+            &c_category, &i_audio_inputs, &i_audio_outputs, &i_midi_inputs, &i_midi_outputs ) )
     {
         Plugin_Info pi(c_type);
         pi.s_unique_id = c_unique_id;
@@ -303,6 +305,8 @@ Scanner_Window::load_plugin_cache ( void )
         pi.category = c_category;
         pi.audio_inputs = i_audio_inputs;
         pi.audio_outputs = i_audio_outputs;
+        pi.midi_inputs = i_midi_inputs;
+        pi.midi_outputs = i_midi_outputs;
         
         g_plugin_cache.push_back(pi);
 

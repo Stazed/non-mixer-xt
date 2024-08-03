@@ -256,6 +256,8 @@ Plugin_Scan::scan_LV2_plugins( std::list<Plugin_Info> & pr )
         // get audio port count and check for supported ports
         pi.audio_inputs = 0;
         pi.audio_outputs = 0;
+        pi.midi_inputs = 0;
+        pi.midi_outputs = 0;
 
         for (uint j=0, count=lilvPlugin.get_num_ports(); j<count; ++j)
         {
@@ -285,7 +287,10 @@ Plugin_Scan::scan_LV2_plugins( std::list<Plugin_Info> & pr )
             {
                 if (lilvPort.supports_event(lv2World.midi_event) || lilvPort.supports_event(lv2World.time_position))
                 {
-                    // supported
+                    if (isInput)
+                        ++(pi.midi_inputs);
+                    else
+                        ++(pi.midi_outputs);
                 }
                 // supported or optional
             }
@@ -435,10 +440,36 @@ Plugin_Scan::scan_CLAP_plugins( std::list<Plugin_Info> & pr, std::string clap_pa
                  }
              }
          }
+         
+         const clap_plugin_note_ports *note_ports
+                    = static_cast<const clap_plugin_note_ports *> (
+                            inst->get_extension(inst, CLAP_EXT_NOTE_PORTS));
+        if (note_ports && note_ports->count && note_ports->get)
+        {
+            clap_note_port_info info;
+            const uint32_t nins = note_ports->count(inst, true);
+            for (uint32_t i = 0; i < nins; ++i)
+            {
+                ::memset(&info, 0, sizeof(info));
+                if (note_ports->get(inst, i, true, &info))
+                {
+                    ++pi.midi_inputs;
+                }
+            }
+            const uint32_t nouts = note_ports->count(inst, false);
+            for (uint32_t i = 0; i < nouts; ++i)
+            {
+                ::memset(&info, 0, sizeof(info));
+                if (note_ports->get(inst, i, false, &info))
+                {
+                    ++pi.midi_outputs;
+                }
+            }
+        }
 
-         inst->destroy(inst);
+        inst->destroy(inst);
 
-         clap_PI_cache.push_back( pi );
+        clap_PI_cache.push_back( pi );
 
      //    DMESSAGE("Name = %s: Path = %s: ID = %d: Audio Ins = %d: Audio Outs = %d",
      //            pi.name.c_str(), pi.plug_path.c_str(), pi.id, pi.audio_inputs, pi.audio_outputs);
@@ -497,9 +528,9 @@ Plugin_Scan::save_plugin_cache ( void )
           i != plugin_cache.end();
           ++i )
     {
-        fprintf( fp, "%s|%s|%lu|%s|%s|%s|%s|%d|%d\n", i->type.c_str(), i->s_unique_id.c_str(), i->id,
+        fprintf( fp, "%s|%s|%lu|%s|%s|%s|%s|%d|%d|%d|%d\n", i->type.c_str(), i->s_unique_id.c_str(), i->id,
                 i->plug_path.c_str(), i->name.c_str(), i->author.c_str(), i->category.c_str(),
-                i->audio_inputs, i->audio_outputs);
+                i->audio_inputs, i->audio_outputs, i->midi_inputs, i->midi_outputs);
     }
     
     fclose( fp );

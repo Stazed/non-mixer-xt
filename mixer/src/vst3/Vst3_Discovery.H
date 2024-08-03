@@ -33,11 +33,7 @@
 
 #include "../Plugin_Info.H"
 
-/**
- * The controller stuff is only necessary for querying parameters, UI and MIDI which
- * we currently do not need.
- */
-//#define VST3_CONTROLLER 1
+#define VST3_CONTROLLER 1
 
 namespace vst3_discovery
 {

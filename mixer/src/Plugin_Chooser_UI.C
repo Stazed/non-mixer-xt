@@ -27,7 +27,7 @@ Plugin_Chooser_UI::Plugin_Chooser_UI(int X, int Y, int W, int H, const char *L)
   } // Fl_Round_Button* favorites_button
   o->end();
 } // Fl_Group* o
-{ Fl_Group* o = new Fl_Group(5, 29, 725, 77);
+{ Fl_Group* o = new Fl_Group(5, 29, 825, 77);
   o->box(FL_UP_FRAME);
   { name_input = new Fl_Input(75, 38, 300, 24, "Name:");
     name_input->labelsize(12);
@@ -37,10 +37,10 @@ Plugin_Chooser_UI::Plugin_Chooser_UI(int X, int Y, int W, int H, const char *L)
     author_input->labelsize(12);
     author_input->textsize(13);
   } // Fl_Input* author_input
-  { outputs_input = new Fl_Value_Input(693, 70, 30, 24, "Outputs:");
+  { outputs_input = new Fl_Value_Input(730, 70, 30, 24, "Outputs:");
     outputs_input->labelsize(12);
   } // Fl_Value_Input* outputs_input
-  { inputs_input = new Fl_Value_Input(693, 39, 30, 24, "Inputs:");
+  { inputs_input = new Fl_Value_Input(730, 39, 30, 24, "Inputs:");
     inputs_input->labelsize(12);
   } // Fl_Value_Input* inputs_input
   { category_choice = new Fl_Choice(75, 70, 405, 24, "Category:");
@@ -59,7 +59,7 @@ Plugin_Chooser_UI::Plugin_Chooser_UI(int X, int Y, int W, int H, const char *L)
   table_group->end();
   Fl_Group::current()->resizable(table_group);
 } // Fl_Group* table_group
-{ type_choice = new Fl_Choice(530, 70, 95, 24, "Type:");
+{ type_choice = new Fl_Choice(475, 70, 95, 24, "Type:");
   type_choice->down_box(FL_BORDER_BOX);
   type_choice->labelsize(12);
   type_choice->textsize(12);

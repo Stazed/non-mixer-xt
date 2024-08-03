@@ -655,8 +655,9 @@ bool vst3_discovery_scan::open_descriptor ( unsigned long iIndex )
     m_iAudioOuts = m_pImpl->numChannels(Vst::kAudio, Vst::kOutput);
 
 #ifdef VST3_CONTROLLER
-    m_iMidiIns   = m_pImpl->numChannels(Vst::kEvent, Vst::kInput);
-    m_iMidiOuts  = m_pImpl->numChannels(Vst::kEvent, Vst::kOutput);
+    
+    m_iMidiIns   = m_pImpl->component()->getBusCount(Vst::kEvent, Vst::kInput);
+    m_iMidiOuts  = m_pImpl->component()->getBusCount(Vst::kEvent, Vst::kOutput);
 
     Vst::IEditController *controller = m_pImpl->controller();
     if (controller)
@@ -666,6 +667,7 @@ bool vst3_discovery_scan::open_descriptor ( unsigned long iIndex )
         m_bEditor = (editor != nullptr);
     }
 
+#if 0   // don't query parameters
     m_iControlIns  = 0;
     m_iControlOuts = 0;
 
@@ -685,7 +687,8 @@ bool vst3_discovery_scan::open_descriptor ( unsigned long iIndex )
             }
         }
     }
-#endif
+#endif  // 0
+#endif  // VST3_CONTROLLER
     return true;
 }
 
@@ -792,6 +795,8 @@ void vst3_discovery_scan_file ( const std::string& sFilename, std::list<Plugin_I
 
         pi.audio_inputs = plugin.audioIns();
         pi.audio_outputs = plugin.audioOuts();
+        pi.midi_inputs = plugin.midiIns();
+        pi.midi_outputs = plugin.midiOuts();
 
         pi.s_unique_id = plugin.uniqueID();
         pi.plug_path = sVst3Object;

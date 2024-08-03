@@ -159,11 +159,6 @@ Plugin_Chooser::search ( const char *name, const char *author, const char *categ
         if ( strcasestr( p->name.c_str(), name ) &&
              strcasestr( p->author.c_str(), author ) )
         {
-#if 0
-            /* MIDI only. Looks like these work now! */
-            if ( p->audio_outputs == 0 )
-                continue;
-#endif
             /* MAX_PORTS is an arbitrary limit, could be more if we really needed it */
             if ( p->audio_outputs > MAX_PORTS)
                 continue;
@@ -255,7 +250,7 @@ public:
 void Plugin_Table::draw_cell(TableContext context, 
 			  int R, int C, int X, int Y, int W, int H)
 {
-    const char *headings[] = { "Fav.", "Name", "Author", "Type", "In", "Out" };
+    const char *headings[] = { "Fav.", "Name", "Author", "Type", "In", "Out", "Midi-In", "Midi-Out" };
  
     static char s[40];
 
@@ -310,6 +305,12 @@ void Plugin_Table::draw_cell(TableContext context,
                     break;
                 case 5:
                     sprintf( s, "%i", _plugin_rows[R]->audio_outputs );
+                    break;
+                case 6:
+                    sprintf( s, "%i", _plugin_rows[R]->midi_inputs );
+                    break;
+                case 7:
+                    sprintf( s, "%i", _plugin_rows[R]->midi_outputs );
                     break;
             }
 
@@ -613,7 +614,7 @@ Plugin_Chooser::Plugin_Chooser ( int X,int Y,int W,int H, const char *L )
             o->col_header(1);
             o->col_resize(1);
             o->row_resize(1);
-            o->cols(6);
+            o->cols(8);
             o->col_resize_min(4);
             o->col_width(0,30);
             o->col_width(1,350 - 7);
@@ -621,6 +622,8 @@ Plugin_Chooser::Plugin_Chooser ( int X,int Y,int W,int H, const char *L )
             o->col_width(3,75);
             o->col_width(4,30);
             o->col_width(5,30);
+            o->col_width(6,52);
+            o->col_width(7,52);
             o->color(FL_BLACK);
             o->box(FL_NO_BOX);
             o->when(FL_WHEN_CHANGED);
@@ -630,7 +633,7 @@ Plugin_Chooser::Plugin_Chooser ( int X,int Y,int W,int H, const char *L )
 
         resizable(o);
     }
-    size_range( 735, 300, 735, 0 );
+    size_range( 840, 300, 840, 0 );
     
     end();
 

@@ -509,6 +509,8 @@ void vst2_discovery_scan_file ( const std::string& sFilename, std::list<Plugin_I
         pi.category = plugin.category();
         pi.audio_inputs = plugin.numInputs();
         pi.audio_outputs = plugin.numOutputs();
+        pi.midi_inputs = plugin.numMidiInputs();
+        pi.midi_outputs = plugin.numMidiOutputs();
 
         pi.id = plugin.uniqueID();
         pi.plug_path = sFilename;
