@@ -454,7 +454,8 @@ public:
                     close_descriptor();
                     return false;
                 }
-#ifdef VST3_CONTROLLER
+
+#if 0   // We don't need to query editor or get controller for scan
                 Vst::IEditController *controller = nullptr;
                 if (m_component->queryInterface(
                                 Vst::IEditController::iid,
@@ -505,7 +506,7 @@ public:
 
     void close_descriptor ()
     {
-#ifdef VST3_CONTROLLER
+#if 0
         if (m_component && m_controller)
         {
             FUnknownPtr<Vst::IConnectionPoint> component_cp(m_component);
@@ -659,6 +660,7 @@ bool vst3_discovery_scan::open_descriptor ( unsigned long iIndex )
     m_iMidiIns   = m_pImpl->component()->getBusCount(Vst::kEvent, Vst::kInput);
     m_iMidiOuts  = m_pImpl->component()->getBusCount(Vst::kEvent, Vst::kOutput);
 
+#if 0   // don't query parameters or editor
     Vst::IEditController *controller = m_pImpl->controller();
     if (controller)
     {
@@ -667,7 +669,6 @@ bool vst3_discovery_scan::open_descriptor ( unsigned long iIndex )
         m_bEditor = (editor != nullptr);
     }
 
-#if 0   // don't query parameters
     m_iControlIns  = 0;
     m_iControlOuts = 0;
 
