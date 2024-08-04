@@ -1247,7 +1247,7 @@ Module::insert_menu_cb ( const Fl_Menu_ *menu )
 
             if(!scanner.load_plugin_cache())
             {
-                fl_alert( "Plugin Cache not found, please run 'Scan for plugins'");
+                fl_alert( "Plugin Cache empty or invalid, please run 'Scan for plugins'");
                 return;
             }
         }

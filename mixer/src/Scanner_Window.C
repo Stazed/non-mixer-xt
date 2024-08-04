@@ -320,6 +320,9 @@ Scanner_Window::load_plugin_cache ( void )
 
     fclose(fp);
     
+    if(g_plugin_cache.empty())
+        return false;
+    
     g_plugin_cache.sort();
 
     return true;
