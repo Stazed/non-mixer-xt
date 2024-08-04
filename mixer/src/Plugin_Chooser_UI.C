@@ -59,7 +59,7 @@ Plugin_Chooser_UI::Plugin_Chooser_UI(int X, int Y, int W, int H, const char *L)
   table_group->end();
   Fl_Group::current()->resizable(table_group);
 } // Fl_Group* table_group
-{ type_choice = new Fl_Choice(475, 70, 95, 24, "Type:");
+{ type_choice = new Fl_Choice(515, 70, 95, 24, "Type:");
   type_choice->down_box(FL_BORDER_BOX);
   type_choice->labelsize(12);
   type_choice->textsize(12);

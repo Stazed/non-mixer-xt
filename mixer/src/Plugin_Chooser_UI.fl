@@ -58,7 +58,7 @@ widget_class Plugin_Chooser_UI {
   }
   Fl_Choice type_choice {
     label {Type:} open selected
-    xywh {475 70 95 24} down_box BORDER_BOX labelsize 12 textsize 12
+    xywh {515 70 95 24} down_box BORDER_BOX labelsize 12 textsize 12
   } {
     MenuItem {} {
       label ALL

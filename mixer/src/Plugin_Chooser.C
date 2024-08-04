@@ -250,7 +250,7 @@ public:
 void Plugin_Table::draw_cell(TableContext context, 
 			  int R, int C, int X, int Y, int W, int H)
 {
-    const char *headings[] = { "Fav.", "Name", "Author", "Type", "In", "Out", "Midi-In", "Midi-Out" };
+    const char *headings[] = { "Fav.", "Name", "Author", "Type", "Audio", "Midi" };
  
     static char s[40];
 
@@ -301,16 +301,10 @@ void Plugin_Table::draw_cell(TableContext context,
                     s2 = _plugin_rows[R]->type.c_str();
                     break;
                 case 4:
-                    sprintf( s, "%i", _plugin_rows[R]->audio_inputs );
+                    sprintf( s, "%i : %i", _plugin_rows[R]->audio_inputs, _plugin_rows[R]->audio_outputs );
                     break;
                 case 5:
-                    sprintf( s, "%i", _plugin_rows[R]->audio_outputs );
-                    break;
-                case 6:
-                    sprintf( s, "%i", _plugin_rows[R]->midi_inputs );
-                    break;
-                case 7:
-                    sprintf( s, "%i", _plugin_rows[R]->midi_outputs );
+                    sprintf( s, "%i : %i", _plugin_rows[R]->midi_inputs, _plugin_rows[R]->midi_outputs );
                     break;
             }
 
@@ -614,16 +608,14 @@ Plugin_Chooser::Plugin_Chooser ( int X,int Y,int W,int H, const char *L )
             o->col_header(1);
             o->col_resize(1);
             o->row_resize(1);
-            o->cols(8);
+            o->cols(6);
             o->col_resize_min(4);
             o->col_width(0,30);
             o->col_width(1,350 - 7);
             o->col_width(2,200);
             o->col_width(3,75);
-            o->col_width(4,30);
-            o->col_width(5,30);
-            o->col_width(6,52);
-            o->col_width(7,52);
+            o->col_width(4,50);
+            o->col_width(5,50);
             o->color(FL_BLACK);
             o->box(FL_NO_BOX);
             o->when(FL_WHEN_CHANGED);
@@ -633,7 +625,7 @@ Plugin_Chooser::Plugin_Chooser ( int X,int Y,int W,int H, const char *L )
 
         resizable(o);
     }
-    size_range( 840, 300, 840, 0 );
+    size_range( 775, 300, 775, 0 );
     
     end();
 
