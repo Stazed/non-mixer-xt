@@ -89,7 +89,7 @@
 
 const double NSM_CHECK_INTERVAL = 0.25f;
 
-const char COPYRIGHT[]  = "Copyright (c) 2008-2021 Jonathan Moore Liles";
+const char COPYRIGHT[] = "Copyright (c) 2008-2021 Jonathan Moore Liles";
 const char COPYRIGHT2[] = "Copyright (c) 2022-2024 Stazed";
 
 char *user_config_dir;
@@ -103,163 +103,162 @@ std::string export_import_strip = "";
 std::vector<std::string>remove_custom_data_directories;
 
 /* Maximum number of audio, aux, control ports*/
-const int MAX_PORTS = 100;   // extern
+const int MAX_PORTS = 100; // extern
 
 #include <errno.h>
 
 static int
-ensure_dirs ( void )
+ensure_dirs( void )
 {
-    asprintf( &user_config_dir, "%s/.config/%s", getenv( "HOME" ), USER_CONFIG_DIR );
-    asprintf( &clipboard_dir, "%s/%s",user_config_dir, "clipboard" );
+    asprintf ( &user_config_dir, "%s/.config/%s", getenv ( "HOME" ), USER_CONFIG_DIR );
+    asprintf ( &clipboard_dir, "%s/%s", user_config_dir, "clipboard" );
 
-    int r = mkdir( user_config_dir, 0777 );
-    r = mkdir( clipboard_dir, 0777 );
+    int r = mkdir ( user_config_dir, 0777 );
+    r = mkdir ( clipboard_dir, 0777 );
 
     return r == 0 || errno == EEXIST;
 }
 
 #include <signal.h>
 
-static void cb_main ( Fl_Double_Window *, void *)
+static void
+cb_main( Fl_Double_Window *, void * )
 {
-    if ( Fl::event() == FL_SHORTCUT && Fl::event_key() == FL_Escape )
-	return;
+    if ( Fl::event ( ) == FL_SHORTCUT && Fl::event_key ( ) == FL_Escape )
+        return;
 
-    mixer->command_quit();
+    mixer->command_quit ( );
 }
 
 void
-check_nsm ( void * v )
+check_nsm( void * v )
 {
-    nsm->check();
-    Fl::repeat_timeout( NSM_CHECK_INTERVAL, check_nsm, v );
+    nsm->check ( );
+    Fl::repeat_timeout ( NSM_CHECK_INTERVAL, check_nsm, v );
 }
 
 static volatile int got_sigterm = 0;
 
 void
-sigterm_handler ( int )
+sigterm_handler( int )
 {
-    stop_process = true;    // if NSM, stop jack process calls
+    stop_process = true; // if NSM, stop jack process calls
     got_sigterm = 1;
 }
 
 void
-check_sigterm ( void * )
+check_sigterm( void * )
 {
     if ( got_sigterm )
     {
-        MESSAGE( "Got SIGTERM, quitting..." );
-        mixer->quit();
+        MESSAGE ( "Got SIGTERM, quitting..." );
+        mixer->quit ( );
     }
-    Fl::repeat_timeout( 0.1f, check_sigterm );
+    Fl::repeat_timeout ( 0.1f, check_sigterm );
 }
 
-
 int
-main ( int argc, char **argv )
+main( int argc, char **argv )
 {
 #ifdef LV2_SUPPORT
-    suil_init(&argc, &argv, SUIL_ARG_NONE);
+    suil_init ( &argc, &argv, SUIL_ARG_NONE );
 #endif
     bool no_ui = false;
 
     fl_display = 0;
 
-    printf( "%s %s\n", APP_TITLE, VERSION );
-    printf( "%s\n%s\n", COPYRIGHT, COPYRIGHT2 );
+    printf ( "%s %s\n", APP_TITLE, VERSION );
+    printf ( "%s\n%s\n", COPYRIGHT, COPYRIGHT2 );
 
-    Thread::init();
+    Thread::init ( );
 
-    Thread thread( "UI" );
-    thread.set();
+    Thread thread ( "UI" );
+    thread.set ( );
 
-    ensure_dirs();
+    ensure_dirs ( );
 
-    signal( SIGTERM, sigterm_handler );
-    signal( SIGHUP, sigterm_handler );
-    signal( SIGINT, sigterm_handler );
+    signal ( SIGTERM, sigterm_handler );
+    signal ( SIGHUP, sigterm_handler );
+    signal ( SIGINT, sigterm_handler );
 
-    Fl_Tooltip::color( FL_BLACK );
-    Fl_Tooltip::textcolor( FL_YELLOW );
-    Fl_Tooltip::size( 14 );
-    Fl_Tooltip::hoverdelay( 0.1f );
+    Fl_Tooltip::color ( FL_BLACK );
+    Fl_Tooltip::textcolor ( FL_YELLOW );
+    Fl_Tooltip::size ( 14 );
+    Fl_Tooltip::hoverdelay ( 0.1f );
 
 
-    LOG_REGISTER_CREATE( Mixer_Strip );
-    LOG_REGISTER_CREATE( Chain );
-    LOG_REGISTER_CREATE( Plugin_Module );
+    LOG_REGISTER_CREATE ( Mixer_Strip );
+    LOG_REGISTER_CREATE ( Chain );
+    LOG_REGISTER_CREATE ( Plugin_Module );
 #ifdef LV2_SUPPORT
-    LOG_REGISTER_CREATE( LV2_Plugin );
+    LOG_REGISTER_CREATE ( LV2_Plugin );
 #endif
 #ifdef CLAP_SUPPORT
-    LOG_REGISTER_CREATE( CLAP_Plugin );
+    LOG_REGISTER_CREATE ( CLAP_Plugin );
 #endif
 #ifdef LADSPA_SUPPORT
-    LOG_REGISTER_CREATE( LADSPA_Plugin );
+    LOG_REGISTER_CREATE ( LADSPA_Plugin );
 #endif
 #ifdef VST2_SUPPORT
-    LOG_REGISTER_CREATE( VST2_Plugin );
+    LOG_REGISTER_CREATE ( VST2_Plugin );
 #endif
 #ifdef VST3_SUPPORT
-    LOG_REGISTER_CREATE( VST3_Plugin );
+    LOG_REGISTER_CREATE ( VST3_Plugin );
 #endif
-    LOG_REGISTER_CREATE( Gain_Module );
-    LOG_REGISTER_CREATE( Spatializer_Module );
-    LOG_REGISTER_CREATE( Meter_Module );
-    LOG_REGISTER_CREATE( JACK_Module );
-    LOG_REGISTER_CREATE( Mono_Pan_Module );
-    LOG_REGISTER_CREATE( Meter_Indicator_Module );
-    LOG_REGISTER_CREATE( Controller_Module );
-    LOG_REGISTER_CREATE( AUX_Module );
-    LOG_REGISTER_CREATE( Spatialization_Console );
-    LOG_REGISTER_CREATE( Group );
+    LOG_REGISTER_CREATE ( Gain_Module );
+    LOG_REGISTER_CREATE ( Spatializer_Module );
+    LOG_REGISTER_CREATE ( Meter_Module );
+    LOG_REGISTER_CREATE ( JACK_Module );
+    LOG_REGISTER_CREATE ( Mono_Pan_Module );
+    LOG_REGISTER_CREATE ( Meter_Indicator_Module );
+    LOG_REGISTER_CREATE ( Controller_Module );
+    LOG_REGISTER_CREATE ( AUX_Module );
+    LOG_REGISTER_CREATE ( Spatialization_Console );
+    LOG_REGISTER_CREATE ( Group );
 
-    signal( SIGPIPE, SIG_IGN );
+    signal ( SIGPIPE, SIG_IGN );
 
 
     const char *osc_port = NULL;
 
     nsm = new NSM_Client;
 
-    instance_name = strdup( APP_NAME );
+    instance_name = strdup ( APP_NAME );
     bool instance_override = false;
 
-    static struct option long_options[] = 
-        {
-            { "help", no_argument, 0, '?' },
-            { "instance", required_argument, 0, 'i' },
-            { "osc-port", required_argument, 0, 'p' },
-            { "no-ui", no_argument, 0, 'u' },
-            { 0, 0, 0, 0 }
-        };
+    static struct option long_options[] ={
+        { "help", no_argument, 0, '?' },
+        { "instance", required_argument, 0, 'i' },
+        { "osc-port", required_argument, 0, 'p' },
+        { "no-ui", no_argument, 0, 'u' },
+        { 0, 0, 0, 0 }
+    };
 
     int option_index = 0;
     int c = 0;
-    
 
-    while ( ( c = getopt_long_only( argc, argv, "", long_options, &option_index  ) ) != -1 )
+
+    while ( ( c = getopt_long_only ( argc, argv, "", long_options, &option_index ) ) != -1 )
     {
         switch ( c )
         {
             case 'p':
-                DMESSAGE( "Using OSC port %s", optarg );
+                DMESSAGE ( "Using OSC port %s", optarg );
                 osc_port = optarg;
                 break;
             case 'i':
-                DMESSAGE( "Using OSC port %s", optarg );
-                free( instance_name );
-                instance_name = strdup( optarg );
+                DMESSAGE ( "Using OSC port %s", optarg );
+                free ( instance_name );
+                instance_name = strdup ( optarg );
                 instance_override = true;
                 break;
             case 'u':
-                DMESSAGE( "Disabling user interface" );
+                DMESSAGE ( "Disabling user interface" );
                 no_ui = true;
                 break;
             case '?':
-                printf( "\nUsage: %s [--instance instance_name] [--osc-port portnum] [path_to_project]\n\n", argv[0] );
-                exit(0);
+                printf ( "\nUsage: %s [--instance instance_name] [--osc-port portnum] [path_to_project]\n\n", argv[0] );
+                exit ( 0 );
                 break;
         }
     }
@@ -267,86 +266,86 @@ main ( int argc, char **argv )
     {
 #if 0
         /* There is no need for this - it's the same as 'non-mixer-xt -u' from command line */
-        char *name = strdup( argv[0] );
-        char *n = basename( name );
+        char *name = strdup ( argv[0] );
+        char *n = basename ( name );
 
-        if (  ! strcmp( n, "non-mixer-noui" ) )
-	{
-	    DMESSAGE("Not running UI: invoked as non-mixer-noui");
+        if ( !strcmp ( n, "non-mixer-noui" ) )
+        {
+            DMESSAGE ( "Not running UI: invoked as non-mixer-noui" );
             no_ui = true;
-	}
+        }
 
-        free( name );
+        free ( name );
 #endif
-	if ( NULL == getenv("DISPLAY") )
-	{
-	    DMESSAGE("Not running UI: $DISPLAY environment variable unset");
-	    no_ui = true;
-	}
+        if ( NULL == getenv ( "DISPLAY" ) )
+        {
+            DMESSAGE ( "Not running UI: $DISPLAY environment variable unset" );
+            no_ui = true;
+        }
     }
 
-    if ( ! no_ui )
+    if ( !no_ui )
     {
-        Fl::visual( FL_DOUBLE | FL_RGB );
-        
-        Fl::visible_focus( 0 );
+        Fl::visual ( FL_DOUBLE | FL_RGB );
 
-        fl_register_images();
+        Fl::visible_focus ( 0 );
+
+        fl_register_images ( );
     }
 
     // "The main thread must call lock() to initialize the threading support in FLTK."
-    Fl::lock();
+    Fl::lock ( );
 
-    const char *nsm_url = getenv( "NSM_URL" );
+    const char *nsm_url = getenv ( "NSM_URL" );
 
     Fl_Double_Window *main_window;
 
-    
-    {
-        Fl_Double_Window *o = main_window = new Fl_Double_Window( 800, 600, "Non Mixer XT" );
-        {
-            main_window->xclass( APP_NAME );
 
-            { 
-                Fl_Widget *m = mixer = new Mixer( 0, 0, main_window->w(), main_window->h(), NULL );
-                Fl_Group::current()->resizable(m);
+    {
+        Fl_Double_Window *o = main_window = new Fl_Double_Window ( 800, 600, "Non Mixer XT" );
+        {
+            main_window->xclass ( APP_NAME );
+
+            {
+                Fl_Widget *m = mixer = new Mixer ( 0, 0, main_window->w ( ), main_window->h ( ), NULL );
+                Fl_Group::current ( )->resizable ( m );
             }
         }
-        o->end();
+        o->end ( );
 
-        o->size_range( main_window->w(), mixer->min_h(), 0, 0 );
+        o->size_range ( main_window->w ( ), mixer->min_h ( ), 0, 0 );
 
-        o->callback( (Fl_Callback*)cb_main, main_window );
+        o->callback ( (Fl_Callback*) cb_main, main_window );
 
-        if ( ! no_ui && !nsm_url)
+        if ( !no_ui && !nsm_url )
         {
-            o->show();
+            o->show ( );
         }
-                      
+
     }
 
     // This unlock will freeze child locks in FLTK at least... It seemed to be needed for NTK???
     // But docs say this is only for unlocking child locks not the main lock used above for initializing.
     // Fl::unlock();
 
-    mixer->init_osc( osc_port );
-        
+    mixer->init_osc ( osc_port );
+
     if ( nsm_url )
     {
-        if ( ! nsm->init( nsm_url ) )
+        if ( !nsm->init ( nsm_url ) )
         {
             if ( instance_override )
-                WARNING( "--instance option is not available when running under session management, ignoring." );
-                
-            if ( optind < argc )
-                WARNING( "Loading files from the command-line is incompatible with session management, ignoring." );
+                WARNING ( "--instance option is not available when running under session management, ignoring." );
 
-            nsm->announce( APP_NAME, ":optional-gui:switch:dirty:", argv[0] );
+            if ( optind < argc )
+                WARNING ( "Loading files from the command-line is incompatible with session management, ignoring." );
+
+            nsm->announce ( APP_NAME, ":optional-gui:switch:dirty:", argv[0] );
 
             /* if ( ! no_ui ) */
             /* { */
-                // poll so we can keep OSC handlers running in the GUI thread and avoid extra sync
-                Fl::add_timeout( NSM_CHECK_INTERVAL, check_nsm, NULL );
+            // poll so we can keep OSC handlers running in the GUI thread and avoid extra sync
+            Fl::add_timeout ( NSM_CHECK_INTERVAL, check_nsm, NULL );
             /* } */
         }
     }
@@ -354,33 +353,33 @@ main ( int argc, char **argv )
     {
         if ( optind < argc )
         {
-            MESSAGE( "Loading \"%s\"", argv[optind] );
+            MESSAGE ( "Loading \"%s\"", argv[optind] );
 
-            if ( ! mixer->command_load( argv[optind] ) )
+            if ( !mixer->command_load ( argv[optind] ) )
             {
-                fl_alert( "Error opening project specified on commandline" );
+                fl_alert ( "Error opening project specified on commandline" );
             }
         }
     }
 
-    Fl::add_timeout( 0.1f, check_sigterm );
-    Fl::dnd_text_ops( 0 );
+    Fl::add_timeout ( 0.1f, check_sigterm );
+    Fl::dnd_text_ops ( 0 );
 
 #ifdef FLTK_SUPPORT
-    fl_register_themes(USER_CONFIG_DIR);
+    fl_register_themes ( USER_CONFIG_DIR );
 #endif
 
-    if ( ! no_ui && !nsm_url)
+    if ( !no_ui && !nsm_url )
     {
-        DMESSAGE( "Running UI..." );
+        DMESSAGE ( "Running UI..." );
 
-        Fl::run();
+        Fl::run ( );
     }
     else
     {
-        while ( ! got_sigterm )
+        while ( !got_sigterm )
         {
-            Fl::wait(2147483.648);         /* magic number means forever */
+            Fl::wait ( 2147483.648 ); /* magic number means forever */
         }
     }
 
@@ -388,13 +387,13 @@ main ( int argc, char **argv )
     main_window = NULL;
 
     /* Delete clipboard contents because if the strip contains custom data then it will accumulate */
-    if(clipboard_dir)
+    if ( clipboard_dir )
     {
         std::string remove_clipboard = "exec rm -r '";
         remove_clipboard += clipboard_dir;
         remove_clipboard += "'";
-        system(remove_clipboard.c_str());
+        system ( remove_clipboard.c_str ( ) );
     }
 
-    MESSAGE( "Your fun is over" );
+    MESSAGE ( "Your fun is over" );
 }

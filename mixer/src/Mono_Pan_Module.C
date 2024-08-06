@@ -23,125 +23,124 @@
 
 #include "Mono_Pan_Module.H"
 
-
-Mono_Pan_Module::Mono_Pan_Module ( )
-    : Module ( 50, 24, name() )
+Mono_Pan_Module::Mono_Pan_Module( )
+    : Module( 50, 24, name( ) )
 {
-    Port p( this, Port::INPUT, Port::CONTROL, "Pan" );
+    Port p ( this, Port::INPUT, Port::CONTROL, "Pan" );
     p.hints.ranged = true;
     p.hints.minimum = -1.0f;
     p.hints.maximum = 1.0f;
     p.hints.default_value = 0.0f;
 
-    p.connect_to( new float );
-    p.control_value( p.hints.default_value );
+    p.connect_to ( new float );
+    p.control_value ( p.hints.default_value );
 
-    add_port( p );
+    add_port ( p );
 
-    add_port( Port( this, Port::INPUT, Port::AUDIO ) );
-    add_port( Port( this, Port::OUTPUT, Port::AUDIO ) );
-    add_port( Port( this, Port::OUTPUT, Port::AUDIO ) );
+    add_port ( Port ( this, Port::INPUT, Port::AUDIO ) );
+    add_port ( Port ( this, Port::OUTPUT, Port::AUDIO ) );
+    add_port ( Port ( this, Port::OUTPUT, Port::AUDIO ) );
 
-    end();
+    end ( );
 
-    log_create();
- 
-    smoothing.sample_rate( sample_rate() );
+    log_create ( );
+
+    smoothing.sample_rate ( sample_rate ( ) );
 }
 
-Mono_Pan_Module::~Mono_Pan_Module ( )
+Mono_Pan_Module::~Mono_Pan_Module( )
 {
-    delete static_cast<float*>( control_input[0].buffer() );
-    log_destroy();
+    delete static_cast<float*> ( control_input[0].buffer ( ) );
+    log_destroy ( );
 }
-
 
 void
-Mono_Pan_Module::handle_sample_rate_change ( nframes_t n )
+Mono_Pan_Module::handle_sample_rate_change( nframes_t n )
 {
-    smoothing.sample_rate( n );
+    smoothing.sample_rate ( n );
 }
 
 bool
-Mono_Pan_Module::configure_inputs ( int n )
+Mono_Pan_Module::configure_inputs( int n )
 {
-    THREAD_ASSERT( UI );
+    THREAD_ASSERT ( UI );
 
-    int on = audio_input.size();
+    int on = audio_input.size ( );
 
     if ( n > on )
     {
-	add_port( Port( this, Port::INPUT, Port::AUDIO ) );
+        add_port ( Port ( this, Port::INPUT, Port::AUDIO ) );
     }
     else if ( n < on )
     {
-	audio_input.back().disconnect();
-	audio_input.pop_back();	
+        audio_input.back ( ).disconnect ( );
+        audio_input.pop_back ( );
     }
-    
+
     return true;
 }
 
 
 /**********/
 /* Engine */
+
 /**********/
 
 void
-Mono_Pan_Module::process ( nframes_t nframes )
+Mono_Pan_Module::process( nframes_t nframes )
 {
-    if ( unlikely( bypass() ) )
+    if ( unlikely ( bypass ( ) ) )
     {
-	if ( audio_input.size() == 1 )
-	{
-	    buffer_copy( static_cast<sample_t*>( audio_output[1].buffer() ),
-                    static_cast<sample_t*>( audio_input[0].buffer() ),
+        if ( audio_input.size ( ) == 1 )
+        {
+            buffer_copy ( static_cast<sample_t*> ( audio_output[1].buffer ( ) ),
+                    static_cast<sample_t*> ( audio_input[0].buffer ( ) ),
                     nframes );
-	}
+        }
     }
     else
     {
-        const float gt = (control_input[0].control_value() + 1.0f) * 0.5f;
+        const float gt = ( control_input[0].control_value ( ) + 1.0f ) * 0.5f;
 
-        sample_t gainbuf[nframes];            
-        bool use_gainbuf = smoothing.apply( gainbuf, nframes, gt );
+        sample_t gainbuf[nframes];
+        bool use_gainbuf = smoothing.apply ( gainbuf, nframes, gt );
 
-	if ( audio_input.size() == 2 )
-	{
-	    /* convert stereo to mono */
-	    buffer_mix( static_cast<sample_t*>( audio_input[0].buffer() ),
-			static_cast<sample_t*>( audio_input[1].buffer() ),
-			nframes );
-	}
-	
-        if ( unlikely( use_gainbuf ) )
-        {            
-            /* right channel */                
-            buffer_copy_and_apply_gain_buffer( static_cast<sample_t*>( audio_output[1].buffer() ),
-                                               static_cast<sample_t*>( audio_input[0].buffer() ),
-                                               gainbuf,
-                                               nframes );
-                
+        if ( audio_input.size ( ) == 2 )
+        {
+            /* convert stereo to mono */
+            buffer_mix ( static_cast<sample_t*> ( audio_input[0].buffer ( ) ),
+                    static_cast<sample_t*> ( audio_input[1].buffer ( ) ),
+                    nframes );
+        }
+
+        if ( unlikely ( use_gainbuf ) )
+        {
+            /* right channel */
+            buffer_copy_and_apply_gain_buffer ( static_cast<sample_t*> ( audio_output[1].buffer ( ) ),
+                    static_cast<sample_t*> ( audio_input[0].buffer ( ) ),
+                    gainbuf,
+                    nframes );
+
             /*  left channel  */
             for ( nframes_t i = 0; i < nframes; i++ )
                 gainbuf[i] = 1.0f - gainbuf[i];
-                
-            buffer_apply_gain_buffer( static_cast<sample_t*>( audio_output[0].buffer() ),
+
+            buffer_apply_gain_buffer ( static_cast<sample_t*> ( audio_output[0].buffer ( ) ),
                     gainbuf,
                     nframes );
         }
         else
         {
             /* right channel */
-            buffer_copy_and_apply_gain( static_cast<sample_t*>( audio_output[1].buffer() ),
-                                        static_cast<sample_t*>( audio_input[0].buffer() ),
-                                        nframes,
-                                        gt );
-                
-            /*  left channel  */
-            buffer_apply_gain( static_cast<sample_t*>( audio_output[0].buffer() ),
+            buffer_copy_and_apply_gain ( static_cast<sample_t*> ( audio_output[1].buffer ( ) ),
+                    static_cast<sample_t*> ( audio_input[0].buffer ( ) ),
                     nframes,
-                    1.0f - gt);
+                    gt );
+
+            /*  left channel  */
+            buffer_apply_gain ( static_cast<sample_t*> ( audio_output[0].buffer ( ) ),
+                    nframes,
+                    1.0f - gt );
         }
     }
 }

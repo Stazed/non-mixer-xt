@@ -39,22 +39,22 @@
 char *user_config_dir;
 
 static int
-ensure_dirs ( void )
+ensure_dirs( void )
 {
-    asprintf( &user_config_dir, "%s/.config/%s", getenv( "HOME" ), USER_CONFIG_DIR );
+    asprintf ( &user_config_dir, "%s/.config/%s", getenv ( "HOME" ), USER_CONFIG_DIR );
 
-    int r = mkdir( user_config_dir, 0777 );
+    int r = mkdir ( user_config_dir, 0777 );
 
     return r == 0 || errno == EEXIST;
 }
 
-
-int main(int /*argc*/, char** argv)
+int
+main( int /*argc*/, char** argv )
 {
-    if(!ensure_dirs())
+    if ( !ensure_dirs ( ) )
     {
-        fl_alert( "Warning! Cannot create/open user config directory! Scanning aborted..." );
-        return (EXIT_SUCCESS);
+        fl_alert ( "Warning! Cannot create/open user config directory! Scanning aborted..." );
+        return (EXIT_SUCCESS );
     }
 
     std::string s_name = "";
@@ -65,30 +65,30 @@ int main(int /*argc*/, char** argv)
 
     while ( *argv )
     {
-        if(count == 0)
+        if ( count == 0 )
         {
             count++;
             s_name = *argv++;
-            continue;      
+            continue;
         }
-        else if(count == 1)
+        else if ( count == 1 )
         {
             count++;
             s_type = *argv++;
             continue;
         }
-        else if(count == 2)
+        else if ( count == 2 )
         {
             s_path = *argv++;
             continue;
         }
     }
 
-    DMESSAGE( "TYPE = %s: PATH = %s", s_type.c_str(), s_path.c_str());
+    DMESSAGE ( "TYPE = %s: PATH = %s", s_type.c_str ( ), s_path.c_str ( ) );
 
     Plugin_Scan scanner;
-    scanner.get_all_plugins(s_type, s_path);
+    scanner.get_all_plugins ( s_type, s_path );
 
-    return (EXIT_SUCCESS);
+    return (EXIT_SUCCESS );
 }
 

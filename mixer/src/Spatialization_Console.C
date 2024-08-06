@@ -38,25 +38,24 @@
 
 #include <FL/Fl_Menu_Bar.H>
 
-
-Spatialization_Console::Spatialization_Console ( void ) :
+Spatialization_Console::Spatialization_Console( void ) :
     Fl_Double_Window( 850, 850 ),
-    _resized(false)
+    _resized( false )
 {
-    label( "Spatialization Console" );
+    label ( "Spatialization Console" );
 
-    labelfont( FL_HELVETICA );
-    labelsize( 14 );
+    labelfont ( FL_HELVETICA );
+    labelsize ( 14 );
 
     int padding = 48;
     int S = 802;
-    
+
     if ( fl_display )
         /* don't open the display in noui mode... */
     {
         int sx, sy, sw, sh;
-        
-        Fl::screen_xywh( sx, sy, sw, sh );
+
+        Fl::screen_xywh ( sx, sy, sw, sh );
 
         if ( sw < 850 || sh < 850 )
         {
@@ -65,158 +64,156 @@ Spatialization_Console::Spatialization_Console ( void ) :
         }
     }
 
-    panner = new Panner( 25,25, S, S );
-    panner->callback( cb_panner_value_handle, this );
-    panner->when( FL_WHEN_CHANGED );
+    panner = new Panner ( 25, 25, S, S );
+    panner->callback ( cb_panner_value_handle, this );
+    panner->when ( FL_WHEN_CHANGED );
 
-    size( S + padding, S + padding );
+    size ( S + padding, S + padding );
 
-    callback( cb_window, this );
-    end();
+    callback ( cb_window, this );
+    end ( );
 
-    make_controls();
+    make_controls ( );
 
     mixer->spatialization_console = this;
 }
 
-Spatialization_Console::~Spatialization_Console ( )
+Spatialization_Console::~Spatialization_Console( )
 {
-//    controls_by_port.clear();
+    //    controls_by_port.clear();
     mixer->spatialization_console = NULL;
-    
+
 }
 
-void 
-Spatialization_Console::get ( Log_Entry &e ) const
+void
+Spatialization_Console::get( Log_Entry &e ) const
 {
-    e.add( ":range", panner->range() );
-    e.add( ":projection", panner->projection() );
+    e.add ( ":range", panner->range ( ) );
+    e.add ( ":projection", panner->projection ( ) );
 #ifdef FLTK_SUPPORT
-    e.add( ":shown", ((Fl_Double_Window*)this)->shown() );
+    e.add ( ":shown", ( ( Fl_Double_Window* )this )->shown ( ) );
 #else
-    e.add( ":shown", ((const Fl_Double_Window*)this)->shown() );
+    e.add ( ":shown", ( (const Fl_Double_Window*) this )->shown ( ) );
 #endif
 }
 
 void
-Spatialization_Console::set ( Log_Entry &e )
+Spatialization_Console::set( Log_Entry &e )
 {
-    for ( int i = 0; i < e.size(); ++i )
+    for ( int i = 0; i < e.size ( ); ++i )
     {
         const char *s, *v;
 
-        e.get( i, &s, &v );
+        e.get ( i, &s, &v );
 
-        if ( ! ( strcmp( s, ":range" ) ) )
-            panner->range( atoi( v ) );
-        if ( ! ( strcmp( s, ":projection" ) ) )
-            panner->projection( atoi( v ) );
-        else if ( ! ( strcmp( s, ":shown" ) ) )
+        if ( !( strcmp ( s, ":range" ) ) )
+            panner->range ( atoi ( v ) );
+        if ( !( strcmp ( s, ":projection" ) ) )
+            panner->projection ( atoi ( v ) );
+        else if ( !( strcmp ( s, ":shown" ) ) )
         {
-            if ( atoi( v ) )
+            if ( atoi ( v ) )
             {
                 if ( fl_display )
                 {
-                show();
+                    show ( );
                 }
             }
             else
-                hide();
+                hide ( );
         }
     }
 }
 
-
 void
-Spatialization_Console::cb_window ( Fl_Widget *w, void *v )
+Spatialization_Console::cb_window( Fl_Widget *w, void *v )
 {
-    ((Spatialization_Console*)v)->cb_window(w);
+    ( (Spatialization_Console*) v )->cb_window ( w );
 }
 
 void
-Spatialization_Console::cb_window ( Fl_Widget *w )
+Spatialization_Console::cb_window( Fl_Widget *w )
 {
-    w->hide();
-    mixer->update_menu();
+    w->hide ( );
+    mixer->update_menu ( );
 }
 
-
 void
-Spatialization_Console::make_controls ( void )
+Spatialization_Console::make_controls( void )
 {
-    panner->clear_points();
+    panner->clear_points ( );
 
-    for ( int i = 0; i < mixer->nstrips(); i++ )
+    for ( int i = 0; i < mixer->nstrips ( ); i++ )
     {
-        Mixer_Strip *o = mixer->track_by_number( i );
-        
-        if ( o->spatializer() )
+        Mixer_Strip *o = mixer->track_by_number ( i );
+
+        if ( o->spatializer ( ) )
         {
             Panner::Point p;
 
-            p.color = o->color();
-            p.userdata = o->spatializer();
-            p.label = o->name();
+            p.color = o->color ( );
+            p.userdata = o->spatializer ( );
+            p.label = o->name ( );
 
-            if ( o->spatializer()->is_controlling() )
+            if ( o->spatializer ( )->is_controlling ( ) )
             {
                 p.visible = true;
 
-                p.azimuth( o->spatializer()->control_output[0].control_value() );
-                p.elevation( o->spatializer()->control_output[1].control_value() );
-                if ( o->spatializer()->control_output[2].connected() )
+                p.azimuth ( o->spatializer ( )->control_output[0].control_value ( ) );
+                p.elevation ( o->spatializer ( )->control_output[1].control_value ( ) );
+                if ( o->spatializer ( )->control_output[2].connected ( ) )
                 {
                     p.radius_enabled = true;
-                    p.radius( o->spatializer()->control_output[2].control_value() );
+                    p.radius ( o->spatializer ( )->control_output[2].control_value ( ) );
                 }
             }
             else
                 p.visible = false;
 
-            panner->add_point(p);
+            panner->add_point ( p );
         }
     }
 
-    panner->redraw();
+    panner->redraw ( );
 }
 
 void
-Spatialization_Console::cb_panner_value_handle ( Fl_Widget *, void *v )
+Spatialization_Console::cb_panner_value_handle( Fl_Widget *, void *v )
 {
-//    callback_data *cd = (callback_data*)v;
-    
-    Spatialization_Console *sc = (Spatialization_Console*)v;
+    //    callback_data *cd = (callback_data*)v;
 
-    Panner::Point *p = sc->panner->pushed();
- 
-    Controller_Module *cm = (Controller_Module*)p->userdata;
+    Spatialization_Console *sc = (Spatialization_Console*) v;
 
-    cm->control_output[0].control_value( p->azimuth() );
-    cm->control_output[1].control_value( p->elevation() );
+    Panner::Point *p = sc->panner->pushed ( );
+
+    Controller_Module *cm = (Controller_Module*) p->userdata;
+
+    cm->control_output[0].control_value ( p->azimuth ( ) );
+    cm->control_output[1].control_value ( p->elevation ( ) );
     if ( p->radius_enabled )
-        cm->control_output[2].control_value( p->radius() );
+        cm->control_output[2].control_value ( p->radius ( ) );
 }
 
 /* Display changes initiated via automation or from other parts of the GUI */
 void
-Spatialization_Console::handle_control_changed ( Controller_Module *m )
+Spatialization_Console::handle_control_changed( Controller_Module *m )
 {
-    if ( Fl::pushed() == panner )
+    if ( Fl::pushed ( ) == panner )
         return;
 
-    for ( int i = 0; i < panner->points(); i++ )
+    for ( int i = 0; i < panner->points ( ); i++ )
     {
-        Panner::Point *p = panner->point(i);
+        Panner::Point *p = panner->point ( i );
 
         if ( p->userdata == m )
         {
-            p->azimuth( m->control_output[0].control_value() );
-            p->elevation( m->control_output[1].control_value() );
+            p->azimuth ( m->control_output[0].control_value ( ) );
+            p->elevation ( m->control_output[1].control_value ( ) );
             if ( p->radius_enabled )
-                p->radius( m->control_output[2].control_value() );
+                p->radius ( m->control_output[2].control_value ( ) );
 
-            if ( panner->visible_r() )
-                panner->redraw();
+            if ( panner->visible_r ( ) )
+                panner->redraw ( );
 
             break;
         }
@@ -224,7 +221,7 @@ Spatialization_Console::handle_control_changed ( Controller_Module *m )
 }
 
 void
-Spatialization_Console::update ( void )
+Spatialization_Console::update( void )
 {
-    make_controls();
+    make_controls ( );
 }

@@ -31,105 +31,104 @@ extern Mixer *mixer;
 
 extern NSM_Client *nsm;
 
-NSM_Client::NSM_Client ( )
+NSM_Client::NSM_Client( )
 {
 }
 
-int command_open ( const char *name, const char *display_name, const char *client_id, char **out_msg );
-int command_save ( char **out_msg );
+int command_open( const char *name, const char *display_name, const char *client_id, char **out_msg );
+int command_save( char **out_msg );
 
 int
-NSM_Client::command_broadcast ( const char *path, lo_message msg )
+NSM_Client::command_broadcast( const char *path, lo_message msg )
 {
-//    int argc = lo_message_get_argc( msg );
-//    lo_arg **argv = lo_message_get_argv( msg );
+    //    int argc = lo_message_get_argc( msg );
+    //    lo_arg **argv = lo_message_get_argv( msg );
 
-    if ( !strcmp( path, "/non/hello" ) )
+    if ( !strcmp ( path, "/non/hello" ) )
     {
-        mixer->handle_hello( msg );
+        mixer->handle_hello ( msg );
         return 0;
     }
-    else 
+    else
         return -1;
 
 }
 
-
 int
-NSM_Client::command_save ( char **out_msg )
+NSM_Client::command_save( char **out_msg )
 {
-    Fl::lock();
+    Fl::lock ( );
 
     int r = ERR_OK;
 
-    if ( ! mixer->command_save() )
+    if ( !mixer->command_save ( ) )
     {
-        *out_msg = strdup( "Failed to save for unknown reason");
+        *out_msg = strdup ( "Failed to save for unknown reason" );
         return r = ERR_GENERAL;
     }
 
-    Fl::unlock();
-    
+    Fl::unlock ( );
+
     return r;
 }
 
 int
-NSM_Client::command_open ( const char *name, const char *display_name, const char *client_id, char **out_msg )
+NSM_Client::command_open( const char *name, const char *display_name, const char *client_id, char **out_msg )
 {
-    Fl::lock();
+    Fl::lock ( );
 
     if ( instance_name )
-        free( instance_name );
-    
-    instance_name = strdup( client_id );
+        free ( instance_name );
 
-    mixer->osc_endpoint->name( client_id );
+    instance_name = strdup ( client_id );
+
+    mixer->osc_endpoint->name ( client_id );
 
     int r = ERR_OK;
 
-    if ( Project::validate( name ) )
+    if ( Project::validate ( name ) )
     {
-        if ( ! mixer->command_load( name, display_name ) )
+        if ( !mixer->command_load ( name, display_name ) )
         {
-            *out_msg = strdup( "Failed to load for unknown reason" );
+            *out_msg = strdup ( "Failed to load for unknown reason" );
             r = ERR_GENERAL;
         }
     }
     else
     {
-        if ( ! mixer->command_new( name, display_name ) )
+        if ( !mixer->command_new ( name, display_name ) )
         {
-            *out_msg = strdup( "Failed to load for unknown reason" );
+            *out_msg = strdup ( "Failed to load for unknown reason" );
             r = ERR_GENERAL;
         }
     }
 
-    mixer->say_hello();
+    mixer->say_hello ( );
 
-    Fl::unlock();
+    Fl::unlock ( );
 
     return r;
 }
 
 void
-NSM_Client::command_active ( bool active )
+NSM_Client::command_active( bool active )
 {
-    Fl::lock();
+    Fl::lock ( );
 
-    mixer->sm_active( active );
+    mixer->sm_active ( active );
 
-    Fl::unlock();
+    Fl::unlock ( );
 }
 
 void
 NSM_Client::command_hide_gui( void )
 {
-    mixer->command_hide_gui();
+    mixer->command_hide_gui ( );
 }
 
 void
 NSM_Client::command_show_gui( void )
 {
-    mixer->command_show_gui();
+    mixer->command_show_gui ( );
 }
 

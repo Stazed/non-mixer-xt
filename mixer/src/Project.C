@@ -46,12 +46,11 @@
 const int PROJECT_VERSION = 1;
 
 
-const char *Project::_errstr[] =
-{
-    "Not a Non-Mixer-XT project",
-    "Locked by another process",
-    "Access denied",
-    "Incompatible project version"
+const char *Project::_errstr[] ={
+                                 "Not a Non-Mixer-XT project",
+                                 "Locked by another process",
+                                 "Access denied",
+                                 "Incompatible project version"
 };
 
 char Project::_name[256];
@@ -64,21 +63,22 @@ int Project::_lockfd = 0;
 
 /***********/
 /* Private */
+
 /***********/
 
 void
-Project::set_name ( const char *name )
+Project::set_name( const char *name )
 {
-    strcpy( Project::_name, name );
+    strcpy ( Project::_name, name );
 
-    if ( Project::_name[ strlen( Project::_name ) - 1 ] == '/' )
-        Project::_name[ strlen( Project::_name ) - 1 ] = '\0';
+    if ( Project::_name[ strlen ( Project::_name ) - 1 ] == '/' )
+        Project::_name[ strlen ( Project::_name ) - 1 ] = '\0';
 
-    char *s = rindex( Project::_name, '/' );
+    char *s = rindex ( Project::_name, '/' );
 
     s = s ? s + 1 : Project::_name;
 
-    memmove( Project::_name, s, strlen( s ) + 1 );
+    memmove ( Project::_name, s, strlen ( s ) + 1 );
 
     for ( s = Project::_name; *s; ++s )
         if ( *s == '_' || *s == '-' )
@@ -86,19 +86,19 @@ Project::set_name ( const char *name )
 }
 
 void
-Project::name ( const char *name )
+Project::name( const char *name )
 {
-    strcpy( Project::_name, name );
+    strcpy ( Project::_name, name );
 }
 
 bool
-Project::write_info ( void )
+Project::write_info( void )
 {
     FILE *fp;
 
-    if ( ! ( fp = fopen( "info", "w" ) ) )
+    if ( !( fp = fopen ( "info", "w" ) ) )
     {
-        WARNING( "could not open project info file for writing." );
+        WARNING ( "could not open project info file for writing." );
         return false;
     }
 
@@ -106,31 +106,31 @@ Project::write_info ( void )
 
     if ( ! *_created_on )
     {
-        time_t t = time( NULL );
-        ctime_r( &t, s );
-        s[ strlen( s ) - 1 ] = '\0';
+        time_t t = time ( NULL );
+        ctime_r ( &t, s );
+        s[ strlen ( s ) - 1 ] = '\0';
     }
     else
-        strcpy( s, _created_on );
+        strcpy ( s, _created_on );
 
-    fprintf( fp, "created by\n\t%s\ncreated on\n\t%s\nversion\n\t%d\n",
-             APP_TITLE " " VERSION,
-             s,
-             PROJECT_VERSION );
+    fprintf ( fp, "created by\n\t%s\ncreated on\n\t%s\nversion\n\t%d\n",
+            APP_TITLE " " VERSION,
+            s,
+            PROJECT_VERSION );
 
-    fclose( fp );
+    fclose ( fp );
 
     return true;
 }
 
 bool
-Project::read_info ( int *version, char **creation_date, char **created_by )
+Project::read_info( int *version, char **creation_date, char **created_by )
 {
     FILE *fp;
 
-    if ( ! ( fp = fopen( "info", "r" ) ) )
+    if ( !( fp = fopen ( "info", "r" ) ) )
     {
-        WARNING( "could not open project info file for reading." );
+        WARNING ( "could not open project info file for reading." );
         return false;
     }
 
@@ -140,22 +140,22 @@ Project::read_info ( int *version, char **creation_date, char **created_by )
 
     char *name, *value;
 
-    while ( fscanf( fp, "%m[^\n]\n\t%m[^\n]\n", &name, &value ) == 2 )
+    while ( fscanf ( fp, "%m[^\n]\n\t%m[^\n]\n", &name, &value ) == 2 )
     {
-        MESSAGE( "Info: %s = %s", name, value );
+        MESSAGE ( "Info: %s = %s", name, value );
 
-        if ( ! strcmp( name, "version" ) )
-            *version = atoi( value );
-        else if ( ! strcmp( name, "created on" ) )
-            *creation_date = strdup( value );
-        else if ( ! strcmp( name, "created by" ) )
-            *created_by = strdup( value );
+        if ( !strcmp ( name, "version" ) )
+            *version = atoi ( value );
+        else if ( !strcmp ( name, "created on" ) )
+            *creation_date = strdup ( value );
+        else if ( !strcmp ( name, "created by" ) )
+            *created_by = strdup ( value );
 
-        free( name );
-        free( value );
+        free ( name );
+        free ( value );
     }
 
-    fclose( fp );
+    fclose ( fp );
 
     return true;
 }
@@ -166,73 +166,72 @@ Project::read_info ( int *version, char **creation_date, char **created_by )
 
 /** Save out any settings and unjournaled state... */
 bool
-Project::save ( void )
+Project::save( void )
 {
-    if ( ! open() )
+    if ( !open ( ) )
         return true;
 
-//    tle->save_timeline_settings();
+    //    tle->save_timeline_settings();
 
-    int r = mixer->save();
+    int r = mixer->save ( );
 
-//    Loggable::clear_dirty();
+    //    Loggable::clear_dirty();
 
     return r;
-//    return Loggable::save_unjournaled_state();
+    //    return Loggable::save_unjournaled_state();
 }
-
 
 /** Close the project (reclaiming all memory) */
 bool
-Project::close ( void )
+Project::close( void )
 {
-    if ( ! open() )
+    if ( !open ( ) )
         return true;
 
-    if ( ! save() )
+    if ( !save ( ) )
         return false;
 
     Project::_is_opening_closing = true;
 
-    Loggable::close();
-/* //    write_info(); */
+    Loggable::close ( );
+    /* //    write_info(); */
 
     _is_open = false;
 
     *Project::_name = '\0';
     *Project::_created_on = '\0';
 
-    release_lock( &_lockfd, ".lock" );
+    release_lock ( &_lockfd, ".lock" );
 
     Project::_is_opening_closing = false;
-    
+
     return true;
 }
 
 /** Ensure a project is valid before opening it... */
 bool
-Project::validate ( const char *name )
+Project::validate( const char *name )
 {
     bool r = true;
 
     char pwd[512];
 
-    fl_filename_absolute( pwd, sizeof( pwd ), "." );
+    fl_filename_absolute ( pwd, sizeof ( pwd ), "." );
 
-    if ( chdir( name ) )
+    if ( chdir ( name ) )
     {
-        WARNING( "Cannot change to project dir \"%s\"", name );
+        WARNING ( "Cannot change to project dir \"%s\"", name );
         return false;
     }
 
-    if ( ! exists( "info" ) ||
-         ! exists( "snapshot" ))
+    if ( !exists ( "info" ) ||
+         !exists ( "snapshot" ) )
     {
-        WARNING( "Not a Non-Mixer-XT project: \"%s\"", name );
+        WARNING ( "Not a Non-Mixer-XT project: \"%s\"", name );
         r = false;
     }
 
-    chdir( pwd );
+    chdir ( pwd );
 
     return r;
 }
@@ -240,59 +239,59 @@ Project::validate ( const char *name )
 /** Try to open project /name/. Returns 0 if sucsessful, an error code
  * otherwise */
 int
-Project::open ( const char *name )
+Project::open( const char *name )
 {
-    if ( ! validate( name ) )
+    if ( !validate ( name ) )
         return E_INVALID;
 
-    close();
+    close ( );
 
-    chdir( name );
+    chdir ( name );
 
-    if ( ! acquire_lock( &_lockfd, ".lock" ) )
+    if ( !acquire_lock ( &_lockfd, ".lock" ) )
         return E_LOCKED;
 
     int version;
     char *creation_date;
     char *created_by;
 
-    if ( ! read_info( &version, &creation_date, &created_by ) )
+    if ( !read_info ( &version, &creation_date, &created_by ) )
         return E_INVALID;
 
-    if ( strncmp( created_by, APP_TITLE, strlen( APP_TITLE ) ) )
+    if ( strncmp ( created_by, APP_TITLE, strlen ( APP_TITLE ) ) )
         return E_INVALID;
 
     if ( version != PROJECT_VERSION )
         return E_VERSION;
 
     _is_opening_closing = true;
-    
-    if ( ! Loggable::replay( "snapshot" ) )
+
+    if ( !Loggable::replay ( "snapshot" ) )
         return E_INVALID;
 
     if ( creation_date )
     {
-        strcpy( _created_on, creation_date );
-        free( creation_date );
+        strcpy ( _created_on, creation_date );
+        free ( creation_date );
     }
     else
         *_created_on = 0;
 
 
-    getcwd( _path, sizeof( _path ) );
+    getcwd ( _path, sizeof ( _path ) );
 
-    set_name( _path );
+    set_name ( _path );
 
     _is_open = true;
 
     _is_opening_closing = false;
-//    tle->load_timeline_settings();
+    //    tle->load_timeline_settings();
 
-//    timeline->zoom_fit();
+    //    timeline->zoom_fit();
 
-//    Loggable::clear_dirty();
+    //    Loggable::clear_dirty();
 
-    MESSAGE( "Loaded project \"%s\"", name );
+    MESSAGE ( "Loaded project \"%s\"", name );
 
     return 0;
 }
@@ -300,54 +299,54 @@ Project::open ( const char *name )
 /** Create a new project /name/ from existing template
  * /template_name/ */
 bool
-Project::create ( const char *name, const char *template_name )
+Project::create( const char *name, const char *template_name )
 {
-    if ( exists( name ) )
+    if ( exists ( name ) )
     {
-        WARNING( "Project already exists" );
+        WARNING ( "Project already exists" );
         return false;
     }
 
-    close();
+    close ( );
 
-    if ( mkdir( name, 0777 ) )
+    if ( mkdir ( name, 0777 ) )
     {
-        WARNING( "Cannot create project directory: %s", name );
+        WARNING ( "Cannot create project directory: %s", name );
         return false;
     }
 
-    if ( chdir( name ) )
+    if ( chdir ( name ) )
     {
-        FATAL( "WTF? Cannot change to new project directory" );
+        FATAL ( "WTF? Cannot change to new project directory" );
         return false;
     }
 
-//    mkdir( "sources", 0777 );
-    creat( "snapshot", 0666 );
+    //    mkdir( "sources", 0777 );
+    creat ( "snapshot", 0666 );
 
     /* TODO: copy template */
 
-    write_info();
+    write_info ( );
 
-    if ( open( name ) == 0 )
+    if ( open ( name ) == 0 )
     {
-//        /* add the bare essentials */
-//        timeline->beats_per_minute( 0, 120 );
-//        timeline->time( 0, 4, 4 );
+        //        /* add the bare essentials */
+        //        timeline->beats_per_minute( 0, 120 );
+        //        timeline->time( 0, 4, 4 );
 
-        MESSAGE( "Created project \"%s\" from template \"%s\"", name, template_name );
+        MESSAGE ( "Created project \"%s\" from template \"%s\"", name, template_name );
         return true;
     }
     else
     {
-        WARNING( "Failed to open newly created project" );
+        WARNING ( "Failed to open newly created project" );
         return false;
     }
 }
 
 /** Replace the journal with a snapshot of the current state */
 void
-Project::compact ( void )
+Project::compact( void )
 {
-    Loggable::compact();
+    Loggable::compact ( );
 }

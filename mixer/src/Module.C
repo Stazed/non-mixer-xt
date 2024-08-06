@@ -73,72 +73,71 @@ nframes_t Module::_sample_rate = 0;
 Module *Module::_copied_module_empty = 0;
 char *Module::_copied_module_settings = 0;
 
-
-Module::Module ( int W, int H, const char *L ) :
+Module::Module( int W, int H, const char *L ) :
     Fl_Group( 0, 0, W, H, L ),
-    _instances(1),
-    _chain(0),
-    _is_default(false),
-    _is_jack_module(false),
-    _is_zero_synth(false),
-    _has_name_change(false),
-    _base_label(NULL),
-    _nframes(0),
-    _number(-2),    /* magic number indicates old instance, before numbering */
-    _editor(0),
-    _plug_type(Type_NONE),
-    _is_from_custom_ui(false),
-    _is_removed(false),
-    _use_custom_data(false)
+    _instances( 1 ),
+    _chain( 0 ),
+    _is_default( false ),
+    _is_jack_module( false ),
+    _is_zero_synth( false ),
+    _has_name_change( false ),
+    _base_label( NULL ),
+    _nframes( 0 ),
+    _number( -2 ), /* magic number indicates old instance, before numbering */
+    _editor( 0 ),
+    _plug_type( Type_NONE ),
+    _is_from_custom_ui( false ),
+    _is_removed( false ),
+    _use_custom_data( false )
 #ifdef LV2_SUPPORT
-    ,_b_have_visible_atom_control_port(false)
+    , _b_have_visible_atom_control_port( false )
 #endif
 {
-    Module::init();
+    Module::init ( );
 }
 
-Module::Module ( bool is_default, int W, int H, const char *L ) :
+Module::Module( bool is_default, int W, int H, const char *L ) :
     Fl_Group( 0, 0, W, H, L ),
     Loggable( !is_default ),
-    _instances(1),
-    _chain(0),
-    _is_default(is_default),
-    _is_jack_module(false),
-    _is_zero_synth(false),
-    _has_name_change(false),
-    _base_label(NULL),
-    _nframes(0),
-    _number(-2),    /* magic number indicates old instance, before numbering */
-    _editor(0),
-    _plug_type(Type_NONE),
-    _is_from_custom_ui(false),
-    _is_removed(false),
-    _use_custom_data(false)
+    _instances( 1 ),
+    _chain( 0 ),
+    _is_default( is_default ),
+    _is_jack_module( false ),
+    _is_zero_synth( false ),
+    _has_name_change( false ),
+    _base_label( NULL ),
+    _nframes( 0 ),
+    _number( -2 ), /* magic number indicates old instance, before numbering */
+    _editor( 0 ),
+    _plug_type( Type_NONE ),
+    _is_from_custom_ui( false ),
+    _is_removed( false ),
+    _use_custom_data( false )
 {
-    Module::init();
+    Module::init ( );
 }
 
-Module::Module ( ) :
+Module::Module( ) :
     Fl_Group( 0, 0, 50, 50, "Unnamed" ),
-    _instances(1),
-    _chain(0),
-    _is_default(false),
-    _is_jack_module(false),
-    _is_zero_synth(false),
-    _has_name_change(false),
-    _base_label(NULL),
-    _nframes(0),
-    _number(-2),    /* magic number indicates old instance, before numbering */
-    _editor(0),
-    _plug_type(Type_NONE),
-    _is_from_custom_ui(false),
-    _is_removed(false),
-    _use_custom_data(false)
+    _instances( 1 ),
+    _chain( 0 ),
+    _is_default( false ),
+    _is_jack_module( false ),
+    _is_zero_synth( false ),
+    _has_name_change( false ),
+    _base_label( NULL ),
+    _nframes( 0 ),
+    _number( -2 ), /* magic number indicates old instance, before numbering */
+    _editor( 0 ),
+    _plug_type( Type_NONE ),
+    _is_from_custom_ui( false ),
+    _is_removed( false ),
+    _use_custom_data( false )
 {
-    Module::init();
+    Module::init ( );
 }
 
-Module::~Module ( )
+Module::~Module( )
 {
     /* we assume that the client for this chain is already locked */
     if ( _bypass )
@@ -152,270 +151,267 @@ Module::~Module ( )
         delete _editor;
         _editor = NULL;
     }
-    
-    for ( unsigned int i = 0; i < audio_input.size(); ++i )
-        audio_input[i].disconnect();
-    for ( unsigned int i = 0; i < audio_output.size(); ++i )
-        audio_output[i].disconnect();
-    for ( unsigned int i = 0; i < aux_audio_input.size(); ++i )
+
+    for ( unsigned int i = 0; i < audio_input.size ( ); ++i )
+        audio_input[i].disconnect ( );
+    for ( unsigned int i = 0; i < audio_output.size ( ); ++i )
+        audio_output[i].disconnect ( );
+    for ( unsigned int i = 0; i < aux_audio_input.size ( ); ++i )
     {
-        aux_audio_input[i].disconnect();
-        aux_audio_input[i].jack_port()->shutdown();
-        delete aux_audio_input[i].jack_port();
-    }    
-    for ( unsigned int i = 0; i < aux_audio_output.size(); ++i )
+        aux_audio_input[i].disconnect ( );
+        aux_audio_input[i].jack_port ( )->shutdown ( );
+        delete aux_audio_input[i].jack_port ( );
+    }
+    for ( unsigned int i = 0; i < aux_audio_output.size ( ); ++i )
     {
-        aux_audio_output[i].disconnect();
-        aux_audio_output[i].jack_port()->shutdown();
-        delete aux_audio_output[i].jack_port();
+        aux_audio_output[i].disconnect ( );
+        aux_audio_output[i].jack_port ( )->shutdown ( );
+        delete aux_audio_output[i].jack_port ( );
     }
 
-    destroy_connected_controller_module();
+    destroy_connected_controller_module ( );
 
-    aux_audio_output.clear();
-    aux_audio_input.clear();
-    
-    audio_input.clear();
-    audio_output.clear();
+    aux_audio_output.clear ( );
+    aux_audio_input.clear ( );
 
-    control_input.clear();
-    control_output.clear();
+    audio_input.clear ( );
+    audio_output.clear ( );
 
-    if ( parent() )
-        parent()->remove( this );
+    control_input.clear ( );
+    control_output.clear ( );
+
+    if ( parent ( ) )
+        parent ( )->remove ( this );
 }
 
-
 void
-Module::init ( void )
+Module::init( void )
 {
     /* we use pointers to these vector elements for port auto connection stuff and need to prevent reallocation from invalidating them. */
-    audio_input.reserve(MAX_PORTS);
-    audio_output.reserve(MAX_PORTS);
-    control_input.reserve(MAX_PORTS);
-    control_output.reserve(MAX_PORTS);
-    aux_audio_input.reserve(MAX_PORTS);
-    aux_audio_output.reserve(MAX_PORTS);
-    
-    _bypass = new float(0);
+    audio_input.reserve ( MAX_PORTS );
+    audio_output.reserve ( MAX_PORTS );
+    control_input.reserve ( MAX_PORTS );
+    control_output.reserve ( MAX_PORTS );
+    aux_audio_input.reserve ( MAX_PORTS );
+    aux_audio_output.reserve ( MAX_PORTS );
 
-    box( FL_UP_BOX );
-    labeltype( FL_NO_LABEL );
-    align( FL_ALIGN_CENTER | FL_ALIGN_INSIDE );
-    set_visible_focus();
-    selection_color( FL_YELLOW );
+    _bypass = new float(0 );
 
-    labelsize(12);
+    box ( FL_UP_BOX );
+    labeltype ( FL_NO_LABEL );
+    align ( FL_ALIGN_CENTER | FL_ALIGN_INSIDE );
+    set_visible_focus ( );
+    selection_color ( FL_YELLOW );
 
-    color( fl_color_average( fl_rgb_color( 0x3a, 0x99, 0x7c ), FL_BACKGROUND_COLOR, 1.0f ));
+    labelsize ( 12 );
 
-    tooltip();
+    color ( fl_color_average ( fl_rgb_color ( 0x3a, 0x99, 0x7c ), FL_BACKGROUND_COLOR, 1.0f ) );
+
+    tooltip ( );
 }
 
 void
-Module::update_tooltip ( void )
+Module::update_tooltip( void )
 {
     char *s;
-    asprintf( &s, "Left click to edit parameters; Ctrl + left click to select; right click or MENU key for menu. (info: latency: %lu)", (unsigned long) get_module_latency() );
+    asprintf ( &s, "Left click to edit parameters; Ctrl + left click to select; right click or MENU key for menu. (info: latency: %lu)", (unsigned long) get_module_latency ( ) );
 
-    copy_tooltip(s);
-    free(s);
+    copy_tooltip ( s );
+    free ( s );
 }
 
 void
-Module::get ( Log_Entry &e ) const
+Module::get( Log_Entry &e ) const
 {
-//    e.add( ":name",            label()           );
-//    e.add( ":color",           (unsigned long)color());
+    //    e.add( ":name",            label()           );
+    //    e.add( ":color",           (unsigned long)color());
 
     /* If using state restore then all the parameter are stored in the custom data file */
-    if(!_use_custom_data)
+    if ( !_use_custom_data )
     {
-        char *s = get_parameters();
-        if ( strlen( s ) )
-            e.add( ":parameter_values", s );
+        char *s = get_parameters ( );
+        if ( strlen ( s ) )
+            e.add ( ":parameter_values", s );
 
         delete[] s;
     }
 
-    e.add( ":is_default", is_default() );
-    e.add( ":chain", chain() );
-    e.add( ":active", ! bypass() );
-    if ( number() >= 0 )
-	e.add( ":number", number() );
+    e.add ( ":is_default", is_default ( ) );
+    e.add ( ":chain", chain ( ) );
+    e.add ( ":active", !bypass ( ) );
+    if ( number ( ) >= 0 )
+        e.add ( ":number", number ( ) );
 }
 
 bool
-Module::copy ( void ) const
+Module::copy( void ) const
 {
-    Module *m = clone_empty();
+    Module *m = clone_empty ( );
 
-    if ( ! m )
+    if ( !m )
     {
-        DMESSAGE( "Module \"%s\" doesn't support cloning", name() );
+        DMESSAGE ( "Module \"%s\" doesn't support cloning", name ( ) );
         return false;
     }
 
-    Log_Entry *ne = new Log_Entry();
+    Log_Entry *ne = new Log_Entry ( );
 
     _copied_module_empty = m;
 
     {
         Log_Entry e;
 
-        if (clipboard_dir)
+        if ( clipboard_dir )
         {
             export_import_strip = clipboard_dir;
             export_import_strip += "/clipboard.strip";
         }
 
-        get( e );
+        get ( e );
 
-        for ( int i = 0; i < e.size(); ++i )
+        for ( int i = 0; i < e.size ( ); ++i )
         {
             const char *s, *v;
 
-            e.get( i, &s, &v );
+            e.get ( i, &s, &v );
 
             /* we don't want this module to get added to the current
                chain... */
-            if ( !( !strcmp( s, ":chain" ) ||
-                    !strcmp( s, ":is_default" ) ||
-		    !strcmp( s, ":number" ) ) )
+            if ( !( !strcmp ( s, ":chain" ) ||
+                    !strcmp ( s, ":is_default" ) ||
+                    !strcmp ( s, ":number" ) ) )
             {
-                DMESSAGE( "%s = %s", s, v );
-                ne->add_raw( s, v );
+                DMESSAGE ( "%s = %s", s, v );
+                ne->add_raw ( s, v );
             }
         }
 
         export_import_strip = "";
     }
 
-    _copied_module_settings = ne->print();
+    _copied_module_settings = ne->print ( );
 
     return true;
 }
 
-    
 void
-Module::paste_before ( void )
+Module::paste_before( void )
 {
     Module *m = _copied_module_empty;
 
-    Log_Entry le( _copied_module_settings );
-    le.remove( ":chain" );
+    Log_Entry le ( _copied_module_settings );
+    le.remove ( ":chain" );
 
-    char *print = le.print();
+    char *print = le.print ( );
 
-    DMESSAGE( "Pasting settings: %s", print );
+    DMESSAGE ( "Pasting settings: %s", print );
 
-    free( print );
+    free ( print );
 
-    if (clipboard_dir)
+    if ( clipboard_dir )
     {
         export_import_strip = clipboard_dir;
         export_import_strip += "/clipboard.strip";
     }
 
-    m->set( le );
+    m->set ( le );
 
-    m->number(-1);
+    m->number ( -1 );
 
-    if ( ! chain()->insert( this, m ) )
+    if ( !chain ( )->insert ( this, m ) )
     {
-        fl_alert( "Copied module cannot be inserted at this point in the chain" );
+        fl_alert ( "Copied module cannot be inserted at this point in the chain" );
     }
 
     export_import_strip = "";
 
-    free( _copied_module_settings );
+    free ( _copied_module_settings );
     _copied_module_settings = NULL;
     _copied_module_empty = NULL;
 
     /* set up for another paste */
-    m->copy();
+    m->copy ( );
 }
 
 void
-Module::number ( int v )
+Module::number( int v )
 {
     _number = v;
 
     char s[255];
 
-    if ( v > 0 && !is_default() )
-	snprintf( s, sizeof(s), "%s.%i", base_label(), v );
+    if ( v > 0 && !is_default ( ) )
+        snprintf ( s, sizeof (s ), "%s.%i", base_label ( ), v );
     else
-	snprintf( s, sizeof(s), "%s", base_label() );
-    
-    copy_label( s );
+        snprintf ( s, sizeof (s ), "%s", base_label ( ) );
+
+    copy_label ( s );
 }
 
 void
-Module::base_label ( const char *s )
+Module::base_label( const char *s )
 {
     if ( _base_label )
-	free( _base_label );
+        free ( _base_label );
 
     _base_label = NULL;
 
     if ( s )
-	_base_label = strdup(s);
+        _base_label = strdup ( s );
 }
 
-
 void
-Module::Port::disconnect_from_strip ( const Mixer_Strip *o )
+Module::Port::disconnect_from_strip( const Mixer_Strip *o )
 {
-    for ( std::list<Module::Port*>::iterator i = _connected.begin(); i != _connected.end();  )
+    for ( std::list<Module::Port*>::iterator i = _connected.begin ( ); i != _connected.end ( ); )
     {
         Module::Port *p = *i;
 
-	++i;			/* iterator trick */
-	
-        if ( p->module()->chain()->strip() == o )
+        ++i; /* iterator trick */
+
+        if ( p->module ( )->chain ( )->strip ( ) == o )
         {
-            disconnect(p);
+            disconnect ( p );
         }
     }
 }
 
 const char *
-Module::Port::osc_number_path ( void )
+Module::Port::osc_number_path( void )
 {
-    if ( ! _scaled_signal || !_scaled_signal->path() )
+    if ( !_scaled_signal || !_scaled_signal->path ( ) )
         return NULL;
 
-    int n = _module->chain()->strip()->number();
+    int n = _module->chain ( )->strip ( )->number ( );
 
     if ( _by_number_path && n == _by_number_number )
         return _by_number_path;
 
     if ( _by_number_path )
-        free( _by_number_path );
+        free ( _by_number_path );
 
     char *rem;
     char *client_name;
     char *strip_name;
 
-    std::string s_scaled_signal_path = _scaled_signal->path();
+    std::string s_scaled_signal_path = _scaled_signal->path ( );
 
     // remove leading '/' so sscanf below will work - necessary since liblo now requires leading '/'
-    s_scaled_signal_path.erase(0, 1);
+    s_scaled_signal_path.erase ( 0, 1 );
 
-    if ( 3 != sscanf( s_scaled_signal_path.c_str(), "%m[^/]/strip/%m[^/]/%m[^\n]", &client_name, &strip_name, &rem ) )
+    if ( 3 != sscanf ( s_scaled_signal_path.c_str ( ), "%m[^/]/strip/%m[^/]/%m[^\n]", &client_name, &strip_name, &rem ) )
     {
         return NULL;
     }
 
-    free( strip_name );
+    free ( strip_name );
 
     char *path;
-    asprintf( &path, "%s/strip#/%i/%s", client_name, n, rem );
+    asprintf ( &path, "%s/strip#/%i/%s", client_name, n, rem );
 
-    free( client_name );
-    free( rem );
-    
+    free ( client_name );
+    free ( rem );
+
     _by_number_path = path;
     _by_number_number = n;
 
@@ -423,23 +419,23 @@ Module::Port::osc_number_path ( void )
 }
 
 void
-Module::Port::send_feedback ( bool force )
+Module::Port::send_feedback( bool force )
 {
     if ( !force && !_pending_feedback )
-	return;
-    
-    float f = control_value();
+        return;
+
+    float f = control_value ( );
 
     if ( hints.ranged )
     {
         // scale value to range.
-        
+
         float scale = hints.maximum - hints.minimum;
         float offset = hints.minimum;
-        
-        f =  ( f - offset ) / scale;
+
+        f = ( f - offset ) / scale;
     }
-    
+
     if ( f > 1.0f )
         f = 1.0f;
     else if ( f < 0.0f )
@@ -452,164 +448,164 @@ Module::Port::send_feedback ( bool force )
     /* unsigned long long ms = (t.tv_sec * 1000 + ( t.tv_nsec / 1000000 )); */
     /* if ( ms - _feedback_milliseconds < 1000 / 30 ) */
     /* 	return; */
-    
+
     /* _feedback_milliseconds = ms; */
-		 
+
     if ( _scaled_signal )
     {
-	/* if ( fabsf( _feedback_value - f ) > (1.0f / 128.0f) ) */
-	{
+        /* if ( fabsf( _feedback_value - f ) > (1.0f / 128.0f) ) */
+        {
             /* only send feedback if value has changed significantly since the last time we sent it. */
-	    /* DMESSAGE( "signal value: %f, controL_value: %f", _scaled_signal->value(), f ); */
+            /* DMESSAGE( "signal value: %f, controL_value: %f", _scaled_signal->value(), f ); */
             /* send feedback for by_name signal */
-	    mixer->osc_endpoint->send_feedback( _scaled_signal->path(), f, force );
-        
-            /* send feedback for by number signal */
-	    mixer->osc_endpoint->send_feedback( osc_number_path(), f, force );
-	
-	    /* _feedback_value = f; */
+            mixer->osc_endpoint->send_feedback ( _scaled_signal->path ( ), f, force );
 
-	    _pending_feedback = false;
-	    /* _scaled_signal->value( f ); */
+            /* send feedback for by number signal */
+            mixer->osc_endpoint->send_feedback ( osc_number_path ( ), f, force );
+
+            /* _feedback_value = f; */
+
+            _pending_feedback = false;
+            /* _scaled_signal->value( f ); */
         }
     }
 }
 
 void
-Module::schedule_feedback ( void )
+Module::schedule_feedback( void )
 {
-    for ( int i = 0; i < ncontrol_inputs(); i++ )
-        control_input[i].schedule_feedback();
+    for ( int i = 0; i < ncontrol_inputs ( ); i++ )
+        control_input[i].schedule_feedback ( );
 }
 
 void
-Module::send_feedback ( bool force )
+Module::send_feedback( bool force )
 {
-    for ( int i = 0; i < ncontrol_inputs(); i++ )
-        control_input[i].send_feedback(force);
+    for ( int i = 0; i < ncontrol_inputs ( ); i++ )
+        control_input[i].send_feedback ( force );
 }
 
 void
-Module::handle_control_changed ( Module::Port *p )
+Module::handle_control_changed( Module::Port *p )
 {
     if ( _editor )
         _editor->handle_control_changed ( p );
 
     // redraw if bypass state changed
-    if (bypassable() && !control_input.empty())
+    if ( bypassable ( ) && !control_input.empty ( ) )
     {
-        if(p == &control_input[control_input.size() - 1])
+        if ( p == &control_input[control_input.size ( ) - 1] )
         {
-            if ( !strcmp( "dsp/bypass", p->name()) )
+            if ( !strcmp ( "dsp/bypass", p->name ( ) ) )
             {
-                redraw();
-                p->schedule_feedback();
+                redraw ( );
+                p->schedule_feedback ( );
                 return;
             }
         }
     }
 
 #if defined(LV2_SUPPORT) || defined(CLAP_SUPPORT) || defined(VST2_SUPPORT) || defined(VST3_SUPPORT)
-    Module *m = p->module();
+    Module *m = p->module ( );
 #endif
 
 #ifdef LV2_SUPPORT
-    if (m->_plug_type == Type_LV2)
+    if ( m->_plug_type == Type_LV2 )
     {
-        if(m->_is_from_custom_ui)
+        if ( m->_is_from_custom_ui )
         {
-          //  DMESSAGE("Received control from custom UI");
+            //  DMESSAGE("Received control from custom UI");
             m->_is_from_custom_ui = false;
         }
         else
         {
-            LV2_Plugin *pm = static_cast<LV2_Plugin *> (m);
+            LV2_Plugin *pm = static_cast<LV2_Plugin *> ( m );
 
-            int i = m->control_input_port_index( p );
-            float value = p->control_value();
-            DMESSAGE("Port_index = %d: Value = %f", i, value);
-            pm->send_to_custom_ui(i, sizeof(float), 0, &value); // 0 = float type
+            int i = m->control_input_port_index ( p );
+            float value = p->control_value ( );
+            DMESSAGE ( "Port_index = %d: Value = %f", i, value );
+            pm->send_to_custom_ui ( i, sizeof (float ), 0, &value ); // 0 = float type
         }
     }
 #endif
 #ifdef CLAP_SUPPORT
-    if (m->_plug_type == Type_CLAP)
+    if ( m->_plug_type == Type_CLAP )
     {
-        if(m->_is_from_custom_ui)
+        if ( m->_is_from_custom_ui )
         {
-          //  DMESSAGE("Received control from custom UI");
+            //  DMESSAGE("Received control from custom UI");
             m->_is_from_custom_ui = false;
         }
         else
         {
-            CLAP_Plugin *pm = static_cast<CLAP_Plugin *> (m);
+            CLAP_Plugin *pm = static_cast<CLAP_Plugin *> ( m );
 
             uint32_t param_id = p->hints.parameter_id;
-            float value = p->control_value();
-            DMESSAGE("CLAP Param ID = %d: Value = %f", param_id, value);
-            pm->setParameter(param_id, value);
+            float value = p->control_value ( );
+            DMESSAGE ( "CLAP Param ID = %d: Value = %f", param_id, value );
+            pm->setParameter ( param_id, value );
         }
     }
 #endif
 #ifdef VST2_SUPPORT
-    if (m->_plug_type == Type_VST2)
+    if ( m->_plug_type == Type_VST2 )
     {
-        if(m->_is_from_custom_ui)
+        if ( m->_is_from_custom_ui )
         {
-          //  DMESSAGE("Received control from custom UI");
+            //  DMESSAGE("Received control from custom UI");
             m->_is_from_custom_ui = false;
         }
         else
         {
-            VST2_Plugin *pm = static_cast<VST2_Plugin *> (m);
+            VST2_Plugin *pm = static_cast<VST2_Plugin *> ( m );
 
             uint32_t iIndex = p->hints.plug_port_index;
-            float value = p->control_value();
-            
-            if(p->hints.type == Port::Hints::LV2_INTEGER)
+            float value = p->control_value ( );
+
+            if ( p->hints.type == Port::Hints::LV2_INTEGER )
             {
-                value = value / float(p->hints.maximum - p->hints.minimum);
+                value = value / float(p->hints.maximum - p->hints.minimum );
             }
-            
-            DMESSAGE("VST2 Param ID = %d: Value = %f", iIndex, value);
-            pm->setParameter(iIndex, value);
+
+            DMESSAGE ( "VST2 Param ID = %d: Value = %f", iIndex, value );
+            pm->setParameter ( iIndex, value );
         }
     }
 #endif
 #ifdef VST3_SUPPORT
-    if (m->_plug_type == Type_VST3)
+    if ( m->_plug_type == Type_VST3 )
     {
-        if(m->_is_from_custom_ui)
+        if ( m->_is_from_custom_ui )
         {
-          //  DMESSAGE("Received control from custom UI");
+            //  DMESSAGE("Received control from custom UI");
             m->_is_from_custom_ui = false;
         }
         else
         {
-            VST3_Plugin *pm = static_cast<VST3_Plugin *> (m);
+            VST3_Plugin *pm = static_cast<VST3_Plugin *> ( m );
 
             uint32_t param_id = p->hints.parameter_id;
             float value = 0.0f;
 
             // VST3 only receives integer in float normalized ranges 0.0 to 1.0.
             // So do the conversion to float normalized here.
-            if(p->hints.type == Port::Hints::INTEGER)
+            if ( p->hints.type == Port::Hints::INTEGER )
             {
-                float tmp = p->control_value();
-                value = tmp / float(p->hints.maximum);
+                float tmp = p->control_value ( );
+                value = tmp / float(p->hints.maximum );
             }
             else
             {
-                value = p->control_value();
+                value = p->control_value ( );
             }
 
-            pm->updateParam(param_id, value);
+            pm->updateParam ( param_id, value );
         }
     }
-    
+
 #endif
-    p->schedule_feedback();
-    
+    p->schedule_feedback ( );
+
     /* DMESSAGE("Control changed"); */
     /* p->send_feedback(false); */
 }
@@ -621,10 +617,11 @@ Module::handle_control_changed ( Module::Port *p )
 /*         return _scaled_signal->connected(); */
 /*     else */
 /*         return false; */
+
 /* } */
 
 char *
-Module::Port::generate_osc_path ()
+Module::Port::generate_osc_path( )
 {
     const Module::Port *p = this;
 
@@ -632,16 +629,16 @@ Module::Port::generate_osc_path ()
 
     // /strip/STRIPNAME/MODULENAME/CONTROLNAME
 
-    if ( ! p->hints.visible && ! p->hints.invisible_with_signals)
+    if ( !p->hints.visible && !p->hints.invisible_with_signals )
     {
         return NULL;
     }
 
-    asprintf( &path, "/strip/%s/%s/%s", module()->chain()->name(), p->module()->label(), p->symbol() );
+    asprintf ( &path, "/strip/%s/%s/%s", module ( )->chain ( )->name ( ), p->module ( )->label ( ), p->symbol ( ) );
 
-    char *s = escape_url( path );
-    
-    free( path );
+    char *s = escape_url ( path );
+
+    free ( path );
 
     path = s;
 
@@ -649,20 +646,20 @@ Module::Port::generate_osc_path ()
 }
 
 void
-Module::Port::handle_signal_connection_state_changed ( OSC::Signal *, void *o )
+Module::Port::handle_signal_connection_state_changed( OSC::Signal *, void *o )
 {
-    ((Module::Port*)o)->module()->redraw();
+    ( ( Module::Port* )o )->module ( )->redraw ( );
 }
 
 void
-Module::Port::change_osc_path ( char *path )
+Module::Port::change_osc_path( char *path )
 {
     if ( path )
     {
         char *scaled_path = path;
         char *unscaled_path = NULL;
 
-        asprintf( &unscaled_path, "%s/unscaled", path );
+        asprintf ( &unscaled_path, "%s/unscaled", path );
 
         if ( NULL == _scaled_signal )
         {
@@ -676,45 +673,44 @@ Module::Port::change_osc_path ( char *path )
                 scaled_default = ( hints.default_value - offset ) / scale;
             }
 
-            _scaled_signal = mixer->osc_endpoint->add_signal( scaled_path,
-                                                              _direction == INPUT ? OSC::Signal::Input : OSC::Signal::Output,
-                                                              0.0, 1.0, scaled_default,
-                                                              &Module::Port::osc_control_change_cv,
-                                                              &Module::Port::osc_control_update_signals,
-                                                              this );
-            _scaled_signal->set_infos(name(), hints.type);
+            _scaled_signal = mixer->osc_endpoint->add_signal ( scaled_path,
+                    _direction == INPUT ? OSC::Signal::Input : OSC::Signal::Output,
+                    0.0, 1.0, scaled_default,
+                    &Module::Port::osc_control_change_cv,
+                    &Module::Port::osc_control_update_signals,
+                    this );
+            _scaled_signal->set_infos ( name ( ), hints.type );
 
-            _scaled_signal->connection_state_callback( handle_signal_connection_state_changed, this );
+            _scaled_signal->connection_state_callback ( handle_signal_connection_state_changed, this );
 
-            _unscaled_signal = mixer->osc_endpoint->add_signal( unscaled_path,
-                                                                _direction == INPUT ? OSC::Signal::Input : OSC::Signal::Output,
-                                                                hints.minimum, hints.maximum, hints.default_value,
-                                                                &Module::Port::osc_control_change_exact,
-                                                                &Module::Port::osc_control_update_signals,
-                                                                this );
-            _unscaled_signal->set_infos(name(), hints.type);
+            _unscaled_signal = mixer->osc_endpoint->add_signal ( unscaled_path,
+                    _direction == INPUT ? OSC::Signal::Input : OSC::Signal::Output,
+                    hints.minimum, hints.maximum, hints.default_value,
+                    &Module::Port::osc_control_change_exact,
+                    &Module::Port::osc_control_update_signals,
+                    this );
+            _unscaled_signal->set_infos ( name ( ), hints.type );
         }
         else
         {
-            DMESSAGE( "Renaming OSC signals" );
+            DMESSAGE ( "Renaming OSC signals" );
 
-            _scaled_signal->rename( scaled_path );
-            _unscaled_signal->rename( unscaled_path );
+            _scaled_signal->rename ( scaled_path );
+            _unscaled_signal->rename ( unscaled_path );
         }
 
-        free( unscaled_path );
+        free ( unscaled_path );
         /* this was path, it's ok to free because it was malloc()'d in generate_osc_path */
-        free( scaled_path );
+        free ( scaled_path );
     }
 }
 
-
-int 
-Module::Port::osc_control_change_exact ( float v, void *user_data )
+int
+Module::Port::osc_control_change_exact( float v, void *user_data )
 {
-    Module::Port *p = (Module::Port*)user_data;
+    Module::Port *p = ( Module::Port* )user_data;
 
-    Fl::lock();
+    Fl::lock ( );
 
     float f = v;
 
@@ -726,20 +722,21 @@ Module::Port::osc_control_change_exact ( float v, void *user_data )
             f = p->hints.minimum;
 
         if ( Hints::BOOLEAN == p->hints.type )
-            f = f > (p->hints.maximum - (p->hints.maximum - p->hints.minimum)) * 0.5f ?
-                p->hints.maximum : 
+            f = f > ( p->hints.maximum - ( p->hints.maximum - p->hints.minimum ) ) * 0.5f ?
+            p->hints.maximum :
                 p->hints.minimum;
     }
 
 
-    p->control_value( f );
+    p->control_value ( f );
 
-    Fl::unlock();
+    Fl::unlock ( );
 
-//    mixer->osc_endpoint->send( lo_message_get_source( msg ), "/reply", path, f );
+    //    mixer->osc_endpoint->send( lo_message_get_source( msg ), "/reply", path, f );
 
     return 0;
 }
+
 /**
  * The function called when OSC message (parameter change) is sent from controller, i.e. generic or
  * from non-timeline-xt or midi-mapper-xt to be scaled to range.
@@ -753,14 +750,14 @@ Module::Port::osc_control_change_exact ( float v, void *user_data )
  * @return 
  *      Always returns 0.
  */
-int 
-Module::Port::osc_control_change_cv ( float v, void *user_data )
+int
+Module::Port::osc_control_change_cv( float v, void *user_data )
 {
-    Module::Port *p = (Module::Port*)user_data;
+    Module::Port *p = ( Module::Port* )user_data;
 
     float f = v;
 
-    Fl::lock();
+    Fl::lock ( );
 
     // clamp value to control voltage range.
     if ( f > 1.0 )
@@ -777,15 +774,15 @@ Module::Port::osc_control_change_cv ( float v, void *user_data )
 
         float scale = p->hints.maximum - p->hints.minimum;
         float offset = p->hints.minimum;
-        
+
         f = ( f * scale ) + offset;
     }
 
-    p->control_value( f );
+    p->control_value ( f );
 
-    Fl::unlock();
+    Fl::unlock ( );
 
-//    mixer->osc_endpoint->send( lo_message_get_source( msg ), "/reply", path, f );
+    //    mixer->osc_endpoint->send( lo_message_get_source( msg ), "/reply", path, f );
 
     return 0;
 }
@@ -800,169 +797,167 @@ Module::Port::osc_control_change_cv ( float v, void *user_data )
  *      Zero on success.
  */
 int
-Module::Port::osc_control_update_signals ( void *user_data )
+Module::Port::osc_control_update_signals( void *user_data )
 {
-    Module::Port *p = (Module::Port*)user_data;
+    Module::Port *p = ( Module::Port* )user_data;
 
-    Fl::lock();
+    Fl::lock ( );
 
-    float f = p->control_value();
+    float f = p->control_value ( );
 
-    if ( p->unscaled_signal() )
+    if ( p->unscaled_signal ( ) )
     {
 
-        p->unscaled_signal()->value_no_callback(f);
+        p->unscaled_signal ( )->value_no_callback ( f );
     }
 
-    if ( p->scaled_signal() && p->hints.ranged)
+    if ( p->scaled_signal ( ) && p->hints.ranged )
     {
         // scale value to range.
 
         float scale = p->hints.maximum - p->hints.minimum;
         float offset = p->hints.minimum;
-        f =  ( f - offset ) / scale;
+        f = ( f - offset ) / scale;
 
         if ( f > 1.0f )
             f = 1.0f;
         else if ( f < 0.0f )
             f = 0.0f;
 
-        p->scaled_signal()->value_no_callback(f);
+        p->scaled_signal ( )->value_no_callback ( f );
     }
 
-    Fl::unlock();
+    Fl::unlock ( );
 
     return 0;
 }
 
-
 void
-Module::set ( Log_Entry &e )
+Module::set( Log_Entry &e )
 {
     /* have to do this before adding to chain... */
 
     int n = -2;
-    
-    for ( int i = 0; i < e.size(); ++i )
+
+    for ( int i = 0; i < e.size ( ); ++i )
     {
         const char *s, *v;
 
-        e.get( i, &s, &v );
+        e.get ( i, &s, &v );
 
-    	if ( ! strcmp(s, ":number" ) )
-	{
-	    n = atoi(v);
-	}
-    }
-    
-    number(n);
-    
-    for ( int i = 0; i < e.size(); ++i )
-    {
-        const char *s, *v;
-
-        e.get( i, &s, &v );
-
-        if ( ! ( strcmp( s, ":is_default" ) ) )
+        if ( !strcmp ( s, ":number" ) )
         {
-            is_default( atoi( v ) );
+            n = atoi ( v );
         }
-        else if ( ! strcmp( s, ":chain" ) )
+    }
+
+    number ( n );
+
+    for ( int i = 0; i < e.size ( ); ++i )
+    {
+        const char *s, *v;
+
+        e.get ( i, &s, &v );
+
+        if ( !( strcmp ( s, ":is_default" ) ) )
+        {
+            is_default ( atoi ( v ) );
+        }
+        else if ( !strcmp ( s, ":chain" ) )
         {
             /* This trickiness is because we may need to know the name of
                our chain before we actually get added to it. */
             unsigned int ii;
-            sscanf( v, "%X", &ii );
-            Chain *t = static_cast<Chain*>(Loggable::find( ii ));
+            sscanf ( v, "%X", &ii );
+            Chain *t = static_cast<Chain*> ( Loggable::find ( ii ) );
 
-            assert( t );
+            assert ( t );
 
-            chain( t );
+            chain ( t );
         }
     }
 
-    for ( int i = 0; i < e.size(); ++i )
+    for ( int i = 0; i < e.size ( ); ++i )
     {
         const char *s, *v;
 
-        e.get( i, &s, &v );
+        e.get ( i, &s, &v );
 
-/*         if ( ! strcmp( s, ":name" ) ) */
-/*             label( v ); */
-        if ( ! strcmp( s, ":parameter_values" ) )
+        /*         if ( ! strcmp( s, ":name" ) ) */
+        /*             label( v ); */
+        if ( !strcmp ( s, ":parameter_values" ) )
         {
-            set_parameters( v );
+            set_parameters ( v );
         }
-        else if ( ! ( strcmp( s, ":active" ) ) )
+        else if ( !( strcmp ( s, ":active" ) ) )
         {
-            bypass( ! atoi( v ) );
+            bypass ( !atoi ( v ) );
         }
-        else if ( ! strcmp( s, ":chain" ) )
+        else if ( !strcmp ( s, ":chain" ) )
         {
             unsigned int ii;
-            sscanf( v, "%X", &ii );
-            Chain *t = static_cast<Chain*>(Loggable::find( ii ));
+            sscanf ( v, "%X", &ii );
+            Chain *t = static_cast<Chain*> ( Loggable::find ( ii ) );
 
-            assert( t );
+            assert ( t );
 
-            t->add( this );
+            t->add ( this );
         }
     }
 }
 
-
 void
-Module::chain ( Chain *v )
+Module::chain( Chain *v )
 {
     if ( _chain != v )
     {
-        DMESSAGE( "Adding module %s in to chain %s", label(), v ? v->name() : "NULL" );
+        DMESSAGE ( "Adding module %s in to chain %s", label ( ), v ? v->name ( ) : "NULL" );
 
-        _chain = v; 
+        _chain = v;
 
-        for ( int i = 0; i < ncontrol_inputs(); ++i )
+        for ( int i = 0; i < ncontrol_inputs ( ); ++i )
         {
-            control_input[i].update_osc_port();
+            control_input[i].update_osc_port ( );
         }
 
         // Publish output control signals and update them when the chain changes.
-        for ( int i = 0; i < ncontrol_outputs(); ++i )
+        for ( int i = 0; i < ncontrol_outputs ( ); ++i )
         {
-            if ( control_output[i].name() != NULL )
-                control_output[i].update_osc_port();
+            if ( control_output[i].name ( ) != NULL )
+                control_output[i].update_osc_port ( );
         }
     }
     else
     {
-        DMESSAGE( "Module %s already belongs to chain %s", label(), v ? v->name() : "NULL" );
+        DMESSAGE ( "Module %s already belongs to chain %s", label ( ), v ? v->name ( ) : "NULL" );
     }
 }
 
 /* return a string serializing this module's parameter settings.  The
    format is 1.0:2.0:... Where 1.0 is the value of the first control
    input, 2.0 is the value of the second control input etc.
-*/
+ */
 char *
-Module::get_parameters ( void ) const
+Module::get_parameters( void ) const
 {
-    int len = control_input.size() * 50;
+    int len = control_input.size ( ) * 50;
 
     /* To have something to return because valgrind indicates invalid read/write
      * if control_input.size() == 0 and new char[ len ] is created with 0 size */
-    if( !control_input.size() )
+    if ( !control_input.size ( ) )
         len = 1;
 
     char *s = new char[ len ];
-    
+
     s[0] = 0;
     char *sp = s;
 
-    if ( control_input.size() )
+    if ( control_input.size ( ) )
     {
-        for ( unsigned int i = 0; i < control_input.size(); ++i )
-            sp += snprintf( sp, len - (sp - s),"%f:", control_input[i].control_value() );
+        for ( unsigned int i = 0; i < control_input.size ( ); ++i )
+            sp += snprintf ( sp, len - ( sp - s ), "%f:", control_input[i].control_value ( ) );
 
-        *(sp - 1) = '\0';
+        *( sp - 1 ) = '\0';
     }
 
     /* DMESSAGE("get_parameters: %s",s); */
@@ -970,13 +965,13 @@ Module::get_parameters ( void ) const
 }
 
 void
-Module::set_parameters ( const char *parameters )
+Module::set_parameters( const char *parameters )
 {
-    char *s = strdup( parameters );
+    char *s = strdup ( parameters );
 
     char *start = s;
     unsigned int i = 0;
-    for ( char *sp = s; ; ++sp )
+    for ( char *sp = s;; ++sp )
     {
         if ( ':' == *sp || '\0' == *sp )
         {
@@ -984,113 +979,112 @@ Module::set_parameters ( const char *parameters )
 
             *sp = '\0';
 
-            DMESSAGE( start );
+            DMESSAGE ( start );
 
-            if ( i < control_input.size() )
-                control_input[i].control_value( atof( start ) );
+            if ( i < control_input.size ( ) )
+                control_input[i].control_value ( atof ( start ) );
             else
             {
-                WARNING( "Module has no parameter at index %i", i );
+                WARNING ( "Module has no parameter at index %i", i );
                 break;
             }
 
             i++;
 
-            if ( '\0' == was  )
+            if ( '\0' == was )
                 break;
 
             start = sp + 1;
         }
     }
 
-    free( s );
+    free ( s );
 }
 
 void
-Module::draw_box ( int tx, int ty, int tw, int th )
+Module::draw_box( int tx, int ty, int tw, int th )
 {
-    fl_color( fl_contrast( FL_FOREGROUND_COLOR, color() ) );
+    fl_color ( fl_contrast ( FL_FOREGROUND_COLOR, color ( ) ) );
 
-    fl_push_clip( tx, ty, tw, th );
+    fl_push_clip ( tx, ty, tw, th );
 
-    Fl_Color c = color();
+    Fl_Color c = color ( );
 
-    if ( bypass() )
-	c = fl_darker(fl_darker(c));
-    
-    if ( ! active_r() )
-        c = fl_inactive( c );
+    if ( bypass ( ) )
+        c = fl_darker ( fl_darker ( c ) );
 
-    int spacing = w() / instances();
-    for ( int i = instances(); i--; )
+    if ( !active_r ( ) )
+        c = fl_inactive ( c );
+
+    int spacing = w ( ) / instances ( );
+    for ( int i = instances ( ); i--; )
     {
-        fl_draw_box( box(), tx + (spacing * i), ty, tw / instances(), th, c );
+        fl_draw_box ( box ( ), tx + ( spacing * i ), ty, tw / instances ( ), th, c );
     }
 
 
-    if ( audio_input.size() && audio_output.size() )
+    if ( audio_input.size ( ) && audio_output.size ( ) )
     {
         /* maybe draw control indicators */
-        if ( control_input.size() )
+        if ( control_input.size ( ) )
         {
-            fl_draw_box( FL_ROUNDED_BOX, tx + 4, ty + 4, 5, 5, is_being_controlled() ? FL_YELLOW : fl_inactive( FL_YELLOW ) );
+            fl_draw_box ( FL_ROUNDED_BOX, tx + 4, ty + 4, 5, 5, is_being_controlled ( ) ? FL_YELLOW : fl_inactive ( FL_YELLOW ) );
 
             /* fl_draw_box( FL_ROUNDED_BOX, tx + 4, ty + th - 8, 5, 5, is_being_controlled_osc() ? FL_YELLOW : fl_inactive( FL_YELLOW ) ); */
         }
 
-        if ( control_output.size() )
-            fl_draw_box( FL_ROUNDED_BOX, tx + tw - 8, ty + 4, 5, 5, is_controlling() ? FL_YELLOW : fl_inactive( FL_YELLOW ) );
+        if ( control_output.size ( ) )
+            fl_draw_box ( FL_ROUNDED_BOX, tx + tw - 8, ty + 4, 5, 5, is_controlling ( ) ? FL_YELLOW : fl_inactive ( FL_YELLOW ) );
     }
 
-    fl_push_clip( tx + Fl::box_dx(box()), ty + Fl::box_dy(box()), tw - Fl::box_dw(box()), th - Fl::box_dh(box()) );
+    fl_push_clip ( tx + Fl::box_dx ( box ( ) ), ty + Fl::box_dy ( box ( ) ), tw - Fl::box_dw ( box ( ) ), th - Fl::box_dh ( box ( ) ) );
 
-    Fl_Group::draw_children();
+    Fl_Group::draw_children ( );
 
-    fl_pop_clip();
+    fl_pop_clip ( );
 
-    if ( focused_r( this ) )
-        draw_focus_frame( tx,ty,tw,th, selection_color() );
+    if ( focused_r ( this ) )
+        draw_focus_frame ( tx, ty, tw, th, selection_color ( ) );
 
-    fl_pop_clip();
+    fl_pop_clip ( );
 }
 
 #include "SpectrumView.H"
 #include "Scanner_Window.H"
 #include <FL/Fl_Double_Window.H>
 
-
 bool
-Module::show_analysis_window ( void )
+Module::show_analysis_window( void )
 {
     /* use a large window for more accuracy at low frequencies */
-    nframes_t enframes = sample_rate() / 2;
+    nframes_t enframes = sample_rate ( ) / 2;
     float *buf = new float[enframes];
 
-    memset( buf, 0, sizeof(float) * enframes );
-    
+    memset ( buf, 0, sizeof (float ) * enframes );
+
     buf[0] = 1;
-       
-    if ( ! get_impulse_response( buf, enframes ) )
+
+    if ( !get_impulse_response ( buf, enframes ) )
     {
         // return false;
     }
-    
-    Fl_Double_Window *w = new Fl_Double_Window( 1000, 500 );
+
+    Fl_Double_Window *w = new Fl_Double_Window ( 1000, 500 );
 
     {
-        SpectrumView * o = new SpectrumView( 25,25, 1000 - 50, 500 - 50, label() );
-        o->labelsize(10);
-        o->align(FL_ALIGN_RIGHT|FL_ALIGN_TOP);
-        o->sample_rate( sample_rate() );
-        o->data( buf, enframes );
+        SpectrumView * o = new SpectrumView ( 25, 25, 1000 - 50, 500 - 50, label ( ) );
+        o->labelsize ( 10 );
+        o->align ( FL_ALIGN_RIGHT | FL_ALIGN_TOP );
+        o->sample_rate ( sample_rate ( ) );
+        o->data ( buf, enframes );
     }
 
-    w->end();
+    w->end ( );
 
-    w->show();
+    w->show ( );
 
-    while ( w->shown() )
-        Fl::wait();
+    while ( w->shown ( ) )
+        Fl::wait ( );
 
     delete w;
 
@@ -1098,46 +1092,46 @@ Module::show_analysis_window ( void )
 }
 
 void
-Module::draw_label ( int tx, int ty, int tw, int th )
+Module::draw_label( int tx, int ty, int tw, int th )
 {
-    bbox( tx, ty, tw, th );
+    bbox ( tx, ty, tw, th );
 
-    if ( ! label() )
+    if ( !label ( ) )
         return;
 
-    char *lab = strdup( label() );
+    char *lab = strdup ( label ( ) );
 
-    Fl_Color c = fl_contrast( FL_FOREGROUND_COLOR, color() );
+    Fl_Color c = fl_contrast ( FL_FOREGROUND_COLOR, color ( ) );
 
-    if ( bypass() )
-	c = fl_darker(c);
+    if ( bypass ( ) )
+        c = fl_darker ( c );
 
     /* fl_color( active_r() && ! bypass() ? c : fl_inactive(c) ); */
 
-    if ( !active_r() )
-	c = fl_inactive(c);
-    
-    fl_font( FL_HELVETICA, labelsize() );
+    if ( !active_r ( ) )
+        c = fl_inactive ( c );
 
-    char *di = strstr( lab, " -" );
-    
-    if ( ! di )
-        di = strstr( lab, "  " );
+    fl_font ( FL_HELVETICA, labelsize ( ) );
+
+    char *di = strstr ( lab, " -" );
+
+    if ( !di )
+        di = strstr ( lab, "  " );
 
     if ( di )
         *di = '\0';
 
-    int LW = fl_width( lab );
+    int LW = fl_width ( lab );
     char *s = NULL;
 
     if ( LW > tw )
     {
         bool initial = true;
-        s = new char[strlen(lab) + 1];
+        s = new char[strlen ( lab ) + 1];
         char *sp = s;
         const char *lp = lab;
 
-        for ( ; *lp; ++lp )
+        for (; *lp; ++lp )
         {
             bool skip = false;
 
@@ -1148,7 +1142,7 @@ Module::draw_label ( int tx, int ty, int tw, int th )
                     skip = false;
                     break;
                 case 'i': case 'e': case 'o': case 'u': case 'a':
-                    skip = ! initial;
+                    skip = !initial;
                     initial = false;
                     break;
                 default:
@@ -1156,20 +1150,20 @@ Module::draw_label ( int tx, int ty, int tw, int th )
                     initial = false;
                     break;
             }
-            
-            if ( ! skip )
-                *(sp++) = *lp;
+
+            if ( !skip )
+                *( sp++ ) = *lp;
         }
-     
+
         *sp = '\0';
-   
+
     }
 
 
-    fl_color( c );
+    fl_color ( c );
 
-    fl_draw( s ? s : lab, tx, ty, tw, th, align() | FL_ALIGN_CLIP );
-    
+    fl_draw ( s ? s : lab, tx, ty, tw, th, align ( ) | FL_ALIGN_CLIP );
+
     /* if ( bypass() ) */
     /* { */
     /*     fl_color( fl_color_add_alpha( fl_color(), 127 )  ); */
@@ -1179,90 +1173,90 @@ Module::draw_label ( int tx, int ty, int tw, int th )
     /* } */
 
 
-    free(lab);
+    free ( lab );
 
     if ( s )
         delete[] s;
 }
 
 void
-Module::insert_menu_cb ( const Fl_Menu_ *menu )
+Module::insert_menu_cb( const Fl_Menu_ *menu )
 {
-    
-    const char * s_picked =  menu->mvalue()->label();
 
-    DMESSAGE("picked = %s", s_picked );
+    const char * s_picked = menu->mvalue ( )->label ( );
+
+    DMESSAGE ( "picked = %s", s_picked );
 
     Module *mod = NULL;
-    
-    if ( !strcmp( s_picked, "Aux" ) )
+
+    if ( !strcmp ( s_picked, "Aux" ) )
     {
-        AUX_Module *jm = new AUX_Module();
-     
+        AUX_Module *jm = new AUX_Module ( );
+
         mod = jm;
     }
-    if ( !strcmp( s_picked, "Spatializer" ) )
+    if ( !strcmp ( s_picked, "Spatializer" ) )
     {
         int n = 0;
-        for ( int i = 0; i < chain()->modules(); i++ )
+        for ( int i = 0; i < chain ( )->modules ( ); i++ )
         {
-            if ( !strcmp( chain()->module(i)->name(), "Spatializer" ) )
+            if ( !strcmp ( chain ( )->module ( i )->name ( ), "Spatializer" ) )
                 n++;
         }
 
         if ( n == 0 )
         {
-            Spatializer_Module *jm = new Spatializer_Module();
-            
-            jm->chain( chain() );
-            jm->initialize();
-            
+            Spatializer_Module *jm = new Spatializer_Module ( );
+
+            jm->chain ( chain ( ) );
+            jm->initialize ( );
+
             mod = jm;
         }
     }
-    else if ( !strcmp( s_picked, "Gain" ) )
-            mod = new Gain_Module();
-    else if ( !strcmp( s_picked, "Meter" ) )
-        mod = new Meter_Module();
-    else if ( !strcmp( s_picked, "Mono Pan" ))
-        mod = new Mono_Pan_Module();
-    else if ( !strcmp( s_picked, "Scan for plugins" )) 
+    else if ( !strcmp ( s_picked, "Gain" ) )
+        mod = new Gain_Module ( );
+    else if ( !strcmp ( s_picked, "Meter" ) )
+        mod = new Meter_Module ( );
+    else if ( !strcmp ( s_picked, "Mono Pan" ) )
+        mod = new Mono_Pan_Module ( );
+    else if ( !strcmp ( s_picked, "Scan for plugins" ) )
     {
         Scanner_Window scanner;
 
-        if(scanner.get_all_plugins())
+        if ( scanner.get_all_plugins ( ) )
         {
             // Clear the cache vector so it will get re-loaded after the scan
             // if they did not cancel
-            g_plugin_cache.clear();
+            g_plugin_cache.clear ( );
         }
 
         return;
     }
-    else if ( !strcmp( s_picked, "Plugin" ))
+    else if ( !strcmp ( s_picked, "Plugin" ) )
     {
-        if (g_plugin_cache.empty())
+        if ( g_plugin_cache.empty ( ) )
         {
             Scanner_Window scanner;
 
-            if(!scanner.load_plugin_cache())
+            if ( !scanner.load_plugin_cache ( ) )
             {
-                fl_alert( "Plugin Cache empty or invalid, please run 'Scan for plugins'");
+                fl_alert ( "Plugin Cache empty or invalid, please run 'Scan for plugins'" );
                 return;
             }
         }
 
-        Picked picked = Plugin_Chooser::plugin_chooser( this->ninputs() );
+        Picked picked = Plugin_Chooser::plugin_chooser ( this->ninputs ( ) );
 
         switch ( picked.plugin_type )
         {
 #ifdef LADSPA_SUPPORT
             case Type_LADSPA:
             {
-                LADSPA_Plugin *m = new LADSPA_Plugin();
-                if(!m->load_plugin( picked ))
+                LADSPA_Plugin *m = new LADSPA_Plugin ( );
+                if ( !m->load_plugin ( picked ) )
                 {
-                    fl_alert( "%s could not be loaded", m->base_label() );
+                    fl_alert ( "%s could not be loaded", m->base_label ( ) );
                     delete m;
                     return;
                 }
@@ -1274,10 +1268,10 @@ Module::insert_menu_cb ( const Fl_Menu_ *menu )
 #ifdef LV2_SUPPORT
             case Type_LV2:
             {
-                LV2_Plugin *m = new LV2_Plugin();
-                if(!m->load_plugin( picked ))
+                LV2_Plugin *m = new LV2_Plugin ( );
+                if ( !m->load_plugin ( picked ) )
                 {
-                    fl_alert( "%s could not be loaded", m->base_label() );
+                    fl_alert ( "%s could not be loaded", m->base_label ( ) );
                     delete m;
                     return;
                 }
@@ -1289,10 +1283,10 @@ Module::insert_menu_cb ( const Fl_Menu_ *menu )
 #ifdef CLAP_SUPPORT
             case Type_CLAP:
             {
-                CLAP_Plugin *m = new CLAP_Plugin();
-                if(!m->load_plugin( picked ))
+                CLAP_Plugin *m = new CLAP_Plugin ( );
+                if ( !m->load_plugin ( picked ) )
                 {
-                    fl_alert( "%s could not be loaded", m->base_label() );
+                    fl_alert ( "%s could not be loaded", m->base_label ( ) );
                     delete m;
                     return;
                 }
@@ -1304,10 +1298,10 @@ Module::insert_menu_cb ( const Fl_Menu_ *menu )
 #ifdef VST2_SUPPORT
             case Type_VST2:
             {
-                VST2_Plugin *m = new VST2_Plugin();
-                if(!m->load_plugin( picked ))
+                VST2_Plugin *m = new VST2_Plugin ( );
+                if ( !m->load_plugin ( picked ) )
                 {
-                    fl_alert( "%s could not be loaded", m->base_label() );
+                    fl_alert ( "%s could not be loaded", m->base_label ( ) );
                     delete m;
                     return;
                 }
@@ -1319,10 +1313,10 @@ Module::insert_menu_cb ( const Fl_Menu_ *menu )
 #ifdef VST3_SUPPORT
             case Type_VST3:
             {
-                VST3_Plugin *m = new VST3_Plugin();
-                if(!m->load_plugin( picked ))
+                VST3_Plugin *m = new VST3_Plugin ( );
+                if ( !m->load_plugin ( picked ) )
                 {
-                    fl_alert( "%s could not be loaded", m->base_label() );
+                    fl_alert ( "%s could not be loaded", m->base_label ( ) );
                     delete m;
                     return;
                 }
@@ -1340,190 +1334,190 @@ Module::insert_menu_cb ( const Fl_Menu_ *menu )
 
     if ( mod )
     {
-	mod->number(-1);
-	
-        if ( ! chain()->insert( this, mod ) )
+        mod->number ( -1 );
+
+        if ( !chain ( )->insert ( this, mod ) )
         {
-            fl_alert( "Cannot insert this module at this point in the chain" );
+            fl_alert ( "Cannot insert this module at this point in the chain" );
             delete mod;
             return;
         }
 
-        redraw();
+        redraw ( );
     }
 }
 
 void
-Module::insert_menu_cb ( Fl_Widget *w, void *v )
+Module::insert_menu_cb( Fl_Widget *w, void *v )
 {
-    ((Module*)v)->insert_menu_cb( (Fl_Menu_*) w );
+    ( (Module*) v )->insert_menu_cb ( (Fl_Menu_*) w );
 }
 
 void
-Module::menu_cb ( const Fl_Menu_ *m )
+Module::menu_cb( const Fl_Menu_ *m )
 {
     char picked[256];
 
-    if ( ! m->mvalue() || m->mvalue()->flags & FL_SUBMENU_POINTER || m->mvalue()->flags & FL_SUBMENU )
+    if ( !m->mvalue ( ) || m->mvalue ( )->flags & FL_SUBMENU_POINTER || m->mvalue ( )->flags & FL_SUBMENU )
         return;
 
-    strncpy( picked, m->mvalue()->label(), sizeof( picked ) -1 );
+    strncpy ( picked, m->mvalue ( )->label ( ), sizeof ( picked ) - 1 );
 
-//    m->item_pathname( picked, sizeof( picked ) );
+    //    m->item_pathname( picked, sizeof( picked ) );
 
-    DMESSAGE( "%s", picked );
+    DMESSAGE ( "%s", picked );
 
     /* FIXME check this - I believe this was supposed to log the current state for undo, redo but
        the mixer does not have any undo, redo?? Commented out since it does not work with LV2
        save state and triggers a save any time you open the parameter editor window. */
     // Logger log( this );
 
-    if ( ! strcmp( picked, "Edit Parameters" ) )
+    if ( !strcmp ( picked, "Edit Parameters" ) )
     {
-        command_open_parameter_editor();
+        command_open_parameter_editor ( );
     }
-    else if ( ! strcmp( picked, "Bypass" ) )
+    else if ( !strcmp ( picked, "Bypass" ) )
     {
-        if ( ! bypassable() )
+        if ( !bypassable ( ) )
         {
-            fl_alert( "Due to its channel configuration, this module cannot be bypassed." );
+            fl_alert ( "Due to its channel configuration, this module cannot be bypassed." );
         }
         else
         {
-            bypass( !bypass() );
-            redraw();
+            bypass ( !bypass ( ) );
+            redraw ( );
         }
     }
-    else if ( ! strcmp( picked, "Cut" ) )
+    else if ( !strcmp ( picked, "Cut" ) )
     {
-        if ( copy() )
+        if ( copy ( ) )
         {
-            if(chain()->remove( this ))
-                Fl::delete_widget( this );
+            if ( chain ( )->remove ( this ) )
+                Fl::delete_widget ( this );
         }
     }
-    else if ( ! strcmp( picked, "Copy" ) )
+    else if ( !strcmp ( picked, "Copy" ) )
     {
-        copy();
+        copy ( );
     }
-    else if ( ! strcmp( picked, "Paste" ) )
+    else if ( !strcmp ( picked, "Paste" ) )
     {
-        paste_before();
+        paste_before ( );
     }
-    else if ( ! strcmp( picked, "Show Analysis" ) )
+    else if ( !strcmp ( picked, "Show Analysis" ) )
     {
-        show_analysis_window();
+        show_analysis_window ( );
     }
-    else if ( ! strcmp( picked, "Remove" ) )
-        command_remove();
+    else if ( !strcmp ( picked, "Remove" ) )
+        command_remove ( );
 }
 
 void
-Module::menu_cb ( Fl_Widget *w, void *v )
+Module::menu_cb( Fl_Widget *w, void *v )
 {
-    ((Module*)v)->menu_cb( (Fl_Menu_*) w );
+    ( (Module*) v )->menu_cb ( (Fl_Menu_*) w );
 }
 
 /** build the context menu */
 Fl_Menu_Button &
-Module::menu ( void ) const
+Module::menu( void ) const
 {
-    static Fl_Menu_Button m( 0, 0, 0, 0, "Module" );
+    static Fl_Menu_Button m ( 0, 0, 0, 0, "Module" );
     static Fl_Menu_Button *insert_menu = NULL;
 
-    if ( ! insert_menu )
+    if ( !insert_menu )
     {
-        insert_menu = new Fl_Menu_Button( 0, 0, 0, 0 );
+        insert_menu = new Fl_Menu_Button ( 0, 0, 0, 0 );
 
-        insert_menu->add( "Gain", 0, 0 );
-        insert_menu->add( "Meter", 0, 0 );
-        insert_menu->add( "Mono Pan", 0, 0 );
-        insert_menu->add( "Aux", 0, 0 );
-        insert_menu->add( "Spatializer", 0, 0 );
-        insert_menu->add( "Plugin", 0, 0 );
-        insert_menu->add( "Scan for plugins", 0, 0 );
+        insert_menu->add ( "Gain", 0, 0 );
+        insert_menu->add ( "Meter", 0, 0 );
+        insert_menu->add ( "Mono Pan", 0, 0 );
+        insert_menu->add ( "Aux", 0, 0 );
+        insert_menu->add ( "Spatializer", 0, 0 );
+        insert_menu->add ( "Plugin", 0, 0 );
+        insert_menu->add ( "Scan for plugins", 0, 0 );
 
-        insert_menu->callback( &Module::insert_menu_cb, (void*)this );
+        insert_menu->callback ( &Module::insert_menu_cb, (void*) this );
     }
 
-    m.clear();
+    m.clear ( );
 
-    m.add( "Insert", 0, &Module::menu_cb, (void*)this, 0);
-    m.add( "Insert", 0, &Module::menu_cb, const_cast< Fl_Menu_Item *>( insert_menu->menu() ), FL_SUBMENU_POINTER );
-    m.add( "Edit Parameters", FL_CTRL + ' ', &Module::menu_cb, (void*)this, 0 );
-    m.add( "Show Analysis", 's', &Module::menu_cb, (void*)this, 0);
-    m.add( "Bypass",   'b', &Module::menu_cb, (void*)this, FL_MENU_TOGGLE | ( bypass() ? FL_MENU_VALUE : 0 ) );
-    m.add( "Cut", FL_CTRL + 'x', &Module::menu_cb, (void*)this, is_default() ? FL_MENU_INACTIVE : 0 );
-    m.add( "Copy", FL_CTRL + 'c', &Module::menu_cb, (void*)this, is_default() ? FL_MENU_INACTIVE : 0 );
-    m.add( "Paste", FL_CTRL + 'v', &Module::menu_cb, (void*)this, _copied_module_empty ? 0 : FL_MENU_INACTIVE );
+    m.add ( "Insert", 0, &Module::menu_cb, (void*) this, 0 );
+    m.add ( "Insert", 0, &Module::menu_cb, const_cast<Fl_Menu_Item *> ( insert_menu->menu ( ) ), FL_SUBMENU_POINTER );
+    m.add ( "Edit Parameters", FL_CTRL + ' ', &Module::menu_cb, (void*) this, 0 );
+    m.add ( "Show Analysis", 's', &Module::menu_cb, (void*) this, 0 );
+    m.add ( "Bypass", 'b', &Module::menu_cb, (void*) this, FL_MENU_TOGGLE | ( bypass ( ) ? FL_MENU_VALUE : 0 ) );
+    m.add ( "Cut", FL_CTRL + 'x', &Module::menu_cb, (void*) this, is_default ( ) ? FL_MENU_INACTIVE : 0 );
+    m.add ( "Copy", FL_CTRL + 'c', &Module::menu_cb, (void*) this, is_default ( ) ? FL_MENU_INACTIVE : 0 );
+    m.add ( "Paste", FL_CTRL + 'v', &Module::menu_cb, (void*) this, _copied_module_empty ? 0 : FL_MENU_INACTIVE );
 
-    m.add( "Remove",  FL_Delete, &Module::menu_cb, (void*)this );
+    m.add ( "Remove", FL_Delete, &Module::menu_cb, (void*) this );
 
-//    menu_set_callback( menu, &Module::menu_cb, (void*)this );
-    m.callback( &Module::insert_menu_cb, (void*)this );
+    //    menu_set_callback( menu, &Module::menu_cb, (void*)this );
+    m.callback ( &Module::insert_menu_cb, (void*) this );
 
     return m;
 }
 
 void
-Module::handle_chain_name_changed ( )
+Module::handle_chain_name_changed( )
 {
     // Flag to tell Module_Parameter_Editor that the OSC path tooltip needs update
     _has_name_change = true;
 
     // pass it along to our connected Controller_Modules, if any.
-    for ( int i = 0; i < ncontrol_inputs(); ++i )
+    for ( int i = 0; i < ncontrol_inputs ( ); ++i )
     {
-        if ( control_input[i].connected() )
-            control_input[i].connected_port()->module()->handle_chain_name_changed();
-    
-        control_input[i].update_osc_port();
+        if ( control_input[i].connected ( ) )
+            control_input[i].connected_port ( )->module ( )->handle_chain_name_changed ( );
+
+        control_input[i].update_osc_port ( );
     }
 
     // Publish output control signals and update them when the chain changes.
-    for ( int i = 0; i < ncontrol_outputs(); ++i )
+    for ( int i = 0; i < ncontrol_outputs ( ); ++i )
     {
-        if ( control_output[i].name() != NULL )
+        if ( control_output[i].name ( ) != NULL )
         {
-            if ( control_output[i].connected() )
-                control_output[i].connected_port()->module()->handle_chain_name_changed();
+            if ( control_output[i].connected ( ) )
+                control_output[i].connected_port ( )->module ( )->handle_chain_name_changed ( );
 
-            control_output[i].update_osc_port();
+            control_output[i].update_osc_port ( );
         }
     }
 
-    if ( ! chain()->strip()->group()->single() )
+    if ( !chain ( )->strip ( )->group ( )->single ( ) )
     {
         /* we have to rename our JACK ports... */
-        for ( unsigned int i = 0; i < aux_audio_input.size(); i++ )
+        for ( unsigned int i = 0; i < aux_audio_input.size ( ); i++ )
         {
-            aux_audio_input[i].jack_port()->trackname( chain()->name() );
-            aux_audio_input[i].jack_port()->rename();
+            aux_audio_input[i].jack_port ( )->trackname ( chain ( )->name ( ) );
+            aux_audio_input[i].jack_port ( )->rename ( );
         }
-        for ( unsigned int i = 0; i < aux_audio_output.size(); i++ )
+        for ( unsigned int i = 0; i < aux_audio_output.size ( ); i++ )
         {
-            aux_audio_output[i].jack_port()->trackname( chain()->name() );
-            aux_audio_output[i].jack_port()->rename();
+            aux_audio_output[i].jack_port ( )->trackname ( chain ( )->name ( ) );
+            aux_audio_output[i].jack_port ( )->rename ( );
         }
     }
 }
 
 int
-Module::handle ( int m )
+Module::handle( int m )
 {
     static unsigned long _event_state = 0;
 
-    unsigned long evstate = Fl::event_state();
+    unsigned long evstate = Fl::event_state ( );
 
     switch ( m )
     {
         case FL_ENTER:
-//            Fl::focus(this);
+            //            Fl::focus(this);
         case FL_LEAVE:
             return 1;
     }
 
-    if ( Fl_Group::handle( m ) )
+    if ( Fl_Group::handle ( m ) )
         return 1;
 
     switch ( m )
@@ -1533,22 +1527,22 @@ Module::handle ( int m )
             /* For LV2/CLAP/VST we show the custom UI if available with the space bar. The generic
                UI is shown with CTRL space. If no custom UI then either space or CTRL space opens
                the generic UI. */
-            if ( !( Fl::event_key(FL_Control_L) ) &&  !( Fl::event_key(FL_Control_R) ) && (Fl::event_key(32)) ) // 32 == space bar
+            if ( !( Fl::event_key ( FL_Control_L ) ) && !( Fl::event_key ( FL_Control_R ) ) && ( Fl::event_key ( 32 ) ) ) // 32 == space bar
             {
-                open_plugin_ui();
+                open_plugin_ui ( );
                 return 1;
             }
 
-            if ( Fl::event_key() == FL_Menu )
+            if ( Fl::event_key ( ) == FL_Menu )
             {
-                menu_popup( &menu(), x(), y() );
+                menu_popup ( &menu ( ), x ( ), y ( ) );
                 return 1;
             }
             else
-                return menu().test_shortcut() != 0;
+                return menu ( ).test_shortcut ( ) != 0;
         }
-        case FL_PUSH:     
-            take_focus();
+        case FL_PUSH:
+            take_focus ( );
             _event_state = evstate;
             return 1;
             // if ( Fl::visible_focus() && handle( FL_FOCUS )) Fl::focus(this);
@@ -1560,39 +1554,39 @@ Module::handle ( int m )
             unsigned long e = _event_state;
             _event_state = 0;
 
-            if ( ! Fl::event_inside( this ) )
+            if ( !Fl::event_inside ( this ) )
                 return 1;
 
             if ( ( e & FL_BUTTON1 ) && ( e & FL_CTRL ) )
             {
-                Fl::focus(this);
+                Fl::focus ( this );
                 return 1;
             }
             else if ( e & FL_BUTTON1 )
             {
-                open_plugin_ui();
+                open_plugin_ui ( );
                 return 1;
             }
             else if ( e & FL_BUTTON3 && e & FL_CTRL )
             {
-                command_remove();
+                command_remove ( );
                 return 1;
             }
             else if ( e & FL_BUTTON3 )
             {
-                menu_popup( &menu() );
+                menu_popup ( &menu ( ) );
                 return 1;
             }
             else if ( e & FL_BUTTON2 )
             {
-                if ( !bypassable() )
+                if ( !bypassable ( ) )
                 {
-                    fl_alert( "Due to its channel configuration, this module cannot be bypassed." );
+                    fl_alert ( "Due to its channel configuration, this module cannot be bypassed." );
                 }
                 else
                 {
-                    bypass( !bypass() );
-                    redraw();
+                    bypass ( !bypass ( ) );
+                    redraw ( );
                 }
                 return 1;
             }
@@ -1605,7 +1599,7 @@ Module::handle ( int m )
         }
         case FL_FOCUS:
         case FL_UNFOCUS:
-            redraw();
+            redraw ( );
             return 1;
     }
 
@@ -1614,144 +1608,145 @@ Module::handle ( int m )
 
 /*************/
 /* AUX Ports */
+
 /*************/
 
 
 static char *
-generate_port_name ( const char *aux, int direction, int n )
+generate_port_name( const char *aux, int direction, int n )
 {
     char *s;
-    asprintf( &s, "%s%s%s-%i",
-              aux ? aux : "",
-              aux ? "/" : "",
-              direction == JACK::Port::Input ? "in" : "out",
-              n + 1 );
+    asprintf ( &s, "%s%s%s-%i",
+            aux ? aux : "",
+            aux ? "/" : "",
+            direction == JACK::Port::Input ? "in" : "out",
+            n + 1 );
 
     return s;
 }
 
 static void
-jack_port_activation_error ( const JACK::Port *p )
+jack_port_activation_error( const JACK::Port *p )
 {
-    fl_alert( "Could not activate JACK port \"%s\"", p->name() );
+    fl_alert ( "Could not activate JACK port \"%s\"", p->name ( ) );
 }
 
 /* freeze/disconnect all jack ports--used when changing groups */
 void
-Module::freeze_ports ( void )
+Module::freeze_ports( void )
 {
     // pass it along to our connected Controller_Modules, if any.
-    for ( int i = 0; i < ncontrol_inputs(); ++i )
+    for ( int i = 0; i < ncontrol_inputs ( ); ++i )
     {
-        if ( control_input[i].connected() )
-	{
-	    if ( ! control_input[i].connected_port()->module()  )
-	    {
-		DWARNING( "Programming error. Connected port has null module. %s %s",
-			 
-			 name(),
-			 control_input[i].connected_port()->name());
-	    }
-	    else
-	    {
-		control_input[i].connected_port()->module()->freeze_ports();
-	    }
-	}
+        if ( control_input[i].connected ( ) )
+        {
+            if ( !control_input[i].connected_port ( )->module ( ) )
+            {
+                DWARNING ( "Programming error. Connected port has null module. %s %s",
+
+                        name ( ),
+                        control_input[i].connected_port ( )->name ( ) );
+            }
+            else
+            {
+                control_input[i].connected_port ( )->module ( )->freeze_ports ( );
+            }
+        }
     }
 
-    for ( unsigned int i = 0; i < aux_audio_input.size(); ++i )
-    {   
-        aux_audio_input[i].jack_port()->freeze();
-        aux_audio_input[i].jack_port()->shutdown();
+    for ( unsigned int i = 0; i < aux_audio_input.size ( ); ++i )
+    {
+        aux_audio_input[i].jack_port ( )->freeze ( );
+        aux_audio_input[i].jack_port ( )->shutdown ( );
     }
 
-    for ( unsigned int i = 0; i < aux_audio_output.size(); ++i )
+    for ( unsigned int i = 0; i < aux_audio_output.size ( ); ++i )
     {
-        aux_audio_output[i].jack_port()->freeze();
-        aux_audio_output[i].jack_port()->shutdown();
+        aux_audio_output[i].jack_port ( )->freeze ( );
+        aux_audio_output[i].jack_port ( )->shutdown ( );
     }
 }
 
 /* rename and thaw all jack ports--used when changing groups */
 void
-Module::thaw_ports ( void )
+Module::thaw_ports( void )
 {
     // pass it along to our connected Controller_Modules, if any.
-    for ( int i = 0; i < ncontrol_inputs(); ++i )
+    for ( int i = 0; i < ncontrol_inputs ( ); ++i )
     {
-        if ( control_input[i].connected() )
-            control_input[i].connected_port()->module()->thaw_ports();
+        if ( control_input[i].connected ( ) )
+            control_input[i].connected_port ( )->module ( )->thaw_ports ( );
     }
 
-    const char *trackname = chain()->strip()->group()->single() ? NULL : chain()->name();
+    const char *trackname = chain ( )->strip ( )->group ( )->single ( ) ? NULL : chain ( )->name ( );
 
-    for ( unsigned int i = 0; i < aux_audio_input.size(); ++i )
-    {   
+    for ( unsigned int i = 0; i < aux_audio_input.size ( ); ++i )
+    {
         /* if we're entering a group we need to add the chain name
          * prefix and if we're leaving one, we need to remove it */
-        
-        aux_audio_input[i].jack_port()->client( chain()->client() );
-        aux_audio_input[i].jack_port()->trackname( trackname );
-        aux_audio_input[i].jack_port()->thaw();
+
+        aux_audio_input[i].jack_port ( )->client ( chain ( )->client ( ) );
+        aux_audio_input[i].jack_port ( )->trackname ( trackname );
+        aux_audio_input[i].jack_port ( )->thaw ( );
     }
 
-    for ( unsigned int i = 0; i < aux_audio_output.size(); ++i )
+    for ( unsigned int i = 0; i < aux_audio_output.size ( ); ++i )
     {
         /* if we're entering a group we won't actually be using our
          * JACK output ports anymore, just mixing into the group outputs */
-        aux_audio_output[i].jack_port()->client( chain()->client() );
-        aux_audio_output[i].jack_port()->trackname( trackname );
-        aux_audio_output[i].jack_port()->thaw();
+        aux_audio_output[i].jack_port ( )->client ( chain ( )->client ( ) );
+        aux_audio_output[i].jack_port ( )->trackname ( trackname );
+        aux_audio_output[i].jack_port ( )->thaw ( );
 
-        mixer->maybe_auto_connect_output( &aux_audio_output[i] );
+        mixer->maybe_auto_connect_output ( &aux_audio_output[i] );
     }
 }
 
 void
-Module::destroy_connected_controller_module()
+Module::destroy_connected_controller_module( )
 {
-    for ( unsigned int i = 0; i < control_input.size(); ++i )
+    for ( unsigned int i = 0; i < control_input.size ( ); ++i )
     {
         /* destroy connected Controller_Module */
-        if ( control_input[i].connected() )
+        if ( control_input[i].connected ( ) )
         {
-            Module *o = static_cast<Module*>( control_input[i].connected_port()->module() );
+            Module *o = static_cast<Module*> ( control_input[i].connected_port ( )->module ( ) );
 
-	    if ( !o )
-	    {
-		DWARNING( "Programming error. Connected port has null module. %s %s",
-			 
-			  label(),
-			  control_input[i].connected_port()->name());
-	    }
-	    
-	    control_input[i].disconnect();
-	    
-	    if ( o )
-	    {
-		if ( ! o->is_default() )
-		{
-		    DMESSAGE( "Deleting connected module %s", o->label() );
-		    
-		    delete o;
-		}
-	    }
-	}
-	
-        control_input[i].destroy_osc_port();
+            if ( !o )
+            {
+                DWARNING ( "Programming error. Connected port has null module. %s %s",
+
+                        label ( ),
+                        control_input[i].connected_port ( )->name ( ) );
+            }
+
+            control_input[i].disconnect ( );
+
+            if ( o )
+            {
+                if ( !o->is_default ( ) )
+                {
+                    DMESSAGE ( "Deleting connected module %s", o->label ( ) );
+
+                    delete o;
+                }
+            }
+        }
+
+        control_input[i].destroy_osc_port ( );
     }
 
-    for ( unsigned int i = 0; i < control_output.size(); ++i )
-        control_output[i].disconnect();
+    for ( unsigned int i = 0; i < control_output.size ( ); ++i )
+        control_output[i].disconnect ( );
 }
 
 void
-Module::deleteEditor()
+Module::deleteEditor( )
 {
     if ( _editor )
     {
-        if (_editor->visible())
-            _editor->hide();
+        if ( _editor->visible ( ) )
+            _editor->hide ( );
 
         delete _editor;
         _editor = NULL;
@@ -1759,31 +1754,31 @@ Module::deleteEditor()
 }
 
 void
-Module::auto_connect_outputs ( void )
+Module::auto_connect_outputs( void )
 {
-    for ( unsigned int i = 0; i < aux_audio_output.size(); ++i )
+    for ( unsigned int i = 0; i < aux_audio_output.size ( ); ++i )
     {
-        mixer->maybe_auto_connect_output( &aux_audio_output[i] );
+        mixer->maybe_auto_connect_output ( &aux_audio_output[i] );
     }
 }
 
 void
-Module::auto_disconnect_outputs ( void )
+Module::auto_disconnect_outputs( void )
 {
-    for ( unsigned int i = 0; i < aux_audio_output.size(); ++i )
+    for ( unsigned int i = 0; i < aux_audio_output.size ( ); ++i )
     {
         Module::Port *p = &aux_audio_output[i];
 
-        while ( p->connected() )
+        while ( p->connected ( ) )
         {
-            p->connected_port()->jack_port()->disconnect( p->jack_port()->jack_name() );
-            p->disconnect(p->connected_port());
+            p->connected_port ( )->jack_port ( )->disconnect ( p->jack_port ( )->jack_name ( ) );
+            p->disconnect ( p->connected_port ( ) );
         }
     }
 }
 
 void
-Module::get_latency ( JACK::Port::direction_e dir, nframes_t *t_min, nframes_t *t_max ) const
+Module::get_latency( JACK::Port::direction_e dir, nframes_t *t_min, nframes_t *t_max ) const
 {
     nframes_t tmin = JACK_MAX_FRAMES >> 1;
     nframes_t tmax = 0;
@@ -1795,17 +1790,17 @@ Module::get_latency ( JACK::Port::direction_e dir, nframes_t *t_min, nframes_t *
     else
         ports = &aux_audio_output;
 
-    if ( ports->size() )
+    if ( ports->size ( ) )
     {
-        for ( unsigned int i = 0; i < ports->size(); i++ )
+        for ( unsigned int i = 0; i < ports->size ( ); i++ )
         {
             /* if ( ! ports->[i].jack_port()->connected() ) */
             /*     continue; */
 
-            nframes_t min,max;
-            
-            (*ports)[i].jack_port()->get_latency( dir, &min, &max );
-            
+            nframes_t min, max;
+
+            ( *ports )[i].jack_port ( )->get_latency ( dir, &min, &max );
+
             if ( min < tmin )
                 tmin = min;
             if ( max > tmax )
@@ -1816,63 +1811,62 @@ Module::get_latency ( JACK::Port::direction_e dir, nframes_t *t_min, nframes_t *
     {
         tmin = 0;
     }
-    
+
     *t_min = tmin;
     *t_max = tmax;
 }
 
 void
-Module::set_latency ( JACK::Port::direction_e dir, nframes_t min, nframes_t max )
+Module::set_latency( JACK::Port::direction_e dir, nframes_t min, nframes_t max )
 {
     if ( dir == JACK::Port::Output )
     {
-        for ( unsigned int i = 0; i < aux_audio_input.size(); i++ )
-            aux_audio_input[i].jack_port()->set_latency( dir, min, max );
+        for ( unsigned int i = 0; i < aux_audio_input.size ( ); i++ )
+            aux_audio_input[i].jack_port ( )->set_latency ( dir, min, max );
     }
     else
     {
-        for ( unsigned int i = 0; i < aux_audio_output.size(); i++ )
-            aux_audio_output[i].jack_port()->set_latency( dir, min, max );
+        for ( unsigned int i = 0; i < aux_audio_output.size ( ); i++ )
+            aux_audio_output[i].jack_port ( )->set_latency ( dir, min, max );
     }
 }
 
-
 bool
-Module::add_aux_port ( bool input, const char *prefix, int i, JACK::Port::type_e type )
+Module::add_aux_port( bool input, const char *prefix, int i, JACK::Port::type_e type )
 {
-    const char *trackname = chain()->strip()->group()->single() ? NULL : chain()->name();
+    const char *trackname = chain ( )->strip ( )->group ( )->single ( ) ? NULL : chain ( )->name ( );
 
     JACK::Port::direction_e direction = input ? JACK::Port::Input : JACK::Port::Output;
 
-    char *portname = generate_port_name( prefix, direction, i );
+    char *portname = generate_port_name ( prefix, direction, i );
 
-    JACK::Port *po = new JACK::Port( chain()->client(), trackname, portname, direction, type );
+    JACK::Port *po = new JACK::Port ( chain ( )->client ( ), trackname, portname, direction, type );
 
-    free(portname);
+    free ( portname );
 
-    if ( ! po->activate() )
+    if ( !po->activate ( ) )
     {
-        jack_port_activation_error( po );
+        jack_port_activation_error ( po );
         return false;
     }
 
-    if ( po->valid() )
+    if ( po->valid ( ) )
     {
         if ( input )
         {
-            Module::Port mp( static_cast<Module*>(this), Module::Port::INPUT, Module::Port::AUX_AUDIO );
+            Module::Port mp ( static_cast<Module*> ( this ), Module::Port::INPUT, Module::Port::AUX_AUDIO );
 
-            mp.jack_port( po );
+            mp.jack_port ( po );
 
-            aux_audio_input.push_back( mp );
+            aux_audio_input.push_back ( mp );
         }
         else
         {
-            Module::Port mp( static_cast<Module*>(this), Module::Port::OUTPUT, Module::Port::AUX_AUDIO );
+            Module::Port mp ( static_cast<Module*> ( this ), Module::Port::OUTPUT, Module::Port::AUX_AUDIO );
 
-            mp.jack_port( po );
+            mp.jack_port ( po );
 
-            aux_audio_output.push_back( mp );
+            aux_audio_output.push_back ( mp );
         }
     }
     else
@@ -1887,10 +1881,10 @@ Module::add_aux_port ( bool input, const char *prefix, int i, JACK::Port::type_e
 bool
 Module::add_aux_audio_output( const char *prefix, int i )
 {
-    bool r = add_aux_port ( false, prefix, i , JACK::Port::Audio);
+    bool r = add_aux_port ( false, prefix, i, JACK::Port::Audio );
 
     if ( r )
-        mixer->maybe_auto_connect_output( &aux_audio_output.back() );
+        mixer->maybe_auto_connect_output ( &aux_audio_output.back ( ) );
 
     return r;
 }
@@ -1898,148 +1892,149 @@ Module::add_aux_audio_output( const char *prefix, int i )
 bool
 Module::add_aux_audio_input( const char *prefix, int i )
 {
-    return add_aux_port ( true, prefix, i , JACK::Port::Audio);
+    return add_aux_port ( true, prefix, i, JACK::Port::Audio );
 }
 
 bool
 Module::add_aux_cv_input( const char *prefix, int i )
 {
-    return add_aux_port ( true, prefix, i , JACK::Port::CV);
+    return add_aux_port ( true, prefix, i, JACK::Port::CV );
 }
 
 
 /************/
 /* Commands */
+
 /************/
 
 void
-Module::command_open_parameter_editor ( void )
+Module::command_open_parameter_editor( void )
 {
     if ( _editor )
     {
-        if(_editor->visible())
+        if ( _editor->visible ( ) )
         {
-            _editor->hide();
+            _editor->hide ( );
         }
         else
         {
-            _editor->show();
-            set_dirty();
+            _editor->show ( );
+            set_dirty ( );
         }
     }
-    else if ( ncontrol_inputs() && nvisible_control_inputs() )
+    else if ( ncontrol_inputs ( ) && nvisible_control_inputs ( ) )
     {
-        DMESSAGE( "Opening module parameters for \"%s\"", label() );
-        _editor = new Module_Parameter_Editor( this );
+        DMESSAGE ( "Opening module parameters for \"%s\"", label ( ) );
+        _editor = new Module_Parameter_Editor ( this );
 
-        _editor->show();
-        set_dirty();
+        _editor->show ( );
+        set_dirty ( );
     }
 #ifdef LV2_SUPPORT
-    else if (_plug_type == Type_LV2)
+    else if ( _plug_type == Type_LV2 )
     {
-        LV2_Plugin *pm = static_cast<LV2_Plugin *> (this);
-        if(!pm->_PresetList.empty() || _b_have_visible_atom_control_port)
+        LV2_Plugin *pm = static_cast<LV2_Plugin *> ( this );
+        if ( !pm->_PresetList.empty ( ) || _b_have_visible_atom_control_port )
         {
-            DMESSAGE( "Opening module parameters for \"%s\"", label() );
-            _editor = new Module_Parameter_Editor( this );
+            DMESSAGE ( "Opening module parameters for \"%s\"", label ( ) );
+            _editor = new Module_Parameter_Editor ( this );
 
-            _editor->show();
-            set_dirty();
+            _editor->show ( );
+            set_dirty ( );
         }
     }
 #endif
 }
 
 void
-Module::open_plugin_ui()
+Module::open_plugin_ui( )
 {
 #ifdef LV2_SUPPORT
-    if(_plug_type == Type_LV2)
+    if ( _plug_type == Type_LV2 )
     {
-        LV2_Plugin *pm = static_cast<LV2_Plugin *> (this);
-        if(!pm->try_custom_ui())
+        LV2_Plugin *pm = static_cast<LV2_Plugin *> ( this );
+        if ( !pm->try_custom_ui ( ) )
         {
-            command_open_parameter_editor();
+            command_open_parameter_editor ( );
         }
-        else    // set the dirty flag if we opened the custom UI
+        else // set the dirty flag if we opened the custom UI
         {
-            set_dirty();
+            set_dirty ( );
         }
     }
     else
 #endif
 #ifdef CLAP_SUPPORT
-    if(_plug_type == Type_CLAP)
+        if ( _plug_type == Type_CLAP )
     {
-        CLAP_Plugin *pm = static_cast<CLAP_Plugin *> (this);
-        if(!pm->try_custom_ui())
+        CLAP_Plugin *pm = static_cast<CLAP_Plugin *> ( this );
+        if ( !pm->try_custom_ui ( ) )
         {
-            command_open_parameter_editor();
+            command_open_parameter_editor ( );
         }
-        else    // set the dirty flag if we opened the custom UI
+        else // set the dirty flag if we opened the custom UI
         {
-            set_dirty();
+            set_dirty ( );
         }
     }
     else
 #endif
 #ifdef VST2_SUPPORT
-    if(_plug_type == Type_VST2)
+        if ( _plug_type == Type_VST2 )
     {
-        VST2_Plugin *pm = static_cast<VST2_Plugin *> (this);
-        if(!pm->try_custom_ui())
+        VST2_Plugin *pm = static_cast<VST2_Plugin *> ( this );
+        if ( !pm->try_custom_ui ( ) )
         {
-            command_open_parameter_editor();
+            command_open_parameter_editor ( );
         }
-        else    // set the dirty flag if we opened the custom UI
+        else // set the dirty flag if we opened the custom UI
         {
-            set_dirty();
+            set_dirty ( );
         }
     }
     else
 #endif
 #ifdef VST3_SUPPORT
-    if(_plug_type == Type_VST3)
+        if ( _plug_type == Type_VST3 )
     {
-        VST3_Plugin *pm = static_cast<VST3_Plugin *> (this);
-        if(!pm->try_custom_ui())
+        VST3_Plugin *pm = static_cast<VST3_Plugin *> ( this );
+        if ( !pm->try_custom_ui ( ) )
         {
-            command_open_parameter_editor();
+            command_open_parameter_editor ( );
         }
-        else    // set the dirty flag if we opened the custom UI
+        else // set the dirty flag if we opened the custom UI
         {
-            set_dirty();
+            set_dirty ( );
         }
     }
     else
 #endif
-    // LADSPA and internal
+        // LADSPA and internal
     {
-        command_open_parameter_editor();
+        command_open_parameter_editor ( );
     }
 }
 
 void
-Module::command_activate ( void )
+Module::command_activate( void )
 {
-    bypass( false );
+    bypass ( false );
 }
 
 void
-Module::command_deactivate ( void )
+Module::command_deactivate( void )
 {
-    bypass( true );
+    bypass ( true );
 }
 
 void
-Module::command_remove ( void )
+Module::command_remove( void )
 {
-    if ( is_default() )
-        fl_alert( "Default modules may not be deleted." );
+    if ( is_default ( ) )
+        fl_alert ( "Default modules may not be deleted." );
     else
     {
-        if(chain()->remove( this ))
-            Fl::delete_widget( this );
+        if ( chain ( )->remove ( this ) )
+            Fl::delete_widget ( this );
     }
 }
