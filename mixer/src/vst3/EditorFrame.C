@@ -29,92 +29,109 @@
 #include "runloop.h"
 
 //------------------------------------------------------------------------
-inline tresult ARunLoop::registerEventHandler (IEventHandler* handler,
-                                                             FileDescriptor fd)
+
+inline tresult
+ARunLoop::registerEventHandler( IEventHandler* handler,
+                                FileDescriptor fd )
 {
-    DMESSAGE("HAVE REGISTER FROM PLUGIN");
-    if (!handler || eventHandlers.find (fd) != eventHandlers.end ())
-            return kInvalidArgument;
+    DMESSAGE ( "HAVE REGISTER FROM PLUGIN" );
+    if ( !handler || eventHandlers.find ( fd ) != eventHandlers.end ( ) )
+        return kInvalidArgument;
 
-    m_plugin->get_runloop()->registerFileDescriptor (
-        fd, [handler] (int fd) { handler->onFDIsSet (fd); });
+    m_plugin->get_runloop ( )->registerFileDescriptor (
+            fd, [handler] (int fd)
+            {
+                handler->onFDIsSet ( fd ); } );
 
-    eventHandlers.emplace (fd, handler);
+    eventHandlers.emplace ( fd, handler );
     return kResultTrue;
 }
 
 //------------------------------------------------------------------------
-inline tresult ARunLoop::unregisterEventHandler (IEventHandler* handler)
+
+inline tresult
+ARunLoop::unregisterEventHandler( IEventHandler* handler )
 {
-    if (!handler)
+    if ( !handler )
         return kInvalidArgument;
 
-    auto it = std::find_if (eventHandlers.begin (), eventHandlers.end (),
-            [&] (const auto& elem) { return elem.second == handler; });
-    if (it == eventHandlers.end ())
+    auto it = std::find_if ( eventHandlers.begin ( ), eventHandlers.end ( ),
+            [&] (const auto& elem )
+            {
+                return elem.second == handler; } );
+    if ( it == eventHandlers.end ( ) )
         return kResultFalse;
 
-    m_plugin->get_runloop()->unregisterFileDescriptor (it->first);
+    m_plugin->get_runloop ( )->unregisterFileDescriptor ( it->first );
 
-    eventHandlers.erase (it);
+    eventHandlers.erase ( it );
     return kResultTrue;
 }
 
 //------------------------------------------------------------------------
-inline tresult ARunLoop::registerTimer (ITimerHandler* handler,
-                                                      TimerInterval milliseconds)
+
+inline tresult
+ARunLoop::registerTimer( ITimerHandler* handler,
+                         TimerInterval milliseconds )
 {
-    if (!handler || milliseconds == 0)
+    if ( !handler || milliseconds == 0 )
         return kInvalidArgument;
 
-    auto id = m_plugin->get_runloop()->registerTimer (
-        milliseconds, [handler] (auto) { handler->onTimer (); });
+    auto id = m_plugin->get_runloop ( )->registerTimer (
+            milliseconds, [handler] ( auto )
+            {
+                handler->onTimer ( ); } );
 
-    timerHandlers.emplace (id, handler);
+    timerHandlers.emplace ( id, handler );
     return kResultTrue;
 }
 
 //------------------------------------------------------------------------
-inline tresult ARunLoop::unregisterTimer (ITimerHandler* handler)
+
+inline tresult
+ARunLoop::unregisterTimer( ITimerHandler* handler )
 {
-    if (!handler)
+    if ( !handler )
         return kInvalidArgument;
 
-    auto it = std::find_if (timerHandlers.begin (), timerHandlers.end (),
-            [&] (const auto& elem) { return elem.second == handler; });
-    if (it == timerHandlers.end ())
+    auto it = std::find_if ( timerHandlers.begin ( ), timerHandlers.end ( ),
+            [&] (const auto& elem )
+            {
+                return elem.second == handler; } );
+    if ( it == timerHandlers.end ( ) )
         return kResultFalse;
 
-    m_plugin->get_runloop()->unregisterTimer (it->first);
+    m_plugin->get_runloop ( )->unregisterTimer ( it->first );
 
-    timerHandlers.erase (it);
+    timerHandlers.erase ( it );
     return kResultTrue;
 }
 
-
-void EditorFrame::handlePluginUIClosed()
+void
+EditorFrame::handlePluginUIClosed( )
 {
-    m_plugin->set_visibility(false);
+    m_plugin->set_visibility ( false );
 }
 
-void EditorFrame::handlePluginUIResized(const uint width, const uint height)
+void
+EditorFrame::handlePluginUIResized( const uint width, const uint height )
 {
-   // DMESSAGE("Handle Resized W = %d: H = %d", width, height);
+    // DMESSAGE("Handle Resized W = %d: H = %d", width, height);
 
     ViewRect rect0;
-    if (m_plugView->getSize(&rect0) != kResultOk)
+    if ( m_plugView->getSize ( &rect0 ) != kResultOk )
         return;
 
-    Size a_size = getSize();
+    Size a_size = getSize ( );
 
- //   DMESSAGE("rect0 W = %d: H = %d", rect0.getHeight(), rect0.getHeight());
- //   DMESSAGE("a_size W = %d: H = %d", a_size.width, a_size.height);
-    
-    if(rect0.getWidth() != a_size.width || rect0.getHeight() != a_size.height)
+    //   DMESSAGE("rect0 W = %d: H = %d", rect0.getHeight(), rect0.getHeight());
+    //   DMESSAGE("a_size W = %d: H = %d", a_size.width, a_size.height);
+
+    if ( rect0.getWidth ( ) != a_size.width || rect0.getHeight ( ) != a_size.height )
     {
         rect0.right = rect0.left + width;
         rect0.bottom = rect0.top + height;
-        m_plugView->onSize(&rect0);
+        m_plugView->onSize ( &rect0 );
     }
 }
 
