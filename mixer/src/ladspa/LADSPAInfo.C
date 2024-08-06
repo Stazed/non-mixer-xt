@@ -82,7 +82,7 @@ LADSPAInfo::RescanPlugins(void)
                 {
                     cerr << "WARNING: LADSPA_PATH environment variable not set" << endl;
                     cerr << "         Assuming /usr/lib/ladspa:/usr/local/lib/ladspa" << endl;
-                    cerr << "         /usr/lib64/ladspa:/usr/local/lib64/ladspa" << endl;
+                    cerr << "         /usr/lib64/ladspa:/usr/local/lib64/ladspa:~/.ladspa" << endl;
 
                     // usual defaults
                     std::string s_path = "/usr/lib/ladspa:/usr/local/lib/ladspa";
@@ -114,6 +114,14 @@ LADSPAInfo::RescanPlugins(void)
                     {
                         s_path += ":/usr/local/lib64/ladspa";       // not a symlink
                     }
+
+                    // ~/.ladspa
+                    s_path += ":";
+                    s_path += std::filesystem::path(getenv("HOME"));
+                    s_path += "/";
+                    s_path += std::filesystem::path(".ladspa");
+
+                 //   printf("SPATHS = %s\n", s_path.c_str());
 
                     ScanPathList(s_path.c_str(), &LADSPAInfo::ExaminePluginLibrary);
 		}
@@ -585,8 +593,7 @@ LADSPAInfo::ExaminePluginLibrary(const string &path,
 	} else {
 
 	// It's a DLL, so now see if it's a LADSPA plugin library
-		desc_func = (LADSPA_Descriptor_Function)dlsym(handle,
-													"ladspa_descriptor");
+		desc_func = (LADSPA_Descriptor_Function)dlsym(handle, "ladspa_descriptor");
 		if (!desc_func) {
 
 		// Is DLL, but not a LADSPA one
