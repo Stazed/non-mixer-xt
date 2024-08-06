@@ -12,7 +12,7 @@
   WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
   ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
   OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
+ */
 
 #ifdef LV2_SUPPORT
 
@@ -25,175 +25,184 @@
 #include <stdlib.h>
 #include <string.h>
 
-struct LV2_Evbuf_Impl {
-  uint32_t          capacity;
-  uint32_t          atom_Chunk;
-  uint32_t          atom_Sequence;
-  uint32_t          pad; // So buf has correct atom alignment
-  LV2_Atom_Sequence buf;
+struct LV2_Evbuf_Impl
+{
+    uint32_t capacity;
+    uint32_t atom_Chunk;
+    uint32_t atom_Sequence;
+    uint32_t pad; // So buf has correct atom alignment
+    LV2_Atom_Sequence buf;
 };
 
 LV2_Evbuf*
-lv2_evbuf_new(uint32_t capacity, uint32_t atom_Chunk, uint32_t atom_Sequence)
+lv2_evbuf_new( uint32_t capacity, uint32_t atom_Chunk, uint32_t atom_Sequence )
 {
-  const size_t buffer_size =
-    sizeof(LV2_Evbuf) + sizeof(LV2_Atom_Sequence) + capacity;
+    const size_t buffer_size =
+            sizeof (LV2_Evbuf ) + sizeof (LV2_Atom_Sequence ) + capacity;
 
 #if USE_POSIX_MEMALIGN
-  LV2_Evbuf* evbuf = NULL;
-  const int  st    = posix_memalign((void**)&evbuf, 16, buffer_size);
-  if (st) {
-    return NULL;
-  }
+    LV2_Evbuf* evbuf = NULL;
+    const int st = posix_memalign ( (void**) &evbuf, 16, buffer_size );
+    if ( st )
+    {
+        return NULL;
+    }
 
-  assert((uintptr_t)evbuf % 8U == 0U);
+    assert ( (uintptr_t) evbuf % 8U == 0U );
 #else
-  LV2_Evbuf* evbuf = (LV2_Evbuf*)malloc(buffer_size);
+    LV2_Evbuf* evbuf = (LV2_Evbuf*) malloc ( buffer_size );
 #endif
 
-  if (evbuf) {
-    memset(evbuf, 0, sizeof(*evbuf));
-    evbuf->capacity      = capacity;
-    evbuf->atom_Chunk    = atom_Chunk;
-    evbuf->atom_Sequence = atom_Sequence;
-  }
+    if ( evbuf )
+    {
+        memset ( evbuf, 0, sizeof (*evbuf ) );
+        evbuf->capacity = capacity;
+        evbuf->atom_Chunk = atom_Chunk;
+        evbuf->atom_Sequence = atom_Sequence;
+    }
 
-  return evbuf;
+    return evbuf;
 }
 
 void
-lv2_evbuf_free(LV2_Evbuf* evbuf)
+lv2_evbuf_free( LV2_Evbuf* evbuf )
 {
-  free(evbuf);
+    free ( evbuf );
 }
 
 void
-lv2_evbuf_reset(LV2_Evbuf* evbuf, bool input)
+lv2_evbuf_reset( LV2_Evbuf* evbuf, bool input )
 {
-  if (input) {
-    evbuf->buf.atom.size = sizeof(LV2_Atom_Sequence_Body);
-    evbuf->buf.atom.type = evbuf->atom_Sequence;
-  } else {
-    evbuf->buf.atom.size = evbuf->capacity;
-    evbuf->buf.atom.type = evbuf->atom_Chunk;
-  }
+    if ( input )
+    {
+        evbuf->buf.atom.size = sizeof (LV2_Atom_Sequence_Body );
+        evbuf->buf.atom.type = evbuf->atom_Sequence;
+    }
+    else
+    {
+        evbuf->buf.atom.size = evbuf->capacity;
+        evbuf->buf.atom.type = evbuf->atom_Chunk;
+    }
 }
 
 uint32_t
-lv2_evbuf_get_size(LV2_Evbuf* evbuf)
+lv2_evbuf_get_size( LV2_Evbuf* evbuf )
 {
-  assert(evbuf->buf.atom.type != evbuf->atom_Sequence ||
-         evbuf->buf.atom.size >= sizeof(LV2_Atom_Sequence_Body));
-  return evbuf->buf.atom.type == evbuf->atom_Sequence
-           ? evbuf->buf.atom.size - sizeof(LV2_Atom_Sequence_Body)
-           : 0;
+    assert ( evbuf->buf.atom.type != evbuf->atom_Sequence ||
+            evbuf->buf.atom.size >= sizeof (LV2_Atom_Sequence_Body ) );
+    return evbuf->buf.atom.type == evbuf->atom_Sequence
+            ? evbuf->buf.atom.size - sizeof (LV2_Atom_Sequence_Body )
+            : 0;
 }
 
 void*
-lv2_evbuf_get_buffer(LV2_Evbuf* evbuf)
+lv2_evbuf_get_buffer( LV2_Evbuf* evbuf )
 {
-  return &evbuf->buf;
+    return &evbuf->buf;
 }
 
 LV2_Evbuf_Iterator
-lv2_evbuf_begin(LV2_Evbuf* evbuf)
+lv2_evbuf_begin( LV2_Evbuf* evbuf )
 {
-  LV2_Evbuf_Iterator iter = {evbuf, 0};
-  return iter;
-}
-
-LV2_Evbuf_Iterator
-lv2_evbuf_end(LV2_Evbuf* evbuf)
-{
-  const uint32_t           size = lv2_evbuf_get_size(evbuf);
-  const LV2_Evbuf_Iterator iter = {evbuf, lv2_atom_pad_size(size)};
-  return iter;
-}
-
-bool
-lv2_evbuf_is_valid(LV2_Evbuf_Iterator iter)
-{
-  return iter.offset < lv2_evbuf_get_size(iter.evbuf);
-}
-
-LV2_Evbuf_Iterator
-lv2_evbuf_next(const LV2_Evbuf_Iterator iter)
-{
-  if (!lv2_evbuf_is_valid(iter)) {
+    LV2_Evbuf_Iterator iter = { evbuf, 0 };
     return iter;
-  }
+}
 
-  LV2_Atom_Sequence* aseq = &iter.evbuf->buf;
-  LV2_Atom_Event*    aev =
-    (LV2_Atom_Event*)((char*)LV2_ATOM_CONTENTS(LV2_Atom_Sequence, aseq) +
-                      iter.offset);
-
-  const uint32_t offset =
-    iter.offset + lv2_atom_pad_size(sizeof(LV2_Atom_Event) + aev->body.size);
-
-  LV2_Evbuf_Iterator next = {iter.evbuf, offset};
-  return next;
+LV2_Evbuf_Iterator
+lv2_evbuf_end( LV2_Evbuf* evbuf )
+{
+    const uint32_t size = lv2_evbuf_get_size ( evbuf );
+    const LV2_Evbuf_Iterator iter = { evbuf, lv2_atom_pad_size ( size ) };
+    return iter;
 }
 
 bool
-lv2_evbuf_get(LV2_Evbuf_Iterator iter,
-              uint32_t*          frames,
-              uint32_t*          subframes,
-              uint32_t*          type,
-              uint32_t*          size,
-              void**             data)
+lv2_evbuf_is_valid( LV2_Evbuf_Iterator iter )
 {
-  *frames = *subframes = *type = *size = 0;
-  *data                                = NULL;
+    return iter.offset < lv2_evbuf_get_size ( iter.evbuf );
+}
 
-  if (!lv2_evbuf_is_valid(iter)) {
-    return false;
-  }
+LV2_Evbuf_Iterator
+lv2_evbuf_next( const LV2_Evbuf_Iterator iter )
+{
+    if ( !lv2_evbuf_is_valid ( iter ) )
+    {
+        return iter;
+    }
 
-  LV2_Atom_Sequence* aseq = &iter.evbuf->buf;
-  LV2_Atom_Event*    aev =
-    (LV2_Atom_Event*)((char*)LV2_ATOM_CONTENTS(LV2_Atom_Sequence, aseq) +
-                      iter.offset);
+    LV2_Atom_Sequence* aseq = &iter.evbuf->buf;
+    LV2_Atom_Event* aev =
+            (LV2_Atom_Event*) ( (char*) LV2_ATOM_CONTENTS ( LV2_Atom_Sequence, aseq ) +
+                                iter.offset );
 
-  *frames    = aev->time.frames;
-  *subframes = 0;
-  *type      = aev->body.type;
-  *size      = aev->body.size;
-  *data      = LV2_ATOM_BODY(&aev->body);
+    const uint32_t offset =
+            iter.offset + lv2_atom_pad_size ( sizeof (LV2_Atom_Event ) + aev->body.size );
 
-  return true;
+    LV2_Evbuf_Iterator next = { iter.evbuf, offset };
+    return next;
 }
 
 bool
-lv2_evbuf_write(LV2_Evbuf_Iterator* iter,
-                uint32_t            frames,
-                uint32_t            subframes,
-                uint32_t            type,
-                uint32_t            size,
-                const void*         data)
+lv2_evbuf_get( LV2_Evbuf_Iterator iter,
+               uint32_t* frames,
+               uint32_t* subframes,
+               uint32_t* type,
+               uint32_t* size,
+               void** data )
 {
-  (void)subframes;
+    *frames = *subframes = *type = *size = 0;
+    *data = NULL;
 
-  LV2_Atom_Sequence* aseq = &iter->evbuf->buf;
-  if (iter->evbuf->capacity - sizeof(LV2_Atom) - aseq->atom.size <
-      sizeof(LV2_Atom_Event) + size) {
-    return false;
-  }
+    if ( !lv2_evbuf_is_valid ( iter ) )
+    {
+        return false;
+    }
 
-  LV2_Atom_Event* aev =
-    (LV2_Atom_Event*)((char*)LV2_ATOM_CONTENTS(LV2_Atom_Sequence, aseq) +
-                      iter->offset);
+    LV2_Atom_Sequence* aseq = &iter.evbuf->buf;
+    LV2_Atom_Event* aev =
+            (LV2_Atom_Event*) ( (char*) LV2_ATOM_CONTENTS ( LV2_Atom_Sequence, aseq ) +
+                                iter.offset );
 
-  aev->time.frames = frames;
-  aev->body.type   = type;
-  aev->body.size   = size;
-  memcpy(LV2_ATOM_BODY(&aev->body), data, size);
+    *frames = aev->time.frames;
+    *subframes = 0;
+    *type = aev->body.type;
+    *size = aev->body.size;
+    *data = LV2_ATOM_BODY ( &aev->body );
 
-  size = lv2_atom_pad_size(sizeof(LV2_Atom_Event) + size);
-  aseq->atom.size += size;
-  iter->offset += size;
+    return true;
+}
 
-  return true;
+bool
+lv2_evbuf_write( LV2_Evbuf_Iterator* iter,
+                 uint32_t frames,
+                 uint32_t subframes,
+                 uint32_t type,
+                 uint32_t size,
+                 const void* data )
+{
+    (void) subframes;
+
+    LV2_Atom_Sequence* aseq = &iter->evbuf->buf;
+    if ( iter->evbuf->capacity - sizeof (LV2_Atom ) - aseq->atom.size <
+         sizeof (LV2_Atom_Event ) + size )
+    {
+        return false;
+    }
+
+    LV2_Atom_Event* aev =
+            (LV2_Atom_Event*) ( (char*) LV2_ATOM_CONTENTS ( LV2_Atom_Sequence, aseq ) +
+                                iter->offset );
+
+    aev->time.frames = frames;
+    aev->body.type = type;
+    aev->body.size = size;
+    memcpy ( LV2_ATOM_BODY ( &aev->body ), data, size );
+
+    size = lv2_atom_pad_size ( sizeof (LV2_Atom_Event ) + size );
+    aseq->atom.size += size;
+    iter->offset += size;
+
+    return true;
 }
 
 #endif  // LV2_SUPPORT

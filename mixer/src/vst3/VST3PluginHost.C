@@ -31,23 +31,24 @@
 
 #define WARNING( fmt, args... ) warnf( W_WARNING, __MODULE__, __FILE__, __FUNCTION__, __LINE__, fmt, ## args )
 
-
-std::string utf16_to_utf8(const std::u16string& utf16)
+std::string
+utf16_to_utf8( const std::u16string& utf16 )
 {
-    std::wstring_convert<std::codecvt_utf8_utf16<char16_t>,char16_t> convert; 
-    std::string utf8 = convert.to_bytes(utf16);
+    std::wstring_convert < std::codecvt_utf8_utf16<char16_t>, char16_t> convert;
+    std::string utf8 = convert.to_bytes ( utf16 );
     return utf8;
 }
 
 // Constructor.
-VST3PluginHost::VST3PluginHost (VST3_Plugin * plug)
+
+VST3PluginHost::VST3PluginHost( VST3_Plugin * plug )
 {
     FUNKNOWN_CTOR
 
     m_plugin = plug;
-    m_plugInterfaceSupport = owned(NEW PlugInterfaceSupport());
+    m_plugInterfaceSupport = owned ( NEW PlugInterfaceSupport ( ) );
 
-    m_pTimer = new Timer(m_plugin);
+    m_pTimer = new Timer ( m_plugin );
 
     m_timerRefCount = 0;
 
@@ -56,9 +57,10 @@ VST3PluginHost::VST3PluginHost (VST3_Plugin * plug)
 
 
 // Destructor.
-VST3PluginHost::~VST3PluginHost (void)
+
+VST3PluginHost::~VST3PluginHost( void )
 {
-    clear();
+    clear ( );
 
     delete m_pTimer;
 
@@ -69,34 +71,36 @@ VST3PluginHost::~VST3PluginHost (void)
 
 //--- IHostApplication ---
 //
-tresult PLUGIN_API VST3PluginHost::getName ( Vst::String128 name )
-{
-    const std::string str("VST3PluginHost");
-    const int nsize = str.length() < 127 ? str.length() : 127;
 
-    ::memcpy(name, str.c_str(), nsize - 1);
+tresult PLUGIN_API
+VST3PluginHost::getName( Vst::String128 name )
+{
+    const std::string str ( "VST3PluginHost" );
+    const int nsize = str.length ( ) < 127 ? str.length ( ) : 127;
+
+    ::memcpy ( name, str.c_str ( ), nsize - 1 );
     name[nsize] = 0;
     return kResultOk;
 }
 
-
-tresult PLUGIN_API VST3PluginHost::createInstance (
-	TUID cid, TUID _iid, void **obj )
+tresult PLUGIN_API
+VST3PluginHost::createInstance(
+                                TUID cid, TUID _iid, void **obj )
 {
-    const FUID classID (FUID::fromTUID(cid));
-    const FUID interfaceID (FUID::fromTUID(_iid));
+    const FUID classID ( FUID::fromTUID ( cid ) );
+    const FUID interfaceID ( FUID::fromTUID ( _iid ) );
 
-    if (classID == Vst::IMessage::iid &&
-            interfaceID == Vst::IMessage::iid)
+    if ( classID == Vst::IMessage::iid &&
+         interfaceID == Vst::IMessage::iid )
     {
-        *obj = new Message();
+        *obj = new Message ( );
         return kResultOk;
     }
     else
-    if (classID == Vst::IAttributeList::iid &&
-            interfaceID == Vst::IAttributeList::iid)
+        if ( classID == Vst::IAttributeList::iid &&
+             interfaceID == Vst::IAttributeList::iid )
     {
-        *obj = new AttributeList();
+        *obj = new AttributeList ( );
         return kResultOk;
     }
 
@@ -104,15 +108,15 @@ tresult PLUGIN_API VST3PluginHost::createInstance (
     return kResultFalse;
 }
 
-
-tresult PLUGIN_API VST3PluginHost::queryInterface (
-	const char *_iid, void **obj )
+tresult PLUGIN_API
+VST3PluginHost::queryInterface(
+                                const char *_iid, void **obj )
 {
-    QUERY_INTERFACE(_iid, obj, FUnknown::iid, IHostApplication)
-    QUERY_INTERFACE(_iid, obj, IHostApplication::iid, IHostApplication)
+    QUERY_INTERFACE ( _iid, obj, FUnknown::iid, IHostApplication )
+    QUERY_INTERFACE ( _iid, obj, IHostApplication::iid, IHostApplication )
 
-    if (m_plugInterfaceSupport &&
-            m_plugInterfaceSupport->queryInterface(_iid, obj) == kResultOk)
+    if ( m_plugInterfaceSupport &&
+         m_plugInterfaceSupport->queryInterface ( _iid, obj ) == kResultOk )
     {
         return kResultOk;
     }
@@ -121,56 +125,75 @@ tresult PLUGIN_API VST3PluginHost::queryInterface (
     return kResultFalse;
 }
 
+uint32 PLUGIN_API
+VST3PluginHost::addRef( void )
+{
+    return 1;
+}
 
-uint32 PLUGIN_API VST3PluginHost::addRef (void)
-    { return 1; }
-
-uint32 PLUGIN_API VST3PluginHost::release (void)
-    { return 1; }
+uint32 PLUGIN_API
+VST3PluginHost::release( void )
+{
+    return 1;
+}
 
 
 // Timer stuff...
 //
-void VST3PluginHost::startTimer ( int msecs )
-    { if (++m_timerRefCount == 1) m_pTimer->start(msecs); }
 
-void VST3PluginHost::stopTimer (void)
-    { if (m_timerRefCount > 0 && --m_timerRefCount == 0) m_pTimer->stop(); }
+void
+VST3PluginHost::startTimer( int msecs )
+{
+    if ( ++m_timerRefCount == 1 ) m_pTimer->start ( msecs );
+}
 
-int VST3PluginHost::timerInterval (void) const
-    { return m_pTimer->interval(); }
+void
+VST3PluginHost::stopTimer( void )
+{
+    if ( m_timerRefCount > 0 && --m_timerRefCount == 0 ) m_pTimer->stop ( );
+}
+
+int
+VST3PluginHost::timerInterval( void ) const
+{
+    return m_pTimer->interval ( );
+}
 
 // Common host time-keeper context accessor.
-Vst::ProcessContext *VST3PluginHost::processContext (void)
+
+Vst::ProcessContext *
+VST3PluginHost::processContext( void )
 {
     return &m_processContext;
 }
 
-
-void VST3PluginHost::processAddRef (void)
+void
+VST3PluginHost::processAddRef( void )
 {
     ++m_processRefCount;
 }
 
-
-void VST3PluginHost::processReleaseRef (void)
+void
+VST3PluginHost::processReleaseRef( void )
 {
-    if (m_processRefCount > 0) --m_processRefCount;
+    if ( m_processRefCount > 0 ) --m_processRefCount;
 }
 
 // Common host time-keeper process context.
-void VST3PluginHost::updateProcessContext (
-	jack_position_t &pos, const bool &xport_changed, const bool &has_bbt )
+
+void
+VST3PluginHost::updateProcessContext(
+                                      jack_position_t &pos, const bool &xport_changed, const bool &has_bbt )
 {
-    if (m_processRefCount < 1)
+    if ( m_processRefCount < 1 )
         return;
 
-    if (xport_changed)
-        m_processContext.state |=  Vst::ProcessContext::kPlaying;
+    if ( xport_changed )
+        m_processContext.state |= Vst::ProcessContext::kPlaying;
     else
         m_processContext.state &= ~Vst::ProcessContext::kPlaying;
-    
-    if(has_bbt)
+
+    if ( has_bbt )
     {
         m_processContext.sampleRate = pos.frame_rate;
         m_processContext.projectTimeSamples = pos.frame;
@@ -181,7 +204,7 @@ void VST3PluginHost::updateProcessContext (
         m_processContext.barPositionMusic = pos.bar;
 
         m_processContext.state |= Vst::ProcessContext::kTempoValid;
-        m_processContext.tempo  = pos.beats_per_minute;
+        m_processContext.tempo = pos.beats_per_minute;
         m_processContext.state |= Vst::ProcessContext::kTimeSigValid;
         m_processContext.timeSigNumerator = pos.beats_per_bar;
         m_processContext.timeSigDenominator = pos.beat_type;
@@ -191,7 +214,7 @@ void VST3PluginHost::updateProcessContext (
         m_processContext.sampleRate = pos.frame_rate;
         m_processContext.projectTimeSamples = pos.frame;
         m_processContext.state |= Vst::ProcessContext::kTempoValid;
-        m_processContext.tempo  = 120.0;
+        m_processContext.tempo = 120.0;
         m_processContext.state |= Vst::ProcessContext::kTimeSigValid;
         m_processContext.timeSigNumerator = 4;
         m_processContext.timeSigDenominator = 4;
@@ -199,16 +222,18 @@ void VST3PluginHost::updateProcessContext (
 }
 
 // Cleanup.
-void VST3PluginHost::clear (void)
+
+void
+VST3PluginHost::clear( void )
 {
     m_timerRefCount = 0;
     m_processRefCount = 0;
 
-    ::memset(&m_processContext, 0, sizeof(Vst::ProcessContext));
+    ::memset ( &m_processContext, 0, sizeof (Vst::ProcessContext ) );
 }
 
-IMPLEMENT_FUNKNOWN_METHODS (VST3PluginHost::AttributeList, IAttributeList, IAttributeList::iid)
+IMPLEMENT_FUNKNOWN_METHODS( VST3PluginHost::AttributeList, IAttributeList, IAttributeList::iid )
 
-IMPLEMENT_FUNKNOWN_METHODS (VST3PluginHost::Message, IMessage, IMessage::iid)
+IMPLEMENT_FUNKNOWN_METHODS( VST3PluginHost::Message, IMessage, IMessage::iid )
 
 #endif // VST3_SUPPORT
