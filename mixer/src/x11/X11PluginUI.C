@@ -36,170 +36,169 @@
 typedef unsigned char uchar;
 
 static constexpr const uint X11Key_Escape = 9;
-static const uint X11Key_W      = 25;
+static const uint X11Key_W = 25;
 
-typedef void (*EventProcPtr)(XEvent* ev);
+typedef void (*EventProcPtr )( XEvent* ev );
 
 static bool gErrorTriggered = false;
-# if defined(__GNUC__) && (__GNUC__ >= 5) && ! defined(__clang__)
-#  pragma GCC diagnostic push
-#  pragma GCC diagnostic ignored "-Wzero-as-null-pointer-constant"
-# endif
+#if defined(__GNUC__) && (__GNUC__ >= 5) && ! defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wzero-as-null-pointer-constant"
+#endif
 static pthread_mutex_t gErrorMutex = PTHREAD_MUTEX_INITIALIZER;
-# if defined(__GNUC__) && (__GNUC__ >= 5) && ! defined(__clang__)
-#  pragma GCC diagnostic pop
-# endif
+#if defined(__GNUC__) && (__GNUC__ >= 5) && ! defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
 
-static int temporaryErrorHandler(Display*, XErrorEvent*)
+static int
+temporaryErrorHandler( Display*, XErrorEvent* )
 {
     gErrorTriggered = true;
     return 0;
 }
 
-X11PluginUI::X11PluginUI(Callback* const cb, const bool isResizable, const bool canMonitorChildren, bool is_vst3):
-    fCallback(cb),
-    fIsIdling(false),
-    fIsResizable(isResizable),
-    fDisplay(nullptr),
-    fHostWindow(0),
-    fChildWindow(0),
-    plugParentWindow(0),
-    fChildWindowConfigured(false),
-    fChildWindowMonitoring(isResizable || canMonitorChildren),
-    fIsVisible(false),
-    fFirstShow(true),
-    fSetSizeCalledAtLeastOnce(false),
-    fMinimumWidth(0),
-    fMinimumHeight(0),
-    fEventProc(nullptr),
-    fIsVst3(is_vst3)
- {
-    fDisplay = XOpenDisplay(nullptr);
-    NON_SAFE_ASSERT_RETURN(fDisplay != nullptr,);
+X11PluginUI::X11PluginUI( Callback * const cb, const bool isResizable, const bool canMonitorChildren, bool is_vst3 ) :
+    fCallback( cb ),
+    fIsIdling( false ),
+    fIsResizable( isResizable ),
+    fDisplay( nullptr ),
+    fHostWindow( 0 ),
+    fChildWindow( 0 ),
+    plugParentWindow( 0 ),
+    fChildWindowConfigured( false ),
+    fChildWindowMonitoring( isResizable || canMonitorChildren ),
+    fIsVisible( false ),
+    fFirstShow( true ),
+    fSetSizeCalledAtLeastOnce( false ),
+    fMinimumWidth( 0 ),
+    fMinimumHeight( 0 ),
+    fEventProc( nullptr ),
+    fIsVst3( is_vst3 )
+{
+    fDisplay = XOpenDisplay ( nullptr );
+    NON_SAFE_ASSERT_RETURN ( fDisplay != nullptr, );
 
-    const int screen = DefaultScreen(fDisplay);
+    const int screen = DefaultScreen ( fDisplay );
 
     XSetWindowAttributes attr;
-    non_zeroStruct(attr);
+    non_zeroStruct ( attr );
 
-    attr.event_mask = KeyPressMask|KeyReleaseMask|FocusChangeMask;
+    attr.event_mask = KeyPressMask | KeyReleaseMask | FocusChangeMask;
 
-    if (fChildWindowMonitoring)
-        attr.event_mask |= StructureNotifyMask|SubstructureNotifyMask;
+    if ( fChildWindowMonitoring )
+        attr.event_mask |= StructureNotifyMask | SubstructureNotifyMask;
 
-    fHostWindow = XCreateWindow(fDisplay, RootWindow(fDisplay, screen),
-                                0, 0, 300, 300, 0,
-                                DefaultDepth(fDisplay, screen),
-                                InputOutput,
-                                DefaultVisual(fDisplay, screen),
-                                CWBorderPixel|CWEventMask, &attr);
+    fHostWindow = XCreateWindow ( fDisplay, RootWindow ( fDisplay, screen ),
+            0, 0, 300, 300, 0,
+            DefaultDepth ( fDisplay, screen ),
+            InputOutput,
+            DefaultVisual ( fDisplay, screen ),
+            CWBorderPixel | CWEventMask, &attr );
 
-    CARLA_SAFE_ASSERT_RETURN(fHostWindow != 0,);
-    
-//    XSetStandardProperties(fDisplay, fHostWindow, label(), label(), None, NULL, 0, NULL);
+    CARLA_SAFE_ASSERT_RETURN ( fHostWindow != 0, );
 
-    XGrabKey(fDisplay, X11Key_Escape, AnyModifier, fHostWindow, 1, GrabModeAsync, GrabModeAsync);
-    XGrabKey(fDisplay, X11Key_W, AnyModifier, fHostWindow, 1, GrabModeAsync, GrabModeAsync);
+    //    XSetStandardProperties(fDisplay, fHostWindow, label(), label(), None, NULL, 0, NULL);
 
-    Atom wmDelete = XInternAtom(fDisplay, "WM_DELETE_WINDOW", True);
-    XSetWMProtocols(fDisplay, fHostWindow, &wmDelete, 1);
+    XGrabKey ( fDisplay, X11Key_Escape, AnyModifier, fHostWindow, 1, GrabModeAsync, GrabModeAsync );
+    XGrabKey ( fDisplay, X11Key_W, AnyModifier, fHostWindow, 1, GrabModeAsync, GrabModeAsync );
 
-    const pid_t pid = getpid();
-    const Atom _nwp = XInternAtom(fDisplay, "_NET_WM_PID", False);
-    XChangeProperty(fDisplay, fHostWindow, _nwp, XA_CARDINAL, 32, PropModeReplace, (const uchar*)&pid, 1);
+    Atom wmDelete = XInternAtom ( fDisplay, "WM_DELETE_WINDOW", True );
+    XSetWMProtocols ( fDisplay, fHostWindow, &wmDelete, 1 );
 
-    const Atom _nwi = XInternAtom(fDisplay, "_NET_WM_ICON", False);
-    XChangeProperty(fDisplay, fHostWindow, _nwi, XA_CARDINAL, 32, PropModeReplace, (const uchar*)sNonMixerX11Icon, sNonMixerX11IconSize);
+    const pid_t pid = getpid ( );
+    const Atom _nwp = XInternAtom ( fDisplay, "_NET_WM_PID", False );
+    XChangeProperty ( fDisplay, fHostWindow, _nwp, XA_CARDINAL, 32, PropModeReplace, (const uchar*) &pid, 1 );
 
-    const Atom _wt = XInternAtom(fDisplay, "_NET_WM_WINDOW_TYPE", False);
+    const Atom _nwi = XInternAtom ( fDisplay, "_NET_WM_ICON", False );
+    XChangeProperty ( fDisplay, fHostWindow, _nwi, XA_CARDINAL, 32, PropModeReplace, (const uchar*) sNonMixerX11Icon, sNonMixerX11IconSize );
+
+    const Atom _wt = XInternAtom ( fDisplay, "_NET_WM_WINDOW_TYPE", False );
 
     // Setting the window to both dialog and normal will produce a decorated floating dialog
     // Order is important: DIALOG needs to come before NORMAL
     const Atom _wts[2] = {
-        XInternAtom(fDisplay, "_NET_WM_WINDOW_TYPE_DIALOG", False),
-        XInternAtom(fDisplay, "_NET_WM_WINDOW_TYPE_NORMAL", False)
+                          XInternAtom ( fDisplay, "_NET_WM_WINDOW_TYPE_DIALOG", False ),
+                          XInternAtom ( fDisplay, "_NET_WM_WINDOW_TYPE_NORMAL", False )
     };
-    XChangeProperty(fDisplay, fHostWindow, _wt, XA_ATOM, 32, PropModeReplace, (const uchar*)&_wts, 2);
+    XChangeProperty ( fDisplay, fHostWindow, _wt, XA_ATOM, 32, PropModeReplace, (const uchar*) &_wts, 2 );
 
-    if(fIsVst3)
+    if ( fIsVst3 )
     {
         plugParentWindow =
-                XCreateWindow (fDisplay, fHostWindow, 0, 0, 300, 300, 0, DefaultDepth(fDisplay, screen),
-                               InputOutput, CopyFromParent, CWBorderPixel|CWEventMask, &attr);
+                XCreateWindow ( fDisplay, fHostWindow, 0, 0, 300, 300, 0, DefaultDepth ( fDisplay, screen ),
+                InputOutput, CopyFromParent, CWBorderPixel | CWEventMask, &attr );
 
-        XMapWindow (fDisplay, plugParentWindow);
+        XMapWindow ( fDisplay, plugParentWindow );
     }
-//    if (parentId != 0)
-//        setTransientWinId(parentId);
+    //    if (parentId != 0)
+    //        setTransientWinId(parentId);
 }
 
-
-X11PluginUI::~X11PluginUI()
+X11PluginUI::~X11PluginUI( )
 {
-    CARLA_SAFE_ASSERT(! fIsVisible);
+    CARLA_SAFE_ASSERT ( !fIsVisible );
 
-    if (fDisplay == nullptr)
+    if ( fDisplay == nullptr )
         return;
 
-    if (fIsVisible)
+    if ( fIsVisible )
     {
-        XUnmapWindow(fDisplay, fHostWindow);
+        XUnmapWindow ( fDisplay, fHostWindow );
         fIsVisible = false;
     }
 
-    if (fHostWindow != 0)
+    if ( fHostWindow != 0 )
     {
-        XDestroyWindow(fDisplay, fHostWindow);
+        XDestroyWindow ( fDisplay, fHostWindow );
         fHostWindow = 0;
     }
 
-    XCloseDisplay(fDisplay);
+    XCloseDisplay ( fDisplay );
     fDisplay = nullptr;
 }
 
-
 void
-X11PluginUI::show()
+X11PluginUI::show( )
 {
-    CARLA_SAFE_ASSERT_RETURN(fDisplay != nullptr,);
-    CARLA_SAFE_ASSERT_RETURN(fHostWindow != 0,);
+    CARLA_SAFE_ASSERT_RETURN ( fDisplay != nullptr, );
+    CARLA_SAFE_ASSERT_RETURN ( fHostWindow != 0, );
 
-    if (fFirstShow)
+    if ( fFirstShow )
     {
-        if (const Window childWindow = getChildWindow())
+        if ( const Window childWindow = getChildWindow ( ) )
         {
-            if (! fSetSizeCalledAtLeastOnce)
+            if ( !fSetSizeCalledAtLeastOnce )
             {
                 int width = 0;
                 int height = 0;
 
-                XWindowAttributes attrs = {};
+                XWindowAttributes attrs = { };
 
-                pthread_mutex_lock(&gErrorMutex);
-                const XErrorHandler oldErrorHandler = XSetErrorHandler(temporaryErrorHandler);
+                pthread_mutex_lock ( &gErrorMutex );
+                const XErrorHandler oldErrorHandler = XSetErrorHandler ( temporaryErrorHandler );
                 gErrorTriggered = false;
 
-                if (XGetWindowAttributes(fDisplay, childWindow, &attrs))
+                if ( XGetWindowAttributes ( fDisplay, childWindow, &attrs ) )
                 {
                     width = attrs.width;
                     height = attrs.height;
                 }
 
-                XSetErrorHandler(oldErrorHandler);
-                pthread_mutex_unlock(&gErrorMutex);
+                XSetErrorHandler ( oldErrorHandler );
+                pthread_mutex_unlock ( &gErrorMutex );
 
-                if (width == 0 && height == 0)
+                if ( width == 0 && height == 0 )
                 {
-                    XSizeHints sizeHints = {};
+                    XSizeHints sizeHints = { };
 
-                    if (XGetNormalHints(fDisplay, childWindow, &sizeHints))
+                    if ( XGetNormalHints ( fDisplay, childWindow, &sizeHints ) )
                     {
-                        if (sizeHints.flags & PSize)
+                        if ( sizeHints.flags & PSize )
                         {
                             width = sizeHints.width;
                             height = sizeHints.height;
                         }
-                        else if (sizeHints.flags & PBaseSize)
+                        else if ( sizeHints.flags & PBaseSize )
                         {
                             width = sizeHints.base_width;
                             height = sizeHints.base_height;
@@ -207,14 +206,14 @@ X11PluginUI::show()
                     }
                 }
 
-                if (width > 1 && height > 1)
-                    setSize(static_cast<uint>(width), static_cast<uint>(height), false, false);
+                if ( width > 1 && height > 1 )
+                    setSize ( static_cast<uint> ( width ), static_cast<uint> ( height ), false, false );
             }
 
-            const Atom _xevp = XInternAtom(fDisplay, "_XEventProc", False);
+            const Atom _xevp = XInternAtom ( fDisplay, "_XEventProc", False );
 
-            pthread_mutex_lock(&gErrorMutex);
-            const XErrorHandler oldErrorHandler(XSetErrorHandler(temporaryErrorHandler));
+            pthread_mutex_lock ( &gErrorMutex );
+            const XErrorHandler oldErrorHandler ( XSetErrorHandler ( temporaryErrorHandler ) );
             gErrorTriggered = false;
 
             Atom actualType;
@@ -222,16 +221,16 @@ X11PluginUI::show()
             ulong nitems, bytesAfter;
             uchar* data = nullptr;
 
-            XGetWindowProperty(fDisplay, childWindow, _xevp, 0, 1, False, AnyPropertyType,
-                               &actualType, &actualFormat, &nitems, &bytesAfter, &data);
+            XGetWindowProperty ( fDisplay, childWindow, _xevp, 0, 1, False, AnyPropertyType,
+                    &actualType, &actualFormat, &nitems, &bytesAfter, &data );
 
-            XSetErrorHandler(oldErrorHandler);
-            pthread_mutex_unlock(&gErrorMutex);
+            XSetErrorHandler ( oldErrorHandler );
+            pthread_mutex_unlock ( &gErrorMutex );
 
-            if (nitems == 1 && ! gErrorTriggered)
+            if ( nitems == 1 && !gErrorTriggered )
             {
-                fEventProc = *reinterpret_cast<EventProcPtr*>(data);
-                XMapRaised(fDisplay, childWindow);
+                fEventProc = *reinterpret_cast<EventProcPtr*> ( data );
+                XMapRaised ( fDisplay, childWindow );
             }
         }
     }
@@ -239,26 +238,26 @@ X11PluginUI::show()
     fIsVisible = true;
     fFirstShow = false;
 
-    XMapRaised(fDisplay, fHostWindow);
-    XSync(fDisplay, False);
+    XMapRaised ( fDisplay, fHostWindow );
+    XSync ( fDisplay, False );
 }
 
 void
-X11PluginUI::hide()
+X11PluginUI::hide( )
 {
-    CARLA_SAFE_ASSERT_RETURN(fDisplay != nullptr,);
-    CARLA_SAFE_ASSERT_RETURN(fHostWindow != 0,);
+    CARLA_SAFE_ASSERT_RETURN ( fDisplay != nullptr, );
+    CARLA_SAFE_ASSERT_RETURN ( fHostWindow != 0, );
 
     fIsVisible = false;
-    XUnmapWindow(fDisplay, fHostWindow);
-    XFlush(fDisplay);
+    XUnmapWindow ( fDisplay, fHostWindow );
+    XFlush ( fDisplay );
 }
 
 void
-X11PluginUI::idle()
+X11PluginUI::idle( )
 {
     // prevent recursion
-    if (fIsIdling) return;
+    if ( fIsIdling ) return;
 
     uint nextChildWidth = 0;
     uint nextChildHeight = 0;
@@ -268,230 +267,230 @@ X11PluginUI::idle()
 
     fIsIdling = true;
 
-    for (XEvent event; XPending(fDisplay) > 0;)
+    for ( XEvent event; XPending ( fDisplay ) > 0; )
     {
-        XNextEvent(fDisplay, &event);
+        XNextEvent ( fDisplay, &event );
 
-        if (! fIsVisible)
+        if ( !fIsVisible )
             continue;
 
         char* type = nullptr;
 
-        switch (event.type)
+        switch ( event.type )
         {
-        case ConfigureNotify:
-                CARLA_SAFE_ASSERT_CONTINUE(fCallback != nullptr);
-                CARLA_SAFE_ASSERT_CONTINUE(event.xconfigure.width > 0);
-                CARLA_SAFE_ASSERT_CONTINUE(event.xconfigure.height > 0);
+            case ConfigureNotify:
+                CARLA_SAFE_ASSERT_CONTINUE ( fCallback != nullptr );
+                CARLA_SAFE_ASSERT_CONTINUE ( event.xconfigure.width > 0 );
+                CARLA_SAFE_ASSERT_CONTINUE ( event.xconfigure.height > 0 );
 
-                if (event.xconfigure.window == fHostWindow && fHostWindow != 0)
+                if ( event.xconfigure.window == fHostWindow && fHostWindow != 0 )
                 {
-                    nextHostWidth = static_cast<uint>(event.xconfigure.width);
-                    nextHostHeight = static_cast<uint>(event.xconfigure.height);
+                    nextHostWidth = static_cast<uint> ( event.xconfigure.width );
+                    nextHostHeight = static_cast<uint> ( event.xconfigure.height );
                 }
-                else if (event.xconfigure.window == fChildWindow && fChildWindow != 0)
+                else if ( event.xconfigure.window == fChildWindow && fChildWindow != 0 )
                 {
-                    nextChildWidth = static_cast<uint>(event.xconfigure.width);
-                    nextChildHeight = static_cast<uint>(event.xconfigure.height);
+                    nextChildWidth = static_cast<uint> ( event.xconfigure.width );
+                    nextChildHeight = static_cast<uint> ( event.xconfigure.height );
                 }
                 break;
 
-        case ClientMessage:
-            type = XGetAtomName(fDisplay, event.xclient.message_type);
-            CARLA_SAFE_ASSERT_CONTINUE(type != nullptr);
+            case ClientMessage:
+                type = XGetAtomName ( fDisplay, event.xclient.message_type );
+                CARLA_SAFE_ASSERT_CONTINUE ( type != nullptr );
 
-            /* Window X box to close */
-            if (std::strcmp(type, "WM_PROTOCOLS") == 0)
-            {
-                fIsVisible = false;
-                CARLA_SAFE_ASSERT_CONTINUE(fCallback != nullptr);
-                fCallback->handlePluginUIClosed();
-            }
-            break;
-
-        case KeyRelease:
-            /* Escape key to close */
-            if (event.xkey.keycode == X11Key_Escape)
-            {
-                fIsVisible = false;
-                CARLA_SAFE_ASSERT_CONTINUE(fCallback != nullptr);
-                fCallback->handlePluginUIClosed();
-            }
-            /* CTRL W to close */
-            else if(event.xkey.keycode == X11Key_W)
-            {
-                if ((event.xkey.state & (ShiftMask | ControlMask | Mod1Mask | Mod4Mask)) == (ControlMask))
+                /* Window X box to close */
+                if ( std::strcmp ( type, "WM_PROTOCOLS" ) == 0 )
                 {
                     fIsVisible = false;
-                    CARLA_SAFE_ASSERT_CONTINUE(fCallback != nullptr);
-                    fCallback->handlePluginUIClosed();
+                    CARLA_SAFE_ASSERT_CONTINUE ( fCallback != nullptr );
+                    fCallback->handlePluginUIClosed ( );
                 }
-            }
-            break;
+                break;
 
-        case FocusIn:
-            if (fChildWindow == 0)
-                fChildWindow = getChildWindow();
+            case KeyRelease:
+                /* Escape key to close */
+                if ( event.xkey.keycode == X11Key_Escape )
+                {
+                    fIsVisible = false;
+                    CARLA_SAFE_ASSERT_CONTINUE ( fCallback != nullptr );
+                    fCallback->handlePluginUIClosed ( );
+                }
+                    /* CTRL W to close */
+                else if ( event.xkey.keycode == X11Key_W )
+                {
+                    if ( ( event.xkey.state & ( ShiftMask | ControlMask | Mod1Mask | Mod4Mask ) ) == ( ControlMask ) )
+                    {
+                        fIsVisible = false;
+                        CARLA_SAFE_ASSERT_CONTINUE ( fCallback != nullptr );
+                        fCallback->handlePluginUIClosed ( );
+                    }
+                }
+                break;
 
-            if (fChildWindow != 0)
-            {
-                XWindowAttributes wa;
-                non_zeroStruct(wa);
+            case FocusIn:
+                if ( fChildWindow == 0 )
+                    fChildWindow = getChildWindow ( );
 
-                if (XGetWindowAttributes(fDisplay, fChildWindow, &wa) && wa.map_state == IsViewable)
-                    XSetInputFocus(fDisplay, fChildWindow, RevertToPointerRoot, CurrentTime);
-            }
-            break;
+                if ( fChildWindow != 0 )
+                {
+                    XWindowAttributes wa;
+                    non_zeroStruct ( wa );
+
+                    if ( XGetWindowAttributes ( fDisplay, fChildWindow, &wa ) && wa.map_state == IsViewable )
+                        XSetInputFocus ( fDisplay, fChildWindow, RevertToPointerRoot, CurrentTime );
+                }
+                break;
         }
 
-        if (type != nullptr)
-            XFree(type);
-        else if (fEventProc != nullptr && event.type != FocusIn && event.type != FocusOut)
-            fEventProc(&event);
+        if ( type != nullptr )
+            XFree ( type );
+        else if ( fEventProc != nullptr && event.type != FocusIn && event.type != FocusOut )
+            fEventProc ( &event );
     }
 
-    if (nextChildWidth != 0 && nextChildHeight != 0 && fChildWindow != 0)
+    if ( nextChildWidth != 0 && nextChildHeight != 0 && fChildWindow != 0 )
     {
-        applyHintsFromChildWindow();
-        XResizeWindow(fDisplay, fHostWindow, nextChildWidth, nextChildHeight);
+        applyHintsFromChildWindow ( );
+        XResizeWindow ( fDisplay, fHostWindow, nextChildWidth, nextChildHeight );
         // XFlush(fDisplay);
     }
-    else if (nextHostWidth != 0 && nextHostHeight != 0)
+    else if ( nextHostWidth != 0 && nextHostHeight != 0 )
     {
-        if (fChildWindow != 0 && ! fChildWindowConfigured)
+        if ( fChildWindow != 0 && !fChildWindowConfigured )
         {
-            applyHintsFromChildWindow();
+            applyHintsFromChildWindow ( );
             fChildWindowConfigured = true;
         }
 
-        if (fChildWindow != 0)
-            XResizeWindow(fDisplay, fChildWindow, nextHostWidth, nextHostHeight);
+        if ( fChildWindow != 0 )
+            XResizeWindow ( fDisplay, fChildWindow, nextHostWidth, nextHostHeight );
 
-        fCallback->handlePluginUIResized(nextHostWidth, nextHostHeight);
+        fCallback->handlePluginUIResized ( nextHostWidth, nextHostHeight );
     }
 
     fIsIdling = false;
 }
 
 void
-X11PluginUI::focus()
+X11PluginUI::focus( )
 {
-    CARLA_SAFE_ASSERT_RETURN(fDisplay != nullptr,);
-    CARLA_SAFE_ASSERT_RETURN(fHostWindow != 0,);
+    CARLA_SAFE_ASSERT_RETURN ( fDisplay != nullptr, );
+    CARLA_SAFE_ASSERT_RETURN ( fHostWindow != 0, );
 
     XWindowAttributes wa;
-    non_zeroStruct(wa);
+    non_zeroStruct ( wa );
 
-    CARLA_SAFE_ASSERT_RETURN(XGetWindowAttributes(fDisplay, fHostWindow, &wa),);
+    CARLA_SAFE_ASSERT_RETURN ( XGetWindowAttributes ( fDisplay, fHostWindow, &wa ), );
 
-    if (wa.map_state == IsViewable)
+    if ( wa.map_state == IsViewable )
     {
-        XRaiseWindow(fDisplay, fHostWindow);
-        XSetInputFocus(fDisplay, fHostWindow, RevertToPointerRoot, CurrentTime);
-        XSync(fDisplay, False);
+        XRaiseWindow ( fDisplay, fHostWindow );
+        XSetInputFocus ( fDisplay, fHostWindow, RevertToPointerRoot, CurrentTime );
+        XSync ( fDisplay, False );
     }
 }
 
 void
-X11PluginUI::setMinimumSize(const uint width, const uint height)
+X11PluginUI::setMinimumSize( const uint width, const uint height )
 {
-    CARLA_SAFE_ASSERT_RETURN(fDisplay != nullptr,);
-    CARLA_SAFE_ASSERT_RETURN(fHostWindow != 0,);
+    CARLA_SAFE_ASSERT_RETURN ( fDisplay != nullptr, );
+    CARLA_SAFE_ASSERT_RETURN ( fHostWindow != 0, );
 
     fMinimumWidth = width;
     fMinimumHeight = height;
 
-    XSizeHints sizeHints = {};
-    if (XGetNormalHints(fDisplay, fHostWindow, &sizeHints))
+    XSizeHints sizeHints = { };
+    if ( XGetNormalHints ( fDisplay, fHostWindow, &sizeHints ) )
     {
-        sizeHints.flags     |= PMinSize;
-        sizeHints.min_width  = static_cast<int>(width);
-        sizeHints.min_height = static_cast<int>(height);
-        XSetNormalHints(fDisplay, fHostWindow, &sizeHints);
+        sizeHints.flags |= PMinSize;
+        sizeHints.min_width = static_cast<int> ( width );
+        sizeHints.min_height = static_cast<int> ( height );
+        XSetNormalHints ( fDisplay, fHostWindow, &sizeHints );
     }
 }
 
 void
-X11PluginUI::setSize(const uint width, const uint height, const bool forceUpdate, const bool resizeChild)
+X11PluginUI::setSize( const uint width, const uint height, const bool forceUpdate, const bool resizeChild )
 {
-    CARLA_SAFE_ASSERT_RETURN(fDisplay != nullptr,);
-    CARLA_SAFE_ASSERT_RETURN(fHostWindow != 0,);
+    CARLA_SAFE_ASSERT_RETURN ( fDisplay != nullptr, );
+    CARLA_SAFE_ASSERT_RETURN ( fHostWindow != 0, );
 
     fSetSizeCalledAtLeastOnce = true;
-    XResizeWindow(fDisplay, fHostWindow, width, height);
+    XResizeWindow ( fDisplay, fHostWindow, width, height );
 
-    if (fChildWindow != 0 && resizeChild)
-        XResizeWindow(fDisplay, fChildWindow, width, height);
+    if ( fChildWindow != 0 && resizeChild )
+        XResizeWindow ( fDisplay, fChildWindow, width, height );
 
-    if (! fIsResizable)
+    if ( !fIsResizable )
     {
-        XSizeHints sizeHints = {};
-        sizeHints.flags      = PSize|PMinSize|PMaxSize;
-        sizeHints.width      = static_cast<int>(width);
-        sizeHints.height     = static_cast<int>(height);
-        sizeHints.min_width  = static_cast<int>(width);
-        sizeHints.min_height = static_cast<int>(height);
-        sizeHints.max_width  = static_cast<int>(width);
-        sizeHints.max_height = static_cast<int>(height);
+        XSizeHints sizeHints = { };
+        sizeHints.flags = PSize | PMinSize | PMaxSize;
+        sizeHints.width = static_cast<int> ( width );
+        sizeHints.height = static_cast<int> ( height );
+        sizeHints.min_width = static_cast<int> ( width );
+        sizeHints.min_height = static_cast<int> ( height );
+        sizeHints.max_width = static_cast<int> ( width );
+        sizeHints.max_height = static_cast<int> ( height );
 
-        XSetNormalHints(fDisplay, fHostWindow, &sizeHints);
+        XSetNormalHints ( fDisplay, fHostWindow, &sizeHints );
     }
 
-    if (forceUpdate)
-        XSync(fDisplay, False);
+    if ( forceUpdate )
+        XSync ( fDisplay, False );
 }
 
 void
-X11PluginUI::setTitle(const char* const title)
+X11PluginUI::setTitle( const char* const title )
 {
-    CARLA_SAFE_ASSERT_RETURN(fDisplay != nullptr,);
-    CARLA_SAFE_ASSERT_RETURN(fHostWindow != 0,);
+    CARLA_SAFE_ASSERT_RETURN ( fDisplay != nullptr, );
+    CARLA_SAFE_ASSERT_RETURN ( fHostWindow != 0, );
 
-    XStoreName(fDisplay, fHostWindow, title);
+    XStoreName ( fDisplay, fHostWindow, title );
 
-    const Atom _nwn = XInternAtom(fDisplay, "_NET_WM_NAME", False);
-    const Atom utf8 = XInternAtom(fDisplay, "UTF8_STRING", True);
+    const Atom _nwn = XInternAtom ( fDisplay, "_NET_WM_NAME", False );
+    const Atom utf8 = XInternAtom ( fDisplay, "UTF8_STRING", True );
 
-    XChangeProperty(fDisplay, fHostWindow, _nwn, utf8, 8,
-                    PropModeReplace,
-                    (const uchar*)(title),
-                    (int)strlen(title));
+    XChangeProperty ( fDisplay, fHostWindow, _nwn, utf8, 8,
+            PropModeReplace,
+            (const uchar*) ( title ),
+            (int) strlen ( title ) );
 }
 
 void
-X11PluginUI::setTransientWinId(const uintptr_t winId)
+X11PluginUI::setTransientWinId( const uintptr_t winId )
 {
-    CARLA_SAFE_ASSERT_RETURN(fDisplay != nullptr,);
-    CARLA_SAFE_ASSERT_RETURN(fHostWindow != 0,);
+    CARLA_SAFE_ASSERT_RETURN ( fDisplay != nullptr, );
+    CARLA_SAFE_ASSERT_RETURN ( fHostWindow != 0, );
 
-    XSetTransientForHint(fDisplay, fHostWindow, static_cast<Window>(winId));
+    XSetTransientForHint ( fDisplay, fHostWindow, static_cast<Window> ( winId ) );
 }
 
 void
-X11PluginUI::setChildWindow(void* const winId)
+X11PluginUI::setChildWindow( void* const winId )
 {
-    CARLA_SAFE_ASSERT_RETURN(winId != nullptr,);
+    CARLA_SAFE_ASSERT_RETURN ( winId != nullptr, );
 
-    fChildWindow = (Window)winId;
+    fChildWindow = (Window) winId;
 }
 
 void*
-X11PluginUI::getPtr() const
+X11PluginUI::getPtr( ) const
 {
-    return (void*)fHostWindow;
+    return (void*) fHostWindow;
 }
 
 /**
  Used only by VST3
  */
 void*
-X11PluginUI::getparentwin() const
+X11PluginUI::getparentwin( ) const
 {
-    return (void*)plugParentWindow;
+    return (void*) plugParentWindow;
 }
 
 void*
-X11PluginUI::getDisplay() const
+X11PluginUI::getDisplay( ) const
 {
     return fDisplay;
 }
@@ -501,13 +500,15 @@ X11PluginUI::getDisplay() const
  event handling is done in the idle() callback.
  */
 bool
-X11PluginUI::handlePlugEvent (const XEvent& /*event*/)
+X11PluginUI::handlePlugEvent( const XEvent& /*event*/ )
 {
     return false;
 }
 
 //------------------------------------------------------------------------
-Size X11PluginUI::getSize () const
+
+Size
+X11PluginUI::getSize( ) const
 {
     ::Window root;
     int x, y;
@@ -515,57 +516,57 @@ Size X11PluginUI::getSize () const
     unsigned int border_width;
     unsigned int depth;
 
-    XGetGeometry (fDisplay, fHostWindow, &root, &x, &y, &width, &height, &border_width, &depth);
+    XGetGeometry ( fDisplay, fHostWindow, &root, &x, &y, &width, &height, &border_width, &depth );
 
-    return {static_cast<int> (width), static_cast<int> (height)};
+    return {static_cast<int> ( width ), static_cast<int> ( height ) };
 }
 
 void
-X11PluginUI::applyHintsFromChildWindow()
+X11PluginUI::applyHintsFromChildWindow( )
 {
-    pthread_mutex_lock(&gErrorMutex);
-    const XErrorHandler oldErrorHandler = XSetErrorHandler(temporaryErrorHandler);
+    pthread_mutex_lock ( &gErrorMutex );
+    const XErrorHandler oldErrorHandler = XSetErrorHandler ( temporaryErrorHandler );
     gErrorTriggered = false;
 
-    XSizeHints sizeHints = {};
-    if (XGetNormalHints(fDisplay, fChildWindow, &sizeHints) && !gErrorTriggered)
+    XSizeHints sizeHints = { };
+    if ( XGetNormalHints ( fDisplay, fChildWindow, &sizeHints ) && !gErrorTriggered )
     {
-        if (fMinimumWidth != 0 && fMinimumHeight != 0)
+        if ( fMinimumWidth != 0 && fMinimumHeight != 0 )
         {
             sizeHints.flags |= PMinSize;
             sizeHints.min_width = fMinimumWidth;
             sizeHints.min_height = fMinimumHeight;
         }
 
-        XSetNormalHints(fDisplay, fHostWindow, &sizeHints);
+        XSetNormalHints ( fDisplay, fHostWindow, &sizeHints );
     }
 
-    if (gErrorTriggered)
+    if ( gErrorTriggered )
     {
-        WARNING("Caught errors while accessing child window");
+        WARNING ( "Caught errors while accessing child window" );
         fChildWindow = 0;
     }
 
-    XSetErrorHandler(oldErrorHandler);
-    pthread_mutex_unlock(&gErrorMutex);
+    XSetErrorHandler ( oldErrorHandler );
+    pthread_mutex_unlock ( &gErrorMutex );
 }
 
 Window
-X11PluginUI::getChildWindow() const
+X11PluginUI::getChildWindow( ) const
 {
-    CARLA_SAFE_ASSERT_RETURN(fDisplay != nullptr, 0);
-    CARLA_SAFE_ASSERT_RETURN(fHostWindow != 0, 0);
+    CARLA_SAFE_ASSERT_RETURN ( fDisplay != nullptr, 0 );
+    CARLA_SAFE_ASSERT_RETURN ( fHostWindow != 0, 0 );
 
     Window rootWindow, parentWindow, ret = 0;
     Window* childWindows = nullptr;
     uint numChildren = 0;
 
-    XQueryTree(fDisplay, fHostWindow, &rootWindow, &parentWindow, &childWindows, &numChildren);
+    XQueryTree ( fDisplay, fHostWindow, &rootWindow, &parentWindow, &childWindows, &numChildren );
 
-    if (numChildren > 0 && childWindows != nullptr)
+    if ( numChildren > 0 && childWindows != nullptr )
     {
         ret = childWindows[0];
-        XFree(childWindows);
+        XFree ( childWindows );
     }
 
     return ret;
