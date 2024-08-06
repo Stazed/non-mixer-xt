@@ -17,7 +17,7 @@
 
 
 /* 
- * File:   EditorFrame.h
+ * File:   EditorFrame.H
  * Author: sspresto
  *
  * Created on January 4, 2024, 6:01 PM

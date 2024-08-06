@@ -17,7 +17,7 @@
 
 
 /* 
- * File:   EditorFrame.cpp
+ * File:   EditorFrame.C
  * Author: sspresto
  * 
  * Created on January 4, 2024, 6:01 PM
@@ -25,7 +25,7 @@
 
 #ifdef VST3_SUPPORT
 
-#include "EditorFrame.h"
+#include "EditorFrame.H"
 #include "runloop.h"
 
 //------------------------------------------------------------------------

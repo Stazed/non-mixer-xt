@@ -31,7 +31,7 @@
 #include <FL/fl_ask.H>  // fl_alert()
 
 #include "../../../nonlib/dsp.h"
-#include "EditorFrame.h"
+#include "EditorFrame.H"
 #include "VST3_Plugin.H"
 #include "../Chain.H"
 #include "Vst3_Discovery.H"

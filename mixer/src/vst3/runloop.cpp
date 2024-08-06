@@ -39,7 +39,7 @@
 
 #include "runloop.h"
 #include "VST3_Plugin.H"
-#include "EditorFrame.h"
+#include "EditorFrame.H"
 #include <algorithm>
 #include <iostream>
 
