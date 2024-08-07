@@ -454,9 +454,6 @@ VST3_Plugin::~VST3_Plugin( )
 
     delete _pRunloop;
 
-    // Causes memap chunk double free
-    //    delete _pHostContext;
-
     /* This is the case when the user manually removes a Plugin. We set the
      _is_removed = true, and add any custom data directory to the remove directories
      vector. If the user saves the project then we remove any items in the vector.
@@ -1474,6 +1471,7 @@ VST3_Plugin::close_descriptor( )
     if ( _pComponent && _pController &&
          FUnknownPtr<Vst::IEditController> ( _pComponent ).getInterface ( ) )
     {
+        //  This will delete any host context, i.e. _pHostContext
         _pController->terminate ( );
     }
 
