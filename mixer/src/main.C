@@ -93,8 +93,8 @@
 
 const double NSM_CHECK_INTERVAL = 0.25f;
 
-const char COPYRIGHT[] = "Copyright (c) 2008-2021 Jonathan Moore Liles";
-const char COPYRIGHT2[] = "Copyright (c) 2022-2024 Stazed";
+const char COPYRIGHT[] = "Copyright (C) 2008-2021 Jonathan Moore Liles (as Non-Mixer)";
+const char COPYRIGHT2[] = "Copyright (C) 2021- Stazed (as Non-Mixer-XT)";
 
 char *user_config_dir;
 char *clipboard_dir;
