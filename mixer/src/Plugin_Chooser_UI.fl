@@ -2,6 +2,29 @@
 version 1.0309
 header_name {.H}
 code_name {.C}
+comment {//
+// Copyright (C) 2008-2021 Jonathan Moore Liles (as "Non-Mixer")
+// Copyright (C) 2021- Stazed
+//
+// This file is part of Non-Mixer-XT
+//
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either version 2
+// of the License, or (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+//
+} {selected in_source in_header
+}
+
 decl {\#include "../../FL/Fl_Scalepack.H"} {public global
 }
 
@@ -57,7 +80,7 @@ widget_class Plugin_Chooser_UI {
     } {}
   }
   Fl_Choice type_choice {
-    label {Type:} open selected
+    label {Type:} open
     xywh {515 70 95 24} down_box BORDER_BOX labelsize 12 textsize 12
   } {
     MenuItem {} {
