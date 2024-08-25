@@ -1,4 +1,6 @@
 /*******************************************************************************/
+/* Copyright (C) 2011-2022 Filipe Coelho <falktx@falktx.com>                   */
+/* Copyright (C) 2021- Stazed                                                  */
 /*                                                                             */
 /* This file is part of Non-Mixer-XT                                           */
 /*                                                                             */

@@ -1,4 +1,8 @@
 /*******************************************************************************/
+/* Copyright (C) 2007-2022 David Robillard <d@drobilla.net>                    */
+/* Copyright (C) 2005-2022, rncbc aka Rui Nuno Capela.                         */
+/* Copyright (C) 2011-2022 Filipe Coelho <falktx@falktx.com>                   */
+/* Copyright (C) 2021- Stazed                                                  */
 /*                                                                             */
 /* This file is part of Non-Mixer-XT                                           */
 /*                                                                             */
