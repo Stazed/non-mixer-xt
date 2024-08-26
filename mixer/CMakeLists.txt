@@ -270,6 +270,7 @@ if(EnableNTK)
             ${LILV_LIBRARIES}
             ${SUIL_LIBRARIES}
             ${CMAKE_THREAD_LIBS_INIT}
+            dl
             lrdf
     )
 else(EnableNTK)
@@ -285,6 +286,7 @@ else(EnableNTK)
             ${LILV_LIBRARIES}
             ${SUIL_LIBRARIES}
             ${CMAKE_THREAD_LIBS_INIT}
+            dl
             lrdf
     )
 endif(EnableNTK)
