@@ -174,6 +174,19 @@ main( int argc, char **argv )
     printf ( "%s %s\n", APP_TITLE, VERSION );
     printf ( "%s\n%s\n", COPYRIGHT, COPYRIGHT2 );
 
+    /* Test JACK - check to see if jack is running before we go further.
+       We show a fl_message and exit if not.*/
+    jack_client_t *test_client;
+    if (( test_client = jack_client_open ( "TestJACK", (jack_options_t)0, NULL )) == 0 )
+    {
+        fl_message("Cannot make a Jack client. Is JACK running?");
+        return 0;
+    }
+    else    // jack is running so close the test client and continue.
+    {
+        jack_client_close ( test_client );
+    }
+
     Thread::init ( );
 
     Thread thread ( "UI" );
