@@ -27,11 +27,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-
-#include <FL/Fl.H>
-#include <FL/Fl_Window.H>
-#include <FL/Fl_Box.H>
-#include <FL/fl_ask.H>  // fl_alert()
+#include <sys/stat.h>
 
 #include "Plugin_Scan.H"
 #include "../../nonlib/debug.h"
@@ -56,7 +52,7 @@ main( int /*argc*/, char** argv )
 {
     if ( !ensure_dirs ( ) )
     {
-        fl_alert ( "Warning! Cannot create/open user config directory! Scanning aborted..." );
+        fprintf(stderr, "Warning! Cannot create/open user config directory! Scanning aborted...");
         return (EXIT_SUCCESS );
     }
 
@@ -92,6 +88,6 @@ main( int /*argc*/, char** argv )
     Plugin_Scan scanner;
     scanner.get_all_plugins ( s_type, s_path );
 
-    return (EXIT_SUCCESS );
+    return ( EXIT_SUCCESS );
 }
 

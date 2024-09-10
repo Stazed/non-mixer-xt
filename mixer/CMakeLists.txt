@@ -259,14 +259,12 @@ add_executable (nmxt-plugin-scan ${ScanSources} ${VST3SDK_SOURCES} src/nmxt-plug
 
 if(EnableNTK)
     target_include_directories (nmxt-plugin-scan PRIVATE
-            ${NTK_INCLUDE_DIRS}
             ${LRDF_INCLUDE_DIRS}
             ${LILV_INCLUDE_DIRS}
             ${SUIL_INCLUDE_DIRS}
     )
 
     target_link_libraries(nmxt-plugin-scan PRIVATE
-            ${NTK_LIBRARIES}
             ${LILV_LIBRARIES}
             ${SUIL_LIBRARIES}
             ${CMAKE_THREAD_LIBS_INIT}
@@ -275,14 +273,12 @@ if(EnableNTK)
     )
 else(EnableNTK)
     target_include_directories (nmxt-plugin-scan PRIVATE
-            ${FLTK_INCLUDE_DIRS}
             ${LRDF_INCLUDE_DIRS}
             ${LILV_INCLUDE_DIRS}
             ${SUIL_INCLUDE_DIRS}
     )
 
     target_link_libraries(nmxt-plugin-scan PRIVATE
-            ${FLTK_LIBRARIES}
             ${LILV_LIBRARIES}
             ${SUIL_LIBRARIES}
             ${CMAKE_THREAD_LIBS_INIT}
