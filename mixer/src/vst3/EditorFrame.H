@@ -109,12 +109,27 @@ public:
         m_plugView->setFrame(this);
 
         ViewRect rect;
-        if (m_plugView->getSize(&rect) == kResultOk)
+
+        if (m_plugView->checkSizeConstraint(&rect) == kResultOk)
+        {
+            m_resizing = true;
+            int32 x_W = rect.right - rect.left;
+            int32 x_H = rect.bottom - rect.top;
+            DMESSAGE("Width = %d: Height = %d", x_W, x_H );
+
+            Size x_size = getSize();
+            if( (x_size.width != x_W) || x_size.height != x_H )
+                setSize(x_W, x_H, false, false);
+
+            m_resizing = false;
+        }
+        else if (m_plugView->getSize(&rect) == kResultOk)
         {
             m_resizing = true;
             setSize(rect.right - rect.left, rect.bottom - rect.top, false, false);
             m_resizing = false;
         }
+            
     }
 
     // Destructor.
@@ -140,27 +155,35 @@ public:
         if (m_resizing)
             return kResultFalse;
 
-        m_resizing = true;
+        /* checkSizeConstraint may alter the rect sizes here */
+        if (m_plugView->checkSizeConstraint(rect) == kResultOk)
+        {
+            m_resizing = true;
 
-        int width = rect->right  - rect->left;
-        int height = rect->bottom - rect->top;
-        DMESSAGE("EditorFrame[%p]::resizeView(%p, %p) size=(%d, %d)",
-                this, plugView, rect, width, height);
+            int32 width = rect->right - rect->left;
+            int32 height = rect->bottom - rect->top;
+            DMESSAGE("Constraint Width = %d: Height = %d", width, height );
 
-      //  if (m_plugView->canResize() == kResultOk)
-        setSize(width, height, false, false);
+            Size x_size = getSize();
+            if( (x_size.width != width) || (x_size.height != height) )
+                setSize(width, height, false, false);
 
-        m_resizing = false;
+            m_plugView->onSize(rect);
+            m_resizing = false;
+        }
+        else    // If no checkSizeConstraint then just use the unaltered rect
+        {
+            m_resizing = true;
+            int32 width = rect->right - rect->left;
+            int32 height = rect->bottom - rect->top;
+            DMESSAGE("Width = %d: Height = %d", width, height );
+            Size x_size = getSize();
+            if( (x_size.width != width) || (x_size.height != height) )
+                setSize(width, height, false, false);
 
-        ViewRect rect0;
-        if (m_plugView->getSize(&rect0) != kResultOk)
-            return kInternalError;
-
-        int width0 = rect0.right  - rect0.left;
-        int height0 = rect0.bottom - rect0.top;
-
-        if ( (width0 != width) && (height0 != height) )
-            m_plugView->onSize(&rect0);
+            m_plugView->onSize(rect);
+            m_resizing = false;
+        }
 
         return kResultOk;
     }
