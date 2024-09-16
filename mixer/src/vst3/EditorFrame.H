@@ -109,27 +109,32 @@ public:
         m_plugView->setFrame(this);
 
         ViewRect rect;
+        m_resizing = true;
 
-        if (m_plugView->checkSizeConstraint(&rect) == kResultOk)
+        /* getSize will get current or old size */
+        if (m_plugView->getSize(&rect) == kResultOk)
         {
-            m_resizing = true;
-            int32 x_W = rect.right - rect.left;
-            int32 x_H = rect.bottom - rect.top;
-            DMESSAGE("Width = %d: Height = %d", x_W, x_H );
+            /* checkSizeConstraint may alter the rect sizes here */
+            if (m_plugView->checkSizeConstraint(&rect) == kResultOk)
+            {
+                m_resizing = true;
+                int32 x_W = rect.right - rect.left;
+                int32 x_H = rect.bottom - rect.top;
+                DMESSAGE("Width = %d: Height = %d", x_W, x_H );
 
-            Size x_size = getSize();
-            if( (x_size.width != x_W) || x_size.height != x_H )
-                setSize(x_W, x_H, false, false);
+                Size x_size = getSize();
+                if( (x_size.width != x_W) || x_size.height != x_H )
+                    setSize(x_W, x_H, false, false);
 
-            m_resizing = false;
+                m_resizing = false;
+            }
+            else    // not altered
+            {
+                setSize(rect.right - rect.left, rect.bottom - rect.top, false, false);
+            }    
         }
-        else if (m_plugView->getSize(&rect) == kResultOk)
-        {
-            m_resizing = true;
-            setSize(rect.right - rect.left, rect.bottom - rect.top, false, false);
-            m_resizing = false;
-        }
-            
+    
+        m_resizing = false;
     }
 
     // Destructor.
