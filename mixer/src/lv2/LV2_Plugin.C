@@ -2091,7 +2091,11 @@ LV2_Plugin::send_file_to_plugin( int port, const std::string &filename )
     const LV2_Atom* atom = lv2_atom_forge_deref ( &forge, frame.ref );
 
     /* Use the .ttl plugin index, not our internal index */
-    int index = atom_input[port].hints.plug_port_index;
+    const uint32_t index = atom_input[port].hints.plug_port_index;
+
+    // check if invalid index
+    if(index == C_MAX_UINT32)
+        return;
 
     write_atom_event ( _ui_to_plugin, index, atom->size, atom->type, atom + 1U );
 }
@@ -2784,6 +2788,10 @@ LV2_Plugin::update_custom_ui( )
     {
         float value = control_output[i].control_value ( );
         uint32_t port_index = control_output[i].hints.plug_port_index;
+
+        // check if invalid index
+        if(port_index == C_MAX_UINT32)
+            continue;
 
         suil_instance_port_event (
                 _ui_instance, port_index, sizeof (float ), 0, &value );

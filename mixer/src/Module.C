@@ -545,6 +545,11 @@ Module::handle_control_changed( Module::Port *p )
             CLAP_Plugin *pm = static_cast<CLAP_Plugin *> ( m );
 
             uint32_t param_id = p->hints.parameter_id;
+
+            // invalid parameter id, or not set
+            if(param_id == C_MAX_UINT32)
+                return;
+
             float value = p->control_value ( );
             DMESSAGE ( "CLAP Param ID = %d: Value = %f", param_id, value );
             pm->setParameter ( param_id, value );
@@ -564,6 +569,11 @@ Module::handle_control_changed( Module::Port *p )
             VST2_Plugin *pm = static_cast<VST2_Plugin *> ( m );
 
             uint32_t iIndex = p->hints.plug_port_index;
+
+            // check if invalid index
+            if(iIndex == C_MAX_UINT32)
+                return;
+
             float value = p->control_value ( );
 
             if ( p->hints.type == Port::Hints::LV2_INTEGER )
@@ -589,6 +599,11 @@ Module::handle_control_changed( Module::Port *p )
             VST3_Plugin *pm = static_cast<VST3_Plugin *> ( m );
 
             uint32_t param_id = p->hints.parameter_id;
+
+            // invalid parameter id, or not set
+            if(param_id == C_MAX_UINT32)
+                return;
+
             float value = 0.0f;
 
             // VST3 only receives integer in float normalized ranges 0.0 to 1.0.
