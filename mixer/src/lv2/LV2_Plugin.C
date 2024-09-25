@@ -2804,6 +2804,9 @@ LV2_Plugin::update_ui_settings( )
         float value = isnan ( control_input[i].control_value ( ) ) ? 0.0f : control_input[i].control_value ( );
         uint32_t port_index = control_input[i].hints.plug_port_index;
 
+        if(port_index == C_MAX_UINT32)
+            continue;
+
         suil_instance_port_event (
                 _ui_instance, port_index, sizeof (float ), 0, &value );
     }
