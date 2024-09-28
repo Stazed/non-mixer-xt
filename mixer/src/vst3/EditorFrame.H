@@ -117,16 +117,16 @@ public:
             /* checkSizeConstraint may alter the rect sizes here */
             if (m_plugView->checkSizeConstraint(&rect) == kResultOk)
             {
-                m_resizing = true;
-                int32 x_W = rect.right - rect.left;
-                int32 x_H = rect.bottom - rect.top;
+                const int32 x_W = rect.right - rect.left;
+                const int32 x_H = rect.bottom - rect.top;
                 DMESSAGE("Width = %d: Height = %d", x_W, x_H );
 
                 Size x_size = getSize();
                 if( (x_size.width != x_W) || x_size.height != x_H )
+                {
+                    setMinimumSize(x_W, x_H);
                     setSize(x_W, x_H, false, false);
-
-                m_resizing = false;
+                }
             }
             else    // not altered
             {
@@ -160,36 +160,39 @@ public:
         if (m_resizing)
             return kResultFalse;
 
+        m_resizing = true;
+
         /* checkSizeConstraint may alter the rect sizes here */
         if (m_plugView->checkSizeConstraint(rect) == kResultOk)
         {
-            m_resizing = true;
-
-            int32 width = rect->right - rect->left;
-            int32 height = rect->bottom - rect->top;
+            const int32 width = rect->right - rect->left;
+            const int32 height = rect->bottom - rect->top;
             DMESSAGE("Constraint Width = %d: Height = %d", width, height );
 
             Size x_size = getSize();
             if( (x_size.width != width) || (x_size.height != height) )
+            {
+                setMinimumSize(width, height);
                 setSize(width, height, false, false);
+            }
 
             m_plugView->onSize(rect);
-            m_resizing = false;
         }
         else    // If no checkSizeConstraint then just use the unaltered rect
         {
-            m_resizing = true;
-            int32 width = rect->right - rect->left;
-            int32 height = rect->bottom - rect->top;
+            const int32 width = rect->right - rect->left;
+            const int32 height = rect->bottom - rect->top;
             DMESSAGE("Width = %d: Height = %d", width, height );
             Size x_size = getSize();
             if( (x_size.width != width) || (x_size.height != height) )
+            {
                 setSize(width, height, false, false);
+            }
 
             m_plugView->onSize(rect);
-            m_resizing = false;
         }
 
+        m_resizing = false;
         return kResultOk;
     }
 
