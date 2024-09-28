@@ -449,6 +449,7 @@ x_resize( LV2UI_Feature_Handle handle, int width, int height )
         return 1;
 
     pLv2Plugin->_X11_UI->setSize ( width, height, true, false );
+    pLv2Plugin->_X11_UI->setMinimumSize( width, height );
 
     DMESSAGE ( "X-width = %d: X-height = %d", width, height );
 
