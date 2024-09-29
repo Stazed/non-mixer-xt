@@ -19,7 +19,6 @@
 /* Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 /*******************************************************************************/
 
-
 /*
  * File:   Vst3_Discovery.C
  * Author: sspresto
@@ -266,7 +265,6 @@ getCategoryFromName( const std::string &name ) noexcept
     return "Unclassified";
 }
 
-
 //-----------------------------------------------------------------------------
 
 using namespace Steinberg;
@@ -339,9 +337,7 @@ vst3_discovery_scan_host::release( void )
     return 1;
 }
 
-
 static vst3_discovery_scan_host g_vst3HostContext;
-
 
 //----------------------------------------------------------------------
 // class vst3_discovery_scan::Impl -- VST3 plugin interface impl.
@@ -404,7 +400,7 @@ public:
         {
 
             DMESSAGE ( "[%p]::open_descriptor(%lu)"
-                       " *** Failed to resolve plug-in factory.", this, iIndex );
+                " *** Failed to resolve plug-in factory.", this, iIndex );
 
             return false;
         }
@@ -413,7 +409,7 @@ public:
         if ( !factory )
         {
             DMESSAGE ( "[%p]::open_descriptor(%lu)"
-                       " *** Failed to retrieve plug-in factory.", this, iIndex );
+                " *** Failed to retrieve plug-in factory.", this, iIndex );
 
             return false;
         }
@@ -467,11 +463,11 @@ public:
 
                 Vst::IComponent *component = nullptr;
                 if ( factory->createInstance (
-                            classInfo.cid, Vst::IComponent::iid,
-                            (void **) &component ) != kResultOk )
+                    classInfo.cid, Vst::IComponent::iid,
+                    (void **) &component ) != kResultOk )
                 {
                     DMESSAGE ( "[%p]::open_descriptor(%lu)"
-                               " *** Failed to create plug-in component.", this, iIndex );
+                        " *** Failed to create plug-in component.", this, iIndex );
 
                     return false;
                 }
@@ -481,7 +477,7 @@ public:
                 if ( m_component->initialize ( g_vst3HostContext.get ( ) ) != kResultOk )
                 {
                     DMESSAGE ( "[%p]::open_descriptor(%lu)"
-                               " *** Failed to initialize plug-in component.", this, iIndex );
+                        " *** Failed to initialize plug-in component.", this, iIndex );
                     close_descriptor ( );
                     return false;
                 }
@@ -489,24 +485,24 @@ public:
 #if 0   // We don't need to query editor or get controller for scan
                 Vst::IEditController *controller = nullptr;
                 if ( m_component->queryInterface (
-                            Vst::IEditController::iid,
-                            (void **) &controller ) != kResultOk )
+                    Vst::IEditController::iid,
+                    (void **) &controller ) != kResultOk )
                 {
                     TUID controller_cid;
                     if ( m_component->getControllerClassId ( controller_cid ) == kResultOk )
                     {
                         if ( factory->createInstance (
-                                    controller_cid, Vst::IEditController::iid,
-                                    (void **) &controller ) != kResultOk )
+                            controller_cid, Vst::IEditController::iid,
+                            (void **) &controller ) != kResultOk )
                         {
                             DMESSAGE ( "Impl[%p]::open_descriptor(%lu)"
-                                       " *** Failed to create plug-in controller.", this, iIndex );
+                                " *** Failed to create plug-in controller.", this, iIndex );
                         }
                         if ( controller &&
-                                controller->initialize ( g_vst3HostContext.get ( ) ) != kResultOk )
+                            controller->initialize ( g_vst3HostContext.get ( ) ) != kResultOk )
                         {
                             DMESSAGE ( "[%p]::open_descriptor(%lu)"
-                                       " *** Failed to initialize plug-in controller.", this, iIndex );
+                                " *** Failed to initialize plug-in controller.", this, iIndex );
                             controller = nullptr;
                         }
                     }
@@ -551,7 +547,7 @@ public:
         }
 
         if ( m_component && m_controller &&
-                FUnknownPtr<Vst::IEditController> ( m_component ).getInterface ( ) )
+            FUnknownPtr<Vst::IEditController> ( m_component ).getInterface ( ) )
         {
             m_controller->terminate ( );
         }
@@ -631,7 +627,7 @@ public:
             if ( m_component->getBusInfo ( type, direction, i, busInfo ) == kResultOk )
             {
                 if ( ( busInfo.busType == Vst::kMain ) ||
-                        ( busInfo.flags & Vst::BusInfo::kDefaultActive ) )
+                    ( busInfo.flags & Vst::BusInfo::kDefaultActive ) )
                     nchannels += busInfo.channelCount;
             }
         }
@@ -774,7 +770,6 @@ vst3_discovery_scan::get_vst3_object_file( std::string filename )
     return binaryfilename.c_str ( );
 }
 
-
 // File unloader.
 
 void
@@ -824,7 +819,6 @@ vst3_discovery_scan::clear( void )
 #endif
 }
 
-
 //-------------------------------------------------------------------------
 // vst3_discovery_scan_file - The main scan procedure.
 //
@@ -870,7 +864,7 @@ vst3_discovery_scan_file( const std::string& sFilename, std::list<Plugin_Info> &
         vst3pr.push_back ( pi );
 
         DMESSAGE ( "name = %s: category = %s: ID = %s: PATH = %s",
-                   pi.name.c_str ( ), pi.category.c_str ( ), pi.s_unique_id.c_str ( ), pi.plug_path.c_str ( ) );
+            pi.name.c_str ( ), pi.category.c_str ( ), pi.s_unique_id.c_str ( ), pi.plug_path.c_str ( ) );
 
         plugin.close_descriptor ( );
         ++i;

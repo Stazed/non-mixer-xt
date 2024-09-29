@@ -185,7 +185,6 @@ public:
     {
         const nframes_t min_delay_samples = 4;
 
-
         if ( delaybuf )
         {
             for ( nframes_t i = 0; i < nframes; i++ )
@@ -204,10 +203,10 @@ public:
                 _buffer[_write_index++ & _buffer_mask] = buf[i];
 
                 const float read = interpolate_cubic ( frac,
-                                                       _buffer[( read_index - 1 ) & _buffer_mask],
-                                                       _buffer[read_index & _buffer_mask],
-                                                       _buffer[( read_index + 1 ) & _buffer_mask],
-                                                       _buffer[( read_index + 2 ) & _buffer_mask] );
+                    _buffer[( read_index - 1 ) & _buffer_mask],
+                    _buffer[read_index & _buffer_mask],
+                    _buffer[( read_index + 1 ) & _buffer_mask],
+                    _buffer[( read_index + 2 ) & _buffer_mask] );
 
                 buf[i] = read;
             }
@@ -256,10 +255,10 @@ public:
                     frac *= scale;
 
                     const float read = interpolate_cubic ( frac,
-                                                           _buffer[( read_index - 1 ) & _buffer_mask],
-                                                           _buffer[read_index & _buffer_mask],
-                                                           _buffer[( read_index + 1 ) & _buffer_mask],
-                                                           _buffer[( read_index + 2 ) & _buffer_mask] );
+                        _buffer[( read_index - 1 ) & _buffer_mask],
+                        _buffer[read_index & _buffer_mask],
+                        _buffer[( read_index + 1 ) & _buffer_mask],
+                        _buffer[( read_index + 2 ) & _buffer_mask] );
 
                     buf[i] = read;
                 }
@@ -299,9 +298,9 @@ public:
 
     void
     run_mono( float *in,
-              float *out_w, float *out_x, float *out_y, float *out_z,
-              float a, float e,
-              nframes_t nframes )
+        float *out_w, float *out_x, float *out_y, float *out_z,
+        float a, float e,
+        nframes_t nframes )
     {
         float x = _x;
         float y = _y;
@@ -333,9 +332,9 @@ public:
 
     void
     run_stereo( float *in_l, float *in_r,
-                float *out_w, float *out_x, float *out_y, float *out_z,
-                float a, float e, float w,
-                nframes_t nframes )
+        float *out_w, float *out_x, float *out_y, float *out_z,
+        float a, float e, float w,
+        nframes_t nframes )
     {
         float x = _x;
         float y = _y;
@@ -550,7 +549,7 @@ Spatializer_Module::~Spatializer_Module( )
     delete _early_panner;
     delete _panner;
     for ( unsigned int i = 0; i < control_input.size ( ); i++ )
-        delete static_cast<float*> ( control_input[i].buffer ( ) );
+        delete static_cast<float * > ( control_input[i].buffer ( ) );
 }
 
 void
@@ -648,13 +647,13 @@ Spatializer_Module::process( nframes_t nframes )
 
         /* send to late reverb */
         if ( i == 0 )
-            buffer_copy ( static_cast<sample_t*> ( aux_audio_output[0].jack_port ( )->buffer ( nframes ) ),
-                          buf,
-                          nframes );
+            buffer_copy ( static_cast<sample_t * > ( aux_audio_output[0].jack_port ( )->buffer ( nframes ) ),
+                buf,
+                nframes );
         else
             buffer_mix ( static_cast<sample_t*> ( aux_audio_output[0].jack_port ( )->buffer ( nframes ) ),
-                         buf,
-                         nframes );
+                buf,
+                nframes );
 
     }
 
@@ -663,13 +662,13 @@ Spatializer_Module::process( nframes_t nframes )
 
         /* gain effects */
         if ( unlikely ( use_gainbuf ) )
-            buffer_apply_gain_buffer ( static_cast<sample_t*> ( aux_audio_output[0].jack_port ( )->buffer ( nframes ) ),
-                                       gainbuf,
-                                       nframes );
+            buffer_apply_gain_buffer ( static_cast<sample_t * > ( aux_audio_output[0].jack_port ( )->buffer ( nframes ) ),
+                gainbuf,
+                nframes );
         else
             buffer_apply_gain ( static_cast<sample_t*> ( aux_audio_output[0].jack_port ( )->buffer ( nframes ) ),
-                                nframes,
-                                late_gain );
+                nframes,
+                late_gain );
     }
 
 #if 0   // never used
@@ -701,26 +700,26 @@ Spatializer_Module::process( nframes_t nframes )
     if ( audio_input.size ( ) == 1 )
     {
         _early_panner->run_mono ( static_cast<sample_t*> ( audio_input[0].buffer ( ) ),
-                                  static_cast<sample_t*> ( aux_audio_output[1].jack_port ( )->buffer ( nframes ) ),
-                                  static_cast<sample_t*> ( aux_audio_output[2].jack_port ( )->buffer ( nframes ) ),
-                                  static_cast<sample_t*> ( aux_audio_output[3].jack_port ( )->buffer ( nframes ) ),
-                                  static_cast<sample_t*> ( aux_audio_output[4].jack_port ( )->buffer ( nframes ) ),
-                                  azimuth + angle,
-                                  elevation,
-                                  nframes );
+            static_cast<sample_t*> ( aux_audio_output[1].jack_port ( )->buffer ( nframes ) ),
+            static_cast<sample_t*> ( aux_audio_output[2].jack_port ( )->buffer ( nframes ) ),
+            static_cast<sample_t*> ( aux_audio_output[3].jack_port ( )->buffer ( nframes ) ),
+            static_cast<sample_t*> ( aux_audio_output[4].jack_port ( )->buffer ( nframes ) ),
+            azimuth + angle,
+            elevation,
+            nframes );
     }
     else
     {
         _early_panner->run_stereo ( static_cast<sample_t*> ( audio_input[0].buffer ( ) ),
-                                    static_cast<sample_t*> ( audio_input[1].buffer ( ) ),
-                                    static_cast<sample_t*> ( aux_audio_output[1].jack_port ( )->buffer ( nframes ) ),
-                                    static_cast<sample_t*> ( aux_audio_output[2].jack_port ( )->buffer ( nframes ) ),
-                                    static_cast<sample_t*> ( aux_audio_output[3].jack_port ( )->buffer ( nframes ) ),
-                                    static_cast<sample_t*> ( aux_audio_output[4].jack_port ( )->buffer ( nframes ) ),
-                                    azimuth + angle,
-                                    elevation,
-                                    width,
-                                    nframes );
+            static_cast<sample_t*> ( audio_input[1].buffer ( ) ),
+            static_cast<sample_t*> ( aux_audio_output[1].jack_port ( )->buffer ( nframes ) ),
+            static_cast<sample_t*> ( aux_audio_output[2].jack_port ( )->buffer ( nframes ) ),
+            static_cast<sample_t*> ( aux_audio_output[3].jack_port ( )->buffer ( nframes ) ),
+            static_cast<sample_t*> ( aux_audio_output[4].jack_port ( )->buffer ( nframes ) ),
+            azimuth + angle,
+            elevation,
+            width,
+            nframes );
     }
 
     {
@@ -730,13 +729,13 @@ Spatializer_Module::process( nframes_t nframes )
         {
             /* gain effects */
             if ( unlikely ( use_gainbuf ) )
-                buffer_apply_gain_buffer ( static_cast<sample_t*> ( aux_audio_output[i].jack_port ( )->buffer ( nframes ) ),
-                                           gainbuf,
-                                           nframes );
+                buffer_apply_gain_buffer ( static_cast<sample_t * > ( aux_audio_output[i].jack_port ( )->buffer ( nframes ) ),
+                    gainbuf,
+                    nframes );
             else
                 buffer_apply_gain ( static_cast<sample_t*> ( aux_audio_output[i].jack_port ( )->buffer ( nframes ) ),
-                                    nframes,
-                                    early_gain );
+                    nframes,
+                    early_gain );
         }
     }
 
@@ -753,32 +752,32 @@ Spatializer_Module::process( nframes_t nframes )
     {
         /* gain effects */
         if ( unlikely ( use_gainbuf ) )
-            buffer_apply_gain_buffer ( static_cast<sample_t*> ( audio_input[i].buffer ( ) ),
-                                       gainbuf,
-                                       nframes );
+            buffer_apply_gain_buffer ( static_cast<sample_t * > ( audio_input[i].buffer ( ) ),
+                gainbuf,
+                nframes );
         else
             buffer_apply_gain ( static_cast<sample_t*> ( audio_input[i].buffer ( ) ),
-                                nframes,
-                                gain );
+                nframes,
+                gain );
 
         /* frequency effects */
         _lowpass[i]->run_lowpass ( static_cast<sample_t*> ( audio_input[i].buffer ( ) ),
-                                   cutoff_frequency,
-                                   nframes );
+            cutoff_frequency,
+            nframes );
 
         /* delay effects */
         if ( likely ( speed_of_sound ) )
         {
             if ( unlikely ( use_delaybuf ) )
-                _delay[i]->run ( static_cast<sample_t*> ( audio_input[i].buffer ( ) ),
-                                 delaybuf,
-                                 0,
-                                 nframes );
+                _delay[i]->run ( static_cast<sample_t * > ( audio_input[i].buffer ( ) ),
+                    delaybuf,
+                    0,
+                    nframes );
             else
                 _delay[i]->run ( static_cast<sample_t*> ( audio_input[i].buffer ( ) ),
-                                 0,
-                                 delay_seconds,
-                                 nframes );
+                    0,
+                    delay_seconds,
+                    nframes );
         }
     }
 
@@ -786,26 +785,26 @@ Spatializer_Module::process( nframes_t nframes )
     if ( audio_input.size ( ) == 1 )
     {
         _panner->run_mono ( static_cast<sample_t*> ( audio_input[0].buffer ( ) ),
-                            static_cast<sample_t*> ( audio_output[0].buffer ( ) ),
-                            static_cast<sample_t*> ( audio_output[1].buffer ( ) ),
-                            static_cast<sample_t*> ( audio_output[2].buffer ( ) ),
-                            static_cast<sample_t*> ( audio_output[3].buffer ( ) ),
-                            azimuth,
-                            elevation,
-                            nframes );
+            static_cast<sample_t*> ( audio_output[0].buffer ( ) ),
+            static_cast<sample_t*> ( audio_output[1].buffer ( ) ),
+            static_cast<sample_t*> ( audio_output[2].buffer ( ) ),
+            static_cast<sample_t*> ( audio_output[3].buffer ( ) ),
+            azimuth,
+            elevation,
+            nframes );
     }
     else
     {
         _panner->run_stereo ( static_cast<sample_t*> ( audio_input[0].buffer ( ) ),
-                              static_cast<sample_t*> ( audio_input[1].buffer ( ) ),
-                              static_cast<sample_t*> ( audio_output[0].buffer ( ) ),
-                              static_cast<sample_t*> ( audio_output[1].buffer ( ) ),
-                              static_cast<sample_t*> ( audio_output[2].buffer ( ) ),
-                              static_cast<sample_t*> ( audio_output[3].buffer ( ) ),
-                              azimuth,
-                              elevation,
-                              width,
-                              nframes );
+            static_cast<sample_t*> ( audio_input[1].buffer ( ) ),
+            static_cast<sample_t*> ( audio_output[0].buffer ( ) ),
+            static_cast<sample_t*> ( audio_output[1].buffer ( ) ),
+            static_cast<sample_t*> ( audio_output[2].buffer ( ) ),
+            static_cast<sample_t*> ( audio_output[3].buffer ( ) ),
+            azimuth,
+            elevation,
+            width,
+            nframes );
     }
 }
 

@@ -86,7 +86,7 @@ AUX_Module::process( nframes_t nframes )
         {
             if ( audio_input[i].connected ( ) )
                 buffer_fill_with_silence (
-                    static_cast<sample_t*> ( aux_audio_output[i].jack_port ( )->buffer ( nframes ) ),
+                    static_cast<sample_t * > ( aux_audio_output[i].jack_port ( )->buffer ( nframes ) ),
                     nframes );
         }
     }
@@ -104,8 +104,8 @@ AUX_Module::process( nframes_t nframes )
             {
                 if ( audio_input[i].connected ( ) )
                     buffer_copy_and_apply_gain_buffer (
-                        static_cast<sample_t*> ( aux_audio_output[i].jack_port ( )->buffer ( nframes ) ),
-                        static_cast<sample_t*> ( audio_input[i].buffer ( ) ),
+                        static_cast<sample_t * > ( aux_audio_output[i].jack_port ( )->buffer ( nframes ) ),
+                        static_cast<sample_t * > ( audio_input[i].buffer ( ) ),
                         gainbuf,
                         nframes );
             }
@@ -117,8 +117,8 @@ AUX_Module::process( nframes_t nframes )
             {
                 if ( audio_input[i].connected ( ) )
                     buffer_copy_and_apply_gain (
-                        static_cast<sample_t*> ( aux_audio_output[i].jack_port ( )->buffer ( nframes ) ),
-                        static_cast<sample_t*> ( audio_input[i].buffer ( ) ),
+                        static_cast<sample_t * > ( aux_audio_output[i].jack_port ( )->buffer ( nframes ) ),
+                        static_cast<sample_t * > ( audio_input[i].buffer ( ) ),
                         nframes,
                         gt );
             }

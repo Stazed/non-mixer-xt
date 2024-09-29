@@ -59,7 +59,6 @@ VST3PluginHost::VST3PluginHost( VST3_Plugin * plug )
     m_processRefCount = 0;
 }
 
-
 // Destructor.
 
 VST3PluginHost::~VST3PluginHost( void )
@@ -95,13 +94,13 @@ VST3PluginHost::createInstance(
     const FUID interfaceID ( FUID::fromTUID ( _iid ) );
 
     if ( classID == Vst::IMessage::iid &&
-            interfaceID == Vst::IMessage::iid )
+        interfaceID == Vst::IMessage::iid )
     {
         *obj = new Message ( );
         return kResultOk;
     }
     else if ( classID == Vst::IAttributeList::iid &&
-              interfaceID == Vst::IAttributeList::iid )
+        interfaceID == Vst::IAttributeList::iid )
     {
         *obj = new AttributeList ( );
         return kResultOk;
@@ -119,7 +118,7 @@ VST3PluginHost::queryInterface(
     QUERY_INTERFACE ( _iid, obj, IHostApplication::iid, IHostApplication )
 
     if ( m_plugInterfaceSupport &&
-            m_plugInterfaceSupport->queryInterface ( _iid, obj ) == kResultOk )
+        m_plugInterfaceSupport->queryInterface ( _iid, obj ) == kResultOk )
     {
         return kResultOk;
     }
@@ -139,7 +138,6 @@ VST3PluginHost::release( void )
 {
     return 1;
 }
-
 
 // Timer stuff...
 //

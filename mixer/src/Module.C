@@ -282,8 +282,8 @@ Module::copy( void ) const
             /* we don't want this module to get added to the current
                chain... */
             if ( !( !strcmp ( s, ":chain" ) ||
-                    !strcmp ( s, ":is_default" ) ||
-                    !strcmp ( s, ":number" ) ) )
+                !strcmp ( s, ":is_default" ) ||
+                !strcmp ( s, ":number" ) ) )
             {
                 DMESSAGE ( "%s = %s", s, v );
                 ne->add_raw ( s, v );
@@ -367,7 +367,7 @@ Module::base_label( const char *s )
 void
 Module::Port::disconnect_from_strip( const Mixer_Strip *o )
 {
-    for ( std::list<Module::Port*>::iterator i = _connected.begin ( ); i != _connected.end ( ); )
+    for ( std::list<Module::Port * >::iterator i = _connected.begin ( ); i != _connected.end ( ); )
     {
         Module::Port *p = *i;
 
@@ -693,21 +693,21 @@ Module::Port::change_osc_path( char *path )
             }
 
             _scaled_signal = mixer->osc_endpoint->add_signal ( scaled_path,
-                             _direction == INPUT ? OSC::Signal::Input : OSC::Signal::Output,
-                             0.0, 1.0, scaled_default,
-                             &Module::Port::osc_control_change_cv,
-                             &Module::Port::osc_control_update_signals,
-                             this );
+                _direction == INPUT ? OSC::Signal::Input : OSC::Signal::Output,
+                0.0, 1.0, scaled_default,
+                &Module::Port::osc_control_change_cv,
+                &Module::Port::osc_control_update_signals,
+                this );
             _scaled_signal->set_infos ( name ( ), hints.type );
 
             _scaled_signal->connection_state_callback ( handle_signal_connection_state_changed, this );
 
             _unscaled_signal = mixer->osc_endpoint->add_signal ( unscaled_path,
-                               _direction == INPUT ? OSC::Signal::Input : OSC::Signal::Output,
-                               hints.minimum, hints.maximum, hints.default_value,
-                               &Module::Port::osc_control_change_exact,
-                               &Module::Port::osc_control_update_signals,
-                               this );
+                _direction == INPUT ? OSC::Signal::Input : OSC::Signal::Output,
+                hints.minimum, hints.maximum, hints.default_value,
+                &Module::Port::osc_control_change_exact,
+                &Module::Port::osc_control_update_signals,
+                this );
             _unscaled_signal->set_infos ( name ( ), hints.type );
         }
         else
@@ -745,7 +745,6 @@ Module::Port::osc_control_change_exact( float v, void *user_data )
                 p->hints.maximum :
                 p->hints.minimum;
     }
-
 
     p->control_value ( f );
 
@@ -1041,7 +1040,6 @@ Module::draw_box( int tx, int ty, int tw, int th )
         fl_draw_box ( box ( ), tx + ( spacing * i ), ty, tw / instances ( ), th, c );
     }
 
-
     if ( audio_input.size ( ) && audio_output.size ( ) )
     {
         /* maybe draw control indicators */
@@ -1156,22 +1154,22 @@ Module::draw_label( int tx, int ty, int tw, int th )
 
             switch ( *lp )
             {
-            case ' ':
-                initial = true;
-                skip = false;
-                break;
-            case 'i':
-            case 'e':
-            case 'o':
-            case 'u':
-            case 'a':
-                skip = !initial;
-                initial = false;
-                break;
-            default:
-                skip = false;
-                initial = false;
-                break;
+                case ' ':
+                    initial = true;
+                    skip = false;
+                    break;
+                case 'i':
+                case 'e':
+                case 'o':
+                case 'u':
+                case 'a':
+                    skip = !initial;
+                    initial = false;
+                    break;
+                default:
+                    skip = false;
+                    initial = false;
+                    break;
             }
 
             if ( !skip )
@@ -1181,7 +1179,6 @@ Module::draw_label( int tx, int ty, int tw, int th )
         *sp = '\0';
 
     }
-
 
     fl_color ( c );
 
@@ -1194,7 +1191,6 @@ Module::draw_label( int tx, int ty, int tw, int th )
     /*     fl_line( tx, ty + th * 0.5, tx + tw, ty + th * 0.5 ); */
     /*     fl_line_style( FL_SOLID, 0 ); */
     /* } */
-
 
     free ( lab );
 
@@ -1274,84 +1270,84 @@ Module::insert_menu_cb( const Fl_Menu_ *menu )
         switch ( picked.plugin_type )
         {
 #ifdef LADSPA_SUPPORT
-        case Type_LADSPA:
-        {
-            LADSPA_Plugin *m = new LADSPA_Plugin ( );
-            if ( !m->load_plugin ( picked ) )
+            case Type_LADSPA:
             {
-                fl_alert ( "%s could not be loaded", m->base_label ( ) );
-                delete m;
-                return;
-            }
+                LADSPA_Plugin *m = new LADSPA_Plugin ( );
+                if ( !m->load_plugin ( picked ) )
+                {
+                    fl_alert ( "%s could not be loaded", m->base_label ( ) );
+                    delete m;
+                    return;
+                }
 
-            mod = m;
-            break;
-        }
+                mod = m;
+                break;
+            }
 #endif  // LADSPA_SUPPORT
 #ifdef LV2_SUPPORT
-        case Type_LV2:
-        {
-            LV2_Plugin *m = new LV2_Plugin ( );
-            if ( !m->load_plugin ( picked ) )
+            case Type_LV2:
             {
-                fl_alert ( "%s could not be loaded", m->base_label ( ) );
-                delete m;
-                return;
-            }
+                LV2_Plugin *m = new LV2_Plugin ( );
+                if ( !m->load_plugin ( picked ) )
+                {
+                    fl_alert ( "%s could not be loaded", m->base_label ( ) );
+                    delete m;
+                    return;
+                }
 
-            mod = m;
-            break;
-        }
+                mod = m;
+                break;
+            }
 #endif  // LV2_SUPPORT
 #ifdef CLAP_SUPPORT
-        case Type_CLAP:
-        {
-            CLAP_Plugin *m = new CLAP_Plugin ( );
-            if ( !m->load_plugin ( picked ) )
+            case Type_CLAP:
             {
-                fl_alert ( "%s could not be loaded", m->base_label ( ) );
-                delete m;
-                return;
-            }
+                CLAP_Plugin *m = new CLAP_Plugin ( );
+                if ( !m->load_plugin ( picked ) )
+                {
+                    fl_alert ( "%s could not be loaded", m->base_label ( ) );
+                    delete m;
+                    return;
+                }
 
-            mod = m;
-            break;
-        }
+                mod = m;
+                break;
+            }
 #endif  // CLAP_SUPPORT
 #ifdef VST2_SUPPORT
-        case Type_VST2:
-        {
-            VST2_Plugin *m = new VST2_Plugin ( );
-            if ( !m->load_plugin ( picked ) )
+            case Type_VST2:
             {
-                fl_alert ( "%s could not be loaded", m->base_label ( ) );
-                delete m;
-                return;
-            }
+                VST2_Plugin *m = new VST2_Plugin ( );
+                if ( !m->load_plugin ( picked ) )
+                {
+                    fl_alert ( "%s could not be loaded", m->base_label ( ) );
+                    delete m;
+                    return;
+                }
 
-            mod = m;
-            break;
-        }
+                mod = m;
+                break;
+            }
 #endif  // VST2_SUPPORT
 #ifdef VST3_SUPPORT
-        case Type_VST3:
-        {
-            VST3_Plugin *m = new VST3_Plugin ( );
-            if ( !m->load_plugin ( picked ) )
+            case Type_VST3:
             {
-                fl_alert ( "%s could not be loaded", m->base_label ( ) );
-                delete m;
+                VST3_Plugin *m = new VST3_Plugin ( );
+                if ( !m->load_plugin ( picked ) )
+                {
+                    fl_alert ( "%s could not be loaded", m->base_label ( ) );
+                    delete m;
+                    return;
+                }
+
+                mod = m;
+                break;
+            }
+#endif  // VST3_SUPPORT
+            default:
+            {
                 return;
             }
-
-            mod = m;
-            break;
-        }
-#endif  // VST3_SUPPORT
-        default:
-        {
-            return;
-        }
         }
     }
 
@@ -1534,10 +1530,10 @@ Module::handle( int m )
 
     switch ( m )
     {
-    case FL_ENTER:
-    //            Fl::focus(this);
-    case FL_LEAVE:
-        return 1;
+        case FL_ENTER:
+        //            Fl::focus(this);
+        case FL_LEAVE:
+            return 1;
     }
 
     if ( Fl_Group::handle ( m ) )
@@ -1545,85 +1541,85 @@ Module::handle( int m )
 
     switch ( m )
     {
-    case FL_KEYBOARD:
-    {
-        /* For LV2/CLAP/VST we show the custom UI if available with the space bar. The generic
-           UI is shown with CTRL space. If no custom UI then either space or CTRL space opens
-           the generic UI. */
-        if ( !( Fl::event_key ( FL_Control_L ) ) && !( Fl::event_key ( FL_Control_R ) ) && ( Fl::event_key ( 32 ) ) ) // 32 == space bar
+        case FL_KEYBOARD:
         {
-            open_plugin_ui ( );
-            return 1;
-        }
-
-        if ( Fl::event_key ( ) == FL_Menu )
-        {
-            menu_popup ( &menu ( ), x ( ), y ( ) );
-            return 1;
-        }
-        else
-            return menu ( ).test_shortcut ( ) != 0;
-    }
-    case FL_PUSH:
-        take_focus ( );
-        _event_state = evstate;
-        return 1;
-    // if ( Fl::visible_focus() && handle( FL_FOCUS )) Fl::focus(this);
-    case FL_DRAG:
-        _event_state = evstate;
-        return 1;
-    case FL_RELEASE:
-    {
-        unsigned long e = _event_state;
-        _event_state = 0;
-
-        if ( !Fl::event_inside ( this ) )
-            return 1;
-
-        if ( ( e & FL_BUTTON1 ) && ( e & FL_CTRL ) )
-        {
-            Fl::focus ( this );
-            return 1;
-        }
-        else if ( e & FL_BUTTON1 )
-        {
-            open_plugin_ui ( );
-            return 1;
-        }
-        else if ( e & FL_BUTTON3 && e & FL_CTRL )
-        {
-            command_remove ( );
-            return 1;
-        }
-        else if ( e & FL_BUTTON3 )
-        {
-            menu_popup ( &menu ( ) );
-            return 1;
-        }
-        else if ( e & FL_BUTTON2 )
-        {
-            if ( !bypassable ( ) )
+            /* For LV2/CLAP/VST we show the custom UI if available with the space bar. The generic
+               UI is shown with CTRL space. If no custom UI then either space or CTRL space opens
+               the generic UI. */
+            if ( !( Fl::event_key ( FL_Control_L ) ) && !( Fl::event_key ( FL_Control_R ) ) && ( Fl::event_key ( 32 ) ) ) // 32 == space bar
             {
-                fl_alert ( "Due to its channel configuration, this module cannot be bypassed." );
+                open_plugin_ui ( );
+                return 1;
+            }
+
+            if ( Fl::event_key ( ) == FL_Menu )
+            {
+                menu_popup ( &menu ( ), x ( ), y ( ) );
+                return 1;
             }
             else
-            {
-                bypass ( !bypass ( ) );
-                redraw ( );
-            }
-            return 1;
+                return menu ( ).test_shortcut ( ) != 0;
         }
-        /* else */
-        /* { */
-        /*     take_focus(); */
-        /* } */
+        case FL_PUSH:
+            take_focus ( );
+            _event_state = evstate;
+            return 1;
+        // if ( Fl::visible_focus() && handle( FL_FOCUS )) Fl::focus(this);
+        case FL_DRAG:
+            _event_state = evstate;
+            return 1;
+        case FL_RELEASE:
+        {
+            unsigned long e = _event_state;
+            _event_state = 0;
 
-        return 0;
-    }
-    case FL_FOCUS:
-    case FL_UNFOCUS:
-        redraw ( );
-        return 1;
+            if ( !Fl::event_inside ( this ) )
+                return 1;
+
+            if ( ( e & FL_BUTTON1 ) && ( e & FL_CTRL ) )
+            {
+                Fl::focus ( this );
+                return 1;
+            }
+            else if ( e & FL_BUTTON1 )
+            {
+                open_plugin_ui ( );
+                return 1;
+            }
+            else if ( e & FL_BUTTON3 && e & FL_CTRL )
+            {
+                command_remove ( );
+                return 1;
+            }
+            else if ( e & FL_BUTTON3 )
+            {
+                menu_popup ( &menu ( ) );
+                return 1;
+            }
+            else if ( e & FL_BUTTON2 )
+            {
+                if ( !bypassable ( ) )
+                {
+                    fl_alert ( "Due to its channel configuration, this module cannot be bypassed." );
+                }
+                else
+                {
+                    bypass ( !bypass ( ) );
+                    redraw ( );
+                }
+                return 1;
+            }
+            /* else */
+            /* { */
+            /*     take_focus(); */
+            /* } */
+
+            return 0;
+        }
+        case FL_FOCUS:
+        case FL_UNFOCUS:
+            redraw ( );
+            return 1;
     }
 
     return 0;
@@ -1634,16 +1630,15 @@ Module::handle( int m )
 
 /*************/
 
-
 static char *
 generate_port_name( const char *aux, int direction, int n )
 {
     char *s;
     asprintf ( &s, "%s%s%s-%i",
-               aux ? aux : "",
-               aux ? "/" : "",
-               direction == JACK::Port::Input ? "in" : "out",
-               n + 1 );
+        aux ? aux : "",
+        aux ? "/" : "",
+        direction == JACK::Port::Input ? "in" : "out",
+        n + 1 );
 
     return s;
 }
@@ -1667,8 +1662,8 @@ Module::freeze_ports( void )
             {
                 DWARNING ( "Programming error. Connected port has null module. %s %s",
 
-                           name ( ),
-                           control_input[i].connected_port ( )->name ( ) );
+                    name ( ),
+                    control_input[i].connected_port ( )->name ( ) );
             }
             else
             {
@@ -1739,8 +1734,8 @@ Module::destroy_connected_controller_module( )
             {
                 DWARNING ( "Programming error. Connected port has null module. %s %s",
 
-                           label ( ),
-                           control_input[i].connected_port ( )->name ( ) );
+                    label ( ),
+                    control_input[i].connected_port ( )->name ( ) );
             }
 
             control_input[i].disconnect ( );
@@ -1923,7 +1918,6 @@ Module::add_aux_cv_input( const char *prefix, int i )
 {
     return add_aux_port ( true, prefix, i, JACK::Port::CV );
 }
-
 
 /************/
 /* Commands */

@@ -270,8 +270,8 @@ get_plugin_category( const char* const* const features )
             return "Amplitude/Dynamics/Limiters";
         }
         if ( strcmp ( features[i], CLAP_PLUGIN_FEATURE_MASTERING ) == 0 ||
-                strcmp ( features[i], CLAP_PLUGIN_FEATURE_MIXING ) == 0 ||
-                strcmp ( features[i], CLAP_PLUGIN_FEATURE_TRANSIENT_SHAPER ) == 0 )
+            strcmp ( features[i], CLAP_PLUGIN_FEATURE_MIXING ) == 0 ||
+            strcmp ( features[i], CLAP_PLUGIN_FEATURE_TRANSIENT_SHAPER ) == 0 )
         {
             return "Amplitude/Dynamics";
         }
@@ -288,13 +288,13 @@ get_plugin_category( const char* const* const features )
             return "Time/Phasers";
         }
         if ( strcmp ( features[i], CLAP_PLUGIN_FEATURE_PITCH_CORRECTION ) == 0 ||
-                strcmp ( features[i], CLAP_PLUGIN_FEATURE_PITCH_SHIFTER ) == 0 )
+            strcmp ( features[i], CLAP_PLUGIN_FEATURE_PITCH_SHIFTER ) == 0 )
         {
             return "Frequency/Pitch shifters";
         }
         if ( strcmp ( features[i], CLAP_PLUGIN_FEATURE_RESTORATION ) == 0 ||
-                strcmp ( features[i], CLAP_PLUGIN_FEATURE_UTILITY ) == 0
-           )
+            strcmp ( features[i], CLAP_PLUGIN_FEATURE_UTILITY ) == 0
+        )
         {
             return "Utilities";
         }

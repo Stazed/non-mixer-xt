@@ -226,17 +226,17 @@ LADSPA_Plugin::create_control_ports( )
                     {
                         // These hints may be affected by SAMPLERATE, LOGARITHMIC and INTEGER
                         if ( LADSPA_IS_HINT_DEFAULT_MINIMUM ( HintDesc ) &&
-                                LADSPA_IS_HINT_BOUNDED_BELOW ( HintDesc ) )
+                            LADSPA_IS_HINT_BOUNDED_BELOW ( HintDesc ) )
                         {
                             Default = _idata->descriptor->PortRangeHints[Port].LowerBound;
                         }
                         else if ( LADSPA_IS_HINT_DEFAULT_MAXIMUM ( HintDesc ) &&
-                                  LADSPA_IS_HINT_BOUNDED_ABOVE ( HintDesc ) )
+                            LADSPA_IS_HINT_BOUNDED_ABOVE ( HintDesc ) )
                         {
                             Default = _idata->descriptor->PortRangeHints[Port].UpperBound;
                         }
                         else if ( LADSPA_IS_HINT_BOUNDED_BELOW ( HintDesc ) &&
-                                  LADSPA_IS_HINT_BOUNDED_ABOVE ( HintDesc ) )
+                            LADSPA_IS_HINT_BOUNDED_ABOVE ( HintDesc ) )
                         {
                             // These hints require both upper and lower bounds
                             float lp = 0.0f, up = 0.0f;
@@ -306,8 +306,8 @@ LADSPA_Plugin::create_control_ports( )
                     if ( LADSPA_IS_HINT_INTEGER ( HintDesc ) )
                     {
                         if ( p.hints.ranged &&
-                                0 == (int) p.hints.minimum &&
-                                1 == (int) p.hints.maximum )
+                            0 == (int) p.hints.minimum &&
+                            1 == (int) p.hints.maximum )
                             p.hints.type = Port::Hints::BOOLEAN;
                         else
                             p.hints.type = Port::Hints::INTEGER;
@@ -407,7 +407,7 @@ LADSPA_Plugin::configure_inputs( int n )
                 audio_input.push_back ( Port ( this, Port::INPUT, Port::AUDIO ) );
         }
         else if ( n >= plugin_ins ( ) &&
-                  ( plugin_ins ( ) == 1 && plugin_outs ( ) == 1 ) )
+            ( plugin_ins ( ) == 1 && plugin_outs ( ) == 1 ) )
         {
             DMESSAGE ( "Running multiple instances of plugin" );
 
@@ -614,16 +614,16 @@ LADSPA_Plugin::plugin_instances( unsigned int n )
                 if ( LADSPA_IS_PORT_CONTROL ( _idata->descriptor->PortDescriptors[k] ) )
                 {
                     if ( LADSPA_IS_PORT_INPUT ( _idata->descriptor->PortDescriptors[k] ) )
-                        _idata->descriptor->connect_port ( h, k, (LADSPA_Data*) control_input[ij++].buffer ( ) );
+                        _idata->descriptor->connect_port ( h, k, (LADSPA_Data * ) control_input[ij++].buffer ( ) );
                     else if ( LADSPA_IS_PORT_OUTPUT ( _idata->descriptor->PortDescriptors[k] ) )
-                        _idata->descriptor->connect_port ( h, k, (LADSPA_Data*) control_output[oj++].buffer ( ) );
+                        _idata->descriptor->connect_port ( h, k, (LADSPA_Data * ) control_output[oj++].buffer ( ) );
                 }
             }
 
             // connect ports to magic bogus value to aid debugging.
             for ( unsigned int k = 0; k < _idata->descriptor->PortCount; ++k )
                 if ( LADSPA_IS_PORT_AUDIO ( _idata->descriptor->PortDescriptors[k] ) )
-                    _idata->descriptor->connect_port ( h, k, (LADSPA_Data*) 0x42 );
+                    _idata->descriptor->connect_port ( h, k, (LADSPA_Data * ) 0x42 );
         }
     }
 
@@ -660,10 +660,10 @@ LADSPA_Plugin::set_input_buffer( int n, void *buf )
     for ( unsigned int i = 0; i < _idata->descriptor->PortCount; ++i )
     {
         if ( LADSPA_IS_PORT_INPUT ( _idata->descriptor->PortDescriptors[i] ) &&
-                LADSPA_IS_PORT_AUDIO ( _idata->descriptor->PortDescriptors[i] ) )
+            LADSPA_IS_PORT_AUDIO ( _idata->descriptor->PortDescriptors[i] ) )
         {
             if ( n-- == 0 )
-                _idata->descriptor->connect_port ( h, i, (LADSPA_Data*) buf );
+                _idata->descriptor->connect_port ( h, i, (LADSPA_Data * ) buf );
         }
     }
 }
@@ -686,10 +686,10 @@ LADSPA_Plugin::set_output_buffer( int n, void *buf )
     for ( unsigned int i = 0; i < _idata->descriptor->PortCount; ++i )
     {
         if ( LADSPA_IS_PORT_OUTPUT ( _idata->descriptor->PortDescriptors[i] ) &&
-                LADSPA_IS_PORT_AUDIO ( _idata->descriptor->PortDescriptors[i] ) )
+            LADSPA_IS_PORT_AUDIO ( _idata->descriptor->PortDescriptors[i] ) )
         {
             if ( n-- == 0 )
-                _idata->descriptor->connect_port ( h, i, (LADSPA_Data*) buf );
+                _idata->descriptor->connect_port ( h, i, (LADSPA_Data * ) buf );
         }
     }
 }
@@ -716,9 +716,9 @@ LADSPA_Plugin::apply( sample_t *buf, nframes_t nframes )
         if ( LADSPA_IS_PORT_CONTROL ( _idata->descriptor->PortDescriptors[k] ) )
         {
             if ( LADSPA_IS_PORT_INPUT ( _idata->descriptor->PortDescriptors[k] ) )
-                _idata->descriptor->connect_port ( h, k, (LADSPA_Data*) control_input[ij++].buffer ( ) );
+                _idata->descriptor->connect_port ( h, k, (LADSPA_Data * ) control_input[ij++].buffer ( ) );
             else if ( LADSPA_IS_PORT_OUTPUT ( _idata->descriptor->PortDescriptors[k] ) )
-                _idata->descriptor->connect_port ( h, k, (LADSPA_Data*) control_output[oj++].buffer ( ) );
+                _idata->descriptor->connect_port ( h, k, (LADSPA_Data * ) control_output[oj++].buffer ( ) );
         }
     }
 

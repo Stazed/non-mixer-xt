@@ -29,7 +29,6 @@
 #include "../../nonlib/debug.h"
 #include "../../nonlib/OSC/Endpoint.H"
 
-
 extern char *instance_name;
 extern Mixer *mixer;
 
@@ -135,4 +134,3 @@ NSM_Client::command_show_gui( void )
 {
     mixer->command_show_gui ( );
 }
-

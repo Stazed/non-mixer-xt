@@ -46,7 +46,6 @@ static constexpr const HostTimerDetails kTimerFallback = { CLAP_INVALID_ID, 0, 0
 static /*           */ HostTimerDetails kTimerFallbackNC = { CLAP_INVALID_ID, 0, 0 };
 const float F_DEFAULT_MSECS = 0.03f;
 
-
 class Chain; // forward declaration
 
 CLAP_Plugin::CLAP_Plugin( ) :
@@ -223,7 +222,7 @@ CLAP_Plugin::load_plugin( Module::Picked picked )
     }
 
     _factory = static_cast<const clap_plugin_factory *> (
-                   _entry->get_factory ( CLAP_PLUGIN_FACTORY_ID ) );
+        _entry->get_factory ( CLAP_PLUGIN_FACTORY_ID ) );
 
     if ( !_factory )
     {
@@ -255,13 +254,13 @@ CLAP_Plugin::load_plugin( Module::Picked picked )
     if ( !clap_version_is_compatible ( _descriptor->clap_version ) )
     {
         WARNING ( "Incompatible CLAP version: %s"
-                  " plug-in is %d.%d.%d, host is %d.%d.%d.", _clap_id.c_str ( ),
-                  _descriptor->clap_version.major,
-                  _descriptor->clap_version.minor,
-                  _descriptor->clap_version.revision,
-                  CLAP_VERSION.major,
-                  CLAP_VERSION.minor,
-                  CLAP_VERSION.revision );
+            " plug-in is %d.%d.%d, host is %d.%d.%d.", _clap_id.c_str ( ),
+            _descriptor->clap_version.major,
+            _descriptor->clap_version.minor,
+            _descriptor->clap_version.revision,
+            CLAP_VERSION.major,
+            CLAP_VERSION.minor,
+            CLAP_VERSION.revision );
         return false;
     }
 
@@ -489,14 +488,14 @@ CLAP_Plugin::process_jack_transport( uint32_t nframes )
     const bool has_bbt = ( pos.valid & JackPositionBBT );
     const bool xport_changed =
         ( rolling != _rolling || pos.frame != _position ||
-          ( has_bbt && pos.beats_per_minute != _bpm ) );
+        ( has_bbt && pos.beats_per_minute != _bpm ) );
 
     if ( xport_changed )
     {
         if ( has_bbt )
         {
             const double positionBeats = static_cast<double> ( pos.frame )
-                                         / ( sample_rate ( ) * 60 / pos.beats_per_minute );
+                / ( sample_rate ( ) * 60 / pos.beats_per_minute );
 
             // Bar/ Beats
             _transport.bar_start = std::round ( CLAP_BEATTIME_FACTOR * pos.bar_start_tick );
@@ -577,7 +576,7 @@ CLAP_Plugin::process_midi_in(
         // program change
         // after-touch
         if ( ( midi_dialect_ins > 0 ) &&
-                ( status == 0xc0 || status == 0xd0 ) )
+            ( status == 0xc0 || status == 0xd0 ) )
         {
             clap_event_midi ev;
             ev.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
@@ -638,7 +637,7 @@ CLAP_Plugin::process_midi_in(
                 // control-change
                 // pitch-bend
                 if ( ( midi_dialect_ins > 0 ) &&
-                        ( status == 0xa0 || status == 0xb0 || status == 0xe0 ) )
+                    ( status == 0xa0 || status == 0xb0 || status == 0xe0 ) )
                 {
                     clap_event_midi ev;
                     ev.header.space_id = CLAP_CORE_EVENT_SPACE_ID;
@@ -676,63 +675,63 @@ CLAP_Plugin::process_jack_midi_out( uint32_t nframes, unsigned int port )
             {
                 switch ( eh->type )
                 {
-                case CLAP_EVENT_NOTE_ON:
-                {
-                    const clap_event_note *en
-                        = reinterpret_cast<const clap_event_note *> ( eh );
-                    if ( en )
+                    case CLAP_EVENT_NOTE_ON:
                     {
-                        unsigned char midi_note[3];
-                        midi_note[0] = EVENT_NOTE_ON + en->channel;
-                        midi_note[1] = en->key;
-                        midi_note[2] = en->velocity;
+                        const clap_event_note *en
+                            = reinterpret_cast<const clap_event_note *> ( eh );
+                        if ( en )
+                        {
+                            unsigned char midi_note[3];
+                            midi_note[0] = EVENT_NOTE_ON + en->channel;
+                            midi_note[1] = en->key;
+                            midi_note[2] = en->velocity;
 
-                        size_t size = 3;
-                        int nBytes = static_cast<int> ( size );
+                            size_t size = 3;
+                            int nBytes = static_cast<int> ( size );
 
-                        int ret = jack_midi_event_write ( buf, en->header.time,
-                                                          static_cast<jack_midi_data_t*> ( &midi_note[0] ), nBytes );
+                            int ret = jack_midi_event_write ( buf, en->header.time,
+                                static_cast<jack_midi_data_t*> ( &midi_note[0] ), nBytes );
 
-                        if ( ret )
-                            WARNING ( "Jack MIDI note on error = %d", ret );
+                            if ( ret )
+                                WARNING ( "Jack MIDI note on error = %d", ret );
+                        }
+                        break;
                     }
-                    break;
-                }
-                case CLAP_EVENT_NOTE_OFF:
-                {
-                    const clap_event_note *en
-                        = reinterpret_cast<const clap_event_note *> ( eh );
-                    if ( en )
+                    case CLAP_EVENT_NOTE_OFF:
                     {
-                        unsigned char midi_note[3];
-                        midi_note[0] = EVENT_NOTE_OFF + en->channel;
-                        midi_note[1] = en->key;
-                        midi_note[2] = en->velocity;
+                        const clap_event_note *en
+                            = reinterpret_cast<const clap_event_note *> ( eh );
+                        if ( en )
+                        {
+                            unsigned char midi_note[3];
+                            midi_note[0] = EVENT_NOTE_OFF + en->channel;
+                            midi_note[1] = en->key;
+                            midi_note[2] = en->velocity;
 
-                        size_t size = 3;
-                        int nBytes = static_cast<int> ( size );
-                        int ret = jack_midi_event_write ( buf, en->header.time,
-                                                          static_cast<jack_midi_data_t*> ( &midi_note[0] ), nBytes );
+                            size_t size = 3;
+                            int nBytes = static_cast<int> ( size );
+                            int ret = jack_midi_event_write ( buf, en->header.time,
+                                static_cast<jack_midi_data_t*> ( &midi_note[0] ), nBytes );
 
-                        if ( ret )
-                            WARNING ( "Jack MIDI note off error = %d", ret );
+                            if ( ret )
+                                WARNING ( "Jack MIDI note off error = %d", ret );
+                        }
+                        break;
                     }
-                    break;
-                }
-                case CLAP_EVENT_MIDI:
-                {
-                    const clap_event_midi *em
-                        = reinterpret_cast<const clap_event_midi *> ( eh );
-                    if ( em )
+                    case CLAP_EVENT_MIDI:
                     {
-                        int ret = jack_midi_event_write ( buf, em->header.time,
-                                                          static_cast<const jack_midi_data_t*> ( &em->data[0] ), sizeof (em->data ) );
+                        const clap_event_midi *em
+                            = reinterpret_cast<const clap_event_midi *> ( eh );
+                        if ( em )
+                        {
+                            int ret = jack_midi_event_write ( buf, em->header.time,
+                                static_cast<const jack_midi_data_t*> ( &em->data[0] ), sizeof (em->data ) );
 
-                        if ( ret )
-                            WARNING ( "Jack MIDI write error = %d", ret );
+                            if ( ret )
+                                WARNING ( "Jack MIDI write error = %d", ret );
+                        }
+                        break;
                     }
-                    break;
-                }
                 }
             }
         }
@@ -900,7 +899,7 @@ CLAP_Plugin::get_module_latency( void ) const
     {
         const clap_plugin_latency *latency
             = static_cast<const clap_plugin_latency *> (
-                  _plugin->get_extension ( _plugin, CLAP_EXT_LATENCY ) );
+            _plugin->get_extension ( _plugin, CLAP_EXT_LATENCY ) );
 
         if ( latency && latency->get )
             return latency->get ( _plugin );
@@ -921,7 +920,7 @@ CLAP_Plugin::process( nframes_t nframes )
         if ( ninputs ( ) == 1 && noutputs ( ) == 2 )
         {
             buffer_copy ( static_cast<sample_t*> ( audio_output[1].buffer ( ) ),
-                          static_cast<sample_t*> ( audio_input[0].buffer ( ) ), nframes );
+                static_cast<sample_t*> ( audio_input[0].buffer ( ) ), nframes );
         }
 
         _latency = 0;
@@ -1192,7 +1191,7 @@ CLAP_Plugin::clearParams( void )
     {
         // if it is NOT the bypass then delete the buffer
         if ( strcmp ( control_input[i].name ( ), "dsp/bypass" ) )
-            delete static_cast<float*> ( control_input[i].buffer ( ) );
+            delete static_cast<float * > ( control_input[i].buffer ( ) );
     }
 
     for ( unsigned i = 0; i < control_output.size ( ); ++i )
@@ -1306,17 +1305,17 @@ void
 CLAP_Plugin::initialize_plugin( )
 {
     _params = static_cast<const clap_plugin_params *> (
-                  _plugin->get_extension ( _plugin, CLAP_EXT_PARAMS ) );
+        _plugin->get_extension ( _plugin, CLAP_EXT_PARAMS ) );
 
     _timer_support = static_cast<const clap_plugin_timer_support *> (
-                         _plugin->get_extension ( _plugin, CLAP_EXT_TIMER_SUPPORT ) );
+        _plugin->get_extension ( _plugin, CLAP_EXT_TIMER_SUPPORT ) );
     //    m_posix_fd_support = static_cast<const clap_plugin_posix_fd_support *> (
     //        _plugin->get_extension(_plugin, CLAP_EXT_POSIX_FD_SUPPORT));
 
     _gui = static_cast<const clap_plugin_gui *> (
-               _plugin->get_extension ( _plugin, CLAP_EXT_GUI ) );
+        _plugin->get_extension ( _plugin, CLAP_EXT_GUI ) );
     _state = static_cast<const clap_plugin_state *> (
-                 _plugin->get_extension ( _plugin, CLAP_EXT_STATE ) );
+        _plugin->get_extension ( _plugin, CLAP_EXT_STATE ) );
     //    m_note_names = static_cast<const clap_plugin_note_name *> (
     //        _plugin->get_extension(_plugin, CLAP_EXT_NOTE_NAME));
 
@@ -1333,7 +1332,7 @@ CLAP_Plugin::create_audio_ports( )
 
     const clap_plugin_audio_ports_t *audio_ports
         = static_cast<const clap_plugin_audio_ports_t *> (
-              _plugin->get_extension ( _plugin, CLAP_EXT_AUDIO_PORTS ) );
+        _plugin->get_extension ( _plugin, CLAP_EXT_AUDIO_PORTS ) );
 
     if ( audio_ports && audio_ports->count && audio_ports->get )
     {
@@ -1414,7 +1413,7 @@ CLAP_Plugin::create_control_ports( )
 
     const clap_plugin_params *params
         = static_cast<const clap_plugin_params *> (
-              _plugin->get_extension ( _plugin, CLAP_EXT_PARAMS ) );
+        _plugin->get_extension ( _plugin, CLAP_EXT_PARAMS ) );
 
     if ( params && params->count && params->get_info )
     {
@@ -1463,8 +1462,8 @@ CLAP_Plugin::create_control_ports( )
                 if ( param_info.flags & CLAP_PARAM_IS_STEPPED )
                 {
                     if ( p.hints.ranged &&
-                            0 == (int) p.hints.minimum &&
-                            1 == (int) p.hints.maximum )
+                        0 == (int) p.hints.minimum &&
+                        1 == (int) p.hints.maximum )
                         p.hints.type = Port::Hints::BOOLEAN;
                     else
                         p.hints.type = Port::Hints::INTEGER;
@@ -1524,7 +1523,7 @@ CLAP_Plugin::create_note_ports( )
     _iMidiDialectOuts = 0;
     const clap_plugin_note_ports *note_ports
         = static_cast<const clap_plugin_note_ports *> (
-              _plugin->get_extension ( _plugin, CLAP_EXT_NOTE_PORTS ) );
+        _plugin->get_extension ( _plugin, CLAP_EXT_NOTE_PORTS ) );
     if ( note_ports && note_ports->count && note_ports->get )
     {
         clap_note_port_info info;
@@ -1662,9 +1661,9 @@ CLAP_Plugin::process_params_out( void )
         const clap_event_header *eh = _events_out.get ( i );
 
         if ( eh && (
-                    eh->type == CLAP_EVENT_PARAM_VALUE ||
-                    eh->type == CLAP_EVENT_PARAM_GESTURE_BEGIN ||
-                    eh->type == CLAP_EVENT_PARAM_GESTURE_END ) )
+            eh->type == CLAP_EVENT_PARAM_VALUE ||
+            eh->type == CLAP_EVENT_PARAM_GESTURE_BEGIN ||
+            eh->type == CLAP_EVENT_PARAM_GESTURE_END ) )
         {
             _params_out.push ( eh );
         }
@@ -2128,7 +2127,7 @@ CLAP_Plugin::clapRegisterTimer( const uint32_t periodInMs, clap_id * const timer
     if ( _timer_support == nullptr )
     {
         const clap_plugin_timer_support_t * const timerExt = static_cast<const clap_plugin_timer_support_t*> (
-                _plugin->get_extension ( _plugin, CLAP_EXT_TIMER_SUPPORT ) );
+            _plugin->get_extension ( _plugin, CLAP_EXT_TIMER_SUPPORT ) );
 
         if ( timerExt != nullptr && timerExt->on_timer != nullptr )
             _timer_support = timerExt;
@@ -2366,27 +2365,27 @@ CLAP_Plugin::host_log(
 {
     switch ( severity )
     {
-    case CLAP_LOG_DEBUG:
-        DMESSAGE ( "CLAP_log: Debug: %s", msg );
-        break;
-    case CLAP_LOG_INFO:
-        MESSAGE ( "CLAP_log: Info: %s", msg );
-        break;
-    case CLAP_LOG_WARNING:
-        WARNING ( "CLAP_log: Warning: %s", msg );
-        break;
-    case CLAP_LOG_ERROR:
-        WARNING ( "CLAP_log: Error: %s", msg );
-        break;
-    case CLAP_LOG_FATAL:
-        WARNING ( "CLAP_log: Fatal: %s", msg );
-        break;
-    case CLAP_LOG_HOST_MISBEHAVING:
-        WARNING ( "CLAP_log: Host misbehaving: %s", msg );
-        break;
-    default:
-        DMESSAGE ( "CLAP_log: Unknown: %s", msg );
-        break;
+        case CLAP_LOG_DEBUG:
+            DMESSAGE ( "CLAP_log: Debug: %s", msg );
+            break;
+        case CLAP_LOG_INFO:
+            MESSAGE ( "CLAP_log: Info: %s", msg );
+            break;
+        case CLAP_LOG_WARNING:
+            WARNING ( "CLAP_log: Warning: %s", msg );
+            break;
+        case CLAP_LOG_ERROR:
+            WARNING ( "CLAP_log: Error: %s", msg );
+            break;
+        case CLAP_LOG_FATAL:
+            WARNING ( "CLAP_log: Fatal: %s", msg );
+            break;
+        case CLAP_LOG_HOST_MISBEHAVING:
+            WARNING ( "CLAP_log: Host misbehaving: %s", msg );
+            break;
+        default:
+            DMESSAGE ( "CLAP_log: Unknown: %s", msg );
+            break;
     }
 }
 
@@ -2453,7 +2452,7 @@ CLAP_Plugin::restore_CLAP_plugin_state( const std::string &filename )
 }
 
 uint64_t
-CLAP_Plugin::getState( void* * const dataPtr )
+CLAP_Plugin::getState( void * * const dataPtr )
 {
     if ( !_plugin )
         return false;
@@ -2620,4 +2619,3 @@ CLAP_Plugin::set( Log_Entry &e )
 }
 
 #endif  // CLAP_SUPPORT
-

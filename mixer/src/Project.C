@@ -49,7 +49,6 @@
 
 const int PROJECT_VERSION = 1;
 
-
 const char *Project::_errstr[] =
 {
     "Not a Non-Mixer-XT project",
@@ -64,7 +63,6 @@ char Project::_path[512];
 bool Project::_is_open = false;
 bool Project::_is_opening_closing = false;
 int Project::_lockfd = 0;
-
 
 /***********/
 /* Private */
@@ -119,9 +117,9 @@ Project::write_info( void )
         strcpy ( s, _created_on );
 
     fprintf ( fp, "created by\n\t%s\ncreated on\n\t%s\nversion\n\t%d\n",
-              APP_TITLE " " VERSION,
-              s,
-              PROJECT_VERSION );
+        APP_TITLE " " VERSION,
+        s,
+        PROJECT_VERSION );
 
     fclose ( fp );
 
@@ -230,7 +228,7 @@ Project::validate( const char *name )
     }
 
     if ( !exists ( "info" ) ||
-            !exists ( "snapshot" ) )
+        !exists ( "snapshot" ) )
     {
         WARNING ( "Not a Non-Mixer-XT project: \"%s\"", name );
         r = false;
@@ -281,7 +279,6 @@ Project::open( const char *name )
     }
     else
         *_created_on = 0;
-
 
     getcwd ( _path, sizeof ( _path ) );
 

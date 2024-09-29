@@ -60,11 +60,9 @@ char *instance_name;
 
 static nframes_t buffers = 0;
 
-
 OSC::Endpoint *osc = 0;
 
 /* const double NSM_CHECK_INTERVAL = 0.25f; */
-
 
 void
 handle_hello( lo_message msg )
@@ -108,11 +106,11 @@ say_hello( void )
         lo_message m = lo_message_new ( );
 
         lo_message_add ( m, "sssss",
-                         "/non/hello",
-                         osc->url ( ),
-                         APP_TITLE,
-                         VERSION,
-                         instance_name );
+            "/non/hello",
+            osc->url ( ),
+            APP_TITLE,
+            VERSION,
+            instance_name );
 
         nsm_send_broadcast ( nsm, m );
     }
@@ -152,7 +150,6 @@ public:
         {
             if ( !midi_input_port )
                 return 0;
-
 
             /* jack_position_t pos; */
 
@@ -195,7 +192,7 @@ public:
                 /* if ( ev.size == 3 ) */
                 /* e.msb( ev.buffer[2] ); */
 
-                if ( jack_ringbuffer_write ( input_ring_buf, (char*) &e, sizeof ( midievent ) ) != sizeof ( midievent ) )
+                if ( jack_ringbuffer_write ( input_ring_buf, (char * ) &e, sizeof ( midievent ) ) != sizeof ( midievent ) )
                     WARNING ( "input buffer overrun" );
             }
         }
@@ -215,7 +212,7 @@ public:
                 /* jack_ringbuffer_data_t vec[2]; */
                 /* jack_ringbuffer_get_read_vector( output_ring_buf, vec ); */
 
-                if ( jack_ringbuffer_peek ( output_ring_buf, (char*) &ev, sizeof ( jack_midi_event_t ) ) <= 0 )
+                if ( jack_ringbuffer_peek ( output_ring_buf, (char * ) &ev, sizeof ( jack_midi_event_t ) ) <= 0 )
                     break;
 
                 unsigned char *buffer = jack_midi_event_reserve ( buf, frame, ev.size );
@@ -438,7 +435,6 @@ signal_handler( float value, void *user_data )
             //            e.pretty_print();
         }
 
-
         {
             midievent e;
             e.opcode ( MIDI::midievent::CONTROL_CHANGE );
@@ -463,8 +459,8 @@ signal_handler( float value, void *user_data )
 
         for ( int i = 0; i < 4; i++ )
         {
-            if ( jack_ringbuffer_write ( engine->output_ring_buf, (char*) &jev[i],
-                                         sizeof ( jack_midi_event_t ) ) != sizeof ( jack_midi_event_t ) )
+            if ( jack_ringbuffer_write ( engine->output_ring_buf, (char * ) &jev[i],
+                sizeof ( jack_midi_event_t ) ) != sizeof ( jack_midi_event_t ) )
                 WARNING ( "output buffer overrun" );
         }
     }
@@ -478,13 +474,12 @@ signal_handler( float value, void *user_data )
 
         //        m->event.pretty_print();
 
-        if ( jack_ringbuffer_write ( engine->output_ring_buf, (char*) &ev, sizeof ( jack_midi_event_t ) ) != sizeof ( jack_midi_event_t ) )
+        if ( jack_ringbuffer_write ( engine->output_ring_buf, (char * ) &ev, sizeof ( jack_midi_event_t ) ) != sizeof ( jack_midi_event_t ) )
             WARNING ( "output buffer overrun" );
     }
 
     return 0;
 }
-
 
 std::map<std::string, signal_mapping> sig_map;
 std::map<int, std::string> sig_map_ordered;
@@ -500,8 +495,8 @@ save_settings( void )
     fprintf ( fp, "# MIDI-Mapper-XT version %i\n", FILE_VERSION );
 
     for ( std::map<int, std::string>::const_iterator i = sig_map_ordered.begin ( );
-            i != sig_map_ordered.end ( );
-            ++i )
+        i != sig_map_ordered.end ( );
+        ++i )
     {
         signal_mapping &m = sig_map[i->second.c_str ( )];
 
@@ -510,12 +505,12 @@ save_settings( void )
         /* FIXME: instead of T and NRPN14, use 1 7 and 14 (value significant bits).
            Also, use syntax like so: [NRPN 0 0] 1bit :: /foo/bar */
         fprintf ( fp, "%s\t%s\t%s\n",
-                  i->second.c_str ( ),
-                  //		 midi_event,
-                  m.is_toggle ? "1-BIT" :
-                  m.is_nrpn && m.is_nrpn14 ? "14-BIT" :
-                  "7-BIT",
-                  m.signal_name.c_str ( ) );
+            i->second.c_str ( ),
+            //		 midi_event,
+            m.is_toggle ? "1-BIT" :
+            m.is_nrpn && m.is_nrpn14 ? "14-BIT" :
+            "7-BIT",
+            m.signal_name.c_str ( ) );
 
         /* free(midi_event); */
     }
@@ -524,7 +519,6 @@ save_settings( void )
 
     return true;
 }
-
 
 static int max_signal = 0;
 
@@ -560,10 +554,10 @@ load_settings( void )
 
     while (
         ( 1 == version &&
-          3 == fscanf ( fp, "%m[^\t]\t%m[^\t]\t%m[^\n]\n", &midi_event, &flags, &signal_name ) )
+        3 == fscanf ( fp, "%m[^\t]\t%m[^\t]\t%m[^\n]\n", &midi_event, &flags, &signal_name ) )
         ||
         ( 0 == version &&
-          2 == fscanf ( fp, "[%m[^]]] %m[^\n]\n", &midi_event, &signal_name ) ) )
+        2 == fscanf ( fp, "[%m[^]]] %m[^\n]\n", &midi_event, &signal_name ) ) )
     {
         DMESSAGE ( "Read mapping: %s, %s (%s)", midi_event, signal_name, flags );
 
@@ -760,48 +754,47 @@ decode_nrpn( nrpn_state *state, const midievent &e, bool *emit_one )
 
     switch ( e.lsb ( ) )
     {
-    case 6:
-        if ( VALUE_MSB == n->awaiting )
-        {
-            n->value_msb = e.msb ( );
-            n->value_lsb = 0 == e.msb ( ) ? 0 : MAX_7BIT;
+        case 6:
+            if ( VALUE_MSB == n->awaiting )
+            {
+                n->value_msb = e.msb ( );
+                n->value_lsb = 0 == e.msb ( ) ? 0 : MAX_7BIT;
 
-            n->complete = true;
-            n->awaiting = VALUE_LSB;
-            *emit_one = true;
+                n->complete = true;
+                n->awaiting = VALUE_LSB;
+                *emit_one = true;
+                return n;
+            }
+            break;
+        case 38:
+            if ( VALUE_LSB == n->awaiting )
+            {
+                n->value_lsb_exists = true;
+                n->value_lsb = e.msb ( );
+                *emit_one = true;
+                n->complete = true;
+                n->awaiting = COMPLETE;
+                return n;
+            }
+            break;
+        case 99:
+            n->complete = false;
+            n->value_lsb_exists = false;
+            n->control_msb = e.msb ( );
+            n->control_lsb = 0;
+            n->awaiting = CONTROL_LSB;
+            n->value_msb = 0;
+            n->value_lsb = 0;
             return n;
-        }
-        break;
-    case 38:
-        if ( VALUE_LSB == n->awaiting )
-        {
-            n->value_lsb_exists = true;
-            n->value_lsb = e.msb ( );
-            *emit_one = true;
-            n->complete = true;
-            n->awaiting = COMPLETE;
+        case 98:
+            n->awaiting = VALUE_MSB;
+            n->complete = false;
+            n->control_lsb = e.msb ( );
             return n;
-        }
-        break;
-    case 99:
-        n->complete = false;
-        n->value_lsb_exists = false;
-        n->control_msb = e.msb ( );
-        n->control_lsb = 0;
-        n->awaiting = CONTROL_LSB;
-        n->value_msb = 0;
-        n->value_lsb = 0;
-        return n;
-    case 98:
-        n->awaiting = VALUE_MSB;
-        n->complete = false;
-        n->control_lsb = e.msb ( );
-        return n;
     }
 
     return NULL;
 }
-
 
 static volatile int got_sigterm = 0;
 
@@ -879,7 +872,7 @@ emit_signal_for_event( const char *midi_event, midievent &e, struct nrpn_state *
             DMESSAGE ( "Learning value msb: %u, msb: %u", m->learning_value_msb, e.msb ( ) );
 
             is_toggle = ( m->learning_value_msb == 0 && e.msb ( ) == MAX_7BIT ) ||
-                        ( m->learning_value_msb == MAX_7BIT && e.msb ( ) == 0 );
+                ( m->learning_value_msb == MAX_7BIT && e.msb ( ) == 0 );
         }
         else
         {
@@ -889,10 +882,10 @@ emit_signal_for_event( const char *midi_event, midievent &e, struct nrpn_state *
             unsigned int val2 = get_14bit ( st->value_msb, st->value_lsb );
 
             is_toggle = !is_14bit_nrpn
-                        ? ( m->learning_value_msb == 0 && st->value_msb == MAX_7BIT ) ||
-                        ( m->learning_value_msb == MAX_7BIT && st->value_msb == 0 )
-                        : ( val1 == 0 && val2 == MAX_14BIT ) ||
-                        ( val1 == MAX_14BIT && val2 == 0 );
+                ? ( m->learning_value_msb == 0 && st->value_msb == MAX_7BIT ) ||
+                ( m->learning_value_msb == MAX_7BIT && st->value_msb == 0 )
+                : ( val1 == 0 && val2 == MAX_14BIT ) ||
+                ( val1 == MAX_14BIT && val2 == 0 );
         }
 
         DMESSAGE ( "is toggle %i", is_toggle );
@@ -905,8 +898,8 @@ emit_signal_for_event( const char *midi_event, midievent &e, struct nrpn_state *
         m->signal_name = s;
         m->signal =
             osc->add_signal ( s, OSC::Signal::Output, 0, 1, 0,
-                              signal_handler, NULL,
-                              m );
+            signal_handler, NULL,
+            m );
 
         sig_map_ordered[max_signal] = midi_event;
 
@@ -945,11 +938,11 @@ emit_signal_for_event( const char *midi_event, midievent &e, struct nrpn_state *
         if ( percent_off > 5 )
         {
             DMESSAGE ( "Wating for controls to sync. %s: %f percent off target (must be < 5%) [ M:%f S:%f ] ",
-                       m->signal_name.c_str ( ),
-                       percent_off,
-                       val,
-                       m->signal->value ( )
-                     );
+                m->signal_name.c_str ( ),
+                percent_off,
+                val,
+                m->signal->value ( )
+            );
 
             return;
         }
@@ -972,8 +965,8 @@ handle_control_change( nrpn_state *nrpn_state, midievent &e )
     struct nrpn_state *st = decode_nrpn ( nrpn_state, e, &emit_one );
 
     if ( st != NULL &&
-            ( VALUE_LSB == st->awaiting ||
-              COMPLETE == st->awaiting ) )
+        ( VALUE_LSB == st->awaiting ||
+        COMPLETE == st->awaiting ) )
     {
 
         snprintf ( midi_event, 50, "NRPN %d %d", e.channel ( ), get_14bit ( st->control_msb, st->control_lsb ) );
@@ -1008,7 +1001,6 @@ handle_control_change( nrpn_state *nrpn_state, midievent &e )
 /* else if ( e.opcode() == MIDI::midievent::PITCH_WHEEL ) */
 
 /*     asprintf( &s, "/midi/%i/PB", e.channel() ); */
-
 
 int
 main( int /*argc*/, char **argv )
@@ -1088,14 +1080,14 @@ main( int /*argc*/, char **argv )
 
             switch ( e.opcode ( ) )
             {
-            case MIDI::midievent::CONTROL_CHANGE:
-            case MIDI::midievent::PITCH_WHEEL:
-            {
-                handle_control_change ( nrpn_state, e );
-                break;
-            }
-            default:
-                break;
+                case MIDI::midievent::CONTROL_CHANGE:
+                case MIDI::midievent::PITCH_WHEEL:
+                {
+                    handle_control_change ( nrpn_state, e );
+                    break;
+                }
+                default:
+                    break;
             }
             //            e.pretty_print();
         }

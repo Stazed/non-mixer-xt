@@ -203,7 +203,6 @@ main( int argc, char **argv )
     Fl_Tooltip::size ( 14 );
     Fl_Tooltip::hoverdelay ( 0.1f );
 
-
     LOG_REGISTER_CREATE ( Mixer_Strip );
     LOG_REGISTER_CREATE ( Chain );
     LOG_REGISTER_CREATE ( Plugin_Module );
@@ -235,7 +234,6 @@ main( int argc, char **argv )
 
     signal ( SIGPIPE, SIG_IGN );
 
-
     const char *osc_port = NULL;
 
     nsm = new NSM_Client;
@@ -255,29 +253,28 @@ main( int argc, char **argv )
     int option_index = 0;
     int c = 0;
 
-
     while ( ( c = getopt_long_only ( argc, argv, "", long_options, &option_index ) ) != -1 )
     {
         switch ( c )
         {
-        case 'p':
-            DMESSAGE ( "Using OSC port %s", optarg );
-            osc_port = optarg;
-            break;
-        case 'i':
-            DMESSAGE ( "Using OSC port %s", optarg );
-            free ( instance_name );
-            instance_name = strdup ( optarg );
-            instance_override = true;
-            break;
-        case 'u':
-            DMESSAGE ( "Disabling user interface" );
-            no_ui = true;
-            break;
-        case '?':
-            printf ( "\nUsage: %s [--instance instance_name] [--osc-port portnum] [path_to_project]\n\n", argv[0] );
-            exit ( 0 );
-            break;
+            case 'p':
+                DMESSAGE ( "Using OSC port %s", optarg );
+                osc_port = optarg;
+                break;
+            case 'i':
+                DMESSAGE ( "Using OSC port %s", optarg );
+                free ( instance_name );
+                instance_name = strdup ( optarg );
+                instance_override = true;
+                break;
+            case 'u':
+                DMESSAGE ( "Disabling user interface" );
+                no_ui = true;
+                break;
+            case '?':
+                printf ( "\nUsage: %s [--instance instance_name] [--osc-port portnum] [path_to_project]\n\n", argv[0] );
+                exit ( 0 );
+                break;
         }
     }
 
@@ -317,7 +314,6 @@ main( int argc, char **argv )
     const char *nsm_url = getenv ( "NSM_URL" );
 
     Fl_Double_Window *main_window;
-
 
     {
         Fl_Double_Window *o = main_window = new Fl_Double_Window ( 800, 600, "Non Mixer XT" );

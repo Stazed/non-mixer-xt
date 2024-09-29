@@ -78,9 +78,9 @@ Module_Parameter_Editor::is_probably_eq( void )
     const char *name = _module->label ( );
 
     return strcasestr ( name, "eq" ) ||
-           strcasestr ( name, "filter" ) ||
-           strcasestr ( name, "parametric" ) ||
-           strcasestr ( name, "band" );
+        strcasestr ( name, "filter" ) ||
+        strcasestr ( name, "parametric" ) ||
+        strcasestr ( name, "band" );
 }
 
 Module_Parameter_Editor::Module_Parameter_Editor( Module *module ) :
@@ -151,10 +151,10 @@ Module_Parameter_Editor::Module_Parameter_Editor( Module *module ) :
                             preset_index++;
 
                         DMESSAGE ( "item #%d -- label=%s, value=%s type=%s",
-                                   key,
-                                   item.label ( ) ? item.label ( ) : "(Null)", // menu terminators have NULL labels
-                                   ( item.flags & FL_MENU_VALUE ) ? "set" : "clear", // value of toggle or radio items
-                                   ( item.flags & FL_SUBMENU ) ? "Submenu" : "Item" ); // see if item is a submenu or actual item
+                            key,
+                            item.label ( ) ? item.label ( ) : "(Null)", // menu terminators have NULL labels
+                            ( item.flags & FL_MENU_VALUE ) ? "set" : "clear", // value of toggle or radio items
+                            ( item.flags & FL_SUBMENU ) ? "Submenu" : "Item" ); // see if item is a submenu or actual item
                     }
                 }
             }
@@ -237,7 +237,7 @@ Module_Parameter_Editor::Module_Parameter_Editor( Module *module ) :
 
 #if defined(LV2_SUPPORT) || defined(CLAP_SUPPORT) || defined(VST2_SUPPORT) || defined(VST3_SUPPORT)
         if ( ( _module->_plug_type == Type_LV2 ) || ( _module->_plug_type == Type_CLAP )
-                || _module->_plug_type == Type_VST2 || _module->_plug_type == Type_VST3 )
+            || _module->_plug_type == Type_VST2 || _module->_plug_type == Type_VST3 )
         {
 #ifdef FLTK_SUPPORT
             Fl_Color fc = FL_CYAN;
@@ -400,16 +400,16 @@ Module_Parameter_Editor::make_controls( void )
         Module::Port *p = &module->control_input[i];
 
         if ( !strcasecmp ( "Azimuth", p->name ( ) ) &&
-                180.0f == p->hints.maximum &&
-                -180.0f == p->hints.minimum )
+            180.0f == p->hints.maximum &&
+            -180.0f == p->hints.minimum )
         {
             _azimuth_port_number = i;
             azimuth_value = p->control_value ( );
             continue;
         }
         else if ( !strcasecmp ( "Elevation", p->name ( ) ) &&
-                  90.0f == p->hints.maximum &&
-                  -90.0f == p->hints.minimum )
+            90.0f == p->hints.maximum &&
+            -90.0f == p->hints.minimum )
         {
             _elevation_port_number = i;
             elevation_value = p->control_value ( );
@@ -729,7 +729,7 @@ Module_Parameter_Editor::update_control_visibility( bool b_resize )
 
 #if defined(LV2_SUPPORT) || defined(CLAP_SUPPORT) || defined(VST2_SUPPORT) || defined(VST3_SUPPORT)
     if ( ( _module->_plug_type == Type_LV2 ) || ( _module->_plug_type == Type_CLAP ) ||
-            ( _module->_plug_type == Type_VST2 ) || ( _module->_plug_type == Type_VST3 ) )
+        ( _module->_plug_type == Type_VST2 ) || ( _module->_plug_type == Type_VST3 ) )
     {
         /* When the scroller is not used, we need to expand width to account for
            the preset, state save and restore button */
@@ -853,7 +853,7 @@ Module_Parameter_Editor::cb_preset_handle( Fl_Widget *w, void *v )
 
     int index = (int) m->value ( ); // VST2 & VST3
 
-    if ( ( (Module_Parameter_Editor*) v )->_module->_plug_type == Type_LV2 )
+    if ( ( (Module_Parameter_Editor * ) v )->_module->_plug_type == Type_LV2 )
     {
         std::unordered_map<int, int> preset_index = ( (Module_Parameter_Editor*) v )->_mPreset_index;
 
@@ -885,7 +885,7 @@ Module_Parameter_Editor::cb_save_state_handle( Fl_Widget *, void *v )
     char *filename = NULL;
 
 #ifdef CLAP_SUPPORT
-    if ( ( (Module_Parameter_Editor*) v )->_module->_plug_type == Type_CLAP )
+    if ( ( (Module_Parameter_Editor * ) v )->_module->_plug_type == Type_CLAP )
     {
 #define EXT ".state"
         filename = fl_file_chooser ( title.c_str ( ), "(*" EXT")", path, 0 );
@@ -898,13 +898,13 @@ Module_Parameter_Editor::cb_save_state_handle( Fl_Widget *, void *v )
     }
 #endif  // CLAP_SUPPORT
 #ifdef LV2_SUPPORT
-    if ( ( (Module_Parameter_Editor*) v )->_module->_plug_type == Type_LV2 )
+    if ( ( (Module_Parameter_Editor * ) v )->_module->_plug_type == Type_LV2 )
     {
         filename = fl_file_chooser ( title.c_str ( ), "", path, 0 );
     }
 #endif
 #ifdef VST2_SUPPORT
-    if ( ( (Module_Parameter_Editor*) v )->_module->_plug_type == Type_VST2 )
+    if ( ( (Module_Parameter_Editor * ) v )->_module->_plug_type == Type_VST2 )
     {
 #define EXT ".fxp"
         filename = fl_file_chooser ( title.c_str ( ), "(*" EXT")", path, 0 );
@@ -917,7 +917,7 @@ Module_Parameter_Editor::cb_save_state_handle( Fl_Widget *, void *v )
     }
 #endif  // VST2_SUPPORT
 #ifdef VST3_SUPPORT
-    if ( ( (Module_Parameter_Editor*) v )->_module->_plug_type == Type_VST3 )
+    if ( ( (Module_Parameter_Editor * ) v )->_module->_plug_type == Type_VST3 )
     {
 #define EXT ".state"
         filename = fl_file_chooser ( title.c_str ( ), "(*" EXT")", path, 0 );
@@ -988,25 +988,25 @@ Module_Parameter_Editor::cb_restore_state_handle( Fl_Widget *, void *v )
     char *directory = NULL; // or file
 
 #ifdef CLAP_SUPPORT
-    if ( ( (Module_Parameter_Editor*) v )->_module->_plug_type == Type_CLAP )
+    if ( ( (Module_Parameter_Editor * ) v )->_module->_plug_type == Type_CLAP )
     {
         directory = fl_file_chooser ( title.c_str ( ), "*.state", path, 0 );
     }
 #endif
 #ifdef LV2_SUPPORT
-    if ( ( (Module_Parameter_Editor*) v )->_module->_plug_type == Type_LV2 )
+    if ( ( (Module_Parameter_Editor * ) v )->_module->_plug_type == Type_LV2 )
     {
         directory = fl_dir_chooser ( title.c_str ( ), path, 0 );
     }
 #endif
 #ifdef VST2_SUPPORT
-    if ( ( (Module_Parameter_Editor*) v )->_module->_plug_type == Type_VST2 )
+    if ( ( (Module_Parameter_Editor * ) v )->_module->_plug_type == Type_VST2 )
     {
         directory = fl_file_chooser ( title.c_str ( ), "*.fxp", path, 0 );
     }
 #endif
 #ifdef VST3_SUPPORT
-    if ( ( (Module_Parameter_Editor*) v )->_module->_plug_type == Type_VST3 )
+    if ( ( (Module_Parameter_Editor * ) v )->_module->_plug_type == Type_VST3 )
     {
         directory = fl_file_chooser ( title.c_str ( ), "*.state", path, 0 );
     }
@@ -1084,8 +1084,8 @@ Module_Parameter_Editor::handle_control_changed( Module::Port *p )
     Fl_Widget *w = controls_by_port[i];
 
     if ( i == _azimuth_port_number ||
-            i == _elevation_port_number ||
-            i == _radius_port_number )
+        i == _elevation_port_number ||
+        i == _radius_port_number )
     {
         Panner *_panner = static_cast<Panner*> ( w );
 
@@ -1100,7 +1100,6 @@ Module_Parameter_Editor::handle_control_changed( Module::Port *p )
 
         return;
     }
-
 
     if ( p->hints.type == Module::Port::Hints::BOOLEAN )
     {
@@ -1289,35 +1288,35 @@ Module_Parameter_Editor::handle( int m )
 
     switch ( m )
     {
-    case FL_PUSH:
-        if ( test_press ( FL_BUTTON3 ) )
-        {
-            for ( unsigned int i = 0; i < controls_by_port.size ( ); i++ )
+        case FL_PUSH:
+            if ( test_press ( FL_BUTTON3 ) )
             {
-                if ( Fl::event_inside ( controls_by_port[i] ) && controls_by_port[i]->visible ( ) )
+                for ( unsigned int i = 0; i < controls_by_port.size ( ); i++ )
                 {
-                    _selected_control = i;
+                    if ( Fl::event_inside ( controls_by_port[i] ) && controls_by_port[i]->visible ( ) )
+                    {
+                        _selected_control = i;
 
-                    Fl_Menu_Button &mb = menu ( );
+                        Fl_Menu_Button &mb = menu ( );
 
-                    menu_popup ( &mb, Fl::event_x ( ), Fl::event_y ( ) );
+                        menu_popup ( &mb, Fl::event_x ( ), Fl::event_y ( ) );
 
-                    return 1;
+                        return 1;
+                    }
                 }
+                return 0;
             }
-            return 0;
-        }
-        break;
+            break;
 
-    case FL_KEYBOARD:
-    {
-        if ( ( Fl::event_key ( FL_Control_L ) || Fl::event_key ( FL_Control_R ) ) && Fl::event_key ( 119 ) )
+        case FL_KEYBOARD:
         {
-            // ctrl + w -> close editor
-            hide ( );
-            return 1;
+            if ( ( Fl::event_key ( FL_Control_L ) || Fl::event_key ( FL_Control_R ) ) && Fl::event_key ( 119 ) )
+            {
+                // ctrl + w -> close editor
+                hide ( );
+                return 1;
+            }
         }
-    }
     }
 
     return Fl_Group::handle ( m );

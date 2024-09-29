@@ -201,27 +201,25 @@ Meter_Module::handle( int m )
 {
     switch ( m )
     {
-    case FL_PUSH:
-    {
-        int r = 0;
-        if ( test_press ( FL_BUTTON1 ) )
+        case FL_PUSH:
         {
-            /* don't let Module::handle eat our click */
-            r = Fl_Group::handle ( m );
+            int r = 0;
+            if ( test_press ( FL_BUTTON1 ) )
+            {
+                /* don't let Module::handle eat our click */
+                r = Fl_Group::handle ( m );
+            }
+            return Module::handle ( m ) || r;
         }
-        return Module::handle ( m ) || r;
-    }
     }
 
     return Module::handle ( m );
 }
 
-
 /**********/
 /* Engine */
 
 /**********/
-
 
 void
 Meter_Module::process( nframes_t nframes )
@@ -237,8 +235,8 @@ Meter_Module::process( nframes_t nframes )
         /* need to store this separately from other peaks as it must be reset each time we do a round of smoothing output */
 
         /* store peak value */
-        if ( peak > ( (float*) control_output[0].buffer ( ) )[i] )
-            ( (float*) control_output[0].buffer ( ) )[i] = peak;
+        if ( peak > ( (float * ) control_output[0].buffer ( ) )[i] )
+            ( (float * ) control_output[0].buffer ( ) )[i] = peak;
 
         if ( peak > control_value[i] )
             control_value[i] = peak;

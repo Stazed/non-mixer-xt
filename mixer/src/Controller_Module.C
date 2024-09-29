@@ -50,7 +50,6 @@
 #include "Mixer.H"
 #include "Spatialization_Console.H"
 
-
 bool Controller_Module::learn_by_number = false;
 bool Controller_Module::_learn_mode = false;
 
@@ -273,7 +272,6 @@ Controller_Module::connect_spatializer_radius_to( Module *m )
         add_port ( Port ( this, Port::OUTPUT, Port::CONTROL ) );
     }
 
-
     control_output[2].connect_to ( radius_port );
 
     maybe_create_panner ( );
@@ -310,7 +308,6 @@ Controller_Module::maybe_create_panner( void )
         o->align ( FL_ALIGN_TOP );
         o->labelsize ( 10 );
         //        o->callback( cb_panner_value_handle, new callback_data( this, azimuth_port_number, elevation_port_number ) );
-
 
         o->callback ( cb_spatializer_handle, this );
 
@@ -358,16 +355,16 @@ Controller_Module::connect_spatializer_to( Module *m )
         Port *p = &m->control_input[i];
 
         if ( !strcasecmp ( "Azimuth", p->name ( ) ) &&
-                180.0f == p->hints.maximum &&
-                -180.0f == p->hints.minimum )
+            180.0f == p->hints.maximum &&
+            -180.0f == p->hints.minimum )
         {
             azimuth_port = p;
             azimuth_value = p->control_value ( );
             continue;
         }
         else if ( !strcasecmp ( "Elevation", p->name ( ) ) &&
-                  90.0f == p->hints.maximum &&
-                  -90.0f == p->hints.minimum )
+            90.0f == p->hints.maximum &&
+            -90.0f == p->hints.minimum )
         {
             elevation_port = p;
             elevation_value = p->control_value ( );
@@ -660,7 +657,7 @@ Controller_Module::cb_spatializer_handle( Fl_Widget *w )
     Panner *pan = static_cast<Panner*> ( w );
 
     if ( control_output[0].connected ( ) &&
-            control_output[1].connected ( ) )
+        control_output[1].connected ( ) )
     {
         control_output[0].connected_port ( )->control_value ( pan->point ( 0 )->azimuth ( ) );
         control_output[1].connected_port ( )->control_value ( pan->point ( 0 )->elevation ( ) );
@@ -742,8 +739,6 @@ Controller_Module::menu_cb( const Fl_Menu_ *m )
         /*     mixer->osc_endpoint->add_translation( path, p->osc_path() ); */
     }
 
-
-
     /* } */
     /* else */
     /* { */
@@ -764,8 +759,6 @@ Controller_Module::menu_cb( const Fl_Menu_ *m )
     /*     //free( path ); */
     /* } */
 
-
-
 }
 static Fl_Menu_Button *peer_menu;
 static const char *peer_prefix;
@@ -781,10 +774,9 @@ Controller_Module::peer_callback( OSC::Signal *sig, OSC::Signal::State /*state*/
     if ( sig->direction ( ) != OSC::Signal::Output )
         return;
 
-
     /* only list CV signals for now */
     if ( !( sig->parameter_limits ( ).min == 0.0 &&
-            sig->parameter_limits ( ).max == 1.0 ) )
+        sig->parameter_limits ( ).max == 1.0 ) )
         return;
 
     if ( !v )
@@ -909,29 +901,29 @@ Controller_Module::draw( void )
         // Since we don't have alpha transparency for FLTK, just draw 3 pixel outline,
         // each rectangle is one pixel
         fl_rect ( x ( ), y ( ), w ( ), h ( ),
-                  this == _learning_control
-                  ? FL_RED
-                  : FL_GREEN
-                );
+            this == _learning_control
+            ? FL_RED
+            : FL_GREEN
+        );
 
         fl_rect ( x ( ) + 1, y ( ) + 1, w ( ) - 2, h ( ) - 2,
-                  this == _learning_control
-                  ? FL_RED
-                  : FL_GREEN
-                );
+            this == _learning_control
+            ? FL_RED
+            : FL_GREEN
+        );
 
         fl_rect ( x ( ) + 2, y ( ) + 2, w ( ) - 4, h ( ) - 4,
-                  this == _learning_control
-                  ? FL_RED
-                  : FL_GREEN
-                );
+            this == _learning_control
+            ? FL_RED
+            : FL_GREEN
+        );
 #else
         fl_rectf ( x ( ), y ( ), w ( ), h ( ),
-                   fl_color_add_alpha (
-                       this == _learning_control
-                       ? FL_RED
-                       : FL_GREEN,
-                       60 ) );
+            fl_color_add_alpha (
+            this == _learning_control
+            ? FL_RED
+            : FL_GREEN,
+            60 ) );
 #endif
     }
 }
@@ -955,43 +947,43 @@ Controller_Module::handle( int m )
 
     switch ( m )
     {
-    case FL_PUSH:
-    {
-        if ( learn_mode ( ) )
+        case FL_PUSH:
         {
-            tooltip ( "Now learning control. Move the desired control on your controller" );
-
-            _learning_control = this;
-
-            this->redraw ( );
-
-            //connect_to( &module->control_input[port] );
-            Port *p = control_output[0].connected_port ( );
-
-            if ( p )
+            if ( learn_mode ( ) )
             {
-                const char * path = learn_by_number ? p->osc_number_path ( ) : p->osc_path ( );
+                tooltip ( "Now learning control. Move the desired control on your controller" );
 
-                DMESSAGE ( "Will learn %s", path );
+                _learning_control = this;
 
-                mixer->osc_endpoint->learn ( path, Controller_Module::learning_callback, this );
-                mixer->redraw ( );
+                this->redraw ( );
+
+                //connect_to( &module->control_input[port] );
+                Port *p = control_output[0].connected_port ( );
+
+                if ( p )
+                {
+                    const char * path = learn_by_number ? p->osc_number_path ( ) : p->osc_path ( );
+
+                    DMESSAGE ( "Will learn %s", path );
+
+                    mixer->osc_endpoint->learn ( path, Controller_Module::learning_callback, this );
+                    mixer->redraw ( );
+                }
+
+                return 1;
             }
 
-            return 1;
-        }
+            if ( Fl::event_button3 ( ) )
+            {
+                /* context menu */
+                /* if ( type() != SPATIALIZATION ) */
+                menu_popup ( &menu ( ) );
 
-        if ( Fl::event_button3 ( ) )
-        {
-            /* context menu */
-            /* if ( type() != SPATIALIZATION ) */
-            menu_popup ( &menu ( ) );
-
-            return 1;
+                return 1;
+            }
+            else
+                return Fl_Group::handle ( m );
         }
-        else
-            return Fl_Group::handle ( m );
-    }
     }
 
     return Fl_Group::handle ( m );
@@ -1018,7 +1010,7 @@ Controller_Module::handle_control_changed( Port *p )
     {
         // We have to check these always since the control value may not be the same as the widget value
     }
-    else if ( ( (Fl_Valuator*) control )->value ( ) == control_value )
+    else if ( ( (Fl_Valuator * ) control )->value ( ) == control_value )
         return;
 
     /* if ( control->value() != control_value ) */

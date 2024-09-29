@@ -84,7 +84,8 @@ Spatialization_Console *Mixer::spatialization_console = 0;
 struct both_slashes
 {
 
-    bool operator()(char a, char b) const
+    bool
+    operator()(char a, char b) const
     {
         return a == '/' && b == '/';
     }
@@ -101,7 +102,6 @@ Mixer::hide_tooltip( void )
 {
     mixer->_status->label ( 0 );
 }
-
 
 /************************/
 /* OSC Message Handlers */
@@ -164,11 +164,11 @@ Mixer::say_hello( void )
     lo_message m = lo_message_new ( );
 
     lo_message_add ( m, "sssss",
-                     "/non/hello",
-                     osc_endpoint->url ( ),
-                     APP_NAME,
-                     VERSION,
-                     instance_name );
+        "/non/hello",
+        osc_endpoint->url ( ),
+        APP_NAME,
+        VERSION,
+        instance_name );
 
     nsm->broadcast ( m );
 
@@ -458,7 +458,7 @@ Mixer::cb_menu( Fl_Widget* o )
         ab.title->label ( "Non Mixer XT" );
 
         ab.copyright->label ( "Copyright (C) 2008-2021 Jonathan Moore Liles (as Non-Mixer)\n"
-                              "Copyright (C) 2021- Stazed (as Non-Mixer-XT)");
+            "Copyright (C) 2021- Stazed (as Non-Mixer-XT)");
         ab.credits->labelsize ( 14 );
         ab.credits->label (
             "Legacy Non-Mixer by Jonathan Moore Liles.\n"
@@ -502,8 +502,8 @@ Mixer::is_valid_open_new( )
     if ( mixer_strips->children ( ) || !project_directory.empty ( ) )
     {
         fl_alert ( "Error: You cannot open/create a new project\n"
-                   "if any existing project is open or\n"
-                   "if any mixer strips are present." );
+            "if any existing project is open or\n"
+            "if any mixer strips are present." );
         return false;
     }
 
@@ -723,7 +723,6 @@ Mixer::Mixer( int X, int Y, int W, int H, const char *L ) :
 
     update_frequency ( 24 );
 
-
     update_menu ( );
 
     load_options ( );
@@ -862,7 +861,7 @@ Mixer::add_group( Group *g )
     groups.push_back ( g );
 
     for ( int i = mixer_strips->children ( ); i--; )
-        ( (Mixer_Strip*) mixer_strips->child ( i ) )->update_group_choice ( );
+        ( (Mixer_Strip * ) mixer_strips->child ( i ) )->update_group_choice ( );
 }
 
 void
@@ -871,7 +870,7 @@ Mixer::remove_group( Group *g )
     groups.remove ( g );
 
     for ( int i = mixer_strips->children ( ); i--; )
-        ( (Mixer_Strip*) mixer_strips->child ( i ) )->update_group_choice ( );
+        ( (Mixer_Strip * ) mixer_strips->child ( i ) )->update_group_choice ( );
 }
 
 void
@@ -1003,7 +1002,7 @@ Mixer::event_inside( void )
 {
     for ( int i = mixer_strips->children ( ); i--; )
         if ( Fl::event_inside ( mixer_strips->child ( i ) ) )
-            return (Mixer_Strip*) mixer_strips->child ( i );
+            return (Mixer_Strip * ) mixer_strips->child ( i );
 
     return NULL;
 }
@@ -1119,9 +1118,9 @@ Mixer::get_unique_track_name( const char *name )
 Group *
 Mixer::group_by_name( const char *name )
 {
-    for ( std::list<Group*>::iterator i = groups.begin ( );
-            i != groups.end ( );
-            ++i )
+    for ( std::list<Group * >::iterator i = groups.begin ( );
+        i != groups.end ( );
+        ++i )
         if ( !strcmp ( ( *i )->name ( ), name ) )
             return *i;
 
@@ -1160,11 +1159,11 @@ Mixer::snapshot( void )
     if ( spatialization_console )
         spatialization_console->log_create ( );
 
-    for ( std::list<Group*>::iterator i = groups.begin ( ); i != groups.end ( ); ++i )
+    for ( std::list<Group * >::iterator i = groups.begin ( ); i != groups.end ( ); ++i )
         ( *i )->log_create ( );
 
     for ( int i = 0; i < mixer_strips->children ( ); ++i )
-        ( (Mixer_Strip*) mixer_strips->child ( i ) )->log_children ( );
+        ( (Mixer_Strip * ) mixer_strips->child ( i ) )->log_children ( );
 }
 
 void
@@ -1254,14 +1253,14 @@ void
 Mixer::send_feedback( bool force )
 {
     for ( int i = 0; i < mixer_strips->children ( ); i++ )
-        ( (Mixer_Strip*) mixer_strips->child ( i ) )->send_feedback ( force );
+        ( (Mixer_Strip * ) mixer_strips->child ( i ) )->send_feedback ( force );
 }
 
 void
 Mixer::schedule_feedback( void )
 {
     for ( int i = 0; i < mixer_strips->children ( ); i++ )
-        ( (Mixer_Strip*) mixer_strips->child ( i ) )->schedule_feedback ( );
+        ( (Mixer_Strip * ) mixer_strips->child ( i ) )->schedule_feedback ( );
 }
 
 int
@@ -1276,61 +1275,61 @@ Mixer::handle( int m )
 
     switch ( m )
     {
-    case FL_PASTE:
-    {
-        if ( !Fl::event_inside ( this ) )
-            return 0;
-
-        /* Ignore this paste if previous one is not completed */
-        if ( _is_pasting )
+        case FL_PASTE:
         {
-            WARNING ( "Previous paste not completed. SLOW DOWN!!!" );
-            return 0;
+            if ( !Fl::event_inside ( this ) )
+                return 0;
+
+            /* Ignore this paste if previous one is not completed */
+            if ( _is_pasting )
+            {
+                WARNING ( "Previous paste not completed. SLOW DOWN!!!" );
+                return 0;
+            }
+
+            DMESSAGE ( "Got paste into mixer, expecting strip file..." );
+
+            const char *text = Fl::event_text ( );
+
+            char *file;
+
+            if ( !sscanf ( text, "file://%m[^\r\n]\n", &file ) )
+            {
+                WARNING ( "invalid drop \"%s\"\n", text );
+                return 0;
+            }
+
+            /* In the case of a paste without previous copy, there may be garbage in the event_text
+               buffer. In this case, the file would sometimes cause the unescape_url() function to crash.
+               So if sscanf above succeeds, we check if the file string contains the substring
+               "clipboard" which is the folder where copied strips are stored. No "clipboard",
+                means not a valid paste path.
+             */
+            std::string svalid = file;
+
+            if ( svalid.find ( "clipboard" ) != std::string::npos )
+            {
+                MESSAGE ( "Found clipboard!" );
+            }
+            else
+            {
+                MESSAGE ( "Invalid paste path, 'clipboard' not found: %s", file );
+                return 0;
+            }
+
+            unescape_url ( file );
+
+            if ( file )
+                export_import_strip = file;
+
+            MESSAGE ( "Pasted file \"%s\"\n", export_import_strip.c_str ( ) );
+
+            if ( !Mixer_Strip::import_strip ( export_import_strip.c_str ( ) ) )
+                fl_alert ( "%s", "Failed to import strip!" );
+
+            export_import_strip = "";
+            return 1;
         }
-
-        DMESSAGE ( "Got paste into mixer, expecting strip file..." );
-
-        const char *text = Fl::event_text ( );
-
-        char *file;
-
-        if ( !sscanf ( text, "file://%m[^\r\n]\n", &file ) )
-        {
-            WARNING ( "invalid drop \"%s\"\n", text );
-            return 0;
-        }
-
-        /* In the case of a paste without previous copy, there may be garbage in the event_text
-           buffer. In this case, the file would sometimes cause the unescape_url() function to crash.
-           So if sscanf above succeeds, we check if the file string contains the substring
-           "clipboard" which is the folder where copied strips are stored. No "clipboard",
-            means not a valid paste path.
-         */
-        std::string svalid = file;
-
-        if ( svalid.find ( "clipboard" ) != std::string::npos )
-        {
-            MESSAGE ( "Found clipboard!" );
-        }
-        else
-        {
-            MESSAGE ( "Invalid paste path, 'clipboard' not found: %s", file );
-            return 0;
-        }
-
-        unescape_url ( file );
-
-        if ( file )
-            export_import_strip = file;
-
-        MESSAGE ( "Pasted file \"%s\"\n", export_import_strip.c_str ( ) );
-
-        if ( !Mixer_Strip::import_strip ( export_import_strip.c_str ( ) ) )
-            fl_alert ( "%s", "Failed to import strip!" );
-
-        export_import_strip = "";
-        return 1;
-    }
     }
 
     return 0;
@@ -1540,7 +1539,7 @@ Mixer::command_quit( void )
         if ( Loggable::dirty ( ) )
         {
             int i = fl_choice ( "There have been changes since the last save."
-                                " Quitting now will discard them", "Discard", "Cancel", NULL );
+                " Quitting now will discard them", "Discard", "Cancel", NULL );
 
             if ( i != 0 )
                 return;
@@ -1571,4 +1570,3 @@ Mixer::command_show_gui( void )
 {
     window ( )->show ( );
 }
-

@@ -14,7 +14,6 @@
  * For a full copy of the GNU General Public License see the doc/GPL.txt file.
  */
 
-
 /*
  * File:   X11PluginUI.cpp
  * Author: sspresto
@@ -89,11 +88,11 @@ X11PluginUI::X11PluginUI( Callback * const cb, const bool isResizable, const boo
         attr.event_mask |= StructureNotifyMask | SubstructureNotifyMask;
 
     fHostWindow = XCreateWindow ( fDisplay, RootWindow ( fDisplay, screen ),
-                                  0, 0, 300, 300, 0,
-                                  DefaultDepth ( fDisplay, screen ),
-                                  InputOutput,
-                                  DefaultVisual ( fDisplay, screen ),
-                                  CWBorderPixel | CWEventMask, &attr );
+        0, 0, 300, 300, 0,
+        DefaultDepth ( fDisplay, screen ),
+        InputOutput,
+        DefaultVisual ( fDisplay, screen ),
+        CWBorderPixel | CWEventMask, &attr );
 
     CARLA_SAFE_ASSERT_RETURN ( fHostWindow != 0, );
 
@@ -127,7 +126,7 @@ X11PluginUI::X11PluginUI( Callback * const cb, const bool isResizable, const boo
     {
         plugParentWindow =
             XCreateWindow ( fDisplay, fHostWindow, 0, 0, 300, 300, 0, DefaultDepth ( fDisplay, screen ),
-                            InputOutput, CopyFromParent, CWBorderPixel | CWEventMask, &attr );
+            InputOutput, CopyFromParent, CWBorderPixel | CWEventMask, &attr );
 
         XMapWindow ( fDisplay, plugParentWindow );
     }
@@ -223,7 +222,7 @@ X11PluginUI::show( )
             uchar* data = nullptr;
 
             XGetWindowProperty ( fDisplay, childWindow, _xevp, 0, 1, False, AnyPropertyType,
-                                 &actualType, &actualFormat, &nitems, &bytesAfter, &data );
+                &actualType, &actualFormat, &nitems, &bytesAfter, &data );
 
             XSetErrorHandler ( oldErrorHandler );
             pthread_mutex_unlock ( &gErrorMutex );
@@ -279,69 +278,69 @@ X11PluginUI::idle( )
 
         switch ( event.type )
         {
-        case ConfigureNotify:
-            CARLA_SAFE_ASSERT_CONTINUE ( fCallback != nullptr );
-            CARLA_SAFE_ASSERT_CONTINUE ( event.xconfigure.width > 0 );
-            CARLA_SAFE_ASSERT_CONTINUE ( event.xconfigure.height > 0 );
-
-            if ( event.xconfigure.window == fHostWindow && fHostWindow != 0 )
-            {
-                nextHostWidth = static_cast<uint> ( event.xconfigure.width );
-                nextHostHeight = static_cast<uint> ( event.xconfigure.height );
-            }
-            else if ( event.xconfigure.window == fChildWindow && fChildWindow != 0 )
-            {
-                nextChildWidth = static_cast<uint> ( event.xconfigure.width );
-                nextChildHeight = static_cast<uint> ( event.xconfigure.height );
-            }
-            break;
-
-        case ClientMessage:
-            type = XGetAtomName ( fDisplay, event.xclient.message_type );
-            CARLA_SAFE_ASSERT_CONTINUE ( type != nullptr );
-
-            /* Window X box to close */
-            if ( std::strcmp ( type, "WM_PROTOCOLS" ) == 0 )
-            {
-                fIsVisible = false;
+            case ConfigureNotify:
                 CARLA_SAFE_ASSERT_CONTINUE ( fCallback != nullptr );
-                fCallback->handlePluginUIClosed ( );
-            }
-            break;
+                CARLA_SAFE_ASSERT_CONTINUE ( event.xconfigure.width > 0 );
+                CARLA_SAFE_ASSERT_CONTINUE ( event.xconfigure.height > 0 );
 
-        case KeyRelease:
-            /* Escape key to close */
-            if ( event.xkey.keycode == X11Key_Escape )
-            {
-                fIsVisible = false;
-                CARLA_SAFE_ASSERT_CONTINUE ( fCallback != nullptr );
-                fCallback->handlePluginUIClosed ( );
-            }
-            /* CTRL W to close */
-            else if ( event.xkey.keycode == X11Key_W )
-            {
-                if ( ( event.xkey.state & ( ShiftMask | ControlMask | Mod1Mask | Mod4Mask ) ) == ( ControlMask ) )
+                if ( event.xconfigure.window == fHostWindow && fHostWindow != 0 )
+                {
+                    nextHostWidth = static_cast<uint> ( event.xconfigure.width );
+                    nextHostHeight = static_cast<uint> ( event.xconfigure.height );
+                }
+                else if ( event.xconfigure.window == fChildWindow && fChildWindow != 0 )
+                {
+                    nextChildWidth = static_cast<uint> ( event.xconfigure.width );
+                    nextChildHeight = static_cast<uint> ( event.xconfigure.height );
+                }
+                break;
+
+            case ClientMessage:
+                type = XGetAtomName ( fDisplay, event.xclient.message_type );
+                CARLA_SAFE_ASSERT_CONTINUE ( type != nullptr );
+
+                /* Window X box to close */
+                if ( std::strcmp ( type, "WM_PROTOCOLS" ) == 0 )
                 {
                     fIsVisible = false;
                     CARLA_SAFE_ASSERT_CONTINUE ( fCallback != nullptr );
                     fCallback->handlePluginUIClosed ( );
                 }
-            }
-            break;
+                break;
 
-        case FocusIn:
-            if ( fChildWindow == 0 )
-                fChildWindow = getChildWindow ( );
+            case KeyRelease:
+                /* Escape key to close */
+                if ( event.xkey.keycode == X11Key_Escape )
+                {
+                    fIsVisible = false;
+                    CARLA_SAFE_ASSERT_CONTINUE ( fCallback != nullptr );
+                    fCallback->handlePluginUIClosed ( );
+                }
+                /* CTRL W to close */
+                else if ( event.xkey.keycode == X11Key_W )
+                {
+                    if ( ( event.xkey.state & ( ShiftMask | ControlMask | Mod1Mask | Mod4Mask ) ) == ( ControlMask ) )
+                    {
+                        fIsVisible = false;
+                        CARLA_SAFE_ASSERT_CONTINUE ( fCallback != nullptr );
+                        fCallback->handlePluginUIClosed ( );
+                    }
+                }
+                break;
 
-            if ( fChildWindow != 0 )
-            {
-                XWindowAttributes wa;
-                non_zeroStruct ( wa );
+            case FocusIn:
+                if ( fChildWindow == 0 )
+                    fChildWindow = getChildWindow ( );
 
-                if ( XGetWindowAttributes ( fDisplay, fChildWindow, &wa ) && wa.map_state == IsViewable )
-                    XSetInputFocus ( fDisplay, fChildWindow, RevertToPointerRoot, CurrentTime );
-            }
-            break;
+                if ( fChildWindow != 0 )
+                {
+                    XWindowAttributes wa;
+                    non_zeroStruct ( wa );
+
+                    if ( XGetWindowAttributes ( fDisplay, fChildWindow, &wa ) && wa.map_state == IsViewable )
+                        XSetInputFocus ( fDisplay, fChildWindow, RevertToPointerRoot, CurrentTime );
+                }
+                break;
         }
 
         if ( type != nullptr )
@@ -453,9 +452,9 @@ X11PluginUI::setTitle( const char* const title )
     const Atom utf8 = XInternAtom ( fDisplay, "UTF8_STRING", True );
 
     XChangeProperty ( fDisplay, fHostWindow, _nwn, utf8, 8,
-                      PropModeReplace,
-                      (const uchar*) ( title ),
-                      (int) strlen ( title ) );
+        PropModeReplace,
+        (const uchar*) ( title ),
+        (int) strlen ( title ) );
 }
 
 void

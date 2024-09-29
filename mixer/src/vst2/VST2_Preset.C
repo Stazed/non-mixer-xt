@@ -70,7 +70,6 @@ struct VST2_Preset::BaseHeader
     VstInt32 fxVersion; // fx version
 };
 
-
 // Program sub-header structure (fxb/fxp files)
 //
 
@@ -79,7 +78,6 @@ struct VST2_Preset::ProgHeader
     VstInt32 numParams; // number of parameters
     char prgName[28]; // program name (null-terminated ASCII string)
 };
-
 
 // Bank sub-header structure (fxb files)
 //
@@ -91,7 +89,6 @@ struct VST2_Preset::BankHeader
     char future[124]; // reserved, should be zero
 };
 
-
 // Common auxiliary chunk structure (chunked fxb/fxp files)
 //
 
@@ -100,7 +97,6 @@ struct VST2_Preset::Chunk
     VstInt32 size;
     char *data;
 };
-
 
 // Endianess swappers.
 //
@@ -135,7 +131,6 @@ fx_is_magic( VstInt32 v, const char *c )
 #endif
 }
 
-
 //----------------------------------------------------------------------
 // class VST2_Preset -- VST2 preset file interface
 //
@@ -146,7 +141,6 @@ VST2_Preset::VST2_Preset( VST2_Plugin *pVst2Plugin )
     : m_pVst2Plugin( pVst2Plugin )
 {
 }
-
 
 // Loader methods.
 //
@@ -296,12 +290,11 @@ VST2_Preset::load_chunk( FILE& file, int preset )
     }
 
     m_pVst2Plugin->vst2_dispatch ( effSetChunk,
-                                   preset, chunk.size, (void *) chunk.data, 0.0f );
+        preset, chunk.size, (void *) chunk.data, 0.0f );
 
     delete [] chunk.data;
     return true;
 }
-
 
 // File loader.
 //
@@ -392,7 +385,6 @@ VST2_Preset::load( const std::string& sFilename )
     return bResult;
 }
 
-
 // Saver methods.
 //
 
@@ -445,8 +437,8 @@ VST2_Preset::save_bank_progs( FILE& file )
 
         // Estimate size of this section...
         base_header.byteSize = sizeof (base_header )
-                               - sizeof (base_header.chunkMagic )
-                               - sizeof (base_header.byteSize );
+            - sizeof (base_header.chunkMagic )
+            - sizeof (base_header.byteSize );
 
         Chunk chunk;
         if ( bChunked )
@@ -568,7 +560,7 @@ VST2_Preset::save_prog_chunk( FILE& file, const Chunk& chunk )
     prog_header.numParams = iNumParams;
 
     m_pVst2Plugin->vst2_dispatch ( effGetProgramName,
-                                   0, 0, (void *) prog_header.prgName, 0.0f );
+        0, 0, (void *) prog_header.prgName, 0.0f );
 
     fx_endian_swap ( prog_header.numParams );
 
@@ -596,11 +588,10 @@ VST2_Preset::get_chunk( Chunk& chunk, int preset )
 {
     chunk.data = nullptr;
     chunk.size = m_pVst2Plugin->vst2_dispatch (
-                     effGetChunk, preset, 0, (void *) &chunk.data, 0.0f );
+        effGetChunk, preset, 0, (void *) &chunk.data, 0.0f );
 
     return (chunk.size > 0 && chunk.data != nullptr );
 }
-
 
 // File saver.
 //
@@ -659,8 +650,8 @@ VST2_Preset::save( const std::string& sFilename )
 
     // Estimate size of this section...
     base_header.byteSize = sizeof (base_header )
-                           - sizeof (base_header.chunkMagic )
-                           - sizeof (base_header.byteSize );
+        - sizeof (base_header.chunkMagic )
+        - sizeof (base_header.byteSize );
 
     Chunk chunk;
     if ( bFxBank )
@@ -675,7 +666,7 @@ VST2_Preset::save( const std::string& sFilename )
         {
             const int iNumParams = pVst2Effect->numParams;
             base_header.byteSize += pVst2Effect->numPrograms
-                                    * ( sizeof (ProgHeader ) + iNumParams * sizeof (float ) );
+                * ( sizeof (ProgHeader ) + iNumParams * sizeof (float ) );
             base_header.fxMagic = *(VstInt32 *) bankMagic;
         }
     }

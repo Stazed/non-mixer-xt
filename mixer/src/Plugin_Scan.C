@@ -58,7 +58,6 @@ static std::list<Plugin_Info> vst2_PI_cache;
 static std::list<Plugin_Info> vst3_PI_cache;
 #endif
 
-
 extern char *user_config_dir;
 
 static FILE *
@@ -133,7 +132,7 @@ Plugin_Scan::scan_LADSPA_plugins( std::list<Plugin_Info> & pr )
 
     int j = 0;
     for ( std::vector<LADSPAInfo::PluginInfo>::iterator i = plugins.begin ( );
-            i != plugins.end ( ); ++i, j++ )
+        i != plugins.end ( ); ++i, j++ )
     {
         Plugin_Info pi ( "LADSPA" );
 
@@ -151,7 +150,7 @@ Plugin_Scan::scan_LADSPA_plugins( std::list<Plugin_Info> & pr )
     const std::vector<LADSPAInfo::PluginEntry> pe = ladspainfo->GetMenuList ( );
 
     for ( std::vector<LADSPAInfo::PluginEntry>::const_iterator i = pe.begin ( );
-            i != pe.end ( ); ++i )
+        i != pe.end ( ); ++i )
     {
         for ( std::list<Plugin_Info>::iterator k = pr.begin ( ); k != pr.end ( ); ++k )
         {
@@ -333,7 +332,7 @@ Plugin_Scan::scan_LV2_plugins( std::list<Plugin_Info> & pr )
         pi.category = "Unclassified"; // Default
 
         /* Use existing LADSPA table categories for Plugin_Chooser lookup categories */
-        if ( const char* const category = lilvPlugin.get_class ( ).get_label ( ).as_string ( ) )
+        if ( const char * const category = lilvPlugin.get_class ( ).get_label ( ).as_string ( ) )
         {
             pi.category = category;
             for ( unsigned k = 0; k < type_matches.size ( ); ++k )
@@ -421,7 +420,7 @@ Plugin_Scan::scan_CLAP_plugins( std::list<Plugin_Info> & pr, std::string clap_pa
 
         const clap_plugin_audio_ports_t *audio_ports
             = static_cast<const clap_plugin_audio_ports_t *> (
-                  inst->get_extension ( inst, CLAP_EXT_AUDIO_PORTS ) );
+            inst->get_extension ( inst, CLAP_EXT_AUDIO_PORTS ) );
 
         if ( audio_ports && audio_ports->count && audio_ports->get )
         {
@@ -449,7 +448,7 @@ Plugin_Scan::scan_CLAP_plugins( std::list<Plugin_Info> & pr, std::string clap_pa
 
         const clap_plugin_note_ports *note_ports
             = static_cast<const clap_plugin_note_ports *> (
-                  inst->get_extension ( inst, CLAP_EXT_NOTE_PORTS ) );
+            inst->get_extension ( inst, CLAP_EXT_NOTE_PORTS ) );
         if ( note_ports && note_ports->count && note_ports->get )
         {
             clap_note_port_info info;
@@ -533,14 +532,13 @@ Plugin_Scan::save_plugin_cache( void )
         return;
 
     for ( std::list<Plugin_Info>::iterator i = plugin_cache.begin ( );
-            i != plugin_cache.end ( );
-            ++i )
+        i != plugin_cache.end ( );
+        ++i )
     {
         fprintf ( fp, "%s|%s|%lu|%s|%s|%s|%s|%d|%d|%d|%d\n", i->type.c_str ( ), i->s_unique_id.c_str ( ), i->id,
-                  i->plug_path.c_str ( ), i->name.c_str ( ), i->author.c_str ( ), i->category.c_str ( ),
-                  i->audio_inputs, i->audio_outputs, i->midi_inputs, i->midi_outputs );
+            i->plug_path.c_str ( ), i->name.c_str ( ), i->author.c_str ( ), i->category.c_str ( ),
+            i->audio_inputs, i->audio_outputs, i->midi_inputs, i->midi_outputs );
     }
 
     fclose ( fp );
 }
-

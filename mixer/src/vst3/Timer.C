@@ -15,7 +15,6 @@
 /* Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 /*******************************************************************************/
 
-
 /*
  * File:   Timer.C
  * Author: sspresto
@@ -27,7 +26,6 @@
 
 #include "Timer.H"
 #include "VST3_Plugin.H"
-
 
 void
 Timer::start (int msecs)

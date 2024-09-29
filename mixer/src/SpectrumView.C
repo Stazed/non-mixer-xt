@@ -68,9 +68,9 @@ SpectrumView::clear_plans( void )
 {
     /* invalidate all plans */
 
-    for ( std::map<std::string, float*>::iterator i = _cached_plan.begin ( );
-            i != _cached_plan.end ( );
-            ++i )
+    for ( std::map<std::string, float * >::iterator i = _cached_plan.begin ( );
+        i != _cached_plan.end ( );
+        ++i )
     {
         delete[] i->second;
     }
@@ -92,7 +92,6 @@ SpectrumView::sample_rate( unsigned int sample_rate )
         clear_plans ( );
     }
 }
-
 
 #define min(a,b) (a<b?a:b)
 #define max(a,b) (a<b?b:a)
@@ -173,7 +172,6 @@ SpectrumView::analyze_data( unsigned int _plan_size )
         }
     }
 
-
     float *result = new float[_plan_size];
     for ( unsigned i = 0; i < _plan_size; ++i )
     {
@@ -248,7 +246,7 @@ SpectrumView::draw_semilog( void )
         int level = y ( ) + H * i / 16.0;
         fl_line ( x ( ), level, x ( ) + W, level );
 
-        float value = ( 1 - i / 16.0 )*( _dbmax - _dbmin ) + _dbmin;
+        float value = ( 1 - i / 16.0 ) * ( _dbmax - _dbmin ) + _dbmin;
         sprintf ( label, "%.1f", value );
         fl_draw ( label, x ( ) + 4, level + 3, w ( ) - 8, 7, FL_ALIGN_LEFT );
     }
@@ -341,7 +339,6 @@ SpectrumView::draw( void )
 
     fl_push_clip ( x ( ), y ( ), W, H );
 
-
 #ifdef FLTK_SUPPORT
     fl_color ( selection_color ( ) );
 #else
@@ -393,4 +390,3 @@ SpectrumView::resize( int X, int Y, int W, int H )
 
     Fl_Box::resize ( X, Y, W, H );
 }
-

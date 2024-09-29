@@ -32,7 +32,6 @@
 #include "Plugin_Scan.H"
 #include "../../nonlib/debug.h"
 
-
 #define USER_CONFIG_DIR NMXT_CONFIG_DIRECTORY
 
 char *user_config_dir;
@@ -90,4 +89,3 @@ main( int /*argc*/, char** argv )
 
     return ( EXIT_SUCCESS );
 }
-

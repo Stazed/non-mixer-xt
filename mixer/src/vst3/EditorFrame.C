@@ -19,7 +19,6 @@
 /* Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 /*******************************************************************************/
 
-
 /*
  * File:   EditorFrame.C
  * Author: sspresto
@@ -36,7 +35,7 @@
 
 inline tresult
 ARunLoop::registerEventHandler( IEventHandler* handler,
-                                FileDescriptor fd )
+    FileDescriptor fd )
 {
     DMESSAGE ( "HAVE REGISTER FROM PLUGIN" );
     if ( !handler || eventHandlers.find ( fd ) != eventHandlers.end ( ) )
@@ -61,7 +60,7 @@ ARunLoop::unregisterEventHandler( IEventHandler* handler )
         return kInvalidArgument;
 
     auto it = std::find_if ( eventHandlers.begin ( ), eventHandlers.end ( ),
-                             [&] (const auto& elem )
+        [&] (const auto& elem )
     {
         return elem.second == handler;
     } );
@@ -78,13 +77,13 @@ ARunLoop::unregisterEventHandler( IEventHandler* handler )
 
 inline tresult
 ARunLoop::registerTimer( ITimerHandler* handler,
-                         TimerInterval milliseconds )
+    TimerInterval milliseconds )
 {
     if ( !handler || milliseconds == 0 )
         return kInvalidArgument;
 
     auto id = m_plugin->get_runloop ( )->registerTimer (
-                  milliseconds, [handler] ( auto )
+        milliseconds, [handler] ( auto )
     {
         handler->onTimer ( );
     } );
@@ -102,7 +101,7 @@ ARunLoop::unregisterTimer( ITimerHandler* handler )
         return kInvalidArgument;
 
     auto it = std::find_if ( timerHandlers.begin ( ), timerHandlers.end ( ),
-                             [&] (const auto& elem )
+        [&] (const auto& elem )
     {
         return elem.second == handler;
     } );

@@ -49,7 +49,7 @@
 using namespace std;
 
 LADSPAInfo::LADSPAInfo( bool override,
-                        const char *path_list )
+    const char *path_list )
 {
     if ( strlen( path_list ) > 0 )
     {
@@ -228,13 +228,13 @@ LADSPAInfo::UnloadAllLibraries( void )
 {
     // Blank descriptors
     for (vector<PluginInfo>::iterator i = m_Plugins.begin( );
-            i != m_Plugins.end( ); ++i)
+        i != m_Plugins.end( ); ++i)
     {
         if ( i->Descriptor ) i->Descriptor = NULL;
     }
     // Unload DLLs,
     for (vector<LibraryInfo>::iterator i = m_Libraries.begin( );
-            i != m_Libraries.end( ); ++i)
+        i != m_Libraries.end( ); ++i)
     {
         if ( i->Handle )
         {
@@ -315,7 +315,7 @@ LADSPAInfo::DiscardDescriptorByID( unsigned long unique_id )
 
 unsigned long
 LADSPAInfo::GetIDFromFilenameAndLabel( const std::string &filename,
-                                       std::string &label )
+    std::string &label )
 {
     bool library_loaded = false;
 
@@ -380,7 +380,7 @@ LADSPAInfo::GetPluginListEntryByID( unsigned long unique_id )
 {
     unsigned long j = 0;
     for (vector<PluginEntry>::iterator i = m_SSMMenuList.begin( );
-            i != m_SSMMenuList.end( ); ++i, j++)
+        i != m_SSMMenuList.end( ); ++i, j++)
     {
         if ( i->UniqueID == unique_id ) return j;
     }
@@ -396,8 +396,8 @@ LADSPAInfo::GetPluginListEntryByID( unsigned long unique_id )
 
 void
 LADSPAInfo::DescendGroup( string prefix,
-                          const string &group,
-                          unsigned int depth )
+    const string &group,
+    unsigned int depth )
 {
     list<string> groups = GetSubGroups( group );
 
@@ -446,7 +446,7 @@ LADSPAInfo::DescendGroup( string prefix,
         list<PluginEntry> plugins;
 
         for (vector<unsigned long>::iterator p = m_RDFURIs[uri_index].Plugins.begin( );
-                p != m_RDFURIs[uri_index].Plugins.end( ); ++p)
+            p != m_RDFURIs[uri_index].Plugins.end( ); ++p)
         {
 
             PluginInfo *pi = &( m_Plugins[*p] );
@@ -478,14 +478,13 @@ LADSPAInfo::DescendGroup( string prefix,
             pe.Category = prefix;
             pe.Category = pe.Category.substr( 0, pe.Category.size( ) - 1 );
 
-
             plugins.push_back( pe );
         }
         plugins.sort( );
 
         // Deal with duplicates by numbering them
         for (list<PluginEntry>::iterator i = plugins.begin( );
-                i != plugins.end( );)
+            i != plugins.end( );)
         {
             string name = i->Name;
 
@@ -529,7 +528,7 @@ LADSPAInfo::GetSubGroups( const string &group )
     }
 
     for (vector<unsigned long>::iterator sg = m_RDFURIs[uri_index].Children.begin( );
-            sg != m_RDFURIs[uri_index].Children.end( ); ++sg)
+        sg != m_RDFURIs[uri_index].Children.end( ); ++sg)
     {
         groups.push_back( m_RDFURIs[*sg].Label );
     }
@@ -551,7 +550,7 @@ LADSPAInfo::CleanUp( void )
 
     // Unload loaded dlls
     for (vector<LibraryInfo>::iterator i = m_Libraries.begin( );
-            i != m_Libraries.end( ); ++i)
+        i != m_Libraries.end( ); ++i)
     {
         if ( i->Handle ) dlclose( i->Handle );
     }
@@ -578,8 +577,8 @@ LADSPAInfo::CleanUp( void )
 
 void
 LADSPAInfo::ScanPathList( const char *path_list,
-                          void (LADSPAInfo::*ExamineFunc )(const string &,
-                                  const string &) )
+    void (LADSPAInfo::*ExamineFunc )(const string &,
+    const string &) )
 {
     const char *start;
     const char *end;
@@ -645,7 +644,7 @@ LADSPAInfo::ScanPathList( const char *path_list,
 
 void
 LADSPAInfo::ExaminePluginLibrary( const string &path,
-                                  const string &basename )
+    const string &basename )
 {
     void *handle;
     LADSPA_Descriptor_Function desc_func;
@@ -658,7 +657,7 @@ LADSPAInfo::ExaminePluginLibrary( const string &path,
     if ( !handle )
     {
         cerr << "WARNING: File " << fullpath
-             << " could not be examined" << endl;
+            << " could not be examined" << endl;
         cerr << "dlerror() output:" << endl;
         cerr << dlerror( ) << endl;
     }
@@ -672,7 +671,7 @@ LADSPAInfo::ExaminePluginLibrary( const string &path,
 
             // Is DLL, but not a LADSPA one
             cerr << "WARNING: DLL " << fullpath
-                 << " has no ladspa_descriptor function" << endl;
+                << " has no ladspa_descriptor function" << endl;
             cerr << "dlerror() output:" << endl;
             cerr << dlerror( ) << endl;
         }
@@ -694,14 +693,14 @@ LADSPAInfo::ExaminePluginLibrary( const string &path,
                     unsigned long path_index = m_Libraries[library_index].PathIndex;
 
                     cerr << "WARNING: Duplicated Plugin ID ("
-                         << desc->UniqueID << ") found:" << endl;
+                        << desc->UniqueID << ") found:" << endl;
 
                     cerr << "  Plugin " << m_Plugins[plugin_index].Index
-                         << " in library: " << m_Paths[path_index]
-                         << m_Libraries[library_index].Basename
-                         << " [First instance found]" << endl;
+                        << " in library: " << m_Paths[path_index]
+                        << m_Libraries[library_index].Basename
+                        << " [First instance found]" << endl;
                     cerr << "  Plugin " << i << " in library: " << fullpath
-                         << " [Duplicate not added]" << endl;
+                        << " [Duplicate not added]" << endl;
                 }
                 else
                 {
@@ -733,7 +732,6 @@ LADSPAInfo::ExaminePluginLibrary( const string &path,
 
                             library_added = true;
                         }
-
 
                         // Add plugin info
                         PluginInfo pi;
@@ -786,7 +784,6 @@ LADSPAInfo::ExaminePluginLibrary( const string &path,
                     }
                 }
 
-
                 desc = desc_func( ++i );
             }
         }
@@ -799,7 +796,7 @@ LADSPAInfo::ExaminePluginLibrary( const string &path,
 
 void
 LADSPAInfo::ExamineRDFFile( const std::string &path,
-                            const std::string &basename )
+    const std::string &basename )
 {
     string fileuri = "file://" + path + basename;
 
@@ -814,7 +811,7 @@ LADSPAInfo::ExamineRDFFile( const std::string &path,
 
 void
 LADSPAInfo::MetadataRDFDescend( const char * uri,
-                                unsigned long parent )
+    unsigned long parent )
 {
     unsigned long this_uri_index;
 
@@ -912,12 +909,12 @@ LADSPAInfo::CheckPlugin( const LADSPA_Descriptor *desc )
     test( desc->connect_port, "WARNING: Warning: Plugin has no connect_port funciton" );
     test( desc->run, "WARNING: Plugin has no run function" );
     test( !( desc->run_adding != 0 && desc->set_run_adding_gain == 0 ),
-          "WARNING: Plugin has run_adding but no set_run_adding_gain" );
+        "WARNING: Plugin has run_adding but no set_run_adding_gain" );
     test( !( desc->run_adding == 0 && desc->set_run_adding_gain != 0 ),
-          "WARNING: Plugin has set_run_adding_gain but no run_adding" );
+        "WARNING: Plugin has set_run_adding_gain but no run_adding" );
     test( desc->cleanup, "WARNING: Plugin has no cleanup function" );
     test( !LADSPA_IS_INPLACE_BROKEN( desc->Properties ),
-          "WARNING: Plugin cannot use in place processing" );
+        "WARNING: Plugin cannot use in place processing" );
     test( desc->PortCount, "WARNING: Plugin has no ports" );
     test( desc->Name, "WARNING: Plugin has no name" );
 
@@ -968,7 +965,7 @@ LADSPAInfo::GetDescriptorFunctionForLibrary( unsigned long library_index )
 
         // Is DLL, but not a LADSPA one (changed since last path scan?)
         cerr << "WARNING: DLL " << m_Paths[li->PathIndex] << li->Basename
-             << " has no ladspa_descriptor function" << endl;
+            << " has no ladspa_descriptor function" << endl;
         cerr << "Rescan of plugins recommended" << endl;
         cerr << "dlerror() output:" << endl;
         cerr << dlerror( ) << endl;

@@ -82,9 +82,9 @@ DPM::DPM( int X, int Y, int W, int H, const char *L ) :
         }
 
         DPM::blend ( 5,
-                     breaks,
-                     cols,
-                     color ( ) );
+            breaks,
+            cols,
+            color ( ) );
 
     }
 
@@ -191,7 +191,6 @@ DPM::draw( void )
 
         draw_box ( box ( ), X, Y, W, H, color ( ) );
     }
-
 
     const int active = active_r ( );
 

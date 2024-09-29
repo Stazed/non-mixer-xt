@@ -63,12 +63,12 @@ Plugin_Chooser::plugin_chooser( int ninputs )
     std::string cat = o->ui->category_choice->text ( search_category );
 
     o->search ( o->ui->name_input->value ( ),
-                o->ui->author_input->value ( ),
-                cat.c_str ( ),
-                ninputs,
-                0,
-                o->ui->favorites_button->value ( ),
-                o->ui->type_choice->text ( ) );
+        o->ui->author_input->value ( ),
+        cat.c_str ( ),
+        ninputs,
+        0,
+        o->ui->favorites_button->value ( ),
+        o->ui->type_choice->text ( ) );
 
     // Update the category menu selection when there was no change from previous search.
     // I.e. the user closed the chooser then re-opened. The category never gets updated
@@ -85,58 +85,58 @@ Plugin_Chooser::plugin_chooser( int ninputs )
     switch ( picked.plugin_type )
     {
 #ifdef LADSPA_SUPPORT
-    case Type_LADSPA:
-    {
-        picked.unique_id = o->value ( );
-        break;
-    }
+        case Type_LADSPA:
+        {
+            picked.unique_id = o->value ( );
+            break;
+        }
 #endif
 #ifdef LV2_SUPPORT
-    case Type_LV2:
-    {
-        if ( !o->s_unique_id ( ).empty ( ) )
+        case Type_LV2:
         {
-            picked.s_unique_id = o->s_unique_id ( );
+            if ( !o->s_unique_id ( ).empty ( ) )
+            {
+                picked.s_unique_id = o->s_unique_id ( );
+            }
+            break;
         }
-        break;
-    }
 #endif
 #ifdef CLAP_SUPPORT
-    case Type_CLAP:
-    {
-        if ( !o->s_unique_id ( ).empty ( ) )
+        case Type_CLAP:
         {
-            picked.s_unique_id = o->s_unique_id ( );
-        }
-        picked.s_plug_path = o->plug_path ( );
-        picked.unique_id = o->value ( );
-        break;
-    }
-#endif
-#ifdef VST2_SUPPORT
-    case Type_VST2:
-    {
-        if ( !o->plug_path ( ).empty ( ) )
-        {
+            if ( !o->s_unique_id ( ).empty ( ) )
+            {
+                picked.s_unique_id = o->s_unique_id ( );
+            }
             picked.s_plug_path = o->plug_path ( );
             picked.unique_id = o->value ( );
+            break;
         }
-        break;
-    }
+#endif
+#ifdef VST2_SUPPORT
+        case Type_VST2:
+        {
+            if ( !o->plug_path ( ).empty ( ) )
+            {
+                picked.s_plug_path = o->plug_path ( );
+                picked.unique_id = o->value ( );
+            }
+            break;
+        }
 #endif
 #ifdef VST3_SUPPORT
-    case Type_VST3:
-    {
-        if ( !o->s_unique_id ( ).empty ( ) )
+        case Type_VST3:
         {
-            picked.s_unique_id = o->s_unique_id ( );
-            picked.s_plug_path = o->plug_path ( );
+            if ( !o->s_unique_id ( ).empty ( ) )
+            {
+                picked.s_unique_id = o->s_unique_id ( );
+                picked.s_plug_path = o->plug_path ( );
+            }
+            break;
         }
-        break;
-    }
 #endif
-    default:
-        break;
+        default:
+            break;
     }
 
     previous_favorites = o->ui->favorites_button->value ( );
@@ -152,7 +152,7 @@ Plugin_Chooser::plugin_chooser( int ninputs )
 
 void
 Plugin_Chooser::search( const char *name, const char *author, const char *category,
-                        int ninputs, int noutputs, bool favorites, const char *plug_type )
+    int ninputs, int noutputs, bool favorites, const char *plug_type )
 {
     _plugin_rows.clear ( );
 
@@ -161,24 +161,24 @@ Plugin_Chooser::search( const char *name, const char *author, const char *catego
         Plugin_Info *p = &( *i );
 
         if ( strcasestr ( p->name.c_str ( ), name ) &&
-                strcasestr ( p->author.c_str ( ), author ) )
+            strcasestr ( p->author.c_str ( ), author ) )
         {
             /* MAX_PORTS is an arbitrary limit, could be more if we really needed it */
             if ( p->audio_outputs > MAX_PORTS )
                 continue;
 
             if ( !
-                    ( ( ( ( ninputs == 0 || ninputs == p->audio_inputs || ( ninputs == 1 && p->audio_inputs == 2 ) ) ) &&
-                        ( noutputs == 0 || noutputs == p->audio_outputs ) ) ||
-                      ( p->audio_inputs == 1 && p->audio_outputs == 1 ) ||
-                      ( p->audio_inputs == 0 && ninputs == 1 ) ) ) // this would be a synth with no inputs
+                ( ( ( ( ninputs == 0 || ninputs == p->audio_inputs || ( ninputs == 1 && p->audio_inputs == 2 ) ) ) &&
+                ( noutputs == 0 || noutputs == p->audio_outputs ) ) ||
+                ( p->audio_inputs == 1 && p->audio_outputs == 1 ) ||
+                ( p->audio_inputs == 0 && ninputs == 1 ) ) ) // this would be a synth with no inputs
                 continue;
 
 #if defined(CLAP_SUPPORT) || defined(VST3_SUPPORT) || defined(VST2_SUPPORT)
             /* We do not support multiple instance for these ATM. */
             if ( ( strcmp ( p->type.c_str ( ), "CLAP" ) == 0 ) ||
-                    ( strcmp ( p->type.c_str ( ), "VST2" ) == 0 ) ||
-                    ( strcmp ( p->type.c_str ( ), "VST3" ) == 0 ) )
+                ( strcmp ( p->type.c_str ( ), "VST2" ) == 0 ) ||
+                ( strcmp ( p->type.c_str ( ), "VST3" ) == 0 ) )
             {
                 if ( p->audio_inputs == 1 && ninputs > 1 )
                     continue;
@@ -229,12 +229,12 @@ Plugin_Chooser::cb_handle( Fl_Widget *w )
         ui->category_choice->item_pathname ( picked, sizeof ( picked ) );
 
         search ( ui->name_input->value ( ),
-                 ui->author_input->value ( ),
-                 picked[0] == '/' ? &picked[1] : picked,
-                 ui->inputs_input->value ( ),
-                 ui->outputs_input->value ( ),
-                 ui->favorites_button->value ( ),
-                 ui->type_choice->text ( ) );
+            ui->author_input->value ( ),
+            picked[0] == '/' ? &picked[1] : picked,
+            ui->inputs_input->value ( ),
+            ui->outputs_input->value ( ),
+            ui->favorites_button->value ( ),
+            ui->type_choice->text ( ) );
     }
 }
 
@@ -242,7 +242,7 @@ class Plugin_Table : public Fl_Table_Row
 {
 protected:
     void draw_cell( TableContext context, // table cell drawing
-                    int R = 0, int C = 0, int X = 0, int Y = 0, int W = 0, int H = 0 );
+        int R = 0, int C = 0, int X = 0, int Y = 0, int W = 0, int H = 0 );
 public:
 
     Plugin_Table( int x, int y, int w, int h, const char *l = 0 ) : Fl_Table_Row( x, y, w, h, l )
@@ -257,7 +257,7 @@ public:
 
 void
 Plugin_Table::draw_cell( TableContext context,
-                         int R, int C, int X, int Y, int W, int H )
+    int R, int C, int X, int Y, int W, int H )
 {
     const char *headings[] = { "Fav.", "Name", "Author", "Type", "Audio", "Midi" };
 
@@ -265,85 +265,85 @@ Plugin_Table::draw_cell( TableContext context,
 
     switch ( context )
     {
-    case CONTEXT_STARTPAGE:
-        fl_font ( FL_HELVETICA, 12 );
-        return;
+        case CONTEXT_STARTPAGE:
+            fl_font ( FL_HELVETICA, 12 );
+            return;
 
-    case CONTEXT_COL_HEADER:
-        fl_push_clip ( X, Y, W, H );
+        case CONTEXT_COL_HEADER:
+            fl_push_clip ( X, Y, W, H );
+            {
+                fl_draw_box ( FL_THIN_UP_BOX, X, Y, W, H, col_header_color ( ) );
+                fl_color ( FL_FOREGROUND_COLOR );
+                fl_draw ( headings[C], X, Y, W, H, FL_ALIGN_CENTER );
+            }
+            fl_pop_clip ( );
+            return;
+
+        case CONTEXT_ROW_HEADER:
+            return;
+
+        case CONTEXT_CELL:
         {
-            fl_draw_box ( FL_THIN_UP_BOX, X, Y, W, H, col_header_color ( ) );
-            fl_color ( FL_FOREGROUND_COLOR );
-            fl_draw ( headings[C], X, Y, W, H, FL_ALIGN_CENTER );
+            fl_font ( FL_HELVETICA, 12 );
+
+            const char *s2 = (char*) s;
+            Fl_Align a = FL_ALIGN_CENTER;
+            int symbol = 0;
+            Fl_Color c = FL_FOREGROUND_COLOR;
+            switch ( C )
+            {
+                case 0:
+                    sprintf ( s, "%s", "@circle" );
+                    c = _plugin_rows[R]->favorite ? FL_LIGHT2 : FL_BLACK;
+                    symbol = 1;
+                    fl_font ( FL_HELVETICA, 9 );
+                    break;
+                case 1:
+                    a = FL_ALIGN_LEFT;
+                    s2 = _plugin_rows[R]->name.c_str ( );
+                    break;
+                case 2:
+                    a = FL_ALIGN_LEFT;
+                    s2 = _plugin_rows[R]->author.c_str ( );
+                    break;
+                case 3:
+                    s2 = _plugin_rows[R]->type.c_str ( );
+                    break;
+                case 4:
+                    sprintf ( s, "%i : %i", _plugin_rows[R]->audio_inputs, _plugin_rows[R]->audio_outputs );
+                    break;
+                case 5:
+                    sprintf ( s, "%i : %i", _plugin_rows[R]->midi_inputs, _plugin_rows[R]->midi_outputs );
+                    break;
+            }
+
+            fl_color ( row_selected ( R ) ? selection_color ( ) : FL_DARK1 );
+            fl_rectf ( X, Y, W, H );
+            fl_color ( color ( ) );
+            fl_rect ( X, Y, W, H );
+
+            X += 4;
+            W -= 8;
+            Y += 4;
+            H -= 8;
+
+            fl_push_clip ( X, Y, W, H );
+
+            fl_color ( c );
+            fl_draw ( s2, X, Y, W, H, a, 0, symbol );
+
+            fl_pop_clip ( );
+            return;
         }
-        fl_pop_clip ( );
-        return;
 
-    case CONTEXT_ROW_HEADER:
-        return;
+        case CONTEXT_TABLE:
+            fprintf ( stderr, "TABLE CONTEXT CALLED\n" );
+            return;
 
-    case CONTEXT_CELL:
-    {
-        fl_font ( FL_HELVETICA, 12 );
-
-        const char *s2 = (char*) s;
-        Fl_Align a = FL_ALIGN_CENTER;
-        int symbol = 0;
-        Fl_Color c = FL_FOREGROUND_COLOR;
-        switch ( C )
-        {
-        case 0:
-            sprintf ( s, "%s", "@circle" );
-            c = _plugin_rows[R]->favorite ? FL_LIGHT2 : FL_BLACK;
-            symbol = 1;
-            fl_font ( FL_HELVETICA, 9 );
-            break;
-        case 1:
-            a = FL_ALIGN_LEFT;
-            s2 = _plugin_rows[R]->name.c_str ( );
-            break;
-        case 2:
-            a = FL_ALIGN_LEFT;
-            s2 = _plugin_rows[R]->author.c_str ( );
-            break;
-        case 3:
-            s2 = _plugin_rows[R]->type.c_str ( );
-            break;
-        case 4:
-            sprintf ( s, "%i : %i", _plugin_rows[R]->audio_inputs, _plugin_rows[R]->audio_outputs );
-            break;
-        case 5:
-            sprintf ( s, "%i : %i", _plugin_rows[R]->midi_inputs, _plugin_rows[R]->midi_outputs );
-            break;
-        }
-
-        fl_color ( row_selected ( R ) ? selection_color ( ) : FL_DARK1 );
-        fl_rectf ( X, Y, W, H );
-        fl_color ( color ( ) );
-        fl_rect ( X, Y, W, H );
-
-        X += 4;
-        W -= 8;
-        Y += 4;
-        H -= 8;
-
-        fl_push_clip ( X, Y, W, H );
-
-        fl_color ( c );
-        fl_draw ( s2, X, Y, W, H, a, 0, symbol );
-
-        fl_pop_clip ( );
-        return;
-    }
-
-    case CONTEXT_TABLE:
-        fprintf ( stderr, "TABLE CONTEXT CALLED\n" );
-        return;
-
-    case CONTEXT_ENDPAGE:
-    case CONTEXT_RC_RESIZE:
-    case CONTEXT_NONE:
-        return;
+        case CONTEXT_ENDPAGE:
+        case CONTEXT_RC_RESIZE:
+        case CONTEXT_NONE:
+            return;
     }
 }
 
@@ -450,11 +450,11 @@ Plugin_Chooser::load_favorites( void )
     while ( 3 == fscanf ( fp, "%m[^:]:%lu:%m[^]\n]\n", &type, &id, &c_unique_id ) )
     {
         for ( std::list<Plugin_Info>::iterator i = _plugins.begin ( );
-                i != _plugins.end ( );
-                ++i )
+            i != _plugins.end ( );
+            ++i )
         {
             if ( !strcmp ( ( *i ).type.c_str ( ), type ) &&
-                    ( *i ).id == id )
+                ( *i ).id == id )
             {
 #ifdef LV2_SUPPORT
                 if ( !strcmp ( type, "LV2" ) )
@@ -521,8 +521,8 @@ Plugin_Chooser::save_favorites( void )
         return;
 
     for ( std::list<Plugin_Info>::iterator i = _plugins.begin ( );
-            i != _plugins.end ( );
-            ++i )
+        i != _plugins.end ( );
+        ++i )
     {
         if ( ( *i ).favorite )
         {
@@ -541,8 +541,8 @@ Plugin_Chooser::load_categories( void )
     std::list<std::string> categories;
 
     for ( std::list<Plugin_Info>::iterator i = _plugins.begin ( );
-            i != _plugins.end ( );
-            ++i )
+        i != _plugins.end ( );
+        ++i )
     {
         if ( i->category.c_str ( ) )
         {
@@ -552,10 +552,9 @@ Plugin_Chooser::load_categories( void )
 
     categories.sort ( );
 
-
     for ( std::list<std::string>::const_iterator i = categories.begin ( );
-            i != categories.end ( );
-            ++i )
+        i != categories.end ( );
+        ++i )
     {
         ui->category_choice->add ( i->c_str ( ) );
     }
@@ -583,10 +582,8 @@ Plugin_Chooser::Plugin_Chooser( int X, int Y, int W, int H, const char *L )
         o->name_input->callback ( &Plugin_Chooser::cb_handle, this );
         o->name_input->when ( FL_WHEN_CHANGED );
 
-
         o->author_input->callback ( &Plugin_Chooser::cb_handle, this );
         o->author_input->when ( FL_WHEN_CHANGED );
-
 
         o->inputs_input->callback ( &Plugin_Chooser::cb_handle, this );
         o->inputs_input->when ( FL_WHEN_CHANGED );
@@ -599,7 +596,6 @@ Plugin_Chooser::Plugin_Chooser( int X, int Y, int W, int H, const char *L )
 
         o->all_button->callback ( &Plugin_Chooser::cb_handle, this );
         o->all_button->when ( FL_WHEN_CHANGED );
-
 
         o->category_choice->callback ( &Plugin_Chooser::cb_handle, this );
         o->category_choice->when ( FL_WHEN_CHANGED );

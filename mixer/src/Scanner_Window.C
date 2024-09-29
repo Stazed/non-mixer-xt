@@ -18,7 +18,6 @@
 /* Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 /*******************************************************************************/
 
-
 /*
  * File:   Scanner_Window.C
  * Author: sspresto
@@ -36,7 +35,6 @@
 // Global cache of all plugins scanned
 std::list<Plugin_Info> g_plugin_cache;
 
-
 #ifdef CLAP_SUPPORT
 #include "clap/Clap_Discovery.H"
 #endif
@@ -48,7 +46,6 @@ std::list<Plugin_Info> g_plugin_cache;
 #ifdef VST3_SUPPORT
 #include "vst3/Vst3_Discovery.H"
 #endif
-
 
 static Fl_Window * g_scanner_window = 0;
 
@@ -69,7 +66,7 @@ window_cb( Fl_Widget *, void * )
 static void
 cancel_cb( Fl_Widget * w, void * )
 {
-    if ( ( (Fl_Button*) w )->value ( ) )
+    if ( ( (Fl_Button * ) w )->value ( ) )
         return; // don't allow to un-toggle the cancel
     else
         ((Fl_Button*) w )->value ( 1 );
@@ -299,8 +296,8 @@ Scanner_Window::load_plugin_cache( void )
     g_plugin_cache.clear ( );
 
     while ( 11 == fscanf ( fp, "%m[^|]|%m[^|]|%lu|%m[^|]|%m[^|]|%m[^|]|%m[^|]|%d|%d|%d|%d\n]\n",
-                           &c_type, &c_unique_id, &u_id, &c_plug_path, &c_name, &c_author,
-                           &c_category, &i_audio_inputs, &i_audio_outputs, &i_midi_inputs, &i_midi_outputs ) )
+        &c_type, &c_unique_id, &u_id, &c_plug_path, &c_name, &c_author,
+        &c_category, &i_audio_inputs, &i_audio_outputs, &i_midi_inputs, &i_midi_outputs ) )
     {
         Plugin_Info pi ( c_type );
         pi.s_unique_id = c_unique_id;

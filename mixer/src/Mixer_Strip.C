@@ -523,7 +523,7 @@ void
 Mixer_Strip::handle_module_removed( Module *m )
 {
     if ( spatialization_controller->control_output[0].connected ( ) &&
-            spatialization_controller->control_output[0].connected_port ( )->module ( ) == m )
+        spatialization_controller->control_output[0].connected_port ( )->module ( ) == m )
     {
         set_spatializer_visibility ( );
         DMESSAGE ( "Module \"%s\" disconnected from spatialization controller", m->label ( ) );
@@ -810,7 +810,7 @@ Mixer_Strip::update_group_choice( void )
     o->clear ( );
     o->add ( "---" );
 
-    for ( std::list<Group*>::iterator i = mixer->groups.begin ( ); i != mixer->groups.end ( ); )
+    for ( std::list<Group * >::iterator i = mixer->groups.begin ( ); i != mixer->groups.end ( ); )
     {
         Group *g = *i;
 
@@ -991,7 +991,7 @@ Mixer_Strip::menu_cb( const Fl_Menu_ *m )
     else if ( !strcmp ( picked, "/Mute" ) )
     {
         ( (Fl_Button*) mute_controller->child ( 0 ) )->value ( !
-                ( (Fl_Button*) mute_controller->child ( 0 ) )->value ( ) );
+            ( (Fl_Button*) mute_controller->child ( 0 ) )->value ( ) );
 
     }
     else if ( !strcmp ( picked, "Auto Output/On" ) )
@@ -1061,7 +1061,7 @@ matches_pattern( const char *pattern, Module::Port *p )
     if ( 2 == sscanf ( pattern, "%[^/]/%[^\n]", group_name, port_group ) )
     {
         if ( strcmp ( group_name, "*" ) &&
-                strcmp ( group_name, p->module ( )->chain ( )->strip ( )->group ( )->name ( ) ) )
+            strcmp ( group_name, p->module ( )->chain ( )->strip ( )->group ( )->name ( ) ) )
         {
             /* group mismatch */
             return false;
@@ -1095,7 +1095,6 @@ matches_pattern( const char *pattern, Module::Port *p )
 
     return false;
 }
-
 
 #include "JACK_Module.H"
 
@@ -1166,11 +1165,9 @@ Mixer_Strip::maybe_auto_connect_output( Module::Port *p )
     }
 
     if ( _auto_input &&
-            matches_pattern ( _auto_input, p ) )
+        matches_pattern ( _auto_input, p ) )
     {
         /* got a match, add this to list of accepted connections */
-
-
 
         // FIXME: Find a better way to get the port index.
         const char* jack_name = p->jack_port ( )->jack_name ( );
@@ -1227,7 +1224,6 @@ Mixer_Strip::menu( void ) const
     m.clear ( );
 
     std::list<std::string> sl = mixer->get_auto_connect_targets ( );
-
 
     m.add ( "Auto Output/On", 0, 0, 0, FL_MENU_RADIO | ( _manual_connection ? 0 : FL_MENU_VALUE ) );
     m.add ( "Auto Output/Off", 0, 0, 0, FL_MENU_RADIO | ( !_manual_connection ? 0 : FL_MENU_VALUE ) );
@@ -1291,12 +1287,12 @@ Mixer_Strip::handle( int m )
 
     switch ( m )
     {
-    case FL_FOCUS:
-        damage ( FL_DAMAGE_USER1 );
-        return 1;
-    case FL_UNFOCUS:
-        damage ( FL_DAMAGE_USER1 );
-        return 1;
+        case FL_FOCUS:
+            damage ( FL_DAMAGE_USER1 );
+            return 1;
+        case FL_UNFOCUS:
+            damage ( FL_DAMAGE_USER1 );
+            return 1;
     }
 
     /* if ( m == FL_PUSH ) */
@@ -1304,58 +1300,58 @@ Mixer_Strip::handle( int m )
 
     switch ( m )
     {
-    case FL_KEYBOARD:
-    {
-        if ( Fl::event_key ( ) == FL_Menu )
+        case FL_KEYBOARD:
         {
-            menu_popup ( &menu ( ), x ( ), y ( ) );
-            return 1;
+            if ( Fl::event_key ( ) == FL_Menu )
+            {
+                menu_popup ( &menu ( ), x ( ), y ( ) );
+                return 1;
+            }
+            else
+                return menu ( ).test_shortcut ( ) != 0;
+            break;
         }
-        else
-            return menu ( ).test_shortcut ( ) != 0;
-        break;
-    }
-    case FL_PUSH:
-        if ( Fl::event_button1 ( ) && Fl::event_inside ( color_box ) )
-            dragging = this;
-        else
+        case FL_PUSH:
+            if ( Fl::event_button1 ( ) && Fl::event_inside ( color_box ) )
+                dragging = this;
+            else
+                dragging = NULL;
+
+            _button = Fl::event_button ( );
+
+            return 1;
+
+            break;
+
+        case FL_DRAG:
+            return 1;
+            break;
+        case FL_RELEASE:
+            if ( dragging == this && !Fl::event_is_click ( ) )
+            {
+                mixer->insert ( this, mixer->event_inside ( ) );
+                /* FIXME: do better! */
+                mixer->redraw ( );
+                dragging = NULL;
+                return 1;
+            }
+
             dragging = NULL;
 
-        _button = Fl::event_button ( );
+            int b = _button;
+            _button = 0;
 
-        return 1;
-
-        break;
-
-    case FL_DRAG:
-        return 1;
-        break;
-    case FL_RELEASE:
-        if ( dragging == this && !Fl::event_is_click ( ) )
-        {
-            mixer->insert ( this, mixer->event_inside ( ) );
-            /* FIXME: do better! */
-            mixer->redraw ( );
-            dragging = NULL;
-            return 1;
-        }
-
-        dragging = NULL;
-
-        int b = _button;
-        _button = 0;
-
-        /* if ( 1 == b ) */
-        /* { */
-        /*     take_focus(); */
-        /* } */
-        /* else */
-        if ( 3 == b )
-        {
-            menu_popup ( &menu ( ) );
-            return 1;
-        }
-        break;
+            /* if ( 1 == b ) */
+            /* { */
+            /*     take_focus(); */
+            /* } */
+            /* else */
+            if ( 3 == b )
+            {
+                menu_popup ( &menu ( ) );
+                return 1;
+            }
+            break;
     }
 
     return 0;

@@ -108,7 +108,6 @@ Gain_Module::handle_sample_rate_change( nframes_t n )
     smoothing.sample_rate ( n );
 }
 
-
 /**********/
 /* Engine */
 

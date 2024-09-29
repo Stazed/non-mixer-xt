@@ -102,7 +102,6 @@
 extern char *instance_name;
 static bool is_startup = true;
 
-
 /* Chain::Chain ( int X, int Y, int W, int H, const char *L ) : */
 
 /*     Fl_Group( X, Y, W, H, L) */
@@ -208,7 +207,7 @@ Chain::~Chain( )
         client ( )->lock ( );
 
     for ( unsigned int i = scratch_port.size ( ); i--; )
-        free ( static_cast<sample_t*> ( scratch_port[i].buffer ( ) ) );
+        free ( static_cast<sample_t * > ( scratch_port[i].buffer ( ) ) );
 
     scratch_port.clear ( );
 
@@ -768,7 +767,6 @@ Chain::insert( Module *m, Module *n )
         modules_pack->insert ( *n, i );
     }
 
-
     strip ( )->handle_module_added ( n );
 
     configure_ports ( );
@@ -776,11 +774,11 @@ Chain::insert( Module *m, Module *n )
     client ( )->unlock ( );
 
     DMESSAGE ( "Module \"%s\" has %i:%i audio and %i:%i control ports",
-               n->name ( ),
-               n->ninputs ( ),
-               n->noutputs ( ),
-               n->ncontrol_inputs ( ),
-               n->ncontrol_outputs ( ) );
+        n->name ( ),
+        n->ninputs ( ),
+        n->noutputs ( ),
+        n->ncontrol_inputs ( ),
+        n->ncontrol_outputs ( ) );
 
     n->initialize ( );
     return true;
@@ -858,7 +856,7 @@ Chain::draw_connections( Module *m )
 void
 Chain::add_to_process_queue( Module *m )
 {
-    for ( std::list<Module*>::const_iterator i = process_queue.begin ( ); i != process_queue.end ( ); ++i )
+    for ( std::list<Module * >::const_iterator i = process_queue.begin ( ); i != process_queue.end ( ); ++i )
         if ( m == *i )
             return;
 
@@ -986,8 +984,8 @@ Chain::get_output_ports( std::list<std::string> &sl )
             char *s;
 
             asprintf ( &s, "%s/%s",
-                       "*",
-                       m->aux_audio_output[j].jack_port ( )->name ( ) );
+                "*",
+                m->aux_audio_output[j].jack_port ( )->name ( ) );
 
             sl.push_back ( s );
 
@@ -996,9 +994,8 @@ Chain::get_output_ports( std::list<std::string> &sl )
             if ( !strip ( )->group ( )->single ( ) )
             {
                 asprintf ( &s, "%s/%s",
-                           strip ( )->group ( )->name ( ),
-                           m->aux_audio_output[j].jack_port ( )->name ( ) );
-
+                    strip ( )->group ( )->name ( ),
+                    m->aux_audio_output[j].jack_port ( )->name ( ) );
 
                 sl.push_back ( s );
 
@@ -1026,8 +1023,6 @@ Chain::auto_disconnect_outputs( void )
     }
 }
 
-
-
 /*****************/
 /* Import/Export */
 
@@ -1054,7 +1049,6 @@ Chain::do_export( const char *filename )
     return true;
 }
 
-
 /**********/
 /* Client */
 
@@ -1063,7 +1057,7 @@ Chain::do_export( const char *filename )
 void
 Chain::process( nframes_t nframes )
 {
-    for ( std::list<Module*>::const_iterator i = process_queue.begin ( ); i != process_queue.end ( ); ++i )
+    for ( std::list<Module * >::const_iterator i = process_queue.begin ( ); i != process_queue.end ( ); ++i )
     {
         if ( _deleting )
             return;
@@ -1116,7 +1110,7 @@ Chain::port_connect( jack_port_id_t a, jack_port_id_t b, int /*connect*/ )
     /* this is called from JACK non-RT thread... */
 
     if ( jack_port_is_mine ( client ( )->jack_client ( ), jack_port_by_id ( client ( )->jack_client ( ), a ) ) ||
-            jack_port_is_mine ( client ( )->jack_client ( ), jack_port_by_id ( client ( )->jack_client ( ), b ) ) )
+        jack_port_is_mine ( client ( )->jack_client ( ), jack_port_by_id ( client ( )->jack_client ( ), b ) ) )
     {
         /* When the mixer is first starting under NSM, the call to Fl::awake would sometimes
            occur before the initial main() Fl:wait() which would cause an intermittent segfault.

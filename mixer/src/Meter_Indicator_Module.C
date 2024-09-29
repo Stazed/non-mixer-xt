@@ -223,17 +223,17 @@ Meter_Indicator_Module::handle( int m )
 {
     switch ( m )
     {
-    case FL_PUSH:
-    {
-        if ( Fl::event_button3 ( ) && _disable_context_menu )
-            return 0;
-
-        if ( test_press ( FL_BUTTON1 ) )
+        case FL_PUSH:
         {
-            /* don't let Module::handle eat our click */
-            return Fl_Group::handle ( m );
+            if ( Fl::event_button3 ( ) && _disable_context_menu )
+                return 0;
+
+            if ( test_press ( FL_BUTTON1 ) )
+            {
+                /* don't let Module::handle eat our click */
+                return Fl_Group::handle ( m );
+            }
         }
-    }
     }
 
     return Module::handle ( m );

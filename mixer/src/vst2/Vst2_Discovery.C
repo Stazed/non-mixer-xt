@@ -109,7 +109,6 @@ validVST2SearchPaths( )
     return res;
 }
 
-
 #if !defined(__WIN32__) && !defined(_WIN32) && !defined(WIN32)
 #define __cdecl
 #endif
@@ -124,7 +123,7 @@ typedef AEffect* ( *VST_GetPluginInstance ) ( audioMasterCallback );
 
 static VstIntPtr VSTCALLBACK
 vst2_discovery_scan_callback( AEffect *effect,
-                              VstInt32 opcode, VstInt32 index, VstIntPtr value, void *ptr, float opt );
+    VstInt32 opcode, VstInt32 index, VstIntPtr value, void *ptr, float opt );
 
 // Current working VST Shell identifier.
 static int g_iVst2ShellCurrentId = 0;
@@ -322,30 +321,30 @@ vst2_discovery_scan::open_descriptor( unsigned long iIndex )
     // get category
     switch ( vst2_dispatch ( effGetPlugCategory, 0, 0, nullptr, 0.0f ) )
     {
-    case kPlugCategSynth:
-        m_sCategory = "Instrument Plugin";
-        break;
-    case kPlugCategAnalysis:
-        m_sCategory = "Utilities";
-        break;
-    case kPlugCategMastering:
-        m_sCategory = "Amplitude/Dynamics";
-        break;
-    case kPlugCategRoomFx:
-        m_sCategory = "Time/Delays";
-        break;
-    case kPlugCategRestoration:
-        m_sCategory = "Utilities";
-        break;
-    case kPlugCategGenerator:
-        m_sCategory = "Instrument Plugin";
-        break;
-    default:
-        if ( m_pEffect->flags & effFlagsIsSynth )
+        case kPlugCategSynth:
             m_sCategory = "Instrument Plugin";
-        else
-            m_sCategory = "Unclassified";
-        break;
+            break;
+        case kPlugCategAnalysis:
+            m_sCategory = "Utilities";
+            break;
+        case kPlugCategMastering:
+            m_sCategory = "Amplitude/Dynamics";
+            break;
+        case kPlugCategRoomFx:
+            m_sCategory = "Time/Delays";
+            break;
+        case kPlugCategRestoration:
+            m_sCategory = "Utilities";
+            break;
+        case kPlugCategGenerator:
+            m_sCategory = "Instrument Plugin";
+            break;
+        default:
+            if ( m_pEffect->flags & effFlagsIsSynth )
+                m_sCategory = "Instrument Plugin";
+            else
+                m_sCategory = "Unclassified";
+            break;
     }
 
 #ifdef VST2_CONTROLLER
@@ -452,8 +451,8 @@ int
 vst2_discovery_scan::numMidiInputs( ) const
 {
     return (m_pEffect && (
-                ( m_iFlagsEx & effFlagsExCanReceiveVstMidiEvents ) ||
-                ( m_pEffect->flags & effFlagsIsSynth ) ? 1 : 0 ) );
+        ( m_iFlagsEx & effFlagsExCanReceiveVstMidiEvents ) ||
+        ( m_pEffect->flags & effFlagsIsSynth ) ? 1 : 0 ) );
 }
 
 int
@@ -490,7 +489,6 @@ vst2_discovery_scan::vst2_dispatch(
     return m_pEffect->dispatcher ( m_pEffect, opcode, index, value, ptr, opt );
 }
 
-
 // VST flag inquirer.
 
 bool
@@ -499,46 +497,44 @@ vst2_discovery_scan::vst2_canDo( const char *pszCanDo ) const
     return (vst2_dispatch ( effCanDo, 0, 0, (void *) pszCanDo, 0.0f ) > 0 );
 }
 
-
 //----------------------------------------------------------------------
 // The magnificient host callback, which every VST plugin will call.
 
 static VstIntPtr VSTCALLBACK
 vst2_discovery_scan_callback( AEffect* effect,
-                              VstInt32 opcode, VstInt32 index, VstIntPtr /*value*/, void */*ptr*/, float opt )
+    VstInt32 opcode, VstInt32 index, VstIntPtr /*value*/, void */*ptr*/, float opt )
 {
     VstIntPtr ret = 0;
 
     switch ( opcode )
     {
-    case audioMasterVersion:
-        ret = 2;
-        break;
-    case audioMasterAutomate:
-        effect->setParameter ( effect, index, opt );
-        break;
-    case audioMasterCurrentId:
-        ret = (VstIntPtr) g_iVst2ShellCurrentId;
-        break;
-    case audioMasterGetSampleRate:
-        effect->dispatcher ( effect, effSetSampleRate, 0, 0, nullptr, 44100.0f );
-        break;
-    case audioMasterGetBlockSize:
-        effect->dispatcher ( effect, effSetBlockSize, 0, 1024, nullptr, 0.0f );
-        break;
-    case audioMasterGetAutomationState:
-        ret = 1; // off
-        break;
-    case audioMasterGetLanguage:
-        ret = kVstLangEnglish;
-        break;
-    default:
-        break;
+        case audioMasterVersion:
+            ret = 2;
+            break;
+        case audioMasterAutomate:
+            effect->setParameter ( effect, index, opt );
+            break;
+        case audioMasterCurrentId:
+            ret = (VstIntPtr) g_iVst2ShellCurrentId;
+            break;
+        case audioMasterGetSampleRate:
+            effect->dispatcher ( effect, effSetSampleRate, 0, 0, nullptr, 44100.0f );
+            break;
+        case audioMasterGetBlockSize:
+            effect->dispatcher ( effect, effSetBlockSize, 0, 1024, nullptr, 0.0f );
+            break;
+        case audioMasterGetAutomationState:
+            ret = 1; // off
+            break;
+        case audioMasterGetLanguage:
+            ret = kVstLangEnglish;
+            break;
+        default:
+            break;
     }
 
     return ret;
 }
-
 
 //-------------------------------------------------------------------------
 // The VST plugin stance scan method.
@@ -574,7 +570,7 @@ vst2_discovery_scan_file( const std::string& sFilename, std::list<Plugin_Info> &
         vst2pr.push_back ( pi );
 
         DMESSAGE ( "name = %s: category = %s: ID = %u: PATH = %s",
-                   pi.name.c_str ( ), pi.category.c_str ( ), pi.id, pi.plug_path.c_str ( ) );
+            pi.name.c_str ( ), pi.category.c_str ( ), pi.id, pi.plug_path.c_str ( ) );
         DMESSAGE ( "Vendor = %s", pi.author.c_str ( ) );
 
         plugin.close_descriptor ( );
@@ -585,6 +581,5 @@ vst2_discovery_scan_file( const std::string& sFilename, std::list<Plugin_Info> &
 }
 
 } // namespace vst2_discovery
-
 
 #endif  // VST2_SUPPORT
