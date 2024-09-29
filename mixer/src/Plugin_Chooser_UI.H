@@ -33,20 +33,19 @@
 #include <FL/Fl_Choice.H>
 #include <FL/Fl_Table.H>
 
-class Plugin_Chooser_UI : public Fl_Group
-{
+class Plugin_Chooser_UI : public Fl_Group {
 public:
-    Plugin_Chooser_UI(int X, int Y, int W, int H, const char *L = 0);
-    Fl_Round_Button *all_button;
-    Fl_Round_Button *favorites_button;
-    Fl_Input *name_input;
-    Fl_Input *author_input;
-    Fl_Value_Input *outputs_input;
-    Fl_Value_Input *inputs_input;
-    Fl_Choice *category_choice;
-    Fl_Group *table_group;
-    Fl_Table *table;
-    Fl_Choice *type_choice;
-    static Fl_Menu_Item menu_type_choice[];
+  Plugin_Chooser_UI(int X, int Y, int W, int H, const char *L = 0);
+  Fl_Round_Button *all_button;
+  Fl_Round_Button *favorites_button;
+  Fl_Input *name_input;
+  Fl_Input *author_input;
+  Fl_Value_Input *outputs_input;
+  Fl_Value_Input *inputs_input;
+  Fl_Choice *category_choice;
+  Fl_Group *table_group;
+  Fl_Table *table;
+  Fl_Choice *type_choice;
+  static Fl_Menu_Item menu_type_choice[];
 };
 #endif
