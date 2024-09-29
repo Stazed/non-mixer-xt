@@ -397,8 +397,8 @@ Panner::draw( void )
             float po = 5;
 
             fl_push_clip ( px - ( po * 12 ),
-                    py - ( po * 12 ),
-                    pw + ( po * 24 ), ph + ( po * 24 ) );
+                           py - ( po * 12 ),
+                           pw + ( po * 24 ), ph + ( po * 24 ) );
 
             fl_pie ( px + 5, py + 5, pw - 10, ph - 10, 0, 360 );
 
@@ -476,86 +476,86 @@ Panner::handle( int m )
 
     switch ( m )
     {
-        case FL_ENTER:
-        case FL_LEAVE:
-            _projection_choice->value ( _projection_mode );
-            _range_choice->value ( _range_mode );
+    case FL_ENTER:
+    case FL_LEAVE:
+        _projection_choice->value ( _projection_mode );
+        _range_choice->value ( _range_mode );
+        redraw ( );
+        return 1;
+    case FL_PUSH:
+    {
+        if ( Fl::event_button1 ( ) || Fl::event_button3 ( ) )
+            drag = event_point ( );
+
+        if ( Fl::event_button2 ( ) )
+        {
+            /* if ( _projection == POLAR ) */
+            /*     _projection = ORTHO; */
+            /* else */
+            /*     _projection = POLAR; */
+        }
+        return 1;
+    }
+    case FL_RELEASE:
+        if ( drag )
+        {
+            do_callback ( );
+            drag = NULL;
             redraw ( );
             return 1;
-        case FL_PUSH:
-        {
-            if ( Fl::event_button1 ( ) || Fl::event_button3 ( ) )
-                drag = event_point ( );
-
-            if ( Fl::event_button2 ( ) )
-            {
-                /* if ( _projection == POLAR ) */
-                /*     _projection = ORTHO; */
-                /* else */
-                /*     _projection = POLAR; */
-            }
-            return 1;
         }
-        case FL_RELEASE:
-            if ( drag )
-            {
-                do_callback ( );
-                drag = NULL;
-                redraw ( );
-                return 1;
-            }
+        else
+            return 0;
+    case FL_MOUSEWHEEL:
+    {
+        /*             Point *p = event_point(); */
+
+        /*             if ( p ) */
+        /*                 drag = p; */
+
+        /*             if ( drag ) */
+        /*             { */
+        /* //                drag->elevation( drag->elevation() + Fl::event_dy()); */
+        /*                 drag->elevation( 0 - drag->elevation() ); */
+        /*                 do_callback(); */
+        /*                 redraw(); */
+        /*                 return 1; */
+        /*             } */
+
+        return 1;
+    }
+    case FL_DRAG:
+    {
+        if ( !drag )
+            return 0;
+
+        int tx, ty, tw, th;
+        bbox ( tx, ty, tw, th );
+
+        float X = (float(Fl::event_x ( ) - tx ) / tw ) - 0.5f;
+        float Y = (float(Fl::event_y ( ) - ty ) / th ) - 0.5f;
+
+        if ( Fl::event_button1 ( ) )
+        {
+            if ( POLAR == projection ( ) )
+                set_polar ( drag, X, Y );
             else
-                return 0;
-        case FL_MOUSEWHEEL:
-        {
-            /*             Point *p = event_point(); */
-
-            /*             if ( p ) */
-            /*                 drag = p; */
-
-            /*             if ( drag ) */
-            /*             { */
-            /* //                drag->elevation( drag->elevation() + Fl::event_dy()); */
-            /*                 drag->elevation( 0 - drag->elevation() ); */
-            /*                 do_callback(); */
-            /*                 redraw(); */
-            /*                 return 1; */
-            /*             } */
-
-            return 1;
-        }
-        case FL_DRAG:
-        {
-            if ( !drag )
-                return 0;
-
-            int tx, ty, tw, th;
-            bbox ( tx, ty, tw, th );
-
-            float X = (float(Fl::event_x ( ) - tx ) / tw ) - 0.5f;
-            float Y = (float(Fl::event_y ( ) - ty ) / th ) - 0.5f;
-
-            if ( Fl::event_button1 ( ) )
             {
-                if ( POLAR == projection ( ) )
-                    set_polar ( drag, X, Y );
-                else
-                {
-                    if ( fabsf ( X ) < 0.5f &&
-                         fabsf ( Y ) < 0.5f )
-                        set_ortho ( drag, X, Y );
-                }
+                if ( fabsf ( X ) < 0.5f &&
+                        fabsf ( Y ) < 0.5f )
+                    set_ortho ( drag, X, Y );
             }
-            else
-                set_polar_radius ( drag, X, Y );
-
-            if ( when ( ) & FL_WHEN_CHANGED )
-                do_callback ( );
-
-            damage ( FL_DAMAGE_EXPOSE );
-
-            return 1;
         }
+        else
+            set_polar_radius ( drag, X, Y );
+
+        if ( when ( ) & FL_WHEN_CHANGED )
+            do_callback ( );
+
+        damage ( FL_DAMAGE_EXPOSE );
+
+        return 1;
+    }
 
     }
 

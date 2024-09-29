@@ -20,7 +20,7 @@
 /*******************************************************************************/
 
 
-/* 
+/*
  * File:   EditorFrame.H
  * Author: sspresto
  *
@@ -53,7 +53,7 @@
 class ARunLoop : public IRunLoop
 {
 public:
-    
+
     ARunLoop(VST3_Plugin *plug) : m_plugin(plug) {}
 
     //--- IRunLoop ---
@@ -77,8 +77,14 @@ public:
         return kNoInterface;
     }
 
-    uint32 PLUGIN_API addRef  () override { return 1001; }
-    uint32 PLUGIN_API release () override { return 1001; }
+    uint32 PLUGIN_API addRef  () override
+    {
+        return 1001;
+    }
+    uint32 PLUGIN_API release () override
+    {
+        return 1001;
+    }
 
 private:
 
@@ -100,9 +106,9 @@ class EditorFrame : public X11PluginUI, public IPlugFrame,
 public:
 
     // Constructor.
-    EditorFrame (VST3_Plugin * plug, IPlugView *plugView, bool resizeable) 
+    EditorFrame (VST3_Plugin * plug, IPlugView *plugView, bool resizeable)
         : X11PluginUI(this, resizeable, false, true), m_plugin(plug), m_plugView(plugView),
-                m_runLoop(nullptr), m_resizing(false)
+          m_runLoop(nullptr), m_resizing(false)
     {
         m_runLoop = owned(NEW ARunLoop(m_plugin));
 
@@ -131,9 +137,9 @@ public:
             else    // not altered
             {
                 setSize(rect.right - rect.left, rect.bottom - rect.top, false, false);
-            }    
+            }
         }
-    
+
         m_resizing = false;
     }
 
@@ -143,19 +149,23 @@ public:
         m_plugView->setFrame(nullptr);
         m_runLoop = nullptr;
     }
-    
+
     // Accessors.
     IPlugView *plugView () const
-            { return m_plugView; }
+    {
+        return m_plugView;
+    }
     ARunLoop *runLoop () const
-            { return m_runLoop; }
+    {
+        return m_runLoop;
+    }
 
     //--- IPlugFrame ---
     //
     tresult PLUGIN_API resizeView (IPlugView *plugView, ViewRect *rect) override
     {
         if (!rect || !plugView || plugView != m_plugView)
-                return kInvalidArgument;
+            return kInvalidArgument;
 
         if (m_resizing)
             return kResultFalse;
@@ -209,8 +219,14 @@ public:
         return m_runLoop->queryInterface(_iid, obj);
     }
 
-    uint32 PLUGIN_API addRef  () override { return 1002; }
-    uint32 PLUGIN_API release () override { return 1002; }
+    uint32 PLUGIN_API addRef  () override
+    {
+        return 1002;
+    }
+    uint32 PLUGIN_API release () override
+    {
+        return 1002;
+    }
 
 private:
 
@@ -219,7 +235,7 @@ private:
     IPlugView *m_plugView;
     IPtr<ARunLoop> m_runLoop;
     bool m_resizing;
-    
+
 protected:
     void handlePluginUIClosed() override;
     void handlePluginUIResized(const uint width, const uint height) override;

@@ -41,7 +41,7 @@ class Group : public Loggable, public JACK::Client, public Mutex
     Thread _thread;                                            /* only used for thread checking */
 
     int _buffers_dropped;                                       /* buffers dropped because of locking */
-/*     int _buffers_dropped;                                       /\* buffers dropped because of locking *\/ */
+    /*     int _buffers_dropped;                                       /\* buffers dropped because of locking *\/ */
 
     volatile float _dsp_load;
     float _load_coef;
@@ -74,21 +74,36 @@ private:
     friend class Port;
     friend class Transport;
 
-public: 
+public:
 
     LOG_CREATE_FUNC( Group );
 
-    float dsp_load ( void ) const { return _dsp_load; }
-    int nstrips ( void ) const { return strips.size(); }
-    int dropped ( void ) const { return _buffers_dropped; }
+    float dsp_load ( void ) const
+    {
+        return _dsp_load;
+    }
+    int nstrips ( void ) const
+    {
+        return strips.size();
+    }
+    int dropped ( void ) const
+    {
+        return _buffers_dropped;
+    }
 
     Group ( );
     Group ( const char * name, bool single );
     virtual ~Group ( );
 
-    bool single ( void ) const { return _single; }
+    bool single ( void ) const
+    {
+        return _single;
+    }
 
-    const char * name ( void ) const { return _name; }
+    const char * name ( void ) const
+    {
+        return _name;
+    }
     void name ( const char *n );
 
     std::list<Mixer_Strip*> strips;
@@ -99,8 +114,11 @@ public:
     void add (Mixer_Strip*);
     void remove (Mixer_Strip*);
 
-    int children ( void ) const { return strips.size(); }
-    
+    int children ( void ) const
+    {
+        return strips.size();
+    }
+
     /* Engine *engine ( void ) { return _engine; } */
 };
 

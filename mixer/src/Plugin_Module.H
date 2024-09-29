@@ -29,19 +29,20 @@
 
 class Fl_Menu_Button;
 
-class Plugin_Module : public Module {
+class Plugin_Module : public Module
+{
 
 private:
 
     nframes_t _last_latency;
-    
+
     void bbox ( int &X, int &Y, int &W, int &H ) override
-        {
-            X = x();
-            Y = y() + 5;
-            W = w();
-            H = h() - 10;
-        }
+    {
+        X = x();
+        Y = y() + 5;
+        W = w();
+        H = h() - 10;
+    }
 
 public:
 
@@ -55,22 +56,37 @@ private:
 
 public:
 
-    virtual bool load_plugin ( Module::Picked /* picked */ ) {return false;};
+    virtual bool load_plugin ( Module::Picked /* picked */ )
+    {
+        return false;
+    };
 
     virtual void update ( void ) override;
 
     Plugin_Module ( );
     virtual ~Plugin_Module();
 
-    int plugin_ins ( void ) const { return _plugin_ins; }
-    int plugin_outs ( void ) const { return _plugin_outs; }
+    int plugin_ins ( void ) const
+    {
+        return _plugin_ins;
+    }
+    int plugin_outs ( void ) const
+    {
+        return _plugin_outs;
+    }
 
-    const char *name ( void ) const override { return "Plugin"; }
+    const char *name ( void ) const override
+    {
+        return "Plugin";
+    }
 
     int can_support_inputs ( int ) override;
     bool configure_inputs ( int ) override;
 
-    virtual bool bypass ( void ) const override { return *_bypass == 1.0f; }
+    virtual bool bypass ( void ) const override
+    {
+        return *_bypass == 1.0f;
+    }
     virtual void bypass ( bool /*v*/ ) override {};
 
     virtual void process ( nframes_t ) override {};

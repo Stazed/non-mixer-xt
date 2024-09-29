@@ -579,7 +579,7 @@ LADSPAInfo::CleanUp( void )
 void
 LADSPAInfo::ScanPathList( const char *path_list,
                           void (LADSPAInfo::*ExamineFunc )(const string &,
-                          const string &) )
+                                  const string &) )
 {
     const char *start;
     const char *end;
@@ -658,7 +658,7 @@ LADSPAInfo::ExaminePluginLibrary( const string &path,
     if ( !handle )
     {
         cerr << "WARNING: File " << fullpath
-                << " could not be examined" << endl;
+             << " could not be examined" << endl;
         cerr << "dlerror() output:" << endl;
         cerr << dlerror( ) << endl;
     }
@@ -672,7 +672,7 @@ LADSPAInfo::ExaminePluginLibrary( const string &path,
 
             // Is DLL, but not a LADSPA one
             cerr << "WARNING: DLL " << fullpath
-                    << " has no ladspa_descriptor function" << endl;
+                 << " has no ladspa_descriptor function" << endl;
             cerr << "dlerror() output:" << endl;
             cerr << dlerror( ) << endl;
         }
@@ -694,14 +694,14 @@ LADSPAInfo::ExaminePluginLibrary( const string &path,
                     unsigned long path_index = m_Libraries[library_index].PathIndex;
 
                     cerr << "WARNING: Duplicated Plugin ID ("
-                            << desc->UniqueID << ") found:" << endl;
+                         << desc->UniqueID << ") found:" << endl;
 
                     cerr << "  Plugin " << m_Plugins[plugin_index].Index
-                            << " in library: " << m_Paths[path_index]
-                            << m_Libraries[library_index].Basename
-                            << " [First instance found]" << endl;
+                         << " in library: " << m_Paths[path_index]
+                         << m_Libraries[library_index].Basename
+                         << " [First instance found]" << endl;
                     cerr << "  Plugin " << i << " in library: " << fullpath
-                            << " [Duplicate not added]" << endl;
+                         << " [Duplicate not added]" << endl;
                 }
                 else
                 {
@@ -912,12 +912,12 @@ LADSPAInfo::CheckPlugin( const LADSPA_Descriptor *desc )
     test( desc->connect_port, "WARNING: Warning: Plugin has no connect_port funciton" );
     test( desc->run, "WARNING: Plugin has no run function" );
     test( !( desc->run_adding != 0 && desc->set_run_adding_gain == 0 ),
-            "WARNING: Plugin has run_adding but no set_run_adding_gain" );
+          "WARNING: Plugin has run_adding but no set_run_adding_gain" );
     test( !( desc->run_adding == 0 && desc->set_run_adding_gain != 0 ),
-            "WARNING: Plugin has set_run_adding_gain but no run_adding" );
+          "WARNING: Plugin has set_run_adding_gain but no run_adding" );
     test( desc->cleanup, "WARNING: Plugin has no cleanup function" );
     test( !LADSPA_IS_INPLACE_BROKEN( desc->Properties ),
-            "WARNING: Plugin cannot use in place processing" );
+          "WARNING: Plugin cannot use in place processing" );
     test( desc->PortCount, "WARNING: Plugin has no ports" );
     test( desc->Name, "WARNING: Plugin has no name" );
 
@@ -962,13 +962,13 @@ LADSPAInfo::GetDescriptorFunctionForLibrary( unsigned long library_index )
 
     // Got handle so now verify that it's a LADSPA plugin library
     const LADSPA_Descriptor_Function desc_func = (LADSPA_Descriptor_Function) dlsym( li->Handle,
-            "ladspa_descriptor" );
+        "ladspa_descriptor" );
     if ( !desc_func )
     {
 
         // Is DLL, but not a LADSPA one (changed since last path scan?)
         cerr << "WARNING: DLL " << m_Paths[li->PathIndex] << li->Basename
-                << " has no ladspa_descriptor function" << endl;
+             << " has no ladspa_descriptor function" << endl;
         cerr << "Rescan of plugins recommended" << endl;
         cerr << "dlerror() output:" << endl;
         cerr << dlerror( ) << endl;

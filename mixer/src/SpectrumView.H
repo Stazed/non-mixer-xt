@@ -44,18 +44,18 @@ class SpectrumView : public Fl_Box
     static void clear_plans ( void );
 
 public:
-    
+
     static void sample_rate ( unsigned int sample_rate );
 
     /* set dB range. If min == max, then auto leveling will be enabled */
     void db_range ( float min, float max )
-        {
-            _dbmin = min;
-            _dbmax = max;
-            _auto_level = min == max;
-        }
-   
-        /** /data/ must point to allocated memory. It will be freed when new data is set or when the control is destroyed */
+    {
+        _dbmin = min;
+        _dbmax = max;
+        _auto_level = min == max;
+    }
+
+    /** /data/ must point to allocated memory. It will be freed when new data is set or when the control is destroyed */
 
     void data ( float *data, unsigned int data_frames );
 

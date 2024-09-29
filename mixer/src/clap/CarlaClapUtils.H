@@ -33,16 +33,16 @@ struct clap_istream_impl : clap_istream_t
         ctx = this;
         read = read_impl;
     }
-/**
- *  Host provided function used by clap_plugin_state->load.
- *  This gets called by the plugin to restore a plugin state from the host.
- *  The buffer and size are sent and and the host is supposed to copy to
- *  the buffer maximum of size bytes. On each call, the host adjusts the
- *  read position for the copied bytes so that the next call from the plugin will
- *  get the next size bytes. The plugin will loop call until all the host
- *  buffer has been read. The plugin will check on each call, the validity
- *  and stop reading if any errors are encountered.
- */
+    /**
+     *  Host provided function used by clap_plugin_state->load.
+     *  This gets called by the plugin to restore a plugin state from the host.
+     *  The buffer and size are sent and and the host is supposed to copy to
+     *  the buffer maximum of size bytes. On each call, the host adjusts the
+     *  read position for the copied bytes so that the next call from the plugin will
+     *  get the next size bytes. The plugin will loop call until all the host
+     *  buffer has been read. The plugin will check on each call, the validity
+     *  and stop reading if any errors are encountered.
+     */
     static int64_t read_impl(const clap_istream_t* const stream, void* const buffer, const uint64_t size) noexcept
     {
         clap_istream_impl* const self = static_cast<clap_istream_impl*>(stream->ctx);
@@ -72,13 +72,13 @@ struct clap_ostream_impl : clap_ostream_t
         ctx = this;
         write = write_impl;
     }
-/**
- *  Host provided function called by clap_plugin_state->save.
- *  The plugin will call this function which copies from the plugin provided
- *  buffer and size bytes to the host buffer (self->buffer). The plugin will
- *  loop over and write until completed. The host buffer is appended (realloc)
- *  on each cycle. The total size of bytes copied is returned upon completion.
- */
+    /**
+     *  Host provided function called by clap_plugin_state->save.
+     *  The plugin will call this function which copies from the plugin provided
+     *  buffer and size bytes to the host buffer (self->buffer). The plugin will
+     *  loop over and write until completed. The host buffer is appended (realloc)
+     *  on each cycle. The total size of bytes copied is returned upon completion.
+     */
     static int64_t  write_impl(const clap_ostream* const stream, const void* const buffer, const uint64_t size) noexcept
     {
         NON_SAFE_ASSERT_RETURN(size != 0, 0);

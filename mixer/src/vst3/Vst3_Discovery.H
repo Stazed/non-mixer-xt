@@ -20,7 +20,7 @@
 /*******************************************************************************/
 
 
-/* 
+/*
  * File:   Vst3_Discovery.H
  * Author: sspresto
  *
@@ -84,34 +84,56 @@ public:
 #endif
     // Properties.
     const std::string& name() const
-        { return m_sName; }
+    {
+        return m_sName;
+    }
 
     const std::string& vendor() const
-        { return m_sVendor; }
+    {
+        return m_sVendor;
+    }
 
     const std::string& subCategory() const
-        { return m_sSubCategories; }
+    {
+        return m_sSubCategories;
+    }
 
     std::string uniqueID() const
-        { return m_iUniqueID; }
+    {
+        return m_iUniqueID;
+    }
 
     int audioIns() const
-        { return m_iAudioIns; }
+    {
+        return m_iAudioIns;
+    }
     int audioOuts() const
-        { return m_iAudioOuts; }
+    {
+        return m_iAudioOuts;
+    }
 #ifdef VST3_CONTROLLER
     int controlIns() const
-        { return m_iControlIns; }
+    {
+        return m_iControlIns;
+    }
     int controlOuts() const
-        { return m_iControlOuts; }
+    {
+        return m_iControlOuts;
+    }
 
     int midiIns() const
-        { return m_iMidiIns; }
+    {
+        return m_iMidiIns;
+    }
     int midiOuts() const
-        { return m_iMidiOuts; }
+    {
+        return m_iMidiOuts;
+    }
 
     bool hasEditor() const
-        { return m_bEditor; }
+    {
+        return m_bEditor;
+    }
 #endif
 
 protected:

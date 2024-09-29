@@ -48,8 +48,8 @@ class Spatialization_Console : public Loggable, public Fl_Double_Window
     static void cb_window ( Fl_Widget *w );
 
     bool _resized;
-  
-    std::vector<Fl_Widget*> controls_by_port;  
+
+    std::vector<Fl_Widget*> controls_by_port;
 
 protected:
 

@@ -67,7 +67,8 @@ enum Plugin_Index
 
 const uint32_t C_MAX_UINT32 = 4294967295;
 
-class Module : public Fl_Group, public Loggable {
+class Module : public Fl_Group, public Loggable
+{
 
     int _instances;
     Chain *_chain;
@@ -77,7 +78,7 @@ class Module : public Fl_Group, public Loggable {
     bool _has_name_change;
     char *_base_label;
     nframes_t _nframes;
-    
+
     static nframes_t _buffer_size;
     static nframes_t _sample_rate;
     static Module *_copied_module_empty;
@@ -110,31 +111,64 @@ public:
     bool _use_custom_data;
 
     void deleteEditor();
-    virtual int number ( void ) const { return _number; }
+    virtual int number ( void ) const
+    {
+        return _number;
+    }
     virtual void number ( int v );
 
-    virtual const char * base_label ( void ) const { return _base_label ? _base_label : name(); }
+    virtual const char * base_label ( void ) const
+    {
+        return _base_label ? _base_label : name();
+    }
     virtual void base_label ( const char * );
-    
-    virtual nframes_t get_module_latency ( void ) const { return 0; }
+
+    virtual nframes_t get_module_latency ( void ) const
+    {
+        return 0;
+    }
 
     virtual void get_latency ( JACK::Port::direction_e dir, nframes_t *min, nframes_t *max ) const;
     virtual void set_latency ( JACK::Port::direction_e dir, nframes_t min, nframes_t max );
 
     /* true if this module was added by default and not under normal user control */
-    bool is_default ( void ) const { return _is_default; }
-    void is_default ( bool v ) { _is_default = v; }
+    bool is_default ( void ) const
+    {
+        return _is_default;
+    }
+    void is_default ( bool v )
+    {
+        _is_default = v;
+    }
 
-    bool is_jack_module ( void ) const { return _is_jack_module; }
-    void is_jack_module ( bool v ) { _is_jack_module = v; }
+    bool is_jack_module ( void ) const
+    {
+        return _is_jack_module;
+    }
+    void is_jack_module ( bool v )
+    {
+        _is_jack_module = v;
+    }
 
-    bool is_zero_input_synth ( void ) const { return  _is_zero_synth; }
-    void is_zero_input_synth ( bool v ) {  _is_zero_synth = v; }
+    bool is_zero_input_synth ( void ) const
+    {
+        return  _is_zero_synth;
+    }
+    void is_zero_input_synth ( bool v )
+    {
+        _is_zero_synth = v;
+    }
 
     /* Flag to indicate that the Module_Parameter_Editor OSC path needs update */
-    bool has_name_change ( void ) { return _has_name_change; }
-    void has_name_change ( bool v ) { _has_name_change = v; }
-    
+    bool has_name_change ( void )
+    {
+        return _has_name_change;
+    }
+    void has_name_change ( bool v )
+    {
+        _has_name_change = v;
+    }
+
     virtual void update ( void ) {}
 
     virtual void update_tooltip ( void );
@@ -154,8 +188,11 @@ public:
         std::string Label;
         float Value;
 
-        static bool before( const EnumeratorScalePoints& c1, const EnumeratorScalePoints& c2 ) { return c1.Value < c2.Value; }
-        
+        static bool before( const EnumeratorScalePoints& c1, const EnumeratorScalePoints& c2 )
+        {
+            return c1.Value < c2.Value;
+        }
+
         EnumeratorScalePoints() : Value(0.0) {}
     };
 #endif
@@ -166,17 +203,17 @@ public:
         /* support multiple connection for audio ports (many to one, one to many, many to many).
            control ports only support one to one and one to many. */
 
-        
+
         /* char *type_names[] = { "Audio", "Control" }; */
         /* char *direction_names[] = { "Input", "Output" }; */
 
         void update_connected_port_buffer ( void )
-            {
-                if ( connected() )
-                    connected_port()->_buf = _buf;
-            }
+        {
+            if ( connected() )
+                connected_port()->_buf = _buf;
+        }
 
-	
+
     public:
 
         enum Direction { INPUT, OUTPUT };
@@ -217,10 +254,10 @@ public:
                 plug_port_index(C_MAX_UINT32)
 #if defined CLAP_SUPPORT || defined(VST3_SUPPORT)
                 ,parameter_id(C_MAX_UINT32) // set to max value rather than 0 because we ran into
-                                            // a parameter VST3 that was 0 and this was default for
-                                            // the bypass port. Kept turning the plugin on and off...
+                // a parameter VST3 that was 0 and this was default for
+                // the bypass port. Kept turning the plugin on and off...
 #endif
-                { }
+            { }
         };
 
         static int osc_control_change_exact ( float v, void *user_data );
@@ -253,14 +290,14 @@ public:
             _need_file_update(false),
             _supports_time_position(false)
 #endif
+        {
+            /* On port creation, we set _symbol to name for internal/LADSPA plugins that don't
+               have a symbol for OSC path. For LV2/CLAP we replace after creation with the actual symbol */
+            if(name)
             {
-                /* On port creation, we set _symbol to name for internal/LADSPA plugins that don't 
-                   have a symbol for OSC path. For LV2/CLAP we replace after creation with the actual symbol */
-                if(name)
-                {
-                    _symbol = name;
-                }
+                _symbol = name;
             }
+        }
 
         Port ( const Port& p ) :
             hints(p.hints),
@@ -287,102 +324,146 @@ public:
             _need_file_update(false),
             _supports_time_position(p._supports_time_position)
 #endif
-            {
+        {
 #ifdef LV2_SUPPORT
-                hints.ScalePoints = p.hints.ScalePoints;
+            hints.ScalePoints = p.hints.ScalePoints;
 #endif
-            }
+        }
 
         virtual ~Port ( )
-            {
-		/* FIXME: will this cause problems with cloning an instance? */
-		disconnect();
-		
-                if ( _by_number_path )
-                    free( _by_number_path );
-                _by_number_path = NULL;
+        {
+            /* FIXME: will this cause problems with cloning an instance? */
+            disconnect();
+
+            if ( _by_number_path )
+                free( _by_number_path );
+            _by_number_path = NULL;
 #ifdef LV2_SUPPORT
-                if ( _evbuf )
-                    lv2_evbuf_free( _evbuf );
-                _evbuf = NULL;
+            if ( _evbuf )
+                lv2_evbuf_free( _evbuf );
+            _evbuf = NULL;
 #endif
-            }
+        }
 
-	nframes_t nframes ( void ) const { return _nframes; }
-	void  nframes ( nframes_t n) { _nframes = n; }
-        const char *name ( void ) const { return _name; }
-        const char *symbol ( void ) const { return _symbol.c_str(); }
-        void set_symbol (const char * symbol) { ( _symbol = symbol); }
-        Type type ( void ) const { return _type; }
-        Direction direction ( void ) const  { return _direction; }
+        nframes_t nframes ( void ) const
+        {
+            return _nframes;
+        }
+        void  nframes ( nframes_t n)
+        {
+            _nframes = n;
+        }
+        const char *name ( void ) const
+        {
+            return _name;
+        }
+        const char *symbol ( void ) const
+        {
+            return _symbol.c_str();
+        }
+        void set_symbol (const char * symbol)
+        {
+            ( _symbol = symbol);
+        }
+        Type type ( void ) const
+        {
+            return _type;
+        }
+        Direction direction ( void ) const
+        {
+            return _direction;
+        }
 
-        Module * module ( void ) const { return _module; }
+        Module * module ( void ) const
+        {
+            return _module;
+        }
 
-        void buffer ( void *buf, nframes_t nframes ) { _buf = buf; _nframes = nframes; };
-        void *buffer ( void ) const { return _buf; }
+        void buffer ( void *buf, nframes_t nframes )
+        {
+            _buf = buf;
+            _nframes = nframes;
+        };
+        void *buffer ( void ) const
+        {
+            return _buf;
+        }
 #ifdef LV2_SUPPORT
-        void event_buffer ( LV2_Evbuf * evbuf ) { _evbuf = evbuf; }
-        LV2_Evbuf* event_buffer ( void ) const { return _evbuf; }
+        void event_buffer ( LV2_Evbuf * evbuf )
+        {
+            _evbuf = evbuf;
+        }
+        LV2_Evbuf* event_buffer ( void ) const
+        {
+            return _evbuf;
+        }
 #endif
-        OSC::Signal *scaled_signal ( void ) { return _scaled_signal; }
-        OSC::Signal *unscaled_signal ( void ) { return _unscaled_signal; }
+        OSC::Signal *scaled_signal ( void )
+        {
+            return _scaled_signal;
+        }
+        OSC::Signal *unscaled_signal ( void )
+        {
+            return _unscaled_signal;
+        }
 
         const char *osc_path ( )
-            {
-                if ( _scaled_signal )
-                    return _scaled_signal->path();
-                else
-                    return NULL;
-            }
+        {
+            if ( _scaled_signal )
+                return _scaled_signal->path();
+            else
+                return NULL;
+        }
 
         const char *osc_number_path ( void );
 
         void update_osc_port ( )
-            {
+        {
 //                if ( INPUT == _direction )
-                change_osc_path( generate_osc_path() );
-            }
+            change_osc_path( generate_osc_path() );
+        }
 
         void destroy_osc_port ( )
-            {
-                delete _unscaled_signal;
-                delete _scaled_signal;
-                
-                _unscaled_signal = _scaled_signal = NULL;
-            }
+        {
+            delete _unscaled_signal;
+            delete _scaled_signal;
+
+            _unscaled_signal = _scaled_signal = NULL;
+        }
 
         void control_value_no_callback ( float f )
+        {
+            /* can also be called from the OSC thread */
+            if(!_module->_is_from_custom_ui)    // external uis sometimes crash this???
             {
-                /* can also be called from the OSC thread */
-                if(!_module->_is_from_custom_ui)    // external uis sometimes crash this???
-                {
-                    ASSERT( Thread::is( "UI" ) || Thread::is( "OSC" ),
-                            "Function called from wrong thread! (is %s)",  Thread::current()->name() );
-                }
-
-                if ( buffer() )
-                {
-                    *( static_cast<float*>(buffer()) ) = f;
-                }
+                ASSERT( Thread::is( "UI" ) || Thread::is( "OSC" ),
+                        "Function called from wrong thread! (is %s)",  Thread::current()->name() );
             }
+
+            if ( buffer() )
+            {
+                *( static_cast<float*>(buffer()) ) = f;
+            }
+        }
 
         void control_value ( float f )
-            {
-                control_value_no_callback( f );
-                _module->handle_control_changed( this );
-                if ( connected() )
-                    connected_port()->_module->handle_control_changed( connected_port() );
-            }
+        {
+            control_value_no_callback( f );
+            _module->handle_control_changed( this );
+            if ( connected() )
+                connected_port()->_module->handle_control_changed( connected_port() );
+        }
 
         float control_value ( void ) const
-            {
-                if ( buffer() )
-                    return *( static_cast<float*>(buffer()) );
-                else
-                    return 0.0f;
-            }
+        {
+            if ( buffer() )
+                return *( static_cast<float*>(buffer()) );
+            else
+                return 0.0f;
+        }
 
-        bool connected ( void ) const {
+        bool connected ( void ) const
+        {
             if ( _type == Port::AUDIO )
                 /* internal audio ports are considered connected by the buffer setting */
                 return _buf != 0;
@@ -391,95 +472,107 @@ public:
                 return _connected.size() > 0;
         }
 
-	unsigned int nconnected ( void ) const { return _connected.size(); }
-	    
+        unsigned int nconnected ( void ) const
+        {
+            return _connected.size();
+        }
+
         bool connected_osc ( void ) const;
 
         Port *connected_port ( void ) const
-            {
-                return _connected.size() == 0 ? NULL : _connected.front();                
-            }
+        {
+            return _connected.size() == 0 ? NULL : _connected.front();
+        }
 
-	Port *connected_port ( int n ) const
-            {
-		int j = 0;
-		for ( std::list<Module::Port*>::const_iterator i = _connected.begin();
-		      i != _connected.end(); ++i, ++j )
-		    if ( j == n )
-			return *i;
-		
-		return NULL;
-            }
+        Port *connected_port ( int n ) const
+        {
+            int j = 0;
+            for ( std::list<Module::Port*>::const_iterator i = _connected.begin();
+                    i != _connected.end(); ++i, ++j )
+                if ( j == n )
+                    return *i;
+
+            return NULL;
+        }
 
         void connect_to ( Port *to )
+        {
+            if ( _type != Port::AUX_AUDIO )
             {
-                if ( _type != Port::AUX_AUDIO )
-                {
-                    _buf = to->_buf;
-                }
-
-                if ( jack_port() && to->jack_port() )
-                    jack_port()->connect( to->jack_port()->jack_name() );               
-
-                if ( std::find(_connected.begin(),_connected.end(),to) == _connected.end() )
-                {                   
-                    _connected.push_back(to);
-                    to->_connected.push_back(this);
-                }
+                _buf = to->_buf;
             }
+
+            if ( jack_port() && to->jack_port() )
+                jack_port()->connect( to->jack_port()->jack_name() );
+
+            if ( std::find(_connected.begin(),_connected.end(),to) == _connected.end() )
+            {
+                _connected.push_back(to);
+                to->_connected.push_back(this);
+            }
+        }
 
 
         /* disconnect this port from any ports of modules belonging to strip /o/ */
         void disconnect_from_strip ( const Mixer_Strip *o );
-        
+
         void connect_to ( void *buf )
-            {
-                ASSERT( _type == Port::CONTROL, "Operation only available for control ports" );                
-                _buf = buf;
-                update_connected_port_buffer();
-            }
+        {
+            ASSERT( _type == Port::CONTROL, "Operation only available for control ports" );
+            _buf = buf;
+            update_connected_port_buffer();
+        }
 
         void set_buffer ( void *buf )
-            {
-                ASSERT( _type != Port::CONTROL, "Operation only available for audio ports" );                
-                _buf = buf;
-            }
+        {
+            ASSERT( _type != Port::CONTROL, "Operation only available for audio ports" );
+            _buf = buf;
+        }
 
         void send_feedback ( bool force );
 
         bool connected_to ( Port *p )
-            {
-                return std::find( _connected.begin(), _connected.end(), p ) != _connected.end();
-            }
-        
+        {
+            return std::find( _connected.begin(), _connected.end(), p ) != _connected.end();
+        }
+
         /* disconnect from specified port */
         void disconnect ( Port *p )
-            {
-                if ( ! connected_to(p) )
-                    return;
+        {
+            if ( ! connected_to(p) )
+                return;
 
-                if ( _type == Port::CONTROL && p->_module )
-                    p->_module->handle_control_disconnect( this );
-                    
-                if ( jack_port() && p->jack_port() )
-                    jack_port()->disconnect( p->jack_port()->jack_name() );
+            if ( _type == Port::CONTROL && p->_module )
+                p->_module->handle_control_disconnect( this );
 
-                _connected.remove(p);
-                p->_connected.remove(this);
-            }
-        
+            if ( jack_port() && p->jack_port() )
+                jack_port()->disconnect( p->jack_port()->jack_name() );
+
+            _connected.remove(p);
+            p->_connected.remove(this);
+        }
+
         /* disconnect from *all* connected ports */
         void disconnect ( void )
-            {
-		while ( _connected.size() )
-		    disconnect(_connected.front());
-	    }
-	
-        void jack_port ( JACK::Port *v ) { _jack_port = v; }
-        JACK::Port *jack_port ( void ) const { return _jack_port; }
+        {
+            while ( _connected.size() )
+                disconnect(_connected.front());
+        }
 
-	void schedule_feedback ( void ) { _pending_feedback = true; }
-	
+        void jack_port ( JACK::Port *v )
+        {
+            _jack_port = v;
+        }
+        JACK::Port *jack_port ( void ) const
+        {
+            return _jack_port;
+        }
+
+        void schedule_feedback ( void )
+        {
+            _pending_feedback = true;
+        }
+
     private:
 
         char *generate_osc_path ( void );
@@ -501,19 +594,19 @@ public:
         OSC::Signal *_scaled_signal;
         OSC::Signal *_unscaled_signal;
 
-	/* float _feedback_value; */
-	bool _pending_feedback;
-	unsigned long long _feedback_milliseconds;
-        
+        /* float _feedback_value; */
+        bool _pending_feedback;
+        unsigned long long _feedback_milliseconds;
+
         int _by_number_number;
         char *_by_number_path;
-        
+
 #ifdef LV2_SUPPORT
         LV2_Evbuf* _evbuf;
     public:
         const LilvNode* _property;
         LilvNode*   _lilv_symbol;       ///< Symbol
-	LilvNode*   _lilv_label;        ///< Human readable label
+        LilvNode*   _lilv_label;        ///< Human readable label
         LV2_URID    _property_mapped;   ///< Iff type == PROPERTY
         bool _clear_input_buffer;
         bool _need_file_update;
@@ -521,17 +614,17 @@ public:
         std::string _file;
     private:
 #endif
-	
+
         static void handle_signal_connection_state_changed ( OSC::Signal *, void *o );
     };
 
     virtual void bbox ( int &X, int &Y, int &W, int &H )
-        {
-            X += + 5;
-            Y += 5;
-            W -= 10;
-            H -= 10;
-        }
+    {
+        X += + 5;
+        Y += 5;
+        W -= 10;
+        H -= 10;
+    }
 
     Module ( int W, int H, const char *L = 0 );
     Module ( );
@@ -541,27 +634,36 @@ public:
 
     LOG_NAME_FUNC( Module );
 
-    virtual void resize_buffers ( nframes_t v ) { _nframes = v; }
+    virtual void resize_buffers ( nframes_t v )
+    {
+        _nframes = v;
+    }
 
 
-    int instances ( void ) const { return _instances; }
-    void instances ( int i ) { _instances = i; }
+    int instances ( void ) const
+    {
+        return _instances;
+    }
+    void instances ( int i )
+    {
+        _instances = i;
+    }
 
     bool is_being_controlled ( void ) const
-        {
-            for ( nframes_t i = control_input.size(); i--; )
-                if ( control_input[i].connected() )
-                    return true;
-            return false;
-        }
+    {
+        for ( nframes_t i = control_input.size(); i--; )
+            if ( control_input[i].connected() )
+                return true;
+        return false;
+    }
 
     bool is_controlling ( void ) const
-        {
-            for ( nframes_t i = control_output.size(); i--; )
-                if ( control_output[i].connected() )
-                    return true;
-            return false;
-        }
+    {
+        for ( nframes_t i = control_output.size(); i--; )
+            if ( control_output[i].connected() )
+                return true;
+        return false;
+    }
 
     /* bool */
     /* is_being_controlled_osc ( void ) const */
@@ -573,7 +675,10 @@ public:
     /*     } */
 
     virtual const char *name ( void ) const = 0;
-    virtual const char *basename ( void ) const { return "Module"; }
+    virtual const char *basename ( void ) const
+    {
+        return "Module";
+    }
 
     std::vector<Port> audio_input;
     std::vector<Port> audio_output;
@@ -583,77 +688,86 @@ public:
     std::vector<Port> aux_audio_output;
 
     virtual void add_port ( const Port &p )
-        {
-            if ( p.type() == Port::AUDIO && p.direction() == Port::INPUT )
-                audio_input.push_back( p );
-            else if ( p.type() == Port::AUDIO && p.direction() == Port::OUTPUT )
-                audio_output.push_back( p );
-            else if ( p.type() == Port::CONTROL && p.direction() == Port::INPUT )
-                control_input.push_back( p );
-            else if ( p.type() == Port::CONTROL && p.direction() == Port::OUTPUT )
-                control_output.push_back( p );
-        }
+    {
+        if ( p.type() == Port::AUDIO && p.direction() == Port::INPUT )
+            audio_input.push_back( p );
+        else if ( p.type() == Port::AUDIO && p.direction() == Port::OUTPUT )
+            audio_output.push_back( p );
+        else if ( p.type() == Port::CONTROL && p.direction() == Port::INPUT )
+            control_input.push_back( p );
+        else if ( p.type() == Port::CONTROL && p.direction() == Port::OUTPUT )
+            control_output.push_back( p );
+    }
 
     int noutputs ( void ) const
-        {
-            return audio_output.size();
-        }
+    {
+        return audio_output.size();
+    }
 
     int ninputs ( void ) const
-        {
-            return audio_input.size();
-        }
+    {
+        return audio_input.size();
+    }
 
     int ncontrol_inputs ( void ) const
-        {
-            return control_input.size();
-        }
+    {
+        return control_input.size();
+    }
 
     int ncontrol_outputs ( void ) const
-        {
-            return control_output.size();
-        }
+    {
+        return control_output.size();
+    }
 
     int nvisible_control_inputs ( void ) const
-        {
-            int n = 0;
-            for ( std::vector<Port>::const_iterator i = control_input.begin();
-                  i != control_input.end();
-                  ++i )
-                if ( i->hints.visible )
-                    n++;
+    {
+        int n = 0;
+        for ( std::vector<Port>::const_iterator i = control_input.begin();
+                i != control_input.end();
+                ++i )
+            if ( i->hints.visible )
+                n++;
 
-            return n;
-        }
+        return n;
+    }
 
-    virtual bool bypass ( void ) const { return *_bypass == 1.0f; }
-    virtual void bypass ( bool v ) { *_bypass = (float)v; }
+    virtual bool bypass ( void ) const
+    {
+        return *_bypass == 1.0f;
+    }
+    virtual void bypass ( bool v )
+    {
+        *_bypass = (float)v;
+    }
 
     virtual bool bypassable ( void ) const
-        {
-            return ninputs() == noutputs() ||
-                ( ninputs() == 1 && noutputs() == 2 );            
-        }
+    {
+        return ninputs() == noutputs() ||
+               ( ninputs() == 1 && noutputs() == 2 );
+    }
 
     int control_input_port_index ( Port *p )
-        {
-            for ( nframes_t i = control_input.size(); i--; )
-                if ( &control_input[i] == p )
-                    return i;
+    {
+        for ( nframes_t i = control_input.size(); i--; )
+            if ( &control_input[i] == p )
+                return i;
 
-            return -1;
-        }
+        return -1;
+    }
 
     int control_output_port_index ( Port *p )
-        {
-            for ( nframes_t i = control_output.size(); i--; )
-                if ( &control_output[i] == p )
-                    return i;
+    {
+        for ( nframes_t i = control_output.size(); i--; )
+            if ( &control_output[i] == p )
+                return i;
 
-            return -1;
-        }
+        return -1;
+    }
 
-    Chain *chain ( void ) const { return _chain; }
+    Chain *chain ( void ) const
+    {
+        return _chain;
+    }
     void chain ( Chain * v );
 
     char *get_parameters ( void ) const;
@@ -663,7 +777,10 @@ public:
 
     void send_feedback ( bool force );
     void schedule_feedback ( void );
-    virtual bool initialize ( void ) { return true; }
+    virtual bool initialize ( void )
+    {
+        return true;
+    }
 
     /* for the given number of inputs, return how many outputs this
      * plugin would have. -1 if this plugin can't support so many
@@ -681,7 +798,7 @@ public:
 
     /* called whenever the module is initialized or when the sample rate is changed at runtime */
     virtual void handle_sample_rate_change ( nframes_t /*sample_rate*/ ) {}
-        
+
     /* called whenever the value of a control port is changed.
        This can be used to take appropriate action from the GUI thread */
     virtual void handle_control_changed ( Port * );
@@ -695,9 +812,9 @@ public:
     /* module should create a new context, run against this impulse,
      * and return true if there's anything worth reporting */
     virtual bool get_impulse_response ( sample_t * /*buf*/, nframes_t /*nframes*/ )
-        {
-            return false;
-        }
+    {
+        return false;
+    }
 
 #define MODULE_CLONE_FUNC(class)                                \
     virtual Module *clone_empty ( void ) const                  \
@@ -705,7 +822,10 @@ public:
             return new class ();                                \
         }
 
-    virtual Module *clone_empty ( void ) const { return NULL; }
+    virtual Module *clone_empty ( void ) const
+    {
+        return NULL;
+    }
     Module *clone ( Chain *dest ) const;
     Module *clone ( void ) const;
 
@@ -715,19 +835,32 @@ protected:
     void draw_label ( int X, int Y, int W, int H );
     void draw_box ( int X, int Y, int W, int H );
 
-    virtual void draw ( void ) { Module::draw_box(x(),y(),w(),h()); Module::draw_label(x(),y(),w(),h()); }
+    virtual void draw ( void )
+    {
+        Module::draw_box(x(),y(),w(),h());
+        Module::draw_label(x(),y(),w(),h());
+    }
     virtual int handle ( int m );
 
     virtual void get ( Log_Entry &e ) const override;
     virtual void set ( Log_Entry &e ) override;
 
-    bool add_aux_port ( bool input, const char *prefix, int n , JACK::Port::type_e type );
+    bool add_aux_port ( bool input, const char *prefix, int n, JACK::Port::type_e type );
 
 public:
 
-    nframes_t buffer_size ( void ) const { return Module::_buffer_size; }
-    static nframes_t sample_rate ( void )  { return Module::_sample_rate; }
-    nframes_t nframes ( void ) { return _nframes; }
+    nframes_t buffer_size ( void ) const
+    {
+        return Module::_buffer_size;
+    }
+    static nframes_t sample_rate ( void )
+    {
+        return Module::_sample_rate;
+    }
+    nframes_t nframes ( void )
+    {
+        return _nframes;
+    }
 
 
     void auto_connect_outputs();
@@ -743,8 +876,14 @@ public:
     bool add_aux_audio_input ( const char *prefix, int n );
     bool add_aux_cv_input ( const char *prefix, int n );
 
-    static void set_buffer_size ( nframes_t bsize ) { _buffer_size = bsize; }
-    static void sample_rate ( nframes_t srate ) { _sample_rate = srate; }
+    static void set_buffer_size ( nframes_t bsize )
+    {
+        _buffer_size = bsize;
+    }
+    static void sample_rate ( nframes_t srate )
+    {
+        _sample_rate = srate;
+    }
 
     void command_open_parameter_editor();
     void open_plugin_ui();

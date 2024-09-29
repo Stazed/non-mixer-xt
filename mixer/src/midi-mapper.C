@@ -108,11 +108,11 @@ say_hello( void )
         lo_message m = lo_message_new ( );
 
         lo_message_add ( m, "sssss",
-                "/non/hello",
-                osc->url ( ),
-                APP_TITLE,
-                VERSION,
-                instance_name );
+                         "/non/hello",
+                         osc->url ( ),
+                         APP_TITLE,
+                         VERSION,
+                         instance_name );
 
         nsm_send_broadcast ( nsm, m );
     }
@@ -464,7 +464,7 @@ signal_handler( float value, void *user_data )
         for ( int i = 0; i < 4; i++ )
         {
             if ( jack_ringbuffer_write ( engine->output_ring_buf, (char*) &jev[i],
-                 sizeof ( jack_midi_event_t ) ) != sizeof ( jack_midi_event_t ) )
+                                         sizeof ( jack_midi_event_t ) ) != sizeof ( jack_midi_event_t ) )
                 WARNING ( "output buffer overrun" );
         }
     }
@@ -500,8 +500,8 @@ save_settings( void )
     fprintf ( fp, "# MIDI-Mapper-XT version %i\n", FILE_VERSION );
 
     for ( std::map<int, std::string>::const_iterator i = sig_map_ordered.begin ( );
-          i != sig_map_ordered.end ( );
-          ++i )
+            i != sig_map_ordered.end ( );
+            ++i )
     {
         signal_mapping &m = sig_map[i->second.c_str ( )];
 
@@ -510,12 +510,12 @@ save_settings( void )
         /* FIXME: instead of T and NRPN14, use 1 7 and 14 (value significant bits).
            Also, use syntax like so: [NRPN 0 0] 1bit :: /foo/bar */
         fprintf ( fp, "%s\t%s\t%s\n",
-                i->second.c_str ( ),
-                //		 midi_event,
-                m.is_toggle ? "1-BIT" :
-                m.is_nrpn && m.is_nrpn14 ? "14-BIT" :
-                "7-BIT",
-                m.signal_name.c_str ( ) );
+                  i->second.c_str ( ),
+                  //		 midi_event,
+                  m.is_toggle ? "1-BIT" :
+                  m.is_nrpn && m.is_nrpn14 ? "14-BIT" :
+                  "7-BIT",
+                  m.signal_name.c_str ( ) );
 
         /* free(midi_event); */
     }
@@ -559,11 +559,11 @@ load_settings( void )
     DMESSAGE ( "Detected file version %i", version );
 
     while (
-            ( 1 == version &&
-              3 == fscanf ( fp, "%m[^\t]\t%m[^\t]\t%m[^\n]\n", &midi_event, &flags, &signal_name ) )
-            ||
-            ( 0 == version &&
-              2 == fscanf ( fp, "[%m[^]]] %m[^\n]\n", &midi_event, &signal_name ) ) )
+        ( 1 == version &&
+          3 == fscanf ( fp, "%m[^\t]\t%m[^\t]\t%m[^\n]\n", &midi_event, &flags, &signal_name ) )
+        ||
+        ( 0 == version &&
+          2 == fscanf ( fp, "[%m[^]]] %m[^\n]\n", &midi_event, &signal_name ) ) )
     {
         DMESSAGE ( "Read mapping: %s, %s (%s)", midi_event, signal_name, flags );
 
@@ -760,43 +760,43 @@ decode_nrpn( nrpn_state *state, const midievent &e, bool *emit_one )
 
     switch ( e.lsb ( ) )
     {
-        case 6:
-            if ( VALUE_MSB == n->awaiting )
-            {
-                n->value_msb = e.msb ( );
-                n->value_lsb = 0 == e.msb ( ) ? 0 : MAX_7BIT;
+    case 6:
+        if ( VALUE_MSB == n->awaiting )
+        {
+            n->value_msb = e.msb ( );
+            n->value_lsb = 0 == e.msb ( ) ? 0 : MAX_7BIT;
 
-                n->complete = true;
-                n->awaiting = VALUE_LSB;
-                *emit_one = true;
-                return n;
-            }
-            break;
-        case 38:
-            if ( VALUE_LSB == n->awaiting )
-            {
-                n->value_lsb_exists = true;
-                n->value_lsb = e.msb ( );
-                *emit_one = true;
-                n->complete = true;
-                n->awaiting = COMPLETE;
-                return n;
-            }
-            break;
-        case 99:
-            n->complete = false;
-            n->value_lsb_exists = false;
-            n->control_msb = e.msb ( );
-            n->control_lsb = 0;
-            n->awaiting = CONTROL_LSB;
-            n->value_msb = 0;
-            n->value_lsb = 0;
+            n->complete = true;
+            n->awaiting = VALUE_LSB;
+            *emit_one = true;
             return n;
-        case 98:
-            n->awaiting = VALUE_MSB;
-            n->complete = false;
-            n->control_lsb = e.msb ( );
+        }
+        break;
+    case 38:
+        if ( VALUE_LSB == n->awaiting )
+        {
+            n->value_lsb_exists = true;
+            n->value_lsb = e.msb ( );
+            *emit_one = true;
+            n->complete = true;
+            n->awaiting = COMPLETE;
             return n;
+        }
+        break;
+    case 99:
+        n->complete = false;
+        n->value_lsb_exists = false;
+        n->control_msb = e.msb ( );
+        n->control_lsb = 0;
+        n->awaiting = CONTROL_LSB;
+        n->value_msb = 0;
+        n->value_lsb = 0;
+        return n;
+    case 98:
+        n->awaiting = VALUE_MSB;
+        n->complete = false;
+        n->control_lsb = e.msb ( );
+        return n;
     }
 
     return NULL;
@@ -859,7 +859,7 @@ emit_signal_for_event( const char *midi_event, midievent &e, struct nrpn_state *
     {
         /* FIXME: need to gather NRPN LSB value that (maybe) arrives between first and second event for this NRPN controller.
            14-bit flag is set if there was an LSB, otherwise, 7 or 1 bit mode is applied.
-	   
+
            In normal operation, 14-bit NRPN controls should await the LSB before sending signal, 7 and 1 bit can send on MSB.
          */
 
@@ -879,7 +879,7 @@ emit_signal_for_event( const char *midi_event, midievent &e, struct nrpn_state *
             DMESSAGE ( "Learning value msb: %u, msb: %u", m->learning_value_msb, e.msb ( ) );
 
             is_toggle = ( m->learning_value_msb == 0 && e.msb ( ) == MAX_7BIT ) ||
-                    ( m->learning_value_msb == MAX_7BIT && e.msb ( ) == 0 );
+                        ( m->learning_value_msb == MAX_7BIT && e.msb ( ) == 0 );
         }
         else
         {
@@ -889,10 +889,10 @@ emit_signal_for_event( const char *midi_event, midievent &e, struct nrpn_state *
             unsigned int val2 = get_14bit ( st->value_msb, st->value_lsb );
 
             is_toggle = !is_14bit_nrpn
-                    ? ( m->learning_value_msb == 0 && st->value_msb == MAX_7BIT ) ||
-                    ( m->learning_value_msb == MAX_7BIT && st->value_msb == 0 )
-                    : ( val1 == 0 && val2 == MAX_14BIT ) ||
-                    ( val1 == MAX_14BIT && val2 == 0 );
+                        ? ( m->learning_value_msb == 0 && st->value_msb == MAX_7BIT ) ||
+                        ( m->learning_value_msb == MAX_7BIT && st->value_msb == 0 )
+                        : ( val1 == 0 && val2 == MAX_14BIT ) ||
+                        ( val1 == MAX_14BIT && val2 == 0 );
         }
 
         DMESSAGE ( "is toggle %i", is_toggle );
@@ -904,9 +904,9 @@ emit_signal_for_event( const char *midi_event, midievent &e, struct nrpn_state *
 
         m->signal_name = s;
         m->signal =
-                osc->add_signal ( s, OSC::Signal::Output, 0, 1, 0,
-                signal_handler, NULL,
-                m );
+            osc->add_signal ( s, OSC::Signal::Output, 0, 1, 0,
+                              signal_handler, NULL,
+                              m );
 
         sig_map_ordered[max_signal] = midi_event;
 
@@ -935,21 +935,21 @@ emit_signal_for_event( const char *midi_event, midievent &e, struct nrpn_state *
 
     /* wait for values to sync for continuous controls (faders and knobs) before emitting signal. For toggles, just send it immediately. */
     if (
-         /* magic number to give a release time to prevent thrashing. */
-         m->last_feedback_tick > m->last_midi_tick + 100
-         &&
-         !m->is_toggle )
+        /* magic number to give a release time to prevent thrashing. */
+        m->last_feedback_tick > m->last_midi_tick + 100
+        &&
+        !m->is_toggle )
     {
         float percent_off = fabs ( val - m->signal->value ( ) ) * 100.0f;
 
         if ( percent_off > 5 )
         {
             DMESSAGE ( "Wating for controls to sync. %s: %f percent off target (must be < 5%) [ M:%f S:%f ] ",
-                    m->signal_name.c_str ( ),
-                    percent_off,
-                    val,
-                    m->signal->value ( )
-                    );
+                       m->signal_name.c_str ( ),
+                       percent_off,
+                       val,
+                       m->signal->value ( )
+                     );
 
             return;
         }
@@ -972,8 +972,8 @@ handle_control_change( nrpn_state *nrpn_state, midievent &e )
     struct nrpn_state *st = decode_nrpn ( nrpn_state, e, &emit_one );
 
     if ( st != NULL &&
-         ( VALUE_LSB == st->awaiting ||
-           COMPLETE == st->awaiting ) )
+            ( VALUE_LSB == st->awaiting ||
+              COMPLETE == st->awaiting ) )
     {
 
         snprintf ( midi_event, 50, "NRPN %d %d", e.channel ( ), get_14bit ( st->control_msb, st->control_lsb ) );
@@ -1088,14 +1088,14 @@ main( int /*argc*/, char **argv )
 
             switch ( e.opcode ( ) )
             {
-                case MIDI::midievent::CONTROL_CHANGE:
-                case MIDI::midievent::PITCH_WHEEL:
-                {
-                    handle_control_change ( nrpn_state, e );
-                    break;
-                }
-                default:
-                    break;
+            case MIDI::midievent::CONTROL_CHANGE:
+            case MIDI::midievent::PITCH_WHEEL:
+            {
+                handle_control_change ( nrpn_state, e );
+                break;
+            }
+            default:
+                break;
             }
             //            e.pretty_print();
         }

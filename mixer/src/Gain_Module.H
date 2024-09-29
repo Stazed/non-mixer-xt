@@ -36,9 +36,15 @@ public:
     Gain_Module ( const Gain_Module & rhs );
     virtual ~Gain_Module ( );
 
-    const char *name ( void ) const override { return "Gain"; }
+    const char *name ( void ) const override
+    {
+        return "Gain";
+    }
 
-    int can_support_inputs ( int n ) override { return n; }
+    int can_support_inputs ( int n ) override
+    {
+        return n;
+    }
     bool configure_inputs ( int n ) override;
 
     LOG_CREATE_FUNC( Gain_Module );

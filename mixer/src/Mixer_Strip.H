@@ -57,18 +57,25 @@ class Group;
 
 #include "Module.H"
 
-class Mixer_Strip : public Fl_Group, public Loggable {
+class Mixer_Strip : public Fl_Group, public Loggable
+{
 
 public:
 
-    static int min_h ( void ) { return 333; }
+    static int min_h ( void )
+    {
+        return 333;
+    }
 
     Mixer_Strip( const char *strip_name );
     Mixer_Strip();                                              /* for log create */
     virtual ~Mixer_Strip();
 
     void chain ( Chain *c );
-    Chain *chain ( void ) { return _chain; }
+    Chain *chain ( void )
+    {
+        return _chain;
+    }
 
     virtual void log_children ( void ) const override;
 
@@ -88,13 +95,16 @@ public:
     void update ( void );
 
     void name ( const char *name );
-    const char *name ( void ) const { return label(); }
+    const char *name ( void ) const
+    {
+        return label();
+    }
 
 private:
 
     char *_auto_input;
     void auto_input ( const char *s );
-    
+
     unsigned int _dsp_load_index;
 
     /* used to defer setting the mode of the gain controller until the
@@ -167,15 +177,21 @@ public:
     void disconnect_auto_inputs ( const char *exclude_pattern );
     void auto_connect_outputs ( void );
     bool maybe_auto_connect_output ( Module::Port *p );
-       
+
     void get_output_ports ( std::list<std::string> &ports );
 
     void update_group_choice ( void );
 
     Controller_Module *spatializer ( void );
 
-    Group *group ( void ) { return _group; }
-    void clear_group ( void ) { _group = NULL; }
+    Group *group ( void )
+    {
+        return _group;
+    }
+    void clear_group ( void )
+    {
+        _group = NULL;
+    }
 
     //  int group ( void ) const;
     void group ( Group * );

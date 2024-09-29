@@ -19,7 +19,7 @@
 /* Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 /*******************************************************************************/
 
-/* 
+/*
  * File:   VST3PluginHost.H
  * Author: sspresto
  *
@@ -90,7 +90,10 @@ public:
     tresult PLUGIN_API getName (Vst::String128 name) override;
     tresult PLUGIN_API createInstance (TUID cid, TUID _iid, void **obj) override;
 
-    FUnknown *get() { return static_cast<Vst::IHostApplication *> (this); }
+    FUnknown *get()
+    {
+        return static_cast<Vst::IHostApplication *> (this);
+    }
 
     // Timer stuff...
     //
@@ -138,7 +141,7 @@ private:
 //-----------------------------------------------------------------------------
 //
 class VST3PluginHost::PlugInterfaceSupport
-	: public FObject, public Vst::IPlugInterfaceSupport
+    : public FObject, public Vst::IPlugInterfaceSupport
 {
 public:
 
@@ -159,7 +162,7 @@ public:
     OBJ_METHODS (PlugInterfaceSupport, FObject)
     REFCOUNT_METHODS (FObject)
     DEFINE_INTERFACES
-        DEF_INTERFACE (Vst::IPlugInterfaceSupport)
+    DEF_INTERFACE (Vst::IPlugInterfaceSupport)
     END_DEFINE_INTERFACES (FObject)
 
     //--- IPlugInterfaceSupport ----
@@ -178,7 +181,9 @@ public:
 protected:
 
     void addPluInterfaceSupported(const TUID& _iid)
-        { m_fuids.push_back(_iid); }
+    {
+        m_fuids.push_back(_iid);
+    }
 
 private:
 
@@ -203,20 +208,24 @@ public:
 
     // Constructors.
     Attribute (int64 value) : m_size(0), m_type(kInteger)
-        { m_v.intValue = value; }
+    {
+        m_v.intValue = value;
+    }
 
     Attribute (double value) : m_size(0), m_type(kFloat)
-        { m_v.floatValue = value; }
+    {
+        m_v.floatValue = value;
+    }
 
     Attribute (const Vst::TChar *value, uint32 size)
-            : m_size(size), m_type(kString)
+        : m_size(size), m_type(kString)
     {
         m_v.stringValue = new Vst::TChar[size];
         ::memcpy(m_v.stringValue, value, size);
     }
 
     Attribute (const void *value, uint32 size)
-            : m_size(size), m_type(kBinary)
+        : m_size(size), m_type(kBinary)
     {
         m_v.binaryValue = new char[size];
         ::memcpy(m_v.binaryValue, value, size);
@@ -231,10 +240,14 @@ public:
 
     // Accessors.
     int64 intValue () const
-        { return m_v.intValue; }
+    {
+        return m_v.intValue;
+    }
 
     double floatValue () const
-        { return m_v.floatValue; }
+    {
+        return m_v.floatValue;
+    }
 
     const Vst::TChar *stringValue ( uint32& stringSize )
     {
@@ -249,19 +262,21 @@ public:
     }
 
     Type getType () const
-        { return m_type; }
+    {
+        return m_type;
+    }
 
 protected:
 
     // Instance members.
     union v
-    {
-        int64  intValue;
-        double floatValue;
-        Vst::TChar *stringValue;
-        char  *binaryValue;
+        {
+            int64  intValue;
+            double floatValue;
+            Vst::TChar *stringValue;
+            char  *binaryValue;
 
-    } m_v;
+        } m_v;
 
     uint32 m_size;
     Type m_type;
@@ -297,7 +312,7 @@ public:
     //--- IAttributeList ---
     //
     tresult PLUGIN_API setInt (AttrID aid, int64 value) override
-    {   
+    {
         removeAttrID(aid);
 
         std::pair<std::string, Attribute *> Attr ( aid, new Attribute(value) );
@@ -364,7 +379,7 @@ public:
         removeAttrID(aid);
 
         std::pair<std::string, Attribute *> prm ( aid, new Attribute( string, szof ) );
-            m_list.insert(prm);
+        m_list.insert(prm);
 
         return kResultTrue;
     }
@@ -480,7 +495,9 @@ public:
     //--- IMessage ---
     //
     const char *PLUGIN_API getMessageID () override
-        { return m_messageId; }
+    {
+        return m_messageId;
+    }
 
     void PLUGIN_API setMessageID (const char *messageId) override
     {

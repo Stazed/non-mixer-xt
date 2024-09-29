@@ -78,9 +78,9 @@ Module_Parameter_Editor::is_probably_eq( void )
     const char *name = _module->label ( );
 
     return strcasestr ( name, "eq" ) ||
-            strcasestr ( name, "filter" ) ||
-            strcasestr ( name, "parametric" ) ||
-            strcasestr ( name, "band" );
+           strcasestr ( name, "filter" ) ||
+           strcasestr ( name, "parametric" ) ||
+           strcasestr ( name, "band" );
 }
 
 Module_Parameter_Editor::Module_Parameter_Editor( Module *module ) :
@@ -133,7 +133,7 @@ Module_Parameter_Editor::Module_Parameter_Editor( Module *module ) :
                     o->when ( FL_WHEN_CHANGED | FL_WHEN_NOT_CHANGED );
                     o->callback ( cb_preset_handle, this );
 
-                    /* The presets that have submenus are indexed by NTK including NULL labels. 
+                    /* The presets that have submenus are indexed by NTK including NULL labels.
                        We want the index based on valid selection items which does not include
                        NULL labels or FL_SUBMENU. So we create a map with the NTK menu index
                        as the key and the preset_index as incremented for each actual menu item.
@@ -151,10 +151,10 @@ Module_Parameter_Editor::Module_Parameter_Editor( Module *module ) :
                             preset_index++;
 
                         DMESSAGE ( "item #%d -- label=%s, value=%s type=%s",
-                                key,
-                                item.label ( ) ? item.label ( ) : "(Null)", // menu terminators have NULL labels
-                                ( item.flags & FL_MENU_VALUE ) ? "set" : "clear", // value of toggle or radio items
-                                ( item.flags & FL_SUBMENU ) ? "Submenu" : "Item" ); // see if item is a submenu or actual item
+                                   key,
+                                   item.label ( ) ? item.label ( ) : "(Null)", // menu terminators have NULL labels
+                                   ( item.flags & FL_MENU_VALUE ) ? "set" : "clear", // value of toggle or radio items
+                                   ( item.flags & FL_SUBMENU ) ? "Submenu" : "Item" ); // see if item is a submenu or actual item
                     }
                 }
             }
@@ -237,7 +237,7 @@ Module_Parameter_Editor::Module_Parameter_Editor( Module *module ) :
 
 #if defined(LV2_SUPPORT) || defined(CLAP_SUPPORT) || defined(VST2_SUPPORT) || defined(VST3_SUPPORT)
         if ( ( _module->_plug_type == Type_LV2 ) || ( _module->_plug_type == Type_CLAP )
-             || _module->_plug_type == Type_VST2 || _module->_plug_type == Type_VST3 )
+                || _module->_plug_type == Type_VST2 || _module->_plug_type == Type_VST3 )
         {
 #ifdef FLTK_SUPPORT
             Fl_Color fc = FL_CYAN;
@@ -368,7 +368,7 @@ Module_Parameter_Editor::make_controls( void )
 
     controls_by_port.resize ( module->control_input.size ( ) );
 
-    /* FIXME we could probably simplify things and eliminate the flowpack now that we are 
+    /* FIXME we could probably simplify things and eliminate the flowpack now that we are
        using the scroller and no longer have different modes. */
     control_pack->vspacing ( 1 );
     control_pack->hspacing ( 10 );
@@ -400,8 +400,8 @@ Module_Parameter_Editor::make_controls( void )
         Module::Port *p = &module->control_input[i];
 
         if ( !strcasecmp ( "Azimuth", p->name ( ) ) &&
-             180.0f == p->hints.maximum &&
-             -180.0f == p->hints.minimum )
+                180.0f == p->hints.maximum &&
+                -180.0f == p->hints.minimum )
         {
             _azimuth_port_number = i;
             azimuth_value = p->control_value ( );
@@ -512,8 +512,8 @@ Module_Parameter_Editor::make_controls( void )
                     o->precision ( 2 );
                 else if ( r <= 5000.0f )
                     o->precision ( 1 );
-                    /* else if ( r <= 10000.0f ) */
-                    /*     o->precision( 1 ); */
+                /* else if ( r <= 10000.0f ) */
+                /*     o->precision( 1 ); */
                 else
                     o->precision ( 0 );
             }
@@ -729,9 +729,9 @@ Module_Parameter_Editor::update_control_visibility( bool b_resize )
 
 #if defined(LV2_SUPPORT) || defined(CLAP_SUPPORT) || defined(VST2_SUPPORT) || defined(VST3_SUPPORT)
     if ( ( _module->_plug_type == Type_LV2 ) || ( _module->_plug_type == Type_CLAP ) ||
-         ( _module->_plug_type == Type_VST2 ) || ( _module->_plug_type == Type_VST3 ) )
+            ( _module->_plug_type == Type_VST2 ) || ( _module->_plug_type == Type_VST3 ) )
     {
-        /* When the scroller is not used, we need to expand width to account for 
+        /* When the scroller is not used, we need to expand width to account for
            the preset, state save and restore button */
         if ( !_use_scroller )
         {
@@ -858,7 +858,7 @@ Module_Parameter_Editor::cb_preset_handle( Fl_Widget *w, void *v )
         std::unordered_map<int, int> preset_index = ( (Module_Parameter_Editor*) v )->_mPreset_index;
 
         std::unordered_map<int, int>::const_iterator got
-                = preset_index.find ( (int) m->value ( ) );
+            = preset_index.find ( (int) m->value ( ) );
 
         if ( got == preset_index.end ( ) )
         {
@@ -1084,8 +1084,8 @@ Module_Parameter_Editor::handle_control_changed( Module::Port *p )
     Fl_Widget *w = controls_by_port[i];
 
     if ( i == _azimuth_port_number ||
-         i == _elevation_port_number ||
-         i == _radius_port_number )
+            i == _elevation_port_number ||
+            i == _radius_port_number )
     {
         Panner *_panner = static_cast<Panner*> ( w );
 
@@ -1289,35 +1289,35 @@ Module_Parameter_Editor::handle( int m )
 
     switch ( m )
     {
-        case FL_PUSH:
-            if ( test_press ( FL_BUTTON3 ) )
-            {
-                for ( unsigned int i = 0; i < controls_by_port.size ( ); i++ )
-                {
-                    if ( Fl::event_inside ( controls_by_port[i] ) && controls_by_port[i]->visible ( ) )
-                    {
-                        _selected_control = i;
-
-                        Fl_Menu_Button &mb = menu ( );
-
-                        menu_popup ( &mb, Fl::event_x ( ), Fl::event_y ( ) );
-
-                        return 1;
-                    }
-                }
-                return 0;
-            }
-            break;
-
-        case FL_KEYBOARD:
+    case FL_PUSH:
+        if ( test_press ( FL_BUTTON3 ) )
         {
-            if ( ( Fl::event_key ( FL_Control_L ) || Fl::event_key ( FL_Control_R ) ) && Fl::event_key ( 119 ) )
+            for ( unsigned int i = 0; i < controls_by_port.size ( ); i++ )
             {
-                // ctrl + w -> close editor
-                hide ( );
-                return 1;
+                if ( Fl::event_inside ( controls_by_port[i] ) && controls_by_port[i]->visible ( ) )
+                {
+                    _selected_control = i;
+
+                    Fl_Menu_Button &mb = menu ( );
+
+                    menu_popup ( &mb, Fl::event_x ( ), Fl::event_y ( ) );
+
+                    return 1;
+                }
             }
+            return 0;
         }
+        break;
+
+    case FL_KEYBOARD:
+    {
+        if ( ( Fl::event_key ( FL_Control_L ) || Fl::event_key ( FL_Control_R ) ) && Fl::event_key ( 119 ) )
+        {
+            // ctrl + w -> close editor
+            hide ( );
+            return 1;
+        }
+    }
     }
 
     return Fl_Group::handle ( m );

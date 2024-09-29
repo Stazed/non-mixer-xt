@@ -20,10 +20,10 @@
 /*******************************************************************************/
 
 
-/* 
+/*
  * File:   EditorFrame.C
  * Author: sspresto
- * 
+ *
  * Created on January 4, 2024, 6:01 PM
  */
 
@@ -43,9 +43,10 @@ ARunLoop::registerEventHandler( IEventHandler* handler,
         return kInvalidArgument;
 
     m_plugin->get_runloop ( )->registerFileDescriptor (
-            fd, [handler] (int fd)
-            {
-                handler->onFDIsSet ( fd ); } );
+        fd, [handler] (int fd)
+    {
+        handler->onFDIsSet ( fd );
+    } );
 
     eventHandlers.emplace ( fd, handler );
     return kResultTrue;
@@ -60,9 +61,10 @@ ARunLoop::unregisterEventHandler( IEventHandler* handler )
         return kInvalidArgument;
 
     auto it = std::find_if ( eventHandlers.begin ( ), eventHandlers.end ( ),
-            [&] (const auto& elem )
-            {
-                return elem.second == handler; } );
+                             [&] (const auto& elem )
+    {
+        return elem.second == handler;
+    } );
     if ( it == eventHandlers.end ( ) )
         return kResultFalse;
 
@@ -82,9 +84,10 @@ ARunLoop::registerTimer( ITimerHandler* handler,
         return kInvalidArgument;
 
     auto id = m_plugin->get_runloop ( )->registerTimer (
-            milliseconds, [handler] ( auto )
-            {
-                handler->onTimer ( ); } );
+                  milliseconds, [handler] ( auto )
+    {
+        handler->onTimer ( );
+    } );
 
     timerHandlers.emplace ( id, handler );
     return kResultTrue;
@@ -99,9 +102,10 @@ ARunLoop::unregisterTimer( ITimerHandler* handler )
         return kInvalidArgument;
 
     auto it = std::find_if ( timerHandlers.begin ( ), timerHandlers.end ( ),
-            [&] (const auto& elem )
-            {
-                return elem.second == handler; } );
+                             [&] (const auto& elem )
+    {
+        return elem.second == handler;
+    } );
     if ( it == timerHandlers.end ( ) )
         return kResultFalse;
 

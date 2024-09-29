@@ -18,7 +18,7 @@
 /* with This program; see the file COPYING.  If not,write to the Free Software */
 /* Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 /*******************************************************************************/
-/* 
+/*
  * File:   Clap_discovery.h
  * Author: sspresto
  *
@@ -57,7 +57,7 @@ const clap_plugin_entry_t *entryFromCLAPPath(const std::string &p);
 
 struct HostConfig
 {
-  public:
+public:
     bool announceQueriedExtensions{true};
 };
 

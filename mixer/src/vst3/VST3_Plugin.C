@@ -20,10 +20,10 @@
 /*******************************************************************************/
 
 
-/* 
+/*
  * File:   VST3_Plugin.C
  * Author: sspresto
- * 
+ *
  * Created on December 20, 2023, 9:24 AM
  */
 
@@ -61,8 +61,8 @@ IMPLEMENT_FUNKNOWN_METHODS( VST3IMPL::EventList, IEventList, IEventList::iid )
 // Plugin uses this to send messages, update to the host. Plugin to host.
 
 class VST3_Plugin::Handler
-: public Vst::IComponentHandler
-, public Vst::IConnectionPoint
+    : public Vst::IComponentHandler
+    , public Vst::IConnectionPoint
 {
 public:
 
@@ -124,8 +124,7 @@ public:
         {
             m_pPlugin->updateParamValues ( false );
         }
-        else
-            if ( flags & Vst::kReloadComponent )
+        else if ( flags & Vst::kReloadComponent )
         {
             m_pPlugin->deactivate ( );
             m_pPlugin->activate ( );
@@ -163,13 +162,13 @@ private:
 
 tresult PLUGIN_API
 VST3_Plugin::Handler::queryInterface(
-                                      const char *_iid, void **obj )
+    const char *_iid, void **obj )
 {
     QUERY_INTERFACE ( _iid, obj, FUnknown::iid, IComponentHandler )
     QUERY_INTERFACE ( _iid, obj, IComponentHandler::iid, IComponentHandler )
     QUERY_INTERFACE ( _iid, obj, IConnectionPoint::iid, IConnectionPoint )
 
-            * obj = nullptr;
+    * obj = nullptr;
     return kNoInterface;
 }
 
@@ -276,17 +275,14 @@ public:
     {
         if ( mode == kIBSeekSet )
             m_pos = pos;
-        else
-            if ( mode == kIBSeekCur )
+        else if ( mode == kIBSeekCur )
             m_pos += pos;
-        else
-            if ( mode == kIBSeekEnd )
+        else if ( mode == kIBSeekEnd )
             m_pos = m_size - pos;
 
         if ( m_pos < 0 )
             m_pos = 0;
-        else
-            if ( m_pos > m_size )
+        else if ( m_pos > m_size )
             m_pos = m_size;
 
         if ( npos )
@@ -519,7 +515,7 @@ VST3_Plugin::load_plugin( Module::Picked picked )
     if ( controller )
     {
         IPtr<IPlugView> editor =
-                owned ( controller->createView ( Vst::ViewType::kEditor ) );
+            owned ( controller->createView ( Vst::ViewType::kEditor ) );
         _bEditor = ( editor != nullptr );
     }
 
@@ -815,7 +811,7 @@ VST3_Plugin::process( nframes_t nframes )
         if ( ninputs ( ) == 1 && noutputs ( ) == 2 )
         {
             buffer_copy ( static_cast<sample_t*> ( audio_output[1].buffer ( ) ),
-                    static_cast<sample_t*> ( audio_input[0].buffer ( ) ), nframes );
+                          static_cast<sample_t*> ( audio_input[0].buffer ( ) ), nframes );
         }
 
         _latency = 0;
@@ -883,7 +879,7 @@ VST3_Plugin::process( nframes_t nframes )
 
 void
 VST3_Plugin::setParameter(
-                           Vst::ParamID id, Vst::ParamValue value, uint32 offset )
+    Vst::ParamID id, Vst::ParamValue value, uint32 offset )
 {
     int32 index = 0;
     Vst::IParamValueQueue *queue = _cParams_in.addParameterData ( id, index );
@@ -1023,8 +1019,8 @@ VST3_Plugin::init_custom_ui( )
     if ( plugView->isPlatformTypeSupported ( kPlatformTypeX11EmbedWindowID ) != kResultOk )
     {
         DMESSAGE ( "[%p]::openEditor"
-                " *** X11 Window platform is not supported (%s).", this,
-                kPlatformTypeX11EmbedWindowID );
+                   " *** X11 Window platform is not supported (%s).", this,
+                   kPlatformTypeX11EmbedWindowID );
         return false;
     }
 
@@ -1098,16 +1094,18 @@ VST3_Plugin::show_custom_ui( )
     _x_is_visible = true;
 
     _pRunloop->registerWindow (
-            (XID) _pEditorFrame->getparentwin ( ),
-            [this] (const XEvent & e )
-            {
-                return _pEditorFrame->handlePlugEvent ( e ); } );
+        (XID) _pEditorFrame->getparentwin ( ),
+        [this] (const XEvent & e )
+    {
+        return _pEditorFrame->handlePlugEvent ( e );
+    } );
 
     _pRunloop->registerWindow (
-            (XID) _pEditorFrame->getPtr ( ),
-            [this] (const XEvent & e )
-            {
-                return _pEditorFrame->handlePlugEvent ( e ); } );
+        (XID) _pEditorFrame->getPtr ( ),
+        [this] (const XEvent & e )
+    {
+        return _pEditorFrame->handlePlugEvent ( e );
+    } );
 
     _pRunloop->start ( _event_handlers_registered );
 
@@ -1186,7 +1184,7 @@ unsigned long
 VST3_Plugin::findParamId( uint32_t id ) const
 {
     std::unordered_map<uint32_t, unsigned long>::const_iterator got
-            = _mParamIds.find ( id );
+        = _mParamIds.find ( id );
 
     if ( got == _mParamIds.end ( ) )
     {
@@ -1265,7 +1263,7 @@ VST3_Plugin::open_file( const std::string& sFilename )
 
     typedef bool (*VST3_ModuleEntry )(void *);
     const VST3_ModuleEntry module_entry
-            = VST3_ModuleEntry ( ::dlsym ( _pModule, "ModuleEntry" ) );
+        = VST3_ModuleEntry ( ::dlsym ( _pModule, "ModuleEntry" ) );
 
     if ( module_entry )
         module_entry ( _pModule );
@@ -1280,13 +1278,13 @@ VST3_Plugin::open_descriptor( unsigned long iIndex )
 
     typedef IPluginFactory * ( PLUGIN_API * VST3_GetPluginFactory )( );
     const VST3_GetPluginFactory get_plugin_factory
-            = reinterpret_cast<VST3_GetPluginFactory> ( ::dlsym ( _pModule, "GetPluginFactory" ) );
+        = reinterpret_cast<VST3_GetPluginFactory> ( ::dlsym ( _pModule, "GetPluginFactory" ) );
 
     if ( !get_plugin_factory )
     {
         DMESSAGE ( "[%p]::open(\"%s\", %lu)"
-                " *** Failed to resolve plug-in factory.", this,
-                _plugin_filename.c_str ( ), iIndex );
+                   " *** Failed to resolve plug-in factory.", this,
+                   _plugin_filename.c_str ( ), iIndex );
 
         return false;
     }
@@ -1295,8 +1293,8 @@ VST3_Plugin::open_descriptor( unsigned long iIndex )
     if ( !factory )
     {
         DMESSAGE ( "[%p]::open(\"%s\", %lu)"
-                " *** Failed to retrieve plug-in factory.", this,
-                _plugin_filename.c_str ( ), iIndex );
+                   " *** Failed to retrieve plug-in factory.", this,
+                   _plugin_filename.c_str ( ), iIndex );
 
         return false;
     }
@@ -1305,8 +1303,8 @@ VST3_Plugin::open_descriptor( unsigned long iIndex )
     if ( factory->getFactoryInfo ( &factoryInfo ) != kResultOk )
     {
         DMESSAGE ( "[%p]::open(\"%s\", %lu)"
-                " *** Failed to retrieve plug-in factory information.", this,
-                _plugin_filename.c_str ( ), iIndex );
+                   " *** Failed to retrieve plug-in factory information.", this,
+                   _plugin_filename.c_str ( ), iIndex );
 
         return false;
     }
@@ -1364,12 +1362,12 @@ VST3_Plugin::open_descriptor( unsigned long iIndex )
 
             Vst::IComponent *component = nullptr;
             if ( factory->createInstance (
-                 classInfo.cid, Vst::IComponent::iid,
-                 (void **) &component ) != kResultOk )
+                        classInfo.cid, Vst::IComponent::iid,
+                        (void **) &component ) != kResultOk )
             {
                 DMESSAGE ( "[%p]::open(\"%s\", %lu)"
-                        " *** Failed to create plug-in component.", this,
-                        _plugin_filename.c_str ( ), iIndex );
+                           " *** Failed to create plug-in component.", this,
+                           _plugin_filename.c_str ( ), iIndex );
 
                 return false;
             }
@@ -1379,8 +1377,8 @@ VST3_Plugin::open_descriptor( unsigned long iIndex )
             if ( _pComponent->initialize ( _pHostContext->get ( ) ) != kResultOk )
             {
                 DMESSAGE ( "[%p]::open(\"%s\", %lu)"
-                        " *** Failed to initialize plug-in component.", this,
-                        _plugin_filename.c_str ( ), iIndex );
+                           " *** Failed to initialize plug-in component.", this,
+                           _plugin_filename.c_str ( ), iIndex );
 
                 close_descriptor ( );
                 return false;
@@ -1388,27 +1386,27 @@ VST3_Plugin::open_descriptor( unsigned long iIndex )
 
             Vst::IEditController *controller = nullptr;
             if ( _pComponent->queryInterface (
-                 Vst::IEditController::iid,
-                 (void **) &controller ) != kResultOk )
+                        Vst::IEditController::iid,
+                        (void **) &controller ) != kResultOk )
             {
                 TUID controller_cid;
                 if ( _pComponent->getControllerClassId ( controller_cid ) == kResultOk )
                 {
                     if ( factory->createInstance (
-                         controller_cid, Vst::IEditController::iid,
-                         (void **) &controller ) != kResultOk )
+                                controller_cid, Vst::IEditController::iid,
+                                (void **) &controller ) != kResultOk )
                     {
                         DMESSAGE ( "[%p]::open(\"%s\", %lu)"
-                                " *** Failed to create plug-in controller.", this,
-                                _plugin_filename.c_str ( ), iIndex );
+                                   " *** Failed to create plug-in controller.", this,
+                                   _plugin_filename.c_str ( ), iIndex );
                     }
 
                     if ( controller &&
-                         controller->initialize ( _pHostContext->get ( ) ) != kResultOk )
+                            controller->initialize ( _pHostContext->get ( ) ) != kResultOk )
                     {
                         DMESSAGE ( "[%p]::open(\"%s\", %lu)"
-                                " *** Failed to initialize plug-in controller.", this,
-                                _plugin_filename.c_str ( ), iIndex );
+                                   " *** Failed to initialize plug-in controller.", this,
+                                   _plugin_filename.c_str ( ), iIndex );
 
                         controller = nullptr;
                     }
@@ -1419,17 +1417,17 @@ VST3_Plugin::open_descriptor( unsigned long iIndex )
 
             Vst::IUnitInfo *unitInfos = nullptr;
             if ( _pComponent->queryInterface (
-                 Vst::IUnitInfo::iid,
-                 (void **) &unitInfos ) != kResultOk )
+                        Vst::IUnitInfo::iid,
+                        (void **) &unitInfos ) != kResultOk )
             {
                 if ( _pController &&
-                     _pController->queryInterface (
-                     Vst::IUnitInfo::iid,
-                     (void **) &unitInfos ) != kResultOk )
+                        _pController->queryInterface (
+                            Vst::IUnitInfo::iid,
+                            (void **) &unitInfos ) != kResultOk )
                 {
                     DMESSAGE ( "[%p]::open(\"%s\", %lu)"
-                            " *** Failed to create plug-in units information.", this,
-                            _plugin_filename.c_str ( ), iIndex );
+                               " *** Failed to create plug-in units information.", this,
+                               _plugin_filename.c_str ( ), iIndex );
                 }
             }
 
@@ -1473,7 +1471,7 @@ VST3_Plugin::close_descriptor( )
     m_unitInfos = nullptr;
 
     if ( _pComponent && _pController &&
-         FUnknownPtr<Vst::IEditController> ( _pComponent ).getInterface ( ) )
+            FUnknownPtr<Vst::IEditController> ( _pComponent ).getInterface ( ) )
     {
         //  This will delete any host context, i.e. _pHostContext
         _pController->terminate ( );
@@ -1487,7 +1485,7 @@ VST3_Plugin::close_descriptor( )
         _pComponent = nullptr;
         typedef bool (PLUGIN_API * VST3_ModuleExit )( );
         const VST3_ModuleExit module_exit
-                = reinterpret_cast<VST3_ModuleExit> ( ::dlsym ( _pModule, "ModuleExit" ) );
+            = reinterpret_cast<VST3_ModuleExit> ( ::dlsym ( _pModule, "ModuleExit" ) );
 
         if ( module_exit )
             module_exit ( );
@@ -1586,13 +1584,13 @@ VST3_Plugin::process_jack_transport( uint32_t nframes )
     // Get Jack transport position
     jack_position_t pos;
     const bool rolling =
-            ( chain ( )->client ( )->transport_query ( &pos ) == JackTransportRolling );
+        ( chain ( )->client ( )->transport_query ( &pos ) == JackTransportRolling );
 
     // If transport state is not as expected, then something has changed
     const bool has_bbt = ( pos.valid & JackPositionBBT );
     const bool xport_changed =
-            ( rolling != _rolling || pos.frame != _position ||
-              ( has_bbt && pos.beats_per_minute != _bpm ) );
+        ( rolling != _rolling || pos.frame != _position ||
+          ( has_bbt && pos.beats_per_minute != _bpm ) );
 
     _pHostContext->updateProcessContext ( pos, xport_changed, has_bbt );
 
@@ -1622,8 +1620,8 @@ VST3_Plugin::process_jack_midi_in( uint32_t nframes, unsigned int port )
 
 void
 VST3_Plugin::process_midi_in(
-                              unsigned char *data, unsigned int size,
-                              unsigned long offset, unsigned short port )
+    unsigned char *data, unsigned int size,
+    unsigned long offset, unsigned short port )
 {
     for ( uint32_t i = 0; i < size; ++i )
     {
@@ -1655,7 +1653,7 @@ VST3_Plugin::process_midi_in(
             const MidiMapKey mkey ( port, channel, Vst::kAfterTouch );
 
             std::map<MidiMapKey, Vst::ParamID>::const_iterator got
-                    = _mMidiMap.find ( mkey );
+                = _mMidiMap.find ( mkey );
 
             if ( got == _mMidiMap.end ( ) )
                 continue;
@@ -1693,7 +1691,7 @@ VST3_Plugin::process_midi_in(
             event.noteOn.velocity = float(value ) / 127.0f;
             _cEvents_in.addEvent ( event );
         }
-            // note off
+        // note off
         else if ( status == 0x80 )
         {
             event.type = Vst::Event::kNoteOffEvent;
@@ -1703,7 +1701,7 @@ VST3_Plugin::process_midi_in(
             event.noteOff.velocity = float(value ) / 127.0f;
             _cEvents_in.addEvent ( event );
         }
-            // key pressure/poly.aftertouch
+        // key pressure/poly.aftertouch
         else if ( status == 0xa0 )
         {
             event.type = Vst::Event::kPolyPressureEvent;
@@ -1712,13 +1710,13 @@ VST3_Plugin::process_midi_in(
             event.polyPressure.pressure = float(value ) / 127.0f;
             _cEvents_in.addEvent ( event );
         }
-            // control-change
+        // control-change
         else if ( status == 0xb0 )
         {
             const MidiMapKey mkey ( port, channel, key );
 
             std::map<MidiMapKey, Vst::ParamID>::const_iterator got
-                    = _mMidiMap.find ( mkey );
+                = _mMidiMap.find ( mkey );
 
             if ( got == _mMidiMap.end ( ) )
                 continue;
@@ -1731,13 +1729,13 @@ VST3_Plugin::process_midi_in(
                 setParameter ( id, Vst::ParamValue ( val ), offset );
             }
         }
-            // pitch-bend
+        // pitch-bend
         else if ( status == 0xe0 )
         {
             const MidiMapKey mkey ( port, channel, Vst::kPitchBend );
 
             std::map<MidiMapKey, Vst::ParamID>::const_iterator got
-                    = _mMidiMap.find ( mkey );
+                = _mMidiMap.find ( mkey );
 
             if ( got == _mMidiMap.end ( ) )
                 continue;
@@ -1747,7 +1745,7 @@ VST3_Plugin::process_midi_in(
             if ( id != Vst::kNoParamId )
             {
                 const float pitchbend
-                        = float(key + ( value << 7 ) ) / float(0x3fff );
+                    = float(key + ( value << 7 ) ) / float(0x3fff );
                 setParameter ( id, Vst::ParamValue ( pitchbend ), offset );
             }
         }
@@ -1774,57 +1772,57 @@ VST3_Plugin::process_jack_midi_out( uint32_t nframes, unsigned int port )
             {
                 switch ( event.type )
                 {
-                    case Vst::Event::kNoteOnEvent:
-                    {
-                        unsigned char midi_note[3];
-                        midi_note[0] = EVENT_NOTE_ON + event.noteOn.channel;
-                        midi_note[1] = event.noteOn.pitch;
-                        midi_note[2] = (unsigned char) ( event.noteOn.velocity * 127 );
+                case Vst::Event::kNoteOnEvent:
+                {
+                    unsigned char midi_note[3];
+                    midi_note[0] = EVENT_NOTE_ON + event.noteOn.channel;
+                    midi_note[1] = event.noteOn.pitch;
+                    midi_note[2] = (unsigned char) ( event.noteOn.velocity * 127 );
 
-                        size_t size = 3;
-                        int nBytes = static_cast<int> ( size );
-                        int ret = jack_midi_event_write ( buf, event.sampleOffset,
-                                static_cast<jack_midi_data_t*> ( &midi_note[0] ), nBytes );
+                    size_t size = 3;
+                    int nBytes = static_cast<int> ( size );
+                    int ret = jack_midi_event_write ( buf, event.sampleOffset,
+                                                      static_cast<jack_midi_data_t*> ( &midi_note[0] ), nBytes );
 
-                        if ( ret )
-                            WARNING ( "Jack MIDI note on error = %d", ret );
+                    if ( ret )
+                        WARNING ( "Jack MIDI note on error = %d", ret );
 
-                        break;
-                    }
-                    case Vst::Event::kNoteOffEvent:
-                    {
-                        unsigned char midi_note[3];
-                        midi_note[0] = EVENT_NOTE_OFF + event.noteOff.channel;
-                        midi_note[1] = event.noteOff.pitch;
-                        midi_note[2] = (unsigned char) ( event.noteOff.velocity * 127 );
+                    break;
+                }
+                case Vst::Event::kNoteOffEvent:
+                {
+                    unsigned char midi_note[3];
+                    midi_note[0] = EVENT_NOTE_OFF + event.noteOff.channel;
+                    midi_note[1] = event.noteOff.pitch;
+                    midi_note[2] = (unsigned char) ( event.noteOff.velocity * 127 );
 
-                        size_t size = 3;
-                        int nBytes = static_cast<int> ( size );
-                        int ret = jack_midi_event_write ( buf, event.sampleOffset,
-                                static_cast<jack_midi_data_t*> ( &midi_note[0] ), nBytes );
+                    size_t size = 3;
+                    int nBytes = static_cast<int> ( size );
+                    int ret = jack_midi_event_write ( buf, event.sampleOffset,
+                                                      static_cast<jack_midi_data_t*> ( &midi_note[0] ), nBytes );
 
-                        if ( ret )
-                            WARNING ( "Jack MIDI note off error = %d", ret );
+                    if ( ret )
+                        WARNING ( "Jack MIDI note off error = %d", ret );
 
-                        break;
-                    }
-                    case Vst::Event::kPolyPressureEvent:
-                    {
-                        unsigned char midi_note[3];
-                        midi_note[0] = EVENT_CHANNEL_PRESSURE + event.polyPressure.channel;
-                        midi_note[1] = event.polyPressure.pitch;
-                        midi_note[2] = (unsigned char) ( event.polyPressure.pressure * 127 );
+                    break;
+                }
+                case Vst::Event::kPolyPressureEvent:
+                {
+                    unsigned char midi_note[3];
+                    midi_note[0] = EVENT_CHANNEL_PRESSURE + event.polyPressure.channel;
+                    midi_note[1] = event.polyPressure.pitch;
+                    midi_note[2] = (unsigned char) ( event.polyPressure.pressure * 127 );
 
-                        size_t size = 3;
-                        int nBytes = static_cast<int> ( size );
-                        int ret = jack_midi_event_write ( buf, event.sampleOffset,
-                                static_cast<jack_midi_data_t*> ( &midi_note[0] ), nBytes );
+                    size_t size = 3;
+                    int nBytes = static_cast<int> ( size );
+                    int ret = jack_midi_event_write ( buf, event.sampleOffset,
+                                                      static_cast<jack_midi_data_t*> ( &midi_note[0] ), nBytes );
 
-                        if ( ret )
-                            WARNING ( "Jack MIDI polyPressure error = %d", ret );
+                    if ( ret )
+                        WARNING ( "Jack MIDI polyPressure error = %d", ret );
 
-                        break;
-                    }
+                    break;
+                }
                 }
             }
         }
@@ -1862,7 +1860,7 @@ VST3_Plugin::initialize_plugin( )
                     continue;
 
                 if ( paramInfo.flags & Vst::ParameterInfo::kIsProgramChange &&
-                     !( paramInfo.flags & Vst::ParameterInfo::kIsHidden ) )
+                        !( paramInfo.flags & Vst::ParameterInfo::kIsHidden ) )
                 {
                     m_programParamInfo = paramInfo;
                 }
@@ -1896,7 +1894,7 @@ VST3_Plugin::initialize_plugin( )
                         {
                             Vst::String128 name;
                             if ( unitInfos->getProgramName (
-                                 programListInfo.id, k, name ) == kResultOk )
+                                        programListInfo.id, k, name ) == kResultOk )
                             {
                                 std::string s_name = std::to_string ( k );
                                 s_name += " - ";
@@ -1916,11 +1914,11 @@ VST3_Plugin::initialize_plugin( )
             for ( int32 k = 0; k < nprograms; ++k )
             {
                 const Vst::ParamValue value
-                        = Vst::ParamValue ( k )
-                        / Vst::ParamValue ( m_programParamInfo.stepCount );
+                    = Vst::ParamValue ( k )
+                      / Vst::ParamValue ( m_programParamInfo.stepCount );
                 Vst::String128 name;
                 if ( controller->getParamStringByValue (
-                     m_programParamInfo.id, value, name ) == kResultOk )
+                            m_programParamInfo.id, value, name ) == kResultOk )
                 {
                     std::string s_name = std::to_string ( k );
                     s_name += " - ";
@@ -1939,14 +1937,17 @@ VST3_Plugin::initialize_plugin( )
         if ( midiMapping && nports > 0 )
         {
             for ( int16 i = 0; i < Vst::kCountCtrlNumber; ++i )
-            { // controllers...
+            {
+                // controllers...
                 for ( int32 j = 0; j < nports; ++j )
-                { // ports...
+                {
+                    // ports...
                     for ( int16 k = 0; k < 16; ++k )
-                    { // channels...
+                    {
+                        // channels...
                         Vst::ParamID id = Vst::kNoParamId;
                         if ( midiMapping->getMidiControllerAssignment (
-                             j, k, Vst::CtrlNumber ( i ), id ) == kResultOk )
+                                    j, k, Vst::CtrlNumber ( i ), id ) == kResultOk )
                         {
                             std::pair<MidiMapKey, Vst::ParamID> prm ( MidiMapKey ( j, k, i ), id );
                             _mMidiMap.insert ( prm );
@@ -1971,7 +1972,7 @@ VST3_Plugin::clear_plugin( )
 
 int
 VST3_Plugin::numChannels(
-                          Vst::MediaType type, Vst::BusDirection direction ) const
+    Vst::MediaType type, Vst::BusDirection direction ) const
 {
     if ( !_pComponent )
         return -1;
@@ -1985,7 +1986,7 @@ VST3_Plugin::numChannels(
         if ( _pComponent->getBusInfo ( type, direction, i, busInfo ) == kResultOk )
         {
             if ( ( busInfo.busType == Vst::kMain ) ||
-                 ( busInfo.flags & Vst::BusInfo::kDefaultActive ) )
+                    ( busInfo.flags & Vst::BusInfo::kDefaultActive ) )
             {
                 nchannels += busInfo.channelCount;
             }
@@ -2008,7 +2009,7 @@ VST3_Plugin::create_audio_ports( )
         if ( _pComponent->getBusInfo ( Vst::kAudio, Vst::kInput, i, busInfo ) == kResultOk )
         {
             if ( ( busInfo.busType == Vst::kMain ) ||
-                 ( busInfo.flags & Vst::BusInfo::kDefaultActive ) )
+                    ( busInfo.flags & Vst::BusInfo::kDefaultActive ) )
             {
                 _iAudioInBuses++;
                 _vAudioInChannels.push_back ( busInfo.channelCount );
@@ -2023,7 +2024,7 @@ VST3_Plugin::create_audio_ports( )
         if ( _pComponent->getBusInfo ( Vst::kAudio, Vst::kOutput, i, busInfo ) == kResultOk )
         {
             if ( ( busInfo.busType == Vst::kMain ) ||
-                 ( busInfo.flags & Vst::BusInfo::kDefaultActive ) )
+                    ( busInfo.flags & Vst::BusInfo::kDefaultActive ) )
             {
                 _iAudioOutBuses++;
                 _vAudioOutChannels.push_back ( busInfo.channelCount );
@@ -2115,7 +2116,7 @@ VST3_Plugin::create_control_ports( )
                     continue;
 
                 if ( !( paramInfo.flags & Vst::ParameterInfo::kIsReadOnly ) &&
-                     !( paramInfo.flags & Vst::ParameterInfo::kCanAutomate ) )
+                        !( paramInfo.flags & Vst::ParameterInfo::kCanAutomate ) )
                 {
                     continue;
                 }
@@ -2127,8 +2128,7 @@ VST3_Plugin::create_control_ports( )
                     d = Port::OUTPUT;
                     ++control_outs;
                 }
-                else
-                    if ( paramInfo.flags & Vst::ParameterInfo::kCanAutomate )
+                else if ( paramInfo.flags & Vst::ParameterInfo::kCanAutomate )
                 {
                     d = Port::INPUT;
                     ++control_ins;

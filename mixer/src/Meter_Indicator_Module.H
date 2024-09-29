@@ -47,20 +47,38 @@ public:
 
     virtual void update ( void ) override;
 
-    void disable_context_menu ( bool b ) { _disable_context_menu = b; }
+    void disable_context_menu ( bool b )
+    {
+        _disable_context_menu = b;
+    }
 
     void handle_control_changed ( Port *p ) override;
 
     Meter_Indicator_Module ( bool is_default = false );
     virtual ~Meter_Indicator_Module ( );
 
-    bool allows_external_control ( void ) const { return false; }
-    const char *name ( void ) const override { return "Meter Indicator"; }
+    bool allows_external_control ( void ) const
+    {
+        return false;
+    }
+    const char *name ( void ) const override
+    {
+        return "Meter Indicator";
+    }
 
-    int can_support_inputs ( int ) override { return 0; }
-    bool configure_inputs ( int ) override { return false; }
+    int can_support_inputs ( int ) override
+    {
+        return 0;
+    }
+    bool configure_inputs ( int ) override
+    {
+        return false;
+    }
 
-    void pad ( bool v ) { _pad = v; }
+    void pad ( bool v )
+    {
+        _pad = v;
+    }
 
     static void cb_handle ( Fl_Widget *w, void *v );
     void cb_handle ( Fl_Widget *w );

@@ -20,7 +20,7 @@
 
 *****************************************************************************/
 
-/* 
+/*
  * File:   Vst2_Discovery.H
  * Author: sspresto
  *
@@ -56,7 +56,7 @@ std::vector<std::filesystem::path> installedVST2s();
  */
 std::vector<std::filesystem::path> validVST2SearchPaths();
 
-    
+
 typedef struct _AEffect AEffect;
 
 
@@ -79,9 +79,18 @@ public:
     // Properties.
     bool isOpen() const;
 
-    const std::string& name() const { return m_sName; }
-    const std::string& vendor() const { return m_sVendor; }
-    const std::string& category() const { return m_sCategory; }
+    const std::string& name() const
+    {
+        return m_sName;
+    }
+    const std::string& vendor() const
+    {
+        return m_sVendor;
+    }
+    const std::string& category() const
+    {
+        return m_sCategory;
+    }
 
     unsigned int uniqueID() const;
 
@@ -99,7 +108,7 @@ public:
 
     // VST2 host dispatcher.
     int vst2_dispatch(
-            long opcode, long index, long value, void *ptr, float opt) const;
+        long opcode, long index, long value, void *ptr, float opt) const;
 
 protected:
 
@@ -119,7 +128,7 @@ private:
 };
 
 void vst2_discovery_scan_file ( const std::string& sFilename, std::list<Plugin_Info> & vst2pr );
-    
+
 }   // namespace vst2_discovvery
 
 

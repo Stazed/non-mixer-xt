@@ -36,17 +36,17 @@ class JACK_Module : public Module
     char *_prefix;
 
 protected:
-    
+
     void prefix ( const char *s )
-        {
-            if ( _prefix )
-                free( _prefix );
-            
-            _prefix = NULL;
-            
-            if ( s )
-                _prefix = strdup( s );
-        }
+    {
+        if ( _prefix )
+            free( _prefix );
+
+        _prefix = NULL;
+
+        if ( s )
+            _prefix = strdup( s );
+    }
 
     Fl_Button * dec_button;
     Fl_Button * inc_button;
@@ -54,14 +54,14 @@ protected:
     Fl_Box * input_connection_handle;
     Fl_Box * output_connection_handle;
     Fl_Box * output_connection2_handle;
-    
+
     static void cb_button ( Fl_Widget *w, void *v );
     void cb_button ( Fl_Widget *w );
 
 protected:
 
     unsigned int _connection_handle_outputs[2][2];
- 
+
 public:
 
     void update_connection_status ( void );
@@ -69,8 +69,14 @@ public:
     JACK_Module ( bool log = true );
     virtual ~JACK_Module ( );
 
-    virtual const char *basename ( void ) const override { return "JACK"; }
-    virtual const char *name ( void ) const override { return "JACK"; }
+    virtual const char *basename ( void ) const override
+    {
+        return "JACK";
+    }
+    virtual const char *name ( void ) const override
+    {
+        return "JACK";
+    }
 
     virtual void draw ( void ) override;
     virtual int handle ( int m ) override;

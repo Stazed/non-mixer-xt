@@ -20,7 +20,7 @@
 /*******************************************************************************/
 
 
-/* 
+/*
  * File:   VST2_Plugin.H
  * Author: sspresto
  *
@@ -48,7 +48,7 @@ typedef struct _AEffect AEffect;
 constexpr const uint16_t kPluginMaxMidiEvents = 512;
 
 class VST2_Plugin : public Plugin_Module,
-        private X11PluginUI::Callback
+    private X11PluginUI::Callback
 {
 public:
 
@@ -60,13 +60,16 @@ public:
     void handle_sample_rate_change ( nframes_t sample_rate ) override;
     void resize_buffers ( nframes_t buffer_size ) override;
 
-    virtual bool bypass ( void ) const override { return *_bypass == 1.0f; }
+    virtual bool bypass ( void ) const override
+    {
+        return *_bypass == 1.0f;
+    }
     virtual void bypass ( bool v ) override;
 
     void freeze_ports ( void ) override;
     void thaw_ports ( void ) override;
     void clear_midi_vectors() override;
-    
+
     void configure_midi_inputs () override;
     void configure_midi_outputs () override;
 
@@ -106,13 +109,25 @@ public:
     void resizeEditor ( int w, int h );
 
     int ProcessEvents (void *ptr);
-    VstTimeInfo& get_time_info() {return _fTimeInfo;}
-    int32_t get_unique_id() {return _iUniqueID;}
+    VstTimeInfo& get_time_info()
+    {
+        return _fTimeInfo;
+    }
+    int32_t get_unique_id()
+    {
+        return _iUniqueID;
+    }
 
     int vst2_dispatch(long opcode, long index, long value, void *ptr, float opt) const;
     // Specific accessors.
-    AEffect *vst2_effect() const { return _pEffect; }
-    bool isConfigure() const { return _bConfigure; }
+    AEffect *vst2_effect() const
+    {
+        return _pEffect;
+    }
+    bool isConfigure() const
+    {
+        return _bConfigure;
+    }
 
     // Save/Restore state
     void save_VST2_plugin_state(const std::string &filename);
@@ -133,7 +148,8 @@ private:
     VstMidiEvent _fMidiEvents[kPluginMaxMidiEvents*2];
     VstTimeInfo  _fTimeInfo;
 
-    struct FixedVstEvents {
+    struct FixedVstEvents
+    {
         int32_t numEvents;
         intptr_t reserved;
         VstEvent* data[kPluginMaxMidiEvents*2];
@@ -145,7 +161,7 @@ private:
             carla_zeroPointers(data, kPluginMaxMidiEvents*2);
         }
 
-       // CARLA_DECLARE_NON_COPYABLE(FixedVstEvents);
+        // CARLA_DECLARE_NON_COPYABLE(FixedVstEvents);
     } _fEvents;
 
     // Cached port counts.
@@ -168,7 +184,7 @@ private:
     float     _bpm;             ///< Transport tempo in beats per minute
     bool      _rolling;         ///< Transport speed (0=stop, 1=play)
 
-     // GUI Editor stuff...
+    // GUI Editor stuff...
     bool _bEditorCreated;
     X11PluginUI *_X11_UI;
     bool   _x_is_visible;
@@ -191,7 +207,7 @@ private:
     void activate ( void );
     void deactivate ( void );
     void add_port ( const Port &p ) override;
-    
+
     void set_input_buffer ( int n, void *buf );
     void set_output_buffer ( int n, void *buf );
     bool loaded ( void ) const;
@@ -199,7 +215,7 @@ private:
     void process_jack_transport ( uint32_t nframes );
     void process_jack_midi_in ( uint32_t nframes, unsigned int port );
     void process_midi_in (unsigned char *data, unsigned int size,
-	unsigned long offset, unsigned short port );
+                          unsigned long offset, unsigned short port );
     void process_jack_midi_out ( uint32_t nframes, unsigned int port );
 
     bool show_custom_ui();

@@ -67,12 +67,13 @@ DPM::DPM( int X, int Y, int W, int H, const char *L ) :
     {
         int breaks[] = { 0, 80, 90, 110, 127 };
 
-        Fl_Color cols[] = {
-                           fl_darker ( FL_CYAN ),
-                           FL_CYAN,
-                           fl_lighter ( FL_CYAN ),
-                           fl_color_average ( FL_YELLOW, FL_RED, 0.50f ),
-                           FL_RED
+        Fl_Color cols[] =
+        {
+            fl_darker ( FL_CYAN ),
+            FL_CYAN,
+            fl_lighter ( FL_CYAN ),
+            fl_color_average ( FL_YELLOW, FL_RED, 0.50f ),
+            FL_RED
         };
 
         for ( int i = 0; i < 4; ++i )
@@ -81,9 +82,9 @@ DPM::DPM( int X, int Y, int W, int H, const char *L ) :
         }
 
         DPM::blend ( 5,
-                breaks,
-                cols,
-                color ( ) );
+                     breaks,
+                     cols,
+                     color ( ) );
 
     }
 

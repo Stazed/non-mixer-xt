@@ -661,7 +661,7 @@ Chain::insert( Module *m, Module *n )
             n->configure_midi_outputs ( );
 #endif
         }
-            /* This is used when loading from project file */
+        /* This is used when loading from project file */
         else if ( n->can_support_inputs ( module ( modules ( ) - 1 )->noutputs ( ) ) >= 0 )
         {
             n->chain ( this );
@@ -776,11 +776,11 @@ Chain::insert( Module *m, Module *n )
     client ( )->unlock ( );
 
     DMESSAGE ( "Module \"%s\" has %i:%i audio and %i:%i control ports",
-            n->name ( ),
-            n->ninputs ( ),
-            n->noutputs ( ),
-            n->ncontrol_inputs ( ),
-            n->ncontrol_outputs ( ) );
+               n->name ( ),
+               n->ninputs ( ),
+               n->noutputs ( ),
+               n->ncontrol_inputs ( ),
+               n->ncontrol_outputs ( ) );
 
     n->initialize ( );
     return true;
@@ -986,8 +986,8 @@ Chain::get_output_ports( std::list<std::string> &sl )
             char *s;
 
             asprintf ( &s, "%s/%s",
-                    "*",
-                    m->aux_audio_output[j].jack_port ( )->name ( ) );
+                       "*",
+                       m->aux_audio_output[j].jack_port ( )->name ( ) );
 
             sl.push_back ( s );
 
@@ -996,8 +996,8 @@ Chain::get_output_ports( std::list<std::string> &sl )
             if ( !strip ( )->group ( )->single ( ) )
             {
                 asprintf ( &s, "%s/%s",
-                        strip ( )->group ( )->name ( ),
-                        m->aux_audio_output[j].jack_port ( )->name ( ) );
+                           strip ( )->group ( )->name ( ),
+                           m->aux_audio_output[j].jack_port ( )->name ( ) );
 
 
                 sl.push_back ( s );
@@ -1116,7 +1116,7 @@ Chain::port_connect( jack_port_id_t a, jack_port_id_t b, int /*connect*/ )
     /* this is called from JACK non-RT thread... */
 
     if ( jack_port_is_mine ( client ( )->jack_client ( ), jack_port_by_id ( client ( )->jack_client ( ), a ) ) ||
-         jack_port_is_mine ( client ( )->jack_client ( ), jack_port_by_id ( client ( )->jack_client ( ), b ) ) )
+            jack_port_is_mine ( client ( )->jack_client ( ), jack_port_by_id ( client ( )->jack_client ( ), b ) ) )
     {
         /* When the mixer is first starting under NSM, the call to Fl::awake would sometimes
            occur before the initial main() Fl:wait() which would cause an intermittent segfault.

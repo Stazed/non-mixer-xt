@@ -20,10 +20,10 @@
 /*******************************************************************************/
 
 
-/* 
+/*
  * File:   VST2_Plugin.C
  * Author: sspresto
- * 
+ *
  * Created on January 13, 2024, 5:36 PM
  */
 
@@ -521,7 +521,7 @@ nframes_t
 VST2_Plugin::get_module_latency( void ) const
 {
     const VstInt32 *pInitialDelay
-            = ( VstInt32 * ) &( _pEffect->empty3[0] );
+        = ( VstInt32 * ) &( _pEffect->empty3[0] );
 
     return *pInitialDelay;
 }
@@ -538,7 +538,7 @@ VST2_Plugin::process( nframes_t nframes )
         if ( ninputs ( ) == 1 && noutputs ( ) == 2 )
         {
             buffer_copy ( static_cast<sample_t*> ( audio_output[1].buffer ( ) ),
-                    static_cast<sample_t*> ( audio_input[0].buffer ( ) ), nframes );
+                          static_cast<sample_t*> ( audio_input[0].buffer ( ) ), nframes );
         }
 
         _latency = 0;
@@ -570,7 +570,7 @@ VST2_Plugin::process( nframes_t nframes )
         if ( _pEffect->flags & effFlagsCanReplacing )
         {
             _pEffect->processReplacing (
-                    _pEffect, _audio_in_buffers, _audio_out_buffers, nframes );
+                _pEffect, _audio_in_buffers, _audio_out_buffers, nframes );
         }
 
         for ( unsigned int i = 0; i < midi_output.size ( ); ++i )
@@ -903,10 +903,10 @@ VST2_Plugin::open_descriptor( unsigned long iIndex )
     else
         // Not a VST Shell plugin...
         if ( iIndex > 0 )
-    {
-        _pEffect = nullptr;
-        return false;
-    }
+        {
+            _pEffect = nullptr;
+            return false;
+        }
 
     //	vst2_dispatch(effIdentify, 0, 0, nullptr, 0.0f);
     vst2_dispatch ( effOpen, 0, 0, nullptr, 0.0f );
@@ -1028,7 +1028,7 @@ VST2_Plugin::initialize_plugin( )
 
 int
 VST2_Plugin::vst2_dispatch(
-                            long opcode, long index, long value, void *ptr, float opt ) const
+    long opcode, long index, long value, void *ptr, float opt ) const
 {
     if ( _pEffect == nullptr )
         return 0;
@@ -1043,7 +1043,7 @@ VST2_Plugin::vst2_dispatch(
 
 void
 VST2_Plugin::updateParamValue(
-                               unsigned long iIndex, float fValue, bool bUpdate )
+    unsigned long iIndex, float fValue, bool bUpdate )
 {
     if ( iIndex < control_input.size ( ) )
     {
@@ -1114,7 +1114,7 @@ VST2_Plugin *
 VST2_Plugin::findPlugin( AEffect *pVst2Effect )
 {
     std::map<AEffect *, VST2_Plugin *>::const_iterator got
-            = g_vst2Plugins.find ( pVst2Effect );
+        = g_vst2Plugins.find ( pVst2Effect );
 
     if ( got == g_vst2Plugins.end ( ) )
         return nullptr;
@@ -1133,249 +1133,249 @@ Vst2Plugin_HostCallback( AEffect *effect,
     switch ( opcode )
     {
 
-            // VST 1.0 opcodes...
-        case audioMasterVersion:
-            DMESSAGE ( "audioMasterVersion" );
-            ret = 2; // vst2.x
-            break;
+    // VST 1.0 opcodes...
+    case audioMasterVersion:
+        DMESSAGE ( "audioMasterVersion" );
+        ret = 2; // vst2.x
+        break;
 
-        case audioMasterAutomate:
-            DMESSAGE ( "audioMasterAutomate" );
-            pVst2Plugin = VST2_Plugin::findPlugin ( effect );
-            if ( pVst2Plugin )
-            {
-                pVst2Plugin->updateParamValue ( index, opt, false );
-            }
-            break;
+    case audioMasterAutomate:
+        DMESSAGE ( "audioMasterAutomate" );
+        pVst2Plugin = VST2_Plugin::findPlugin ( effect );
+        if ( pVst2Plugin )
+        {
+            pVst2Plugin->updateParamValue ( index, opt, false );
+        }
+        break;
 
-        case audioMasterCurrentId:
-            DMESSAGE ( "audioMasterCurrentId" );
-            pVst2Plugin = VST2_Plugin::findPlugin ( effect );
-            if ( pVst2Plugin )
-            {
-                ret = (VstIntPtr) pVst2Plugin->get_unique_id ( );
-            }
+    case audioMasterCurrentId:
+        DMESSAGE ( "audioMasterCurrentId" );
+        pVst2Plugin = VST2_Plugin::findPlugin ( effect );
+        if ( pVst2Plugin )
+        {
+            ret = (VstIntPtr) pVst2Plugin->get_unique_id ( );
+        }
 
-            break;
+        break;
 
-        case audioMasterIdle:
-            DMESSAGE ( "audioMasterIdle" );
-            pVst2Plugin = VST2_Plugin::findPlugin ( effect );
-            if ( pVst2Plugin )
-            {
-                pVst2Plugin->updateParamValues ( false );
-                pVst2Plugin->idleEditor ( ); // WTF
-            }
-            break;
+    case audioMasterIdle:
+        DMESSAGE ( "audioMasterIdle" );
+        pVst2Plugin = VST2_Plugin::findPlugin ( effect );
+        if ( pVst2Plugin )
+        {
+            pVst2Plugin->updateParamValues ( false );
+            pVst2Plugin->idleEditor ( ); // WTF
+        }
+        break;
 
-        case audioMasterGetTime:
-            //	DMESSAGE("audioMasterGetTime");
-            pVst2Plugin = VST2_Plugin::findPlugin ( effect );
-            if ( pVst2Plugin )
-            {
-                VstTimeInfo& _fTimeInfo = pVst2Plugin->get_time_info ( );
-                ret = ( intptr_t ) & _fTimeInfo;
-            }
+    case audioMasterGetTime:
+        //	DMESSAGE("audioMasterGetTime");
+        pVst2Plugin = VST2_Plugin::findPlugin ( effect );
+        if ( pVst2Plugin )
+        {
+            VstTimeInfo& _fTimeInfo = pVst2Plugin->get_time_info ( );
+            ret = ( intptr_t ) & _fTimeInfo;
+        }
 
-            break;
+        break;
 
-        case audioMasterProcessEvents:
-            DMESSAGE ( "audioMasterProcessEvents" );
+    case audioMasterProcessEvents:
+        DMESSAGE ( "audioMasterProcessEvents" );
 
-            pVst2Plugin = VST2_Plugin::findPlugin ( effect );
-            if ( pVst2Plugin )
-            {
-                ret = pVst2Plugin->ProcessEvents ( ptr );
-            }
-            break;
+        pVst2Plugin = VST2_Plugin::findPlugin ( effect );
+        if ( pVst2Plugin )
+        {
+            ret = pVst2Plugin->ProcessEvents ( ptr );
+        }
+        break;
 
-        case audioMasterIOChanged:
-            DMESSAGE ( "audioMasterIOChanged" );
-            break;
+    case audioMasterIOChanged:
+        DMESSAGE ( "audioMasterIOChanged" );
+        break;
 
-        case audioMasterSizeWindow:
-            DMESSAGE ( "audioMasterSizeWindow" );
-            pVst2Plugin = VST2_Plugin::findPlugin ( effect );
-            if ( pVst2Plugin )
-            {
-                pVst2Plugin->resizeEditor ( int(index ), int(value ) );
-                ret = 1; // supported.
-            }
-            break;
+    case audioMasterSizeWindow:
+        DMESSAGE ( "audioMasterSizeWindow" );
+        pVst2Plugin = VST2_Plugin::findPlugin ( effect );
+        if ( pVst2Plugin )
+        {
+            pVst2Plugin->resizeEditor ( int(index ), int(value ) );
+            ret = 1; // supported.
+        }
+        break;
 
-        case audioMasterGetSampleRate:
-            DMESSAGE ( "audioMasterGetSampleRate" );
+    case audioMasterGetSampleRate:
+        DMESSAGE ( "audioMasterGetSampleRate" );
 
-            pVst2Plugin = VST2_Plugin::findPlugin ( effect );
-            if ( pVst2Plugin )
-            {
-                ret = (VstIntPtr) pVst2Plugin->sample_rate ( );
-            }
+        pVst2Plugin = VST2_Plugin::findPlugin ( effect );
+        if ( pVst2Plugin )
+        {
+            ret = (VstIntPtr) pVst2Plugin->sample_rate ( );
+        }
 
-            break;
+        break;
 
-        case audioMasterGetBlockSize:
-            DMESSAGE ( "audioMasterGetBlockSize" );
+    case audioMasterGetBlockSize:
+        DMESSAGE ( "audioMasterGetBlockSize" );
 
-            pVst2Plugin = VST2_Plugin::findPlugin ( effect );
-            if ( pVst2Plugin )
-            {
-                ret = (VstIntPtr) pVst2Plugin->buffer_size ( );
-            }
+        pVst2Plugin = VST2_Plugin::findPlugin ( effect );
+        if ( pVst2Plugin )
+        {
+            ret = (VstIntPtr) pVst2Plugin->buffer_size ( );
+        }
 
-            break;
+        break;
 
-        case audioMasterGetInputLatency:
-            DMESSAGE ( "audioMasterGetInputLatency" );
-            break;
+    case audioMasterGetInputLatency:
+        DMESSAGE ( "audioMasterGetInputLatency" );
+        break;
 
-        case audioMasterGetOutputLatency:
-            DMESSAGE ( "audioMasterGetOutputLatency" );
-            break;
+    case audioMasterGetOutputLatency:
+        DMESSAGE ( "audioMasterGetOutputLatency" );
+        break;
 
-        case audioMasterGetCurrentProcessLevel:
-            //	DMESSAGE("audioMasterGetCurrentProcessLevel");
-            break;
+    case audioMasterGetCurrentProcessLevel:
+        //	DMESSAGE("audioMasterGetCurrentProcessLevel");
+        break;
 
-        case audioMasterGetAutomationState:
-            DMESSAGE ( "audioMasterGetAutomationState" );
-            ret = 1; // off.
-            break;
+    case audioMasterGetAutomationState:
+        DMESSAGE ( "audioMasterGetAutomationState" );
+        ret = 1; // off.
+        break;
 
-#if !defined(VST_2_3_EXTENSIONS) 
-        case audioMasterGetSpeakerArrangement:
-            DMESSAGE ( "audioMasterGetSpeakerArrangement" );
-            break;
+#if !defined(VST_2_3_EXTENSIONS)
+    case audioMasterGetSpeakerArrangement:
+        DMESSAGE ( "audioMasterGetSpeakerArrangement" );
+        break;
 #endif
 
-        case audioMasterGetVendorString:
-            DMESSAGE ( "audioMasterGetVendorString" );
-            //::strcpy((char *) ptr, QTRACTOR_DOMAIN);
-            ::strcpy ( (char *) ptr, WEBSITE );
-            ret = 1; // ok.
-            break;
+    case audioMasterGetVendorString:
+        DMESSAGE ( "audioMasterGetVendorString" );
+        //::strcpy((char *) ptr, QTRACTOR_DOMAIN);
+        ::strcpy ( (char *) ptr, WEBSITE );
+        ret = 1; // ok.
+        break;
 
-        case audioMasterGetProductString:
-            DMESSAGE ( "audioMasterGetProductString" );
-            //::strcpy((char *) ptr, QTRACTOR_TITLE);
-            ::strcpy ( (char *) ptr, PACKAGE );
-            ret = 1; // ok.
-            break;
+    case audioMasterGetProductString:
+        DMESSAGE ( "audioMasterGetProductString" );
+        //::strcpy((char *) ptr, QTRACTOR_TITLE);
+        ::strcpy ( (char *) ptr, PACKAGE );
+        ret = 1; // ok.
+        break;
 
-        case audioMasterGetVendorVersion:
-            DMESSAGE ( "audioMasterGetVendorVersion" );
-            break;
+    case audioMasterGetVendorVersion:
+        DMESSAGE ( "audioMasterGetVendorVersion" );
+        break;
 
-        case audioMasterVendorSpecific:
-            DMESSAGE ( "audioMasterVendorSpecific" );
-            break;
+    case audioMasterVendorSpecific:
+        DMESSAGE ( "audioMasterVendorSpecific" );
+        break;
 
-        case audioMasterCanDo:
-            DMESSAGE ( "audioMasterCanDo" );
-            if ( ::strcmp ( "receiveVstMidiEvent", (char *) ptr ) == 0 ||
-                 ::strcmp ( "sendVstMidiEvent", (char *) ptr ) == 0 ||
-                 ::strcmp ( "sendVstTimeInfo", (char *) ptr ) == 0 ||
-                 ::strcmp ( "midiProgramNames", (char *) ptr ) == 0 ||
-                 ::strcmp ( "sizeWindow", (char *) ptr ) == 0 )
-            {
-                ret = 1; // can do.
-            }
-            break;
+    case audioMasterCanDo:
+        DMESSAGE ( "audioMasterCanDo" );
+        if ( ::strcmp ( "receiveVstMidiEvent", (char *) ptr ) == 0 ||
+                ::strcmp ( "sendVstMidiEvent", (char *) ptr ) == 0 ||
+                ::strcmp ( "sendVstTimeInfo", (char *) ptr ) == 0 ||
+                ::strcmp ( "midiProgramNames", (char *) ptr ) == 0 ||
+                ::strcmp ( "sizeWindow", (char *) ptr ) == 0 )
+        {
+            ret = 1; // can do.
+        }
+        break;
 
-        case audioMasterGetLanguage:
-            DMESSAGE ( "audioMasterGetLanguage" );
-            ret = (VstIntPtr) kVstLangEnglish;
-            break;
+    case audioMasterGetLanguage:
+        DMESSAGE ( "audioMasterGetLanguage" );
+        ret = (VstIntPtr) kVstLangEnglish;
+        break;
 
 #if 0 // !VST_FORCE_DEPRECATED
-        case audioMasterPinConnected:
-            DMESSAGE ( "audioMasterPinConnected" );
-            break;
+    case audioMasterPinConnected:
+        DMESSAGE ( "audioMasterPinConnected" );
+        break;
 
-            // VST 2.0 opcodes...
-        case audioMasterWantMidi:
-            DMESSAGE ( "audioMasterWantMidi" );
-            break;
+    // VST 2.0 opcodes...
+    case audioMasterWantMidi:
+        DMESSAGE ( "audioMasterWantMidi" );
+        break;
 
-        case audioMasterSetTime:
-            DMESSAGE ( "audioMasterSetTime" );
-            break;
+    case audioMasterSetTime:
+        DMESSAGE ( "audioMasterSetTime" );
+        break;
 
-        case audioMasterTempoAt:
-            DMESSAGE ( "audioMasterTempoAt" );
-            //if (pSession)
-            //	ret = (VstIntPtr) (pSession->tempo() * 10000.0f);
-            break;
+    case audioMasterTempoAt:
+        DMESSAGE ( "audioMasterTempoAt" );
+        //if (pSession)
+        //	ret = (VstIntPtr) (pSession->tempo() * 10000.0f);
+        break;
 
-        case audioMasterGetNumAutomatableParameters:
-            DMESSAGE ( "audioMasterGetNumAutomatableParameters" );
-            break;
+    case audioMasterGetNumAutomatableParameters:
+        DMESSAGE ( "audioMasterGetNumAutomatableParameters" );
+        break;
 
-        case audioMasterGetParameterQuantization:
-            DMESSAGE ( "audioMasterGetParameterQuantization" );
-            ret = 1; // full single float precision
-            break;
+    case audioMasterGetParameterQuantization:
+        DMESSAGE ( "audioMasterGetParameterQuantization" );
+        ret = 1; // full single float precision
+        break;
 
-        case audioMasterNeedIdle:
-            DMESSAGE ( "audioMasterNeedIdle" );
-            break;
+    case audioMasterNeedIdle:
+        DMESSAGE ( "audioMasterNeedIdle" );
+        break;
 
-        case audioMasterGetPreviousPlug:
-            DMESSAGE ( "audioMasterGetPreviousPlug" );
-            break;
+    case audioMasterGetPreviousPlug:
+        DMESSAGE ( "audioMasterGetPreviousPlug" );
+        break;
 
-        case audioMasterGetNextPlug:
-            DMESSAGE ( "audioMasterGetNextPlug" );
-            break;
+    case audioMasterGetNextPlug:
+        DMESSAGE ( "audioMasterGetNextPlug" );
+        break;
 
-        case audioMasterWillReplaceOrAccumulate:
-            DMESSAGE ( "audioMasterWillReplaceOrAccumulate" );
-            ret = 1;
-            break;
+    case audioMasterWillReplaceOrAccumulate:
+        DMESSAGE ( "audioMasterWillReplaceOrAccumulate" );
+        ret = 1;
+        break;
 
-        case audioMasterSetOutputSampleRate:
-            DMESSAGE ( "audioMasterSetOutputSampleRate" );
-            break;
+    case audioMasterSetOutputSampleRate:
+        DMESSAGE ( "audioMasterSetOutputSampleRate" );
+        break;
 
-        case audioMasterSetIcon:
-            DMESSAGE ( "audioMasterSetIcon" );
-            break;
+    case audioMasterSetIcon:
+        DMESSAGE ( "audioMasterSetIcon" );
+        break;
 
-        case audioMasterOpenWindow:
-            DMESSAGE ( "audioMasterOpenWindow" );
-            break;
+    case audioMasterOpenWindow:
+        DMESSAGE ( "audioMasterOpenWindow" );
+        break;
 
-        case audioMasterCloseWindow:
-            DMESSAGE ( "audioMasterCloseWindow" );
-            break;
+    case audioMasterCloseWindow:
+        DMESSAGE ( "audioMasterCloseWindow" );
+        break;
 #endif
 
-        case audioMasterGetDirectory:
-            DMESSAGE ( "audioMasterGetDirectory" );
-            break;
+    case audioMasterGetDirectory:
+        DMESSAGE ( "audioMasterGetDirectory" );
+        break;
 
-        case audioMasterUpdateDisplay:
-            DMESSAGE ( "audioMasterUpdateDisplay" );
-            pVst2Plugin = VST2_Plugin::findPlugin ( effect );
-            if ( pVst2Plugin )
-            {
-                pVst2Plugin->updateParamValues ( false );
-                //	QApplication::processEvents();
-                ret = 1; // supported.
-            }
-            break;
+    case audioMasterUpdateDisplay:
+        DMESSAGE ( "audioMasterUpdateDisplay" );
+        pVst2Plugin = VST2_Plugin::findPlugin ( effect );
+        if ( pVst2Plugin )
+        {
+            pVst2Plugin->updateParamValues ( false );
+            //	QApplication::processEvents();
+            ret = 1; // supported.
+        }
+        break;
 
-        case audioMasterBeginEdit:
-            DMESSAGE ( "audioMasterBeginEdit" );
-            break;
+    case audioMasterBeginEdit:
+        DMESSAGE ( "audioMasterBeginEdit" );
+        break;
 
-        case audioMasterEndEdit:
-            DMESSAGE ( "audioMasterEndEdit" );
-            break;
+    case audioMasterEndEdit:
+        DMESSAGE ( "audioMasterEndEdit" );
+        break;
 
-        default:
-            DMESSAGE ( "audioMasterUnknown" );
-            break;
+    default:
+        DMESSAGE ( "audioMasterUnknown" );
+        break;
     }
 
     return ret;
@@ -1622,13 +1622,13 @@ VST2_Plugin::process_jack_transport( uint32_t nframes )
     // Get Jack transport position
     jack_position_t pos;
     const bool rolling =
-            ( chain ( )->client ( )->transport_query ( &pos ) == JackTransportRolling );
+        ( chain ( )->client ( )->transport_query ( &pos ) == JackTransportRolling );
 
     // If transport state is not as expected, then something has changed
     const bool has_bbt = ( pos.valid & JackPositionBBT );
     const bool xport_changed =
-            ( rolling != _rolling || pos.frame != _position ||
-              ( has_bbt && pos.beats_per_minute != _bpm ) );
+        ( rolling != _rolling || pos.frame != _position ||
+          ( has_bbt && pos.beats_per_minute != _bpm ) );
 
     _fTimeInfo.flags = 0;
 
@@ -1637,7 +1637,7 @@ VST2_Plugin::process_jack_transport( uint32_t nframes )
         if ( has_bbt )
         {
             const double positionBeats = static_cast<double> ( pos.frame )
-                    / ( sample_rate ( ) * 60 / pos.beats_per_minute );
+                                         / ( sample_rate ( ) * 60 / pos.beats_per_minute );
 
             const double ppqBar = static_cast<double> ( pos.beats_per_bar ) * ( pos.bar - 1 );
 
@@ -1767,36 +1767,36 @@ VST2_Plugin::process_midi_in( unsigned char *data, unsigned int size,
         else
             // note off
             if ( status == 0x80 )
-        {
-            if ( _fMidiEventCount >= kPluginMaxMidiEvents * 2 )
-                continue;
+            {
+                if ( _fMidiEventCount >= kPluginMaxMidiEvents * 2 )
+                    continue;
 
-            VstMidiEvent & vstMidiEvent ( _fMidiEvents[_fMidiEventCount++] );
-            non_zeroStruct ( vstMidiEvent );
+                VstMidiEvent & vstMidiEvent ( _fMidiEvents[_fMidiEventCount++] );
+                non_zeroStruct ( vstMidiEvent );
 
-            vstMidiEvent.type = kVstMidiType;
-            vstMidiEvent.byteSize = kVstMidiEventSize;
-            vstMidiEvent.midiData[0] = char(status | channel );
-            vstMidiEvent.midiData[1] = char(key );
-            vstMidiEvent.midiData[2] = char(value );
-        }
-        else
-            // Control Change
-            if ( status == 0xb0 )
-        {
-            if ( _fMidiEventCount >= kPluginMaxMidiEvents * 2 )
-                continue;
+                vstMidiEvent.type = kVstMidiType;
+                vstMidiEvent.byteSize = kVstMidiEventSize;
+                vstMidiEvent.midiData[0] = char(status | channel );
+                vstMidiEvent.midiData[1] = char(key );
+                vstMidiEvent.midiData[2] = char(value );
+            }
+            else
+                // Control Change
+                if ( status == 0xb0 )
+                {
+                    if ( _fMidiEventCount >= kPluginMaxMidiEvents * 2 )
+                        continue;
 
-            VstMidiEvent & vstMidiEvent ( _fMidiEvents[_fMidiEventCount++] );
-            non_zeroStruct ( vstMidiEvent );
+                    VstMidiEvent & vstMidiEvent ( _fMidiEvents[_fMidiEventCount++] );
+                    non_zeroStruct ( vstMidiEvent );
 
-            vstMidiEvent.type = kVstMidiType;
-            vstMidiEvent.byteSize = kVstMidiEventSize;
-            vstMidiEvent.deltaFrames = static_cast<int32_t> ( offset );
-            vstMidiEvent.midiData[0] = char(status | channel );
-            vstMidiEvent.midiData[1] = char(key );
-            vstMidiEvent.midiData[2] = char(value );
-        }
+                    vstMidiEvent.type = kVstMidiType;
+                    vstMidiEvent.byteSize = kVstMidiEventSize;
+                    vstMidiEvent.deltaFrames = static_cast<int32_t> ( offset );
+                    vstMidiEvent.midiData[0] = char(status | channel );
+                    vstMidiEvent.midiData[1] = char(key );
+                    vstMidiEvent.midiData[2] = char(value );
+                }
     }
 }
 
@@ -1827,7 +1827,7 @@ VST2_Plugin::process_jack_midi_out( uint32_t nframes, unsigned int port )
             midiData[2] = static_cast<uint8_t> ( vstMidiEvent.midiData[2] );
 
             int ret = jack_midi_event_write ( buf, static_cast<uint32_t> ( vstMidiEvent.deltaFrames ),
-                    static_cast<jack_midi_data_t*> ( midiData ), 3 );
+                                              static_cast<jack_midi_data_t*> ( midiData ), 3 );
 
             if ( ret )
                 WARNING ( "Jack MIDI event on error = %d", ret );

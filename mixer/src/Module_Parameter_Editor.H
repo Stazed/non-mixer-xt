@@ -49,7 +49,7 @@ class SpectrumView;
 class Module_Parameter_Editor : public Fl_Double_Window
 {
     Module *_module;
-    
+
     struct callback_data
     {
         Module_Parameter_Editor *base_widget;
@@ -57,28 +57,28 @@ class Module_Parameter_Editor : public Fl_Double_Window
         int port_number[3];
 
         callback_data ( Module_Parameter_Editor *base_widget, int port_number )
-            {
-                this->base_widget = base_widget;
-                this->port_number[0] = port_number;
-                this->port_number[1] = -1;
-                this->port_number[2] = -1;
-            }
+        {
+            this->base_widget = base_widget;
+            this->port_number[0] = port_number;
+            this->port_number[1] = -1;
+            this->port_number[2] = -1;
+        }
 
         callback_data ( Module_Parameter_Editor *base_widget, int port_number1, int port_number2 )
-            {
-                this->base_widget = base_widget;
-                this->port_number[0] = port_number1;
-                this->port_number[1] = port_number2;
-                this->port_number[2] = -1;
-            }
+        {
+            this->base_widget = base_widget;
+            this->port_number[0] = port_number1;
+            this->port_number[1] = port_number2;
+            this->port_number[2] = -1;
+        }
 
         callback_data ( Module_Parameter_Editor *base_widget, int port_number1, int port_number2, int port_number3 )
-            {
-                this->base_widget = base_widget;
-                this->port_number[0] = port_number1;
-                this->port_number[1] = port_number2;
-                this->port_number[2] = port_number3;
-            }
+        {
+            this->base_widget = base_widget;
+            this->port_number[0] = port_number1;
+            this->port_number[1] = port_number2;
+            this->port_number[2] = port_number3;
+        }
 
     };
 
@@ -108,7 +108,7 @@ class Module_Parameter_Editor : public Fl_Double_Window
     void bind_control ( int i );
     void make_controls ( void );
     void update_spectrum ( void );
-    
+
     bool is_probably_eq ( void );
 
     static void menu_cb ( Fl_Widget *w, void *v );

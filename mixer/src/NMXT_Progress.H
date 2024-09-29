@@ -17,7 +17,7 @@
 /* with This program; see the file COPYING.  If not,write to the Free Software */
 /* Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 /*******************************************************************************/
-/* 
+/*
  * File:   NMXT_Progress.H
  * Author: sspresto
  *
@@ -36,10 +36,10 @@
 
 class NMXT_Progress : public Fl_Progress
 {
-    public:
+public:
     NMXT_Progress(int x, int y, int w, int h, const char *l = 0) :
         Fl_Progress(x, y, w, h, l) {}
-    
+
 
     int handle(int e)
     {

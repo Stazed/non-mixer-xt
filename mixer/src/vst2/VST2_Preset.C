@@ -20,10 +20,10 @@
 
  *****************************************************************************/
 
-/* 
+/*
  * File:   VST2_Preset.C
  * Author: sspresto
- * 
+ *
  * Created on January 17, 2024, 7:19 AM
  */
 
@@ -165,7 +165,7 @@ VST2_Preset::load_bank_progs( FILE& file )
 
     const int iNumPrograms = int(bank_header.numPrograms );
     const int iCurrentProgram
-            = m_pVst2Plugin->vst2_dispatch ( effGetProgram, 0, 0, nullptr, 0.0f );
+        = m_pVst2Plugin->vst2_dispatch ( effGetProgram, 0, 0, nullptr, 0.0f );
 
     for ( int iProgram = 0; iProgram < iNumPrograms; ++iProgram )
     {
@@ -192,8 +192,7 @@ VST2_Preset::load_bank_progs( FILE& file )
             if ( !load_prog_params ( file ) )
                 return false;
         }
-        else
-            if ( fx_is_magic ( base_header.fxMagic, chunkPresetMagic ) )
+        else if ( fx_is_magic ( base_header.fxMagic, chunkPresetMagic ) )
         {
             if ( !load_prog_chunk ( file ) )
                 return false;
@@ -255,7 +254,7 @@ VST2_Preset::load_bank_chunk( FILE& file )
         return false;
 
     const int iCurrentProgram
-            = m_pVst2Plugin->vst2_dispatch ( effGetProgram, 0, 0, nullptr, 0.0f );
+        = m_pVst2Plugin->vst2_dispatch ( effGetProgram, 0, 0, nullptr, 0.0f );
 
     const bool bResult = load_chunk ( file, 0 );
 
@@ -297,7 +296,7 @@ VST2_Preset::load_chunk( FILE& file, int preset )
     }
 
     m_pVst2Plugin->vst2_dispatch ( effSetChunk,
-            preset, chunk.size, (void *) chunk.data, 0.0f );
+                                   preset, chunk.size, (void *) chunk.data, 0.0f );
 
     delete [] chunk.data;
     return true;
@@ -359,31 +358,26 @@ VST2_Preset::load( const std::string& sFilename )
     {
         DMESSAGE ( "VST2_Presetload() header.chunkMagic is not \"%s\".", cMagic );
     }
-    else
-        if ( base_header.fxID != VstInt32 ( m_pVst2Plugin->get_unique_id ( ) ) )
+    else if ( base_header.fxID != VstInt32 ( m_pVst2Plugin->get_unique_id ( ) ) )
     {
         DMESSAGE ( "VST2_Preset::load() header.fxID != 0x%08lx.", m_pVst2Plugin->get_unique_id ( ) );
     }
-    else
-        if ( fx_is_magic ( base_header.fxMagic, bankMagic ) )
+    else if ( fx_is_magic ( base_header.fxMagic, bankMagic ) )
     {
         DMESSAGE ( "VST2_Preset::load() header.fxMagic is \"%s\" (regular fxb)", bankMagic );
         bResult = load_bank_progs ( *fp );
     }
-    else
-        if ( fx_is_magic ( base_header.fxMagic, chunkBankMagic ) )
+    else if ( fx_is_magic ( base_header.fxMagic, chunkBankMagic ) )
     {
         DMESSAGE ( "VST2_Preset::load() header.fxMagic is \"%s\" (chunked fxb)", chunkBankMagic );
         bResult = load_bank_chunk ( *fp );
     }
-    else
-        if ( fx_is_magic ( base_header.fxMagic, fMagic ) )
+    else if ( fx_is_magic ( base_header.fxMagic, fMagic ) )
     {
         DMESSAGE ( "VST2_Preset::load() header.fxMagic is \"%s\" (regular fxp)", fMagic );
         bResult = load_prog_params ( *fp );
     }
-    else
-        if ( fx_is_magic ( base_header.fxMagic, chunkPresetMagic ) )
+    else if ( fx_is_magic ( base_header.fxMagic, chunkPresetMagic ) )
     {
         DMESSAGE ( "VST2_Preset::load() header.fxMagic is \"%s\" (chunked fxp)", chunkPresetMagic );
         bResult = load_prog_chunk ( *fp );
@@ -417,9 +411,9 @@ VST2_Preset::save_bank_progs( FILE& file )
         return false;
 
     const int iCurrentProgram
-            = m_pVst2Plugin->vst2_dispatch ( effGetProgram, 0, 0, nullptr, 0.0f );
+        = m_pVst2Plugin->vst2_dispatch ( effGetProgram, 0, 0, nullptr, 0.0f );
     const int iVst2Version
-            = m_pVst2Plugin->vst2_dispatch ( effGetVstVersion, 0, 0, nullptr, 0.0f );
+        = m_pVst2Plugin->vst2_dispatch ( effGetVstVersion, 0, 0, nullptr, 0.0f );
 
     BankHeader bank_header;
     ::memset ( &bank_header, 0, sizeof (bank_header ) );
@@ -451,8 +445,8 @@ VST2_Preset::save_bank_progs( FILE& file )
 
         // Estimate size of this section...
         base_header.byteSize = sizeof (base_header )
-                - sizeof (base_header.chunkMagic )
-                - sizeof (base_header.byteSize );
+                               - sizeof (base_header.chunkMagic )
+                               - sizeof (base_header.byteSize );
 
         Chunk chunk;
         if ( bChunked )
@@ -542,7 +536,7 @@ VST2_Preset::save_bank_chunk( FILE& file, const Chunk& chunk )
 
     const int iNumPrograms = pVst2Effect->numPrograms;
     const int iCurrentProgram
-            = m_pVst2Plugin->vst2_dispatch ( effGetProgram, 0, 0, nullptr, 0.0f );
+        = m_pVst2Plugin->vst2_dispatch ( effGetProgram, 0, 0, nullptr, 0.0f );
 
     BankHeader bank_header;
     ::memset ( &bank_header, 0, sizeof (bank_header ) );
@@ -574,7 +568,7 @@ VST2_Preset::save_prog_chunk( FILE& file, const Chunk& chunk )
     prog_header.numParams = iNumParams;
 
     m_pVst2Plugin->vst2_dispatch ( effGetProgramName,
-            0, 0, (void *) prog_header.prgName, 0.0f );
+                                   0, 0, (void *) prog_header.prgName, 0.0f );
 
     fx_endian_swap ( prog_header.numParams );
 
@@ -602,7 +596,7 @@ VST2_Preset::get_chunk( Chunk& chunk, int preset )
 {
     chunk.data = nullptr;
     chunk.size = m_pVst2Plugin->vst2_dispatch (
-            effGetChunk, preset, 0, (void *) &chunk.data, 0.0f );
+                     effGetChunk, preset, 0, (void *) &chunk.data, 0.0f );
 
     return (chunk.size > 0 && chunk.data != nullptr );
 }
@@ -650,9 +644,9 @@ VST2_Preset::save( const std::string& sFilename )
     DMESSAGE ( "VST2_Preset::save(\"%s\")", sFilename.c_str ( ) );
 
     const bool bChunked
-            = m_pVst2Plugin->isConfigure ( );
+        = m_pVst2Plugin->isConfigure ( );
     const int iVst2Version
-            = m_pVst2Plugin->vst2_dispatch ( effGetVstVersion, 0, 0, nullptr, 0.0f );
+        = m_pVst2Plugin->vst2_dispatch ( effGetVstVersion, 0, 0, nullptr, 0.0f );
 
     BaseHeader base_header;
     ::memset ( &base_header, 0, sizeof (base_header ) );
@@ -665,8 +659,8 @@ VST2_Preset::save( const std::string& sFilename )
 
     // Estimate size of this section...
     base_header.byteSize = sizeof (base_header )
-            - sizeof (base_header.chunkMagic )
-            - sizeof (base_header.byteSize );
+                           - sizeof (base_header.chunkMagic )
+                           - sizeof (base_header.byteSize );
 
     Chunk chunk;
     if ( bFxBank )
@@ -681,7 +675,7 @@ VST2_Preset::save( const std::string& sFilename )
         {
             const int iNumParams = pVst2Effect->numParams;
             base_header.byteSize += pVst2Effect->numPrograms
-                    * ( sizeof (ProgHeader ) + iNumParams * sizeof (float ) );
+                                    * ( sizeof (ProgHeader ) + iNumParams * sizeof (float ) );
             base_header.fxMagic = *(VstInt32 *) bankMagic;
         }
     }

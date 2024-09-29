@@ -32,13 +32,13 @@ public:
 
     NSM_Client ( );
     ~NSM_Client ( ) { };
-    
+
 protected:
 
     int command_open ( const char *name,
-            const char *display_name,
-            const char *client_id,
-            char **out_msg ) override;
+                       const char *display_name,
+                       const char *client_id,
+                       char **out_msg ) override;
 
     int command_save ( char **out_msg ) override;
 

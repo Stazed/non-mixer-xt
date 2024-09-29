@@ -243,7 +243,8 @@ main( int argc, char **argv )
     instance_name = strdup ( APP_NAME );
     bool instance_override = false;
 
-    static struct option long_options[] ={
+    static struct option long_options[] =
+    {
         { "help", no_argument, 0, '?' },
         { "instance", required_argument, 0, 'i' },
         { "osc-port", required_argument, 0, 'p' },
@@ -259,24 +260,24 @@ main( int argc, char **argv )
     {
         switch ( c )
         {
-            case 'p':
-                DMESSAGE ( "Using OSC port %s", optarg );
-                osc_port = optarg;
-                break;
-            case 'i':
-                DMESSAGE ( "Using OSC port %s", optarg );
-                free ( instance_name );
-                instance_name = strdup ( optarg );
-                instance_override = true;
-                break;
-            case 'u':
-                DMESSAGE ( "Disabling user interface" );
-                no_ui = true;
-                break;
-            case '?':
-                printf ( "\nUsage: %s [--instance instance_name] [--osc-port portnum] [path_to_project]\n\n", argv[0] );
-                exit ( 0 );
-                break;
+        case 'p':
+            DMESSAGE ( "Using OSC port %s", optarg );
+            osc_port = optarg;
+            break;
+        case 'i':
+            DMESSAGE ( "Using OSC port %s", optarg );
+            free ( instance_name );
+            instance_name = strdup ( optarg );
+            instance_override = true;
+            break;
+        case 'u':
+            DMESSAGE ( "Disabling user interface" );
+            no_ui = true;
+            break;
+        case '?':
+            printf ( "\nUsage: %s [--instance instance_name] [--osc-port portnum] [path_to_project]\n\n", argv[0] );
+            exit ( 0 );
+            break;
         }
     }
 

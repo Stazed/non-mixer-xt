@@ -50,11 +50,12 @@
 const int PROJECT_VERSION = 1;
 
 
-const char *Project::_errstr[] ={
-                                 "Not a Non-Mixer-XT project",
-                                 "Locked by another process",
-                                 "Access denied",
-                                 "Incompatible project version"
+const char *Project::_errstr[] =
+{
+    "Not a Non-Mixer-XT project",
+    "Locked by another process",
+    "Access denied",
+    "Incompatible project version"
 };
 
 char Project::_name[256];
@@ -118,9 +119,9 @@ Project::write_info( void )
         strcpy ( s, _created_on );
 
     fprintf ( fp, "created by\n\t%s\ncreated on\n\t%s\nversion\n\t%d\n",
-            APP_TITLE " " VERSION,
-            s,
-            PROJECT_VERSION );
+              APP_TITLE " " VERSION,
+              s,
+              PROJECT_VERSION );
 
     fclose ( fp );
 
@@ -229,7 +230,7 @@ Project::validate( const char *name )
     }
 
     if ( !exists ( "info" ) ||
-         !exists ( "snapshot" ) )
+            !exists ( "snapshot" ) )
     {
         WARNING ( "Not a Non-Mixer-XT project: \"%s\"", name );
         r = false;

@@ -201,16 +201,16 @@ Meter_Module::handle( int m )
 {
     switch ( m )
     {
-        case FL_PUSH:
+    case FL_PUSH:
+    {
+        int r = 0;
+        if ( test_press ( FL_BUTTON1 ) )
         {
-            int r = 0;
-            if ( test_press ( FL_BUTTON1 ) )
-            {
-                /* don't let Module::handle eat our click */
-                r = Fl_Group::handle ( m );
-            }
-            return Module::handle ( m ) || r;
+            /* don't let Module::handle eat our click */
+            r = Fl_Group::handle ( m );
         }
+        return Module::handle ( m ) || r;
+    }
     }
 
     return Module::handle ( m );

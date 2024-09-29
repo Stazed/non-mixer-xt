@@ -98,8 +98,8 @@ Mono_Pan_Module::process( nframes_t nframes )
         if ( audio_input.size ( ) == 1 )
         {
             buffer_copy ( static_cast<sample_t*> ( audio_output[1].buffer ( ) ),
-                    static_cast<sample_t*> ( audio_input[0].buffer ( ) ),
-                    nframes );
+                          static_cast<sample_t*> ( audio_input[0].buffer ( ) ),
+                          nframes );
         }
     }
     else
@@ -113,38 +113,38 @@ Mono_Pan_Module::process( nframes_t nframes )
         {
             /* convert stereo to mono */
             buffer_mix ( static_cast<sample_t*> ( audio_input[0].buffer ( ) ),
-                    static_cast<sample_t*> ( audio_input[1].buffer ( ) ),
-                    nframes );
+                         static_cast<sample_t*> ( audio_input[1].buffer ( ) ),
+                         nframes );
         }
 
         if ( unlikely ( use_gainbuf ) )
         {
             /* right channel */
             buffer_copy_and_apply_gain_buffer ( static_cast<sample_t*> ( audio_output[1].buffer ( ) ),
-                    static_cast<sample_t*> ( audio_input[0].buffer ( ) ),
-                    gainbuf,
-                    nframes );
+                                                static_cast<sample_t*> ( audio_input[0].buffer ( ) ),
+                                                gainbuf,
+                                                nframes );
 
             /*  left channel  */
             for ( nframes_t i = 0; i < nframes; i++ )
                 gainbuf[i] = 1.0f - gainbuf[i];
 
             buffer_apply_gain_buffer ( static_cast<sample_t*> ( audio_output[0].buffer ( ) ),
-                    gainbuf,
-                    nframes );
+                                       gainbuf,
+                                       nframes );
         }
         else
         {
             /* right channel */
             buffer_copy_and_apply_gain ( static_cast<sample_t*> ( audio_output[1].buffer ( ) ),
-                    static_cast<sample_t*> ( audio_input[0].buffer ( ) ),
-                    nframes,
-                    gt );
+                                         static_cast<sample_t*> ( audio_input[0].buffer ( ) ),
+                                         nframes,
+                                         gt );
 
             /*  left channel  */
             buffer_apply_gain ( static_cast<sample_t*> ( audio_output[0].buffer ( ) ),
-                    nframes,
-                    1.0f - gt );
+                                nframes,
+                                1.0f - gt );
         }
     }
 }

@@ -14,7 +14,7 @@
  * For a full copy of the GNU General Public License see the doc/GPL.txt file.
  */
 
-/* 
+/*
  * File:   X11PluginUI.h
  * Author: sspresto
  *
@@ -43,7 +43,8 @@ class X11PluginUI
 {
 public:
 
-    class Callback {
+    class Callback
+    {
     public:
         virtual ~Callback() {}
         virtual void handlePluginUIClosed() = 0;

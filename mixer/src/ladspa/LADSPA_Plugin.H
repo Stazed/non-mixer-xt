@@ -19,7 +19,7 @@
 /* Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 /*******************************************************************************/
 
-/* 
+/*
  * File:   LADSPA_Plugin.H
  * Author: sspresto
  *
@@ -33,7 +33,8 @@
 #include "../Plugin_Module.H"
 
 
-class LADSPA_Plugin : public Plugin_Module {
+class LADSPA_Plugin : public Plugin_Module
+{
 
 public:
     struct ImplementationData;
@@ -45,12 +46,15 @@ public:
     void create_control_ports();
 
     virtual bool get_impulse_response ( sample_t *buf, nframes_t nframes ) override;
-    
+
     bool configure_inputs ( int ) override;
     void handle_port_connection_change ( void ) override;
     void resize_buffers ( nframes_t buffer_size ) override;
 
-    virtual bool bypass ( void ) const override { return *_bypass == 1.0f; }
+    virtual bool bypass ( void ) const override
+    {
+        return *_bypass == 1.0f;
+    }
     virtual void bypass ( bool v ) override;
 
 private:

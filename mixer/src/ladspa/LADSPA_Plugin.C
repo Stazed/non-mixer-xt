@@ -19,10 +19,10 @@
 /* Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 /*******************************************************************************/
 
-/* 
+/*
  * File:   LADSPA_Plugin.C
  * Author: sspresto
- * 
+ *
  * Created on November 24, 2022, 4:32 PM
  */
 
@@ -226,7 +226,7 @@ LADSPA_Plugin::create_control_ports( )
                     {
                         // These hints may be affected by SAMPLERATE, LOGARITHMIC and INTEGER
                         if ( LADSPA_IS_HINT_DEFAULT_MINIMUM ( HintDesc ) &&
-                             LADSPA_IS_HINT_BOUNDED_BELOW ( HintDesc ) )
+                                LADSPA_IS_HINT_BOUNDED_BELOW ( HintDesc ) )
                         {
                             Default = _idata->descriptor->PortRangeHints[Port].LowerBound;
                         }
@@ -306,8 +306,8 @@ LADSPA_Plugin::create_control_ports( )
                     if ( LADSPA_IS_HINT_INTEGER ( HintDesc ) )
                     {
                         if ( p.hints.ranged &&
-                             0 == (int) p.hints.minimum &&
-                             1 == (int) p.hints.maximum )
+                                0 == (int) p.hints.minimum &&
+                                1 == (int) p.hints.maximum )
                             p.hints.type = Port::Hints::BOOLEAN;
                         else
                             p.hints.type = Port::Hints::INTEGER;
@@ -660,7 +660,7 @@ LADSPA_Plugin::set_input_buffer( int n, void *buf )
     for ( unsigned int i = 0; i < _idata->descriptor->PortCount; ++i )
     {
         if ( LADSPA_IS_PORT_INPUT ( _idata->descriptor->PortDescriptors[i] ) &&
-             LADSPA_IS_PORT_AUDIO ( _idata->descriptor->PortDescriptors[i] ) )
+                LADSPA_IS_PORT_AUDIO ( _idata->descriptor->PortDescriptors[i] ) )
         {
             if ( n-- == 0 )
                 _idata->descriptor->connect_port ( h, i, (LADSPA_Data*) buf );
@@ -686,7 +686,7 @@ LADSPA_Plugin::set_output_buffer( int n, void *buf )
     for ( unsigned int i = 0; i < _idata->descriptor->PortCount; ++i )
     {
         if ( LADSPA_IS_PORT_OUTPUT ( _idata->descriptor->PortDescriptors[i] ) &&
-             LADSPA_IS_PORT_AUDIO ( _idata->descriptor->PortDescriptors[i] ) )
+                LADSPA_IS_PORT_AUDIO ( _idata->descriptor->PortDescriptors[i] ) )
         {
             if ( n-- == 0 )
                 _idata->descriptor->connect_port ( h, i, (LADSPA_Data*) buf );

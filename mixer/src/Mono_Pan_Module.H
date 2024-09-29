@@ -31,15 +31,21 @@
 class Mono_Pan_Module : public Module
 {
     Value_Smoothing_Filter smoothing;
-    
+
 public:
 
     Mono_Pan_Module ( );
     virtual ~Mono_Pan_Module ( );
 
-    const char *name ( void ) const override { return "Mono Pan"; }
+    const char *name ( void ) const override
+    {
+        return "Mono Pan";
+    }
 
-    int can_support_inputs ( int n ) override { return ( n == 1 || n == 2 ) ? 2 : -1; }
+    int can_support_inputs ( int n ) override
+    {
+        return ( n == 1 || n == 2 ) ? 2 : -1;
+    }
     bool configure_inputs ( int n ) override;
 
     LOG_CREATE_FUNC( Mono_Pan_Module );
@@ -47,7 +53,7 @@ public:
     MODULE_CLONE_FUNC( Mono_Pan_Module );
 
     virtual void handle_sample_rate_change ( nframes_t n ) override;
-    
+
 protected:
 
     virtual void process ( nframes_t nframes ) override;

@@ -21,7 +21,7 @@
 /* Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 /*******************************************************************************/
 
-/* 
+/*
  * File:   LV2_Plugin.H
  * Author: sspresto
  *
@@ -67,13 +67,13 @@ extern std::vector<std::string>remove_custom_data_directories;
 
 
 class LV2_Plugin : public Plugin_Module,
-        private X11PluginUI::Callback
+    private X11PluginUI::Callback
 {
 
 public:
 
     ImplementationData *_idata;
-    
+
     virtual bool load_plugin ( Module::Picked picked ) override;
     void get_plugin_extensions();
     void create_audio_ports();
@@ -87,7 +87,10 @@ public:
     void handle_sample_rate_change ( nframes_t sample_rate ) override;
     void resize_buffers ( nframes_t buffer_size ) override;
 
-    virtual bool bypass ( void ) const override { return *_bypass == 1.0f; }
+    virtual bool bypass ( void ) const override
+    {
+        return *_bypass == 1.0f;
+    }
     virtual void bypass ( bool v ) override;
 
     void freeze_ports ( void ) override;
@@ -101,14 +104,23 @@ public:
     const LilvPlugins*	_lilvPlugins{};
     LilvInstance*   _lilv_instance{};       /**< Plugin "instance" (loaded shared lib) */
     LV2_URID_Map* _uridMapFt;
-    LilvWorld* get_lilv_world() {return _lilvWorld;}
-    const LilvPlugin* get_slv2_plugin() const {return _lilv_plugin; }
-    const LilvPlugins* get_lilv_plugins() const {return _lilvPlugins; }
+    LilvWorld* get_lilv_world()
+    {
+        return _lilvWorld;
+    }
+    const LilvPlugin* get_slv2_plugin() const
+    {
+        return _lilv_plugin;
+    }
+    const LilvPlugins* get_lilv_plugins() const
+    {
+        return _lilvPlugins;
+    }
 
     void set_control_value(unsigned long port_index, float value);
     void update_control_parameters(int choice);
 #endif  // PRESET_SUPPORT
-    
+
 #ifdef LV2_STATE_SAVE
     LV2_URID_Unmap* _uridUnmapFt;
     std::string _project_directory;
@@ -145,8 +157,8 @@ public:
 
 private:
     void non_worker_init(LV2_Plugin* plug,
-                 const LV2_Worker_Interface* iface,
-                 bool threaded);
+                         const LV2_Worker_Interface* iface,
+                         bool threaded);
 
     void non_worker_emit_responses( LilvInstance* instance );
     void non_worker_finish( void );
@@ -154,9 +166,9 @@ private:
     void apply_ui_events( uint32_t nframes );
     void set_lv2_port_properties ( Port * port, bool writable );
     int write_atom_event(ZixRing* target, const uint32_t port_index,
-                 const uint32_t    size,
-                 const LV2_URID    type,
-                 const void* const body);
+                         const uint32_t    size,
+                         const LV2_URID    type,
+                         const void* const body);
     size_t get_atom_buffer_size(int port_index);
 #endif  // LV2_WORKER_SUPPORT
 

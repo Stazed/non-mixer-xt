@@ -164,11 +164,11 @@ Mixer::say_hello( void )
     lo_message m = lo_message_new ( );
 
     lo_message_add ( m, "sssss",
-            "/non/hello",
-            osc_endpoint->url ( ),
-            APP_NAME,
-            VERSION,
-            instance_name );
+                     "/non/hello",
+                     osc_endpoint->url ( ),
+                     APP_NAME,
+                     VERSION,
+                     instance_name );
 
     nsm->broadcast ( m );
 
@@ -458,21 +458,21 @@ Mixer::cb_menu( Fl_Widget* o )
         ab.title->label ( "Non Mixer XT" );
 
         ab.copyright->label ( "Copyright (C) 2008-2021 Jonathan Moore Liles (as Non-Mixer)\n"
-                "Copyright (C) 2021- Stazed (as Non-Mixer-XT)");
+                              "Copyright (C) 2021- Stazed (as Non-Mixer-XT)");
         ab.credits->labelsize ( 14 );
         ab.credits->label (
-                "Legacy Non-Mixer by Jonathan Moore Liles.\n"
-                "Filipe Coelho - initial LV2 implementation, X11 embedded,\n"
-                "CLAP timer, stream read and write from the Carla project.\n"
-                "David Robillard for LV2 atom ports and MIDI\n"
-                "event support from the Jalv project.\n"
-                "Rui Nuno Capela for LV2 showInterface, external\n"
-                "UI, presets CLAP, VST(2)** and VST3* support from the Qtractor project.\n"
-                "Jean-Emmanuel Doucet - Extended OSC support.\n"
-                "Non-Mixer-XT modifications by Stazed.\n\n"
-                "*VST is a trademark of Steinberg Media Technologies GmbH.\n"
-                "**VST(2) support using vestige.h by Javier Serrano Polo"
-                );
+            "Legacy Non-Mixer by Jonathan Moore Liles.\n"
+            "Filipe Coelho - initial LV2 implementation, X11 embedded,\n"
+            "CLAP timer, stream read and write from the Carla project.\n"
+            "David Robillard for LV2 atom ports and MIDI\n"
+            "event support from the Jalv project.\n"
+            "Rui Nuno Capela for LV2 showInterface, external\n"
+            "UI, presets CLAP, VST(2)** and VST3* support from the Qtractor project.\n"
+            "Jean-Emmanuel Doucet - Extended OSC support.\n"
+            "Non-Mixer-XT modifications by Stazed.\n\n"
+            "*VST is a trademark of Steinberg Media Technologies GmbH.\n"
+            "**VST(2) support using vestige.h by Javier Serrano Polo"
+        );
 
         /* The FL submodule label is set to timeline, so reset it here to the mixer */
         ab.website_url->label ( WEBSITE );
@@ -502,8 +502,8 @@ Mixer::is_valid_open_new( )
     if ( mixer_strips->children ( ) || !project_directory.empty ( ) )
     {
         fl_alert ( "Error: You cannot open/create a new project\n"
-                "if any existing project is open or\n"
-                "if any mixer strips are present." );
+                   "if any existing project is open or\n"
+                   "if any mixer strips are present." );
         return false;
     }
 
@@ -832,7 +832,7 @@ Mixer::init_osc( const char *osc_port )
 
     osc_endpoint->add_method ( "/non/hello", "ssss", &Mixer::osc_non_hello, osc_endpoint, "" );
 
-    //  
+    //
     osc_endpoint->add_method ( "/non/mixer/add_strip", "", osc_add_strip, osc_endpoint, "" );
 
     osc_endpoint->start ( );
@@ -1120,8 +1120,8 @@ Group *
 Mixer::group_by_name( const char *name )
 {
     for ( std::list<Group*>::iterator i = groups.begin ( );
-          i != groups.end ( );
-          ++i )
+            i != groups.end ( );
+            ++i )
         if ( !strcmp ( ( *i )->name ( ), name ) )
             return *i;
 
@@ -1229,7 +1229,7 @@ Mixer::update_menu( void )
     project_name->label ( Project::name ( ) );
 
     const_cast<Fl_Menu_Item*> ( menubar->find_item ( "&Mixer/&Spatialization Console" ) )
-            ->flags = FL_MENU_TOGGLE | ( ( spatialization_console && spatialization_console->shown ( ) ) ? FL_MENU_VALUE : 0 );
+    ->flags = FL_MENU_TOGGLE | ( ( spatialization_console && spatialization_console->shown ( ) ) ? FL_MENU_VALUE : 0 );
 }
 
 void
@@ -1276,61 +1276,61 @@ Mixer::handle( int m )
 
     switch ( m )
     {
-        case FL_PASTE:
+    case FL_PASTE:
+    {
+        if ( !Fl::event_inside ( this ) )
+            return 0;
+
+        /* Ignore this paste if previous one is not completed */
+        if ( _is_pasting )
         {
-            if ( !Fl::event_inside ( this ) )
-                return 0;
-
-            /* Ignore this paste if previous one is not completed */
-            if ( _is_pasting )
-            {
-                WARNING ( "Previous paste not completed. SLOW DOWN!!!" );
-                return 0;
-            }
-
-            DMESSAGE ( "Got paste into mixer, expecting strip file..." );
-
-            const char *text = Fl::event_text ( );
-
-            char *file;
-
-            if ( !sscanf ( text, "file://%m[^\r\n]\n", &file ) )
-            {
-                WARNING ( "invalid drop \"%s\"\n", text );
-                return 0;
-            }
-
-            /* In the case of a paste without previous copy, there may be garbage in the event_text
-               buffer. In this case, the file would sometimes cause the unescape_url() function to crash.
-               So if sscanf above succeeds, we check if the file string contains the substring
-               "clipboard" which is the folder where copied strips are stored. No "clipboard",
-                means not a valid paste path.
-             */
-            std::string svalid = file;
-
-            if ( svalid.find ( "clipboard" ) != std::string::npos )
-            {
-                MESSAGE ( "Found clipboard!" );
-            }
-            else
-            {
-                MESSAGE ( "Invalid paste path, 'clipboard' not found: %s", file );
-                return 0;
-            }
-
-            unescape_url ( file );
-
-            if ( file )
-                export_import_strip = file;
-
-            MESSAGE ( "Pasted file \"%s\"\n", export_import_strip.c_str ( ) );
-
-            if ( !Mixer_Strip::import_strip ( export_import_strip.c_str ( ) ) )
-                fl_alert ( "%s", "Failed to import strip!" );
-
-            export_import_strip = "";
-            return 1;
+            WARNING ( "Previous paste not completed. SLOW DOWN!!!" );
+            return 0;
         }
+
+        DMESSAGE ( "Got paste into mixer, expecting strip file..." );
+
+        const char *text = Fl::event_text ( );
+
+        char *file;
+
+        if ( !sscanf ( text, "file://%m[^\r\n]\n", &file ) )
+        {
+            WARNING ( "invalid drop \"%s\"\n", text );
+            return 0;
+        }
+
+        /* In the case of a paste without previous copy, there may be garbage in the event_text
+           buffer. In this case, the file would sometimes cause the unescape_url() function to crash.
+           So if sscanf above succeeds, we check if the file string contains the substring
+           "clipboard" which is the folder where copied strips are stored. No "clipboard",
+            means not a valid paste path.
+         */
+        std::string svalid = file;
+
+        if ( svalid.find ( "clipboard" ) != std::string::npos )
+        {
+            MESSAGE ( "Found clipboard!" );
+        }
+        else
+        {
+            MESSAGE ( "Invalid paste path, 'clipboard' not found: %s", file );
+            return 0;
+        }
+
+        unescape_url ( file );
+
+        if ( file )
+            export_import_strip = file;
+
+        MESSAGE ( "Pasted file \"%s\"\n", export_import_strip.c_str ( ) );
+
+        if ( !Mixer_Strip::import_strip ( export_import_strip.c_str ( ) ) )
+            fl_alert ( "%s", "Failed to import strip!" );
+
+        export_import_strip = "";
+        return 1;
+    }
     }
 
     return 0;
@@ -1540,7 +1540,7 @@ Mixer::command_quit( void )
         if ( Loggable::dirty ( ) )
         {
             int i = fl_choice ( "There have been changes since the last save."
-                    " Quitting now will discard them", "Discard", "Cancel", NULL );
+                                " Quitting now will discard them", "Discard", "Cancel", NULL );
 
             if ( i != 0 )
                 return;

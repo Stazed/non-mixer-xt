@@ -103,21 +103,21 @@ Plugin_Module::can_support_inputs( int n )
     /* this is the simple case */
     if ( plugin_ins ( ) == n )
         return plugin_outs ( );
-        /* e.g. MONO going into STEREO */
-        /* we'll duplicate our inputs */
+    /* e.g. MONO going into STEREO */
+    /* we'll duplicate our inputs */
     else if ( n < plugin_ins ( ) &&
               1 == n )
     {
         return plugin_outs ( );
     }
-        /* e.g. STEREO going into MONO */
-        /* we'll run multiple instances of the plugin */
-        /* Only for LADSPA and LV2 */
+    /* e.g. STEREO going into MONO */
+    /* we'll run multiple instances of the plugin */
+    /* Only for LADSPA and LV2 */
     else if ( n > plugin_ins ( ) &&
               ( plugin_ins ( ) == 1 && plugin_outs ( ) == 1 ) )
     {
         if ( ( _plug_type == Type_CLAP ) || ( _plug_type == Type_VST2 ) ||
-             ( _plug_type == Type_VST3 ) )
+                ( _plug_type == Type_VST3 ) )
         {
             return -1; // Don't support multiple instances
         }
@@ -183,7 +183,7 @@ Plugin_Module::set( Log_Entry & )
     if ( !warn_legacy_once )
     {
         fl_alert ( "Non-mixer-xt ERROR - This snapshot contains legacy unsupported modules.\n"
-                "See Help/Projects to convert to the new format!" );
+                   "See Help/Projects to convert to the new format!" );
 
         warn_legacy_once = true;
     }

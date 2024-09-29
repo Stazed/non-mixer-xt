@@ -36,8 +36,8 @@ class Meter_Module : public Module
     Fl_Scalepack *dpm_pack;
 
     // This cannot be correct, only usage 'smoothing.pop_back();' in Meter_Module.C line 164.
- //   std::vector <Value_Smoothing_Filter> smoothing;
-    
+//   std::vector <Value_Smoothing_Filter> smoothing;
+
     volatile float *control_value;
     volatile float *peaks;
 
@@ -48,15 +48,21 @@ class Meter_Module : public Module
     int meter_sample_period_count;
 
     void set_smoothing_sample_rate ( nframes_t nframes, nframes_t sample_rate );
-    
+
 public:
 
     Meter_Module ( );
     virtual ~Meter_Module ( );
 
-    const char *name ( void ) const override { return "Meter"; }
+    const char *name ( void ) const override
+    {
+        return "Meter";
+    }
 
-    int can_support_inputs ( int n ) override { return n > 0 ? n : -1; }
+    int can_support_inputs ( int n ) override
+    {
+        return n > 0 ? n : -1;
+    }
     bool configure_inputs ( int n ) override;
 
     LOG_CREATE_FUNC( Meter_Module );

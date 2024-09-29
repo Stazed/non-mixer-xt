@@ -111,18 +111,18 @@ JACK_Module::JACK_Module( bool log )
 
     {
         Fl_Scalepack *sp1 = new Fl_Scalepack ( x ( ) + Fl::box_dx ( box ( ) ),
-                y ( ) + Fl::box_dy ( box ( ) ),
-                w ( ) - Fl::box_dw ( box ( ) ),
-                h ( ) - Fl::box_dh ( box ( ) ) );
+                                               y ( ) + Fl::box_dy ( box ( ) ),
+                                               w ( ) - Fl::box_dw ( box ( ) ),
+                                               h ( ) - Fl::box_dh ( box ( ) ) );
         sp1->type ( Fl_Pack::VERTICAL );
         sp1->spacing ( 0 );
 
 
         {
             Fl_Scalepack *sp2 = new Fl_Scalepack ( x ( ) + Fl::box_dx ( box ( ) ),
-                    y ( ) + Fl::box_dy ( box ( ) ),
-                    w ( ),
-                    24 - Fl::box_dh ( box ( ) ) );
+                                                   y ( ) + Fl::box_dy ( box ( ) ),
+                                                   w ( ),
+                                                   24 - Fl::box_dh ( box ( ) ) );
             sp2->type ( Fl_Pack::HORIZONTAL );
 
             sp2->spacing ( 0 );
@@ -281,8 +281,8 @@ get_connections_for_ports( const std::vector<Module::Port> &ports )
             }
 
             for ( std::list<std::string>::const_iterator j = names.begin ( );
-                  j != names.end ( );
-                  ++j )
+                    j != names.end ( );
+                    ++j )
             {
                 if ( !strcmp ( j->c_str ( ), strip_name ) )
                 {
@@ -332,15 +332,15 @@ JACK_Module::update_connection_status( void )
     int n = 0;
 
     for ( std::list<std::string>::const_iterator j = input_names.begin ( );
-          j != input_names.end ( );
-          ++j )
+            j != input_names.end ( );
+            ++j )
     {
         connection_display->add ( j->c_str ( ) );
         n++;
     }
     for ( std::list<std::string>::const_iterator j = output_names.begin ( );
-          j != output_names.end ( );
-          ++j )
+            j != output_names.end ( );
+            ++j )
     {
         connection_display->add ( j->c_str ( ) );
         n++;
@@ -358,12 +358,12 @@ JACK_Module::update_connection_status( void )
         DMESSAGE ( "textsize = %d", connection_display->textsize ( ) );
     }
 #else
-        {
-            size ( w ( ), 26 + ( n * ( connection_display->incr_height ( ) ) ) );
-            DMESSAGE ( "connection_display->incr_height()= %d", connection_display->incr_height ( ) );
-        }
+    {
+        size ( w ( ), 26 + ( n * ( connection_display->incr_height ( ) ) ) );
+        DMESSAGE ( "connection_display->incr_height()= %d", connection_display->incr_height ( ) );
+    }
 #endif
-else
+    else
         size ( w ( ), 24 );
 
     parent ( )->parent ( )->redraw ( );
@@ -551,190 +551,190 @@ JACK_Module::handle( int m )
 
     switch ( m )
     {
-        case FL_PUSH:
-            if ( Fl::event_inside ( output_connection_handle ) ||
-                 Fl::event_inside ( output_connection2_handle ) ||
-                 Fl::event_inside ( input_connection_handle ) )
-            {
-                _event_state = evstate;
-                return 1;
-            }
-
-            return Module::handle ( m ) || 1;
-
-        case FL_RELEASE:
-            Fl::selection_owner ( 0 );
-            receptive_to_drop = NULL;
-
-            if ( Fl::event_inside ( output_connection_handle ) ||
-                 Fl::event_inside ( output_connection2_handle ) ||
-                 Fl::event_inside ( input_connection_handle ) )
-            {
-                if ( _event_state & FL_BUTTON3 )
-                {
-                    /* was a right click */
-                    // TODO: Pop up connection menu.
-                }
-            }
-
-            return Module::handle ( m ) || 1;
-        case FL_DRAG:
+    case FL_PUSH:
+        if ( Fl::event_inside ( output_connection_handle ) ||
+                Fl::event_inside ( output_connection2_handle ) ||
+                Fl::event_inside ( input_connection_handle ) )
         {
-            if ( Fl::event_is_click ( ) )
-                return 1;
-
-            int connection_handle = -1;
-            if ( Fl::event_inside ( output_connection_handle ) )
-                connection_handle = 0;
-            if ( Fl::event_inside ( output_connection2_handle ) )
-                connection_handle = 1;
-
-            if ( Fl::event_button1 ( ) &&
-                 connection_handle >= 0
-                 && !Fl::selection_owner ( ) )
-            {
-                DMESSAGE ( "initiation of drag" );
-
-                char *s = static_cast<char*> ( malloc ( 256 ) );
-                s[0] = 0;
-
-                for ( unsigned int i = _connection_handle_outputs[connection_handle][0];
-                      i < aux_audio_output.size ( ) && i < _connection_handle_outputs[connection_handle][1]; ++i )
-                {
-                    char *s2;
-                    char *tmp;
-                    asprintf ( &s2, "jack.port://%s\r\n",
-                            aux_audio_output[i].jack_port ( )->jack_name ( ) );
-
-                    tmp = static_cast<char*> ( realloc ( s, strlen ( s ) + strlen ( s2 ) + 1 ) );
-
-                    if ( tmp )
-                    {
-                        s = tmp;
-                        strcat ( s, s2 );
-                    }
-                    else
-                    {
-                        WARNING ( "Unable to complete drag - realloc failed" );
-                        free ( s );
-                        free ( s2 );
-                        return 1;
-                    }
-                    free ( s2 );
-                }
-
-                Fl::copy ( s, strlen ( s ) + 1, 0 );
-
-                Fl::selection_owner ( this );
-
-                free ( s );
-
-                Fl::dnd ( );
-
-                return 1;
-            }
-
+            _event_state = evstate;
             return 1;
         }
-            /* we have to prevent Fl_Group::handle() from getting these, otherwise it will mess up Fl::belowmouse() */
-        case FL_MOVE:
-            if ( Fl::event_inside ( output_connection_handle ) ||
-                 Fl::event_inside ( output_connection2_handle ) ||
-                 Fl::event_inside ( input_connection_handle ) )
-                fl_cursor ( FL_CURSOR_HAND );
-            else
-                fl_cursor ( FL_CURSOR_DEFAULT );
 
-            /* This calls Fl_Group::handle() which somehow prevent DND FL_PASTE event from being delivered later */
-            /* Module::handle(m); */
-            return 1;
-        case FL_ENTER:
-        case FL_DND_ENTER:
-            Module::handle ( m );
-            return 1;
-        case FL_LEAVE:
-        case FL_DND_LEAVE:
-            Module::handle ( m );
-            if ( this == receptive_to_drop )
-            {
-                receptive_to_drop = NULL;
-                redraw ( );
-            }
-            fl_cursor ( FL_CURSOR_DEFAULT );
-            return 1;
-        case FL_DND_RELEASE:
-            Fl::selection_owner ( 0 );
-            receptive_to_drop = NULL;
-            redraw ( );
-            return 1;
-        case FL_DND_DRAG:
+        return Module::handle ( m ) || 1;
+
+    case FL_RELEASE:
+        Fl::selection_owner ( 0 );
+        receptive_to_drop = NULL;
+
+        if ( Fl::event_inside ( output_connection_handle ) ||
+                Fl::event_inside ( output_connection2_handle ) ||
+                Fl::event_inside ( input_connection_handle ) )
         {
-            if ( this == receptive_to_drop )
-                return 1;
-
-            if ( aux_audio_input.size ( ) )
+            if ( _event_state & FL_BUTTON3 )
             {
-
-                receptive_to_drop = this;
-                redraw ( );
-                return 1;
+                /* was a right click */
+                // TODO: Pop up connection menu.
             }
-
-            return 0;
         }
-        case FL_PASTE:
+
+        return Module::handle ( m ) || 1;
+    case FL_DRAG:
+    {
+        if ( Fl::event_is_click ( ) )
+            return 1;
+
+        int connection_handle = -1;
+        if ( Fl::event_inside ( output_connection_handle ) )
+            connection_handle = 0;
+        if ( Fl::event_inside ( output_connection2_handle ) )
+            connection_handle = 1;
+
+        if ( Fl::event_button1 ( ) &&
+                connection_handle >= 0
+                && !Fl::selection_owner ( ) )
         {
-            receptive_to_drop = NULL;
-            redraw ( );
+            DMESSAGE ( "initiation of drag" );
 
-            if ( !Fl::event_inside ( this ) )
-                return 0;
+            char *s = static_cast<char*> ( malloc ( 256 ) );
+            s[0] = 0;
 
-            /* NOW we get the text... */
-            const char *text = Fl::event_text ( );
-
-            DMESSAGE ( "Got drop text \"%s\"", text );
-
-            if ( strncmp ( text, "jack.port://", strlen ( "jack.port://" ) ) )
+            for ( unsigned int i = _connection_handle_outputs[connection_handle][0];
+                    i < aux_audio_output.size ( ) && i < _connection_handle_outputs[connection_handle][1]; ++i )
             {
-                return 0;
-            }
+                char *s2;
+                char *tmp;
+                asprintf ( &s2, "jack.port://%s\r\n",
+                           aux_audio_output[i].jack_port ( )->jack_name ( ) );
 
-            std::vector<std::string> port_names;
+                tmp = static_cast<char*> ( realloc ( s, strlen ( s ) + strlen ( s2 ) + 1 ) );
 
-            char *port_name;
-            int end;
-            while ( sscanf ( text, "jack.port://%m[^\r\n]\r\n%n", &port_name, &end ) > 0 )
-            {
-                DMESSAGE ( "Scanning %s", port_name );
-                port_names.push_back ( port_name );
-                free ( port_name );
-
-                text += end;
-            }
-
-            for ( unsigned int i = 0; i < aux_audio_input.size ( ) && i < port_names.size ( ); i++ )
-            {
-                const char *pn = port_names[i].c_str ( );
-
-                JACK::Port *ji = aux_audio_input[i].jack_port ( );
-
-                if ( ji->connected_to ( pn ) )
+                if ( tmp )
                 {
-
-                    DMESSAGE ( "Disconnecting from \"%s\"", pn );
-                    ji->disconnect ( pn );
+                    s = tmp;
+                    strcat ( s, s2 );
                 }
                 else
                 {
-                    DMESSAGE ( "Connecting to %s", pn );
-                    ji->connect ( pn );
+                    WARNING ( "Unable to complete drag - realloc failed" );
+                    free ( s );
+                    free ( s2 );
+                    return 1;
                 }
+                free ( s2 );
             }
 
-            Fl::selection_owner ( 0 );
+            Fl::copy ( s, strlen ( s ) + 1, 0 );
+
+            Fl::selection_owner ( this );
+
+            free ( s );
+
+            Fl::dnd ( );
+
             return 1;
         }
+
+        return 1;
+    }
+    /* we have to prevent Fl_Group::handle() from getting these, otherwise it will mess up Fl::belowmouse() */
+    case FL_MOVE:
+        if ( Fl::event_inside ( output_connection_handle ) ||
+                Fl::event_inside ( output_connection2_handle ) ||
+                Fl::event_inside ( input_connection_handle ) )
+            fl_cursor ( FL_CURSOR_HAND );
+        else
+            fl_cursor ( FL_CURSOR_DEFAULT );
+
+        /* This calls Fl_Group::handle() which somehow prevent DND FL_PASTE event from being delivered later */
+        /* Module::handle(m); */
+        return 1;
+    case FL_ENTER:
+    case FL_DND_ENTER:
+        Module::handle ( m );
+        return 1;
+    case FL_LEAVE:
+    case FL_DND_LEAVE:
+        Module::handle ( m );
+        if ( this == receptive_to_drop )
+        {
+            receptive_to_drop = NULL;
+            redraw ( );
+        }
+        fl_cursor ( FL_CURSOR_DEFAULT );
+        return 1;
+    case FL_DND_RELEASE:
+        Fl::selection_owner ( 0 );
+        receptive_to_drop = NULL;
+        redraw ( );
+        return 1;
+    case FL_DND_DRAG:
+    {
+        if ( this == receptive_to_drop )
+            return 1;
+
+        if ( aux_audio_input.size ( ) )
+        {
+
+            receptive_to_drop = this;
+            redraw ( );
+            return 1;
+        }
+
+        return 0;
+    }
+    case FL_PASTE:
+    {
+        receptive_to_drop = NULL;
+        redraw ( );
+
+        if ( !Fl::event_inside ( this ) )
+            return 0;
+
+        /* NOW we get the text... */
+        const char *text = Fl::event_text ( );
+
+        DMESSAGE ( "Got drop text \"%s\"", text );
+
+        if ( strncmp ( text, "jack.port://", strlen ( "jack.port://" ) ) )
+        {
+            return 0;
+        }
+
+        std::vector<std::string> port_names;
+
+        char *port_name;
+        int end;
+        while ( sscanf ( text, "jack.port://%m[^\r\n]\r\n%n", &port_name, &end ) > 0 )
+        {
+            DMESSAGE ( "Scanning %s", port_name );
+            port_names.push_back ( port_name );
+            free ( port_name );
+
+            text += end;
+        }
+
+        for ( unsigned int i = 0; i < aux_audio_input.size ( ) && i < port_names.size ( ); i++ )
+        {
+            const char *pn = port_names[i].c_str ( );
+
+            JACK::Port *ji = aux_audio_input[i].jack_port ( );
+
+            if ( ji->connected_to ( pn ) )
+            {
+
+                DMESSAGE ( "Disconnecting from \"%s\"", pn );
+                ji->disconnect ( pn );
+            }
+            else
+            {
+                DMESSAGE ( "Connecting to %s", pn );
+                ji->connect ( pn );
+            }
+        }
+
+        Fl::selection_owner ( 0 );
+        return 1;
+    }
     }
 
     return Module::handle ( m );
@@ -753,8 +753,8 @@ JACK_Module::process( nframes_t nframes )
         if ( audio_input[i].connected ( ) )
         {
             buffer_copy ( static_cast<sample_t*> ( aux_audio_output[i].jack_port ( )->buffer ( nframes ) ),
-                    static_cast<sample_t*> ( audio_input[i].buffer ( ) ),
-                    nframes );
+                          static_cast<sample_t*> ( audio_input[i].buffer ( ) ),
+                          nframes );
         }
 
     }
@@ -764,8 +764,8 @@ JACK_Module::process( nframes_t nframes )
         if ( audio_output[i].connected ( ) )
         {
             buffer_copy ( static_cast<sample_t*> ( audio_output[i].buffer ( ) ),
-                    static_cast<sample_t*> ( aux_audio_input[i].jack_port ( )->buffer ( nframes ) ),
-                    nframes );
+                          static_cast<sample_t*> ( aux_audio_input[i].jack_port ( )->buffer ( nframes ) ),
+                          nframes );
         }
     }
 }

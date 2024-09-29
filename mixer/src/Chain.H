@@ -42,7 +42,8 @@ class Fl_Flowpack;
 class Fl_Flip_Button;
 class Controller_Module;
 
-class Chain : public Fl_Group, public Loggable {
+class Chain : public Fl_Group, public Loggable
+{
 
     Fl_Flip_Button *tab_button;
     Fl_Pack *controls_pack;
@@ -102,14 +103,20 @@ public:
     void draw ( void );
     void resize ( int X, int Y, int W, int H );
 
-    Mixer_Strip *strip ( void ) const { return _strip; }
+    Mixer_Strip *strip ( void ) const
+    {
+        return _strip;
+    }
     void strip ( Mixer_Strip *v );
-    const char *name ( void ) const { return _name; }
+    const char *name ( void ) const
+    {
+        return _name;
+    }
     void name ( const char *name );
 
     void send_feedback ( bool force );
     void schedule_feedback ( void );
-    
+
     int get_module_instance_number ( Module *m );
 
     void configure_ports ( void );
@@ -117,8 +124,14 @@ public:
 
     bool can_support_input_channels ( int n );
 
-    int modules ( void ) const { return modules_pack ? modules_pack->children() : 0; }
-    Module *module ( int n ) const { return (Module*)modules_pack->child( n ); }
+    int modules ( void ) const
+    {
+        return modules_pack ? modules_pack->children() : 0;
+    }
+    Module *module ( int n ) const
+    {
+        return (Module*)modules_pack->child( n );
+    }
     void remove ( Controller_Module *m );
     bool remove ( Module *m );
     bool add ( Module *m );
@@ -133,14 +146,17 @@ public:
     bool can_configure_outputs ( Module *m, int n ) const;
 
     void configure_outputs_callback ( Fl_Callback *cb, void *v )
-        {
-            _configure_outputs_callback = cb;
-            _configure_outputs_userdata = v;
-        }
+    {
+        _configure_outputs_callback = cb;
+        _configure_outputs_userdata = v;
+    }
 
     void set_latency ( JACK::Port::direction_e );
 
-    Fl_Callback * configure_outputs_callback ( void ) const { return _configure_outputs_callback; }
+    Fl_Callback * configure_outputs_callback ( void ) const
+    {
+        return _configure_outputs_callback;
+    }
 
     virtual void log_children ( void ) const override;
 

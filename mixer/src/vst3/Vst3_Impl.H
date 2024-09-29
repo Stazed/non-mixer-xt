@@ -20,7 +20,7 @@
 /*******************************************************************************/
 
 
-/* 
+/*
  * File:   Vst3_Impl.H
  * Author: sspresto
  *
@@ -51,24 +51,33 @@ public:
     // Constructor.
     ParamQueue (int32 nsize = 8)
         : m_id(Vst::kNoParamId), m_queue(nullptr), m_nsize(0), m_ncount(0)
-        { FUNKNOWN_CTOR	resize(nsize); }
+    {
+        FUNKNOWN_CTOR	resize(nsize);
+    }
 
     // Destructor.
     virtual ~ParamQueue ()
-        { resize(0); FUNKNOWN_DTOR }
+    {
+        resize(0);
+        FUNKNOWN_DTOR
+    }
 
     DECLARE_FUNKNOWN_METHODS
 
     //--- IParamValueQueue ---
     //
     Vst::ParamID PLUGIN_API getParameterId () override
-        { return m_id; }
+    {
+        return m_id;
+    }
 
     int32 PLUGIN_API getPointCount () override
-        { return m_ncount; }
+    {
+        return m_ncount;
+    }
 
     tresult PLUGIN_API getPoint (
-            int32 index, int32& offset, Vst::ParamValue& value ) override
+        int32 index, int32& offset, Vst::ParamValue& value ) override
     {
         if (index < 0 || index >= m_ncount)
             return kResultFalse;
@@ -80,7 +89,7 @@ public:
     }
 
     tresult PLUGIN_API addPoint (
-            int32 offset, Vst::ParamValue value, int32& index ) override
+        int32 offset, Vst::ParamValue value, int32& index ) override
     {
         int32 i = 0;
 
@@ -88,7 +97,7 @@ public:
         {
             QueueItem& item = m_queue[i];
             if (item.offset > offset)
-                    break;
+                break;
             if (item.offset == offset)
             {
                 item.value = value;
@@ -119,7 +128,10 @@ public:
 
     // Helper methods.
     //
-    void setParameterId (Vst::ParamID id) { m_id = id; }
+    void setParameterId (Vst::ParamID id)
+    {
+        m_id = id;
+    }
 
     void takeFrom (ParamQueue& queue)
     {
@@ -134,7 +146,10 @@ public:
         queue.m_ncount = 0;
     }
 
-    void clear () { m_ncount = 0; }
+    void clear ()
+    {
+        m_ncount = 0;
+    }
 
 protected:
 
@@ -192,18 +207,25 @@ public:
     // Constructor.
     ParamChanges (int32 nsize = 4)
         : m_queues(nullptr), m_nsize(0), m_ncount(0)
-        { FUNKNOWN_CTOR resize(nsize); }
+    {
+        FUNKNOWN_CTOR resize(nsize);
+    }
 
     // Destructor.
     virtual ~ParamChanges ()
-        { resize(0); FUNKNOWN_DTOR }
+    {
+        resize(0);
+        FUNKNOWN_DTOR
+    }
 
     DECLARE_FUNKNOWN_METHODS
 
     //--- IParameterChanges ----
     //
     int32 PLUGIN_API getParameterCount () override
-        { return m_ncount; }
+    {
+        return m_ncount;
+    }
 
     Vst::IParamValueQueue *PLUGIN_API getParameterData (int32 index) override
     {
@@ -214,7 +236,7 @@ public:
     }
 
     Vst::IParamValueQueue *PLUGIN_API addParameterData (
-            const Vst::ParamID& id, int32& index ) override
+        const Vst::ParamID& id, int32& index ) override
     {
         int32 i = 0;
 
@@ -298,23 +320,31 @@ public:
     // Constructor.
     EventList (uint32 nsize = 0x100)
         : m_events(nullptr), m_nsize(0), m_ncount(0)
-        { resize(nsize); FUNKNOWN_CTOR }
+    {
+        resize(nsize);
+        FUNKNOWN_CTOR
+    }
 
     // Destructor.
     virtual ~EventList ()
-        { resize(0); FUNKNOWN_DTOR }
+    {
+        resize(0);
+        FUNKNOWN_DTOR
+    }
 
     DECLARE_FUNKNOWN_METHODS
 
     //--- IEventList ---
     //
     int32 PLUGIN_API getEventCount () override
-        { return m_ncount; }
+    {
+        return m_ncount;
+    }
 
     tresult PLUGIN_API getEvent (int32 index, Vst::Event& event) override
     {
         if (index < 0 || index >= m_nsize)
-                return kInvalidArgument;
+            return kInvalidArgument;
 
         event = m_events[index];
 
@@ -333,7 +363,10 @@ public:
 
     // Helper methods.
     //
-    void clear () { m_ncount = 0; }
+    void clear ()
+    {
+        m_ncount = 0;
+    }
 
 protected:
 
@@ -355,11 +388,11 @@ protected:
 
                 if (old_events)
                     ::memcpy(&m_events[0], old_events,
-                            sizeof(Vst::Event) * m_ncount);
+                             sizeof(Vst::Event) * m_ncount);
 
                 if (m_nsize > m_ncount)
                     ::memset(&m_events[m_ncount], 0,
-                            sizeof(Vst::Event) * (m_nsize - m_ncount));
+                             sizeof(Vst::Event) * (m_nsize - m_ncount));
             }
 
             if (old_events)

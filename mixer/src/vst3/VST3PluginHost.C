@@ -19,10 +19,10 @@
 /* Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 /*******************************************************************************/
 
-/* 
+/*
  * File:   VST3PluginHost.C
  * Author: sspresto
- * 
+ *
  * Created on December 29, 2023, 1:36 PM
  */
 
@@ -89,20 +89,19 @@ VST3PluginHost::getName( Vst::String128 name )
 
 tresult PLUGIN_API
 VST3PluginHost::createInstance(
-                                TUID cid, TUID _iid, void **obj )
+    TUID cid, TUID _iid, void **obj )
 {
     const FUID classID ( FUID::fromTUID ( cid ) );
     const FUID interfaceID ( FUID::fromTUID ( _iid ) );
 
     if ( classID == Vst::IMessage::iid &&
-         interfaceID == Vst::IMessage::iid )
+            interfaceID == Vst::IMessage::iid )
     {
         *obj = new Message ( );
         return kResultOk;
     }
-    else
-        if ( classID == Vst::IAttributeList::iid &&
-             interfaceID == Vst::IAttributeList::iid )
+    else if ( classID == Vst::IAttributeList::iid &&
+              interfaceID == Vst::IAttributeList::iid )
     {
         *obj = new AttributeList ( );
         return kResultOk;
@@ -114,13 +113,13 @@ VST3PluginHost::createInstance(
 
 tresult PLUGIN_API
 VST3PluginHost::queryInterface(
-                                const char *_iid, void **obj )
+    const char *_iid, void **obj )
 {
     QUERY_INTERFACE ( _iid, obj, FUnknown::iid, IHostApplication )
     QUERY_INTERFACE ( _iid, obj, IHostApplication::iid, IHostApplication )
 
     if ( m_plugInterfaceSupport &&
-         m_plugInterfaceSupport->queryInterface ( _iid, obj ) == kResultOk )
+            m_plugInterfaceSupport->queryInterface ( _iid, obj ) == kResultOk )
     {
         return kResultOk;
     }
@@ -187,7 +186,7 @@ VST3PluginHost::processReleaseRef( void )
 
 void
 VST3PluginHost::updateProcessContext(
-                                      jack_position_t &pos, const bool &xport_changed, const bool &has_bbt )
+    jack_position_t &pos, const bool &xport_changed, const bool &has_bbt )
 {
     if ( m_processRefCount < 1 )
         return;

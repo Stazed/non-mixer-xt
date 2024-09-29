@@ -20,7 +20,7 @@
 /*******************************************************************************/
 
 
-/* 
+/*
  * File:   VST3_Plugin.H
  * Author: sspresto
  *
@@ -59,13 +59,16 @@ public:
     void handle_sample_rate_change ( nframes_t sample_rate ) override;
     void resize_buffers ( nframes_t buffer_size ) override;
 
-    virtual bool bypass ( void ) const override { return *_bypass == 1.0f; }
+    virtual bool bypass ( void ) const override
+    {
+        return *_bypass == 1.0f;
+    }
     virtual void bypass ( bool v ) override;
 
     void freeze_ports ( void ) override;
     void thaw_ports ( void ) override;
     void clear_midi_vectors() override;
-    
+
     void configure_midi_inputs () override;
     void configure_midi_outputs () override;
 
@@ -102,18 +105,36 @@ public:
 
     bool show_custom_ui();
     bool hide_custom_ui();
-    EditorFrame * get_editor_frame(){ return _pEditorFrame;}
-    Vst::EditorHost::RunLoop* get_runloop(){return _pRunloop;}
-    void set_visibility(bool vis){_x_is_visible = vis;}
+    EditorFrame * get_editor_frame()
+    {
+        return _pEditorFrame;
+    }
+    Vst::EditorHost::RunLoop* get_runloop()
+    {
+        return _pRunloop;
+    }
+    void set_visibility(bool vis)
+    {
+        _x_is_visible = vis;
+    }
 
     void add_ntk_timer(int i_msecs);
     void remove_ntk_timer();
     void custom_update_ui_x();
     static void custom_update_ui ( void * );
 
-    void timer_registered(bool reg) {_timer_registered = reg;}
-    void event_handlers_registered(bool reg) {_event_handlers_registered = reg; }
-    int get_timer_msecs() {return _i_miliseconds;}
+    void timer_registered(bool reg)
+    {
+        _timer_registered = reg;
+    }
+    void event_handlers_registered(bool reg)
+    {
+        _event_handlers_registered = reg;
+    }
+    int get_timer_msecs()
+    {
+        return _i_miliseconds;
+    }
 
     // Save/Restore state
     void save_VST3_plugin_state(const std::string &filename);
@@ -152,7 +173,7 @@ private:
 
     VST3IMPL::ParamChanges _cParams_in;
     VST3IMPL::ParamChanges _cParams_out;    // dummy not used, required by some plugins - DPF
-    
+
     Vst::ParameterInfo m_programParamInfo;
 
     VST3IMPL::EventList _cEvents_in;
@@ -216,7 +237,7 @@ private:
     void process_jack_transport ( uint32_t nframes );
     void process_jack_midi_in ( uint32_t nframes, unsigned int port );
     void process_midi_in (unsigned char *data, unsigned int size,
-		unsigned long offset, unsigned short port);
+                          unsigned long offset, unsigned short port);
 
     void process_jack_midi_out ( uint32_t nframes, unsigned int port );
 
@@ -231,26 +252,25 @@ private:
     void activate ( void );
     void deactivate ( void );
     void vst3_activate ( Vst::IComponent *component,
-	Vst::MediaType type, Vst::BusDirection direction, bool state );
+                         Vst::MediaType type, Vst::BusDirection direction, bool state );
     void add_port ( const Port &p ) override;
 
     // MIDI controller assignment hash key/map.
     struct MidiMapKey
     {
         MidiMapKey (int16 po = 0, int16 ch = 0, int16 co = 0)
-                : port(po), channel(ch), controller(co) {}
+            : port(po), channel(ch), controller(co) {}
         MidiMapKey (const MidiMapKey& key)
-                : port(key.port), channel(key.channel), controller(key.controller) {}
+            : port(key.port), channel(key.channel), controller(key.controller) {}
 
         bool operator< (const MidiMapKey& key) const
         {
             if (port != key.port)
-                    return (port < key.port);
+                return (port < key.port);
+            else if (channel != key.channel)
+                return (channel < key.channel);
             else
-            if (channel != key.channel)
-                    return (channel < key.channel);
-            else
-                    return (controller < key.controller);
+                return (controller < key.controller);
         }
 
         int16 port;

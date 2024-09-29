@@ -35,9 +35,15 @@ public:
 
     virtual void number ( int v ) override;
 
-    virtual const char *name ( void ) const override { return "AUX"; }
+    virtual const char *name ( void ) const override
+    {
+        return "AUX";
+    }
 
-    int can_support_inputs ( int n ) override { return n > 0 ? n : -1; }
+    int can_support_inputs ( int n ) override
+    {
+        return n > 0 ? n : -1;
+    }
 
     virtual bool configure_outputs ( int n ) override;
     virtual bool configure_inputs ( int n ) override;
@@ -46,7 +52,7 @@ public:
     virtual ~AUX_Module ( );
 
     LOG_CREATE_FUNC( AUX_Module );
-    
+
     virtual void handle_sample_rate_change ( nframes_t n ) override;
 
 protected:

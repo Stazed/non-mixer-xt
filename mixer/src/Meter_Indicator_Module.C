@@ -76,7 +76,7 @@ Meter_Indicator_Module::Meter_Indicator_Module( bool is_default ) :
 
     control_value = new float[1 * 2];
     control_value[0] =
-            control_value[1] = 0;
+        control_value[1] = 0;
 
     align ( (Fl_Align) ( FL_ALIGN_CENTER | FL_ALIGN_INSIDE ) );
 
@@ -223,17 +223,17 @@ Meter_Indicator_Module::handle( int m )
 {
     switch ( m )
     {
-        case FL_PUSH:
-        {
-            if ( Fl::event_button3 ( ) && _disable_context_menu )
-                return 0;
+    case FL_PUSH:
+    {
+        if ( Fl::event_button3 ( ) && _disable_context_menu )
+            return 0;
 
-            if ( test_press ( FL_BUTTON1 ) )
-            {
-                /* don't let Module::handle eat our click */
-                return Fl_Group::handle ( m );
-            }
+        if ( test_press ( FL_BUTTON1 ) )
+        {
+            /* don't let Module::handle eat our click */
+            return Fl_Group::handle ( m );
         }
+    }
     }
 
     return Module::handle ( m );

@@ -69,8 +69,8 @@ SpectrumView::clear_plans( void )
     /* invalidate all plans */
 
     for ( std::map<std::string, float*>::iterator i = _cached_plan.begin ( );
-          i != _cached_plan.end ( );
-          ++i )
+            i != _cached_plan.end ( );
+            ++i )
     {
         delete[] i->second;
     }
@@ -216,12 +216,12 @@ SpectrumView::~SpectrumView( void )
 
 SpectrumView::SpectrumView( int X, int Y, int W, int H, const char *L )
     : Fl_Box( X, Y, W, H, L ),
-    _nframes( 0 ),
-    _data( 0 ),
-    _bands( 0 ),
-    _dbmin( -70 ),
-    _dbmax( 30 ),
-    _auto_level( 0 )
+      _nframes( 0 ),
+      _data( 0 ),
+      _bands( 0 ),
+      _dbmin( -70 ),
+      _dbmax( 30 ),
+      _auto_level( 0 )
 {
     box ( FL_FLAT_BOX );
     color ( fl_rgb_color ( 20, 20, 20 ) );

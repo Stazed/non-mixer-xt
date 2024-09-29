@@ -19,12 +19,12 @@
 /*******************************************************************************/
 
 
-/* 
+/*
  * File:   Scanner_Window.C
  * Author: sspresto
- * 
+ *
  * Created on July 17, 2024, 10:43 PM
- * 
+ *
  */
 
 #include <FL/Fl.H>
@@ -299,8 +299,8 @@ Scanner_Window::load_plugin_cache( void )
     g_plugin_cache.clear ( );
 
     while ( 11 == fscanf ( fp, "%m[^|]|%m[^|]|%lu|%m[^|]|%m[^|]|%m[^|]|%m[^|]|%d|%d|%d|%d\n]\n",
-            &c_type, &c_unique_id, &u_id, &c_plug_path, &c_name, &c_author,
-            &c_category, &i_audio_inputs, &i_audio_outputs, &i_midi_inputs, &i_midi_outputs ) )
+                           &c_type, &c_unique_id, &u_id, &c_plug_path, &c_name, &c_author,
+                           &c_category, &i_audio_inputs, &i_audio_outputs, &i_midi_inputs, &i_midi_outputs ) )
     {
         Plugin_Info pi ( c_type );
         pi.s_unique_id = c_unique_id;

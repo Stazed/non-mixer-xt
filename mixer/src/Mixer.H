@@ -40,7 +40,10 @@ class Fl_Blink_Button;
 class Fl_Flowpack;
 class Fl_Menu_Bar;
 class Spatialization_Console;
-namespace OSC { class Endpoint; }
+namespace OSC
+{
+class Endpoint;
+}
 #include <lo/lo.h>
 class Group;
 
@@ -67,7 +70,10 @@ private:
     Mixer_Strip* track_by_name ( const char *name );
 
     void snapshot ( void );
-    static void snapshot ( void *v ) { ((Mixer*)v)->snapshot(); }
+    static void snapshot ( void *v )
+    {
+        ((Mixer*)v)->snapshot();
+    }
 
     void cb_menu(Fl_Widget*);
     static void cb_menu(Fl_Widget*, void*);
@@ -93,15 +99,15 @@ private:
 
     static void handle_dirty ( int, void *v );
 
-    static int osc_non_hello ( const char *, const char *, lo_arg **, int , lo_message msg, void * );
-    static int osc_strip_by_number ( const char *, const char *, lo_arg **, int , lo_message msg, void * );
+    static int osc_non_hello ( const char *, const char *, lo_arg **, int, lo_message msg, void * );
+    static int osc_strip_by_number ( const char *, const char *, lo_arg **, int, lo_message msg, void * );
 
     static void update_cb ( void * );
     void update_cb ( void );
 
 
 public:
-    
+
     void auto_connect ( void );
     void maybe_auto_connect_output ( Module::Port *p );
     std::list<std::string> get_auto_connect_targets ( void );
@@ -112,7 +118,7 @@ public:
     Group *group ( int n );
     void add_group ( Group *g );
     void remove_group ( Group *g );
-    
+
     void update_menu ( void );
     void update_window_title( void );
 
@@ -123,17 +129,22 @@ public:
     Mixer_Strip* track_by_number ( int n );
 
     void update_frequency ( float f );
-    
-    void status ( const char *s ) { 
+
+    void status ( const char *s )
+    {
         if ( s ) _status->copy_label( s );
-        else _status->label(0); 
-        _status->redraw(); }
+        else _status->label(0);
+        _status->redraw();
+    }
 
     virtual int handle ( int m );
 
     char * get_unique_track_name ( const char *name );
 
-    int min_h ( void ) const { return Mixer_Strip::min_h() + (18 * 2); }
+    int min_h ( void ) const
+    {
+        return Mixer_Strip::min_h() + (18 * 2);
+    }
 
     void rows ( int n );
     virtual void resize ( int X, int Y, int W, int H );
@@ -172,9 +183,9 @@ public:
     void load_project_settings ( void );
 
     void renumber_strips ( void );
-    
+
 public:
-    
+
     void command_toggle_fader_view ( void );
     void command_clear_mappings ( void );
     void command_new ( void );

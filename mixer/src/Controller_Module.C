@@ -358,8 +358,8 @@ Controller_Module::connect_spatializer_to( Module *m )
         Port *p = &m->control_input[i];
 
         if ( !strcasecmp ( "Azimuth", p->name ( ) ) &&
-             180.0f == p->hints.maximum &&
-             -180.0f == p->hints.minimum )
+                180.0f == p->hints.maximum &&
+                -180.0f == p->hints.minimum )
         {
             azimuth_port = p;
             azimuth_value = p->control_value ( );
@@ -421,7 +421,7 @@ Controller_Module::connect_to( Port *p )
     control_output[0].connect_to ( p );
 
 #ifdef LV2_SUPPORT
-    /* The controller needs the ScalePoints vector to set the Fl_Choice menu based on 
+    /* The controller needs the ScalePoints vector to set the Fl_Choice menu based on
        ScalePoints Value since the Fl_Menu value may differ from the controller value */
     control_output[0].hints.ScalePoints = p->hints.ScalePoints;
 #endif
@@ -494,7 +494,7 @@ Controller_Module::connect_to( Port *p )
         o->value ( menu_location );
     }
 #endif  // LV2_SUPPORT
-        //  else if ( p->hints.type == Module::Port::Hints::LOGARITHMIC || Module::Port::Hints::LV2_INTEGER )
+    //  else if ( p->hints.type == Module::Port::Hints::LOGARITHMIC || Module::Port::Hints::LV2_INTEGER )
     else
     {
         Fl_Value_SliderX *o = new Fl_Value_SliderX ( 0, 0, 30, 250 );
@@ -660,7 +660,7 @@ Controller_Module::cb_spatializer_handle( Fl_Widget *w )
     Panner *pan = static_cast<Panner*> ( w );
 
     if ( control_output[0].connected ( ) &&
-         control_output[1].connected ( ) )
+            control_output[1].connected ( ) )
     {
         control_output[0].connected_port ( )->control_value ( pan->point ( 0 )->azimuth ( ) );
         control_output[1].connected_port ( )->control_value ( pan->point ( 0 )->elevation ( ) );
@@ -909,29 +909,29 @@ Controller_Module::draw( void )
         // Since we don't have alpha transparency for FLTK, just draw 3 pixel outline,
         // each rectangle is one pixel
         fl_rect ( x ( ), y ( ), w ( ), h ( ),
-                this == _learning_control
-                ? FL_RED
-                : FL_GREEN
+                  this == _learning_control
+                  ? FL_RED
+                  : FL_GREEN
                 );
 
         fl_rect ( x ( ) + 1, y ( ) + 1, w ( ) - 2, h ( ) - 2,
-                this == _learning_control
-                ? FL_RED
-                : FL_GREEN
+                  this == _learning_control
+                  ? FL_RED
+                  : FL_GREEN
                 );
 
         fl_rect ( x ( ) + 2, y ( ) + 2, w ( ) - 4, h ( ) - 4,
-                this == _learning_control
-                ? FL_RED
-                : FL_GREEN
+                  this == _learning_control
+                  ? FL_RED
+                  : FL_GREEN
                 );
 #else
         fl_rectf ( x ( ), y ( ), w ( ), h ( ),
-                fl_color_add_alpha (
-                this == _learning_control
-                ? FL_RED
-                : FL_GREEN,
-                60 ) );
+                   fl_color_add_alpha (
+                       this == _learning_control
+                       ? FL_RED
+                       : FL_GREEN,
+                       60 ) );
 #endif
     }
 }
@@ -955,43 +955,43 @@ Controller_Module::handle( int m )
 
     switch ( m )
     {
-        case FL_PUSH:
+    case FL_PUSH:
+    {
+        if ( learn_mode ( ) )
         {
-            if ( learn_mode ( ) )
+            tooltip ( "Now learning control. Move the desired control on your controller" );
+
+            _learning_control = this;
+
+            this->redraw ( );
+
+            //connect_to( &module->control_input[port] );
+            Port *p = control_output[0].connected_port ( );
+
+            if ( p )
             {
-                tooltip ( "Now learning control. Move the desired control on your controller" );
+                const char * path = learn_by_number ? p->osc_number_path ( ) : p->osc_path ( );
 
-                _learning_control = this;
+                DMESSAGE ( "Will learn %s", path );
 
-                this->redraw ( );
-
-                //connect_to( &module->control_input[port] );
-                Port *p = control_output[0].connected_port ( );
-
-                if ( p )
-                {
-                    const char * path = learn_by_number ? p->osc_number_path ( ) : p->osc_path ( );
-
-                    DMESSAGE ( "Will learn %s", path );
-
-                    mixer->osc_endpoint->learn ( path, Controller_Module::learning_callback, this );
-                    mixer->redraw ( );
-                }
-
-                return 1;
+                mixer->osc_endpoint->learn ( path, Controller_Module::learning_callback, this );
+                mixer->redraw ( );
             }
 
-            if ( Fl::event_button3 ( ) )
-            {
-                /* context menu */
-                /* if ( type() != SPATIALIZATION ) */
-                menu_popup ( &menu ( ) );
-
-                return 1;
-            }
-            else
-                return Fl_Group::handle ( m );
+            return 1;
         }
+
+        if ( Fl::event_button3 ( ) )
+        {
+            /* context menu */
+            /* if ( type() != SPATIALIZATION ) */
+            menu_popup ( &menu ( ) );
+
+            return 1;
+        }
+        else
+            return Fl_Group::handle ( m );
+    }
     }
 
     return Fl_Group::handle ( m );

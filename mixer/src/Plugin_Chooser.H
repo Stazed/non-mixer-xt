@@ -33,22 +33,22 @@ class Plugin_Chooser_UI;
 class Plugin_Chooser : public Fl_Double_Window
 {
     Plugin_Chooser_UI *ui;
-    
+
     std::list <Plugin_Info> _plugins;
-    
+
     static void cb_handle ( Fl_Widget *w, void *v );
     void cb_handle ( Fl_Widget *w );
     static void cb_table ( Fl_Widget *w, void *v );
     void cb_table ( Fl_Widget *w );
 
     void search ( const char *name, const char *author, const char *category,
-                    int ninputs, int noutputs, bool favorites, const char *plug_type );
+                  int ninputs, int noutputs, bool favorites, const char *plug_type );
 
     unsigned int _plugin_type;  // LADSPA, LV2, etc
     std::string _s_unique_id;
     unsigned long _value;
     std::string _plug_path;
-    
+
     int load_favorites ( void );
 
     void save_favorites ( void );
@@ -56,11 +56,23 @@ class Plugin_Chooser : public Fl_Double_Window
     void load_categories ( void );
 public:
 
-    unsigned int plug_type ( void ) const { return _plugin_type; }
-    std::string s_unique_id ( void ) const { return _s_unique_id; }
-    unsigned long value ( void ) const { return _value; }
-    std::string plug_path ( void ) const { return _plug_path; }
-   
+    unsigned int plug_type ( void ) const
+    {
+        return _plugin_type;
+    }
+    std::string s_unique_id ( void ) const
+    {
+        return _s_unique_id;
+    }
+    unsigned long value ( void ) const
+    {
+        return _value;
+    }
+    std::string plug_path ( void ) const
+    {
+        return _plug_path;
+    }
+
     Plugin_Chooser ( int X,int Y,int W,int H, const char *L=0 );
 
     virtual ~Plugin_Chooser( );

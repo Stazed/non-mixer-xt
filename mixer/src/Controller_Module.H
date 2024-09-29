@@ -55,15 +55,21 @@ class Controller_Module : public Module
 
     static void learning_callback ( void *userdata );
     void learning_callback ( void );
-    
+
 public:
 
     static bool _learn_mode;
     static Controller_Module *_learning_control;
 
     static bool learn_by_number;
-    static bool learn_mode ( void ) { return _learn_mode; }
-    static void learn_mode ( bool b ) { _learn_mode = b; }
+    static bool learn_mode ( void )
+    {
+        return _learn_mode;
+    }
+    static void learn_mode ( bool b )
+    {
+        _learn_mode = b;
+    }
 
     enum Mode { GUI, CV, OSC, MIDI };
 
@@ -72,23 +78,45 @@ public:
                 SPINNER,
                 TOGGLE,
                 CHOICE,
-                SPATIALIZATION, };
+                SPATIALIZATION,
+              };
 
-    Mode mode ( void ) const { return _mode; }
+    Mode mode ( void ) const
+    {
+        return _mode;
+    }
     void mode ( Mode v );
 
-    void horizontal ( bool v ) { _horizontal = v; }
-    Type type ( void ) const { return _type; }
+    void horizontal ( bool v )
+    {
+        _horizontal = v;
+    }
+    Type type ( void ) const
+    {
+        return _type;
+    }
 
     Controller_Module ( bool is_default = false );
     virtual ~Controller_Module ( );
 
-    const char *name ( void ) const override { return "Controller"; }
+    const char *name ( void ) const override
+    {
+        return "Controller";
+    }
 
-    int can_support_inputs ( int ) override { return 0; }
-    bool configure_inputs ( int ) override { return false; }
+    int can_support_inputs ( int ) override
+    {
+        return 0;
+    }
+    bool configure_inputs ( int ) override
+    {
+        return false;
+    }
 
-    void pad ( bool v ) { _pad = v; }
+    void pad ( bool v )
+    {
+        _pad = v;
+    }
 
     static void cb_handle ( Fl_Widget *w, void *v );
     void cb_handle ( Fl_Widget *w );
@@ -130,7 +158,7 @@ private:
     void maybe_create_panner ( void );
     char *generate_osc_path ( void );
     void change_osc_path ( char *path );
-    
+
     Mode _mode;
     Type _type;
 

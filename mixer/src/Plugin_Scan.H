@@ -18,7 +18,7 @@
 /* Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 /*******************************************************************************/
 
-/* 
+/*
  * File:   Plugin_Scan.H
  * Author: sspresto
  *
@@ -38,7 +38,8 @@
 
 #include "Plugin_Info.H"
 
-class Plugin_Scan {
+class Plugin_Scan
+{
 public:
 
     void get_all_plugins(std::string s_type, std::string s_path);

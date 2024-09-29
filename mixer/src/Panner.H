@@ -40,10 +40,10 @@ class Panner : public Fl_Group
     Fl_Image *_bg_image;
     bool _bg_image_scaled;
     int _bg_image_projection;
-    
+
     void draw_grid( int,int,int,int);
     void draw_the_box( int, int, int, int );
-    
+
     static int _range_mode;
     static int _projection_mode;
 
@@ -59,7 +59,8 @@ public:
         bool visible;
         bool radius_enabled;
 
-        Point ( ) {
+        Point ( )
+        {
             x = 1;
             y = 0;
             z = 0;
@@ -71,101 +72,104 @@ public:
         }
 
         Point ( float D, float A )
-            {
-                radius_enabled = false;
-                x = 1;
-                y = 0;
-                z = 0;
-                radius( D );
-                azimuth( A );
-                label = 0;
-                userdata = NULL;
-                visible = 1;
-                color = FL_WHITE;
-            }
+        {
+            radius_enabled = false;
+            x = 1;
+            y = 0;
+            z = 0;
+            radius( D );
+            azimuth( A );
+            label = 0;
+            userdata = NULL;
+            visible = 1;
+            color = FL_WHITE;
+        }
 
         static inline void spherical_to_cartesian (float a, float e, float &x, float &y, float &z )
-            {
-                a *= M_PI / 180.0f;
-                e *= M_PI / 180.0f;
-                
-                z = sinf(e);
-                const float ce = cosf(e);
-                x = ce * cosf(-a);
-                y = ce * sinf(-a);
-            }
-        
-        float azimuth ( void ) const {
+        {
+            a *= M_PI / 180.0f;
+            e *= M_PI / 180.0f;
+
+            z = sinf(e);
+            const float ce = cosf(e);
+            x = ce * cosf(-a);
+            y = ce * sinf(-a);
+        }
+
+        float azimuth ( void ) const
+        {
             return -atan2f( y,x ) * ( 180 / M_PI );
         }
-        float elevation ( void ) const { 
+        float elevation ( void ) const
+        {
             return atan2f(z,sqrtf(powf(x,2)+powf(y,2)) ) * ( 180 / M_PI );
         }
-        float radius ( void ) const {
+        float radius ( void ) const
+        {
             if ( ! radius_enabled )
                 return 1.0f;
             else
                 return sqrtf(powf(x,2)+powf(y,2)+powf(z,2));
         }
-        
+
         void azimuth (  float v )
-            {
-                float r = radius();
+        {
+            float r = radius();
 
-                spherical_to_cartesian( v, elevation(), x,y,z );
-                x *= r;
-                y *= r;
-                z *= r;
-            }
-        
-         void elevation ( float v )
-            {
-                float r = radius();
+            spherical_to_cartesian( v, elevation(), x,y,z );
+            x *= r;
+            y *= r;
+            z *= r;
+        }
 
-                spherical_to_cartesian( azimuth(), v, x,y,z );
-                x *= r;
-                y *= r;
-                z *= r;
-            }
-        
+        void elevation ( float v )
+        {
+            float r = radius();
 
-         void radius ( float v )
-            {
-                if (! radius_enabled )
-                    return; 
+            spherical_to_cartesian( azimuth(), v, x,y,z );
+            x *= r;
+            y *= r;
+            z *= r;
+        }
 
-                float r = v;
 
-                spherical_to_cartesian( azimuth(), elevation(), x,y,z );
+        void radius ( float v )
+        {
+            if (! radius_enabled )
+                return;
 
-                x *= r;
-                y *= r;
-                z *= r;
-            }
+            float r = v;
+
+            spherical_to_cartesian( azimuth(), elevation(), x,y,z );
+
+            x *= r;
+            y *= r;
+            z *= r;
+        }
     };
 
 private:
-  
+
     vector <Point> _points;
 
     static int _configs[][12];
 
     void bbox ( int &X, int &Y, int &W, int &H ) const
-        {
-            W = w() - Fl::box_dw( box() );
-            H = h() - Fl::box_dh( box() );
-            X = x() + Fl::box_dx( box() );
-            Y = y() + Fl::box_dy( box() );
+    {
+        W = w() - Fl::box_dw( box() );
+        H = h() - Fl::box_dh( box() );
+        X = x() + Fl::box_dx( box() );
+        Y = y() + Fl::box_dy( box() );
 
-            int S = W > H ? H : W;
+        int S = W > H ? H : W;
 
-            if ( W > H )
-                X += ( (W/2) - (S/2) );
-            else if ( H > W )
-                Y += ( (H/2) - (S/2) );
-          
-            W = H = S;
-        }
+        if ( W > H )
+            X += ( (W/2) - (S/2) );
+        else if ( H > W )
+            Y += ( (H/2) - (S/2) );
+
+        W = H = S;
+    }
 
     void point_bbox ( const Point *p, int *X, int *Y, int *W, int *H ) const;
 
@@ -182,7 +186,7 @@ private:
 
     static void cb_mode ( Fl_Widget *w, void *v );
     void cb_mode ( Fl_Widget *w );
-            
+
 protected:
 
     virtual void draw ( void );
@@ -191,28 +195,47 @@ protected:
 public:
 
     enum { POLAR, ORTHO };
-    
-    int projection ( void ) const { return _projection_mode; }
-    void projection ( int v ) { _projection_choice->value(v); _projection_mode = v; }
+
+    int projection ( void ) const
+    {
+        return _projection_mode;
+    }
+    void projection ( int v )
+    {
+        _projection_choice->value(v);
+        _projection_mode = v;
+    }
 
     Panner ( int X, int Y, int W, int H, const char *L = 0 );
 
-    float range ( void ) const { return *( static_cast<float*>( _range_choice->menu()[_range_mode].user_data() )); }
+    float range ( void ) const
+    {
+        return *( static_cast<float*>( _range_choice->menu()[_range_mode].user_data() ));
+    }
     void range ( float v );
 
-    void clear_points ( void ) { _points.clear(); }
+    void clear_points ( void )
+    {
+        _points.clear();
+    }
 
     void add_point( Panner::Point &p )
-        {
-            _points.push_back( p );
-        }
+    {
+        _points.push_back( p );
+    }
 
     virtual ~Panner ( );
 
     Panner::Point *point ( int i );
 
-    int points ( void ) const { return _points.size(); }
+    int points ( void ) const
+    {
+        return _points.size();
+    }
 
-    Panner::Point *pushed ( void ) { return drag; }
+    Panner::Point *pushed ( void )
+    {
+        return drag;
+    }
 
 };

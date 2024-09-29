@@ -40,19 +40,25 @@ class Spatializer_Module : public JACK_Module
     Value_Smoothing_Filter early_gain_smoothing;
     Value_Smoothing_Filter azimuth_smoothing;
     Value_Smoothing_Filter elevation_smoothing;
-    
+
     std::vector<filter*> _lowpass;
     std::vector<filter*> _highpass;
     std::vector<delay*> _delay;
-    
+
     ambisonic_panner *_panner;
     ambisonic_panner *_early_panner;
-    
+
 public:
 
-    virtual const char *name ( void ) const override { return "Spatializer"; }
+    virtual const char *name ( void ) const override
+    {
+        return "Spatializer";
+    }
 
-    int can_support_inputs ( int n ) override { return n > 0 && n < 3 ? 4 : -1; }
+    int can_support_inputs ( int n ) override
+    {
+        return n > 0 && n < 3 ? 4 : -1;
+    }
 
     virtual bool configure_inputs ( int n ) override;
 
@@ -62,7 +68,7 @@ public:
     LOG_CREATE_FUNC( Spatializer_Module );
 
     MODULE_CLONE_FUNC(Spatializer_Module);
-    
+
     virtual void handle_sample_rate_change ( nframes_t n ) override;
     virtual void handle_control_changed ( Port *p ) override;
     virtual void draw ( void ) override;

@@ -19,7 +19,7 @@
 /* Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 /*******************************************************************************/
 
-/* 
+/*
  * File:   ImplementationData.H
  * Author: sspresto
  *
@@ -39,7 +39,8 @@
 #define USE_SUIL 1
 
 /* supported lv2 features */
-enum Plugin_Module_Supported_Features {
+enum Plugin_Module_Supported_Features
+{
     Plugin_Feature_BufSize_Bounded = 0,
     Plugin_Feature_BufSize_Fixed,
     Plugin_Feature_Options,
@@ -57,7 +58,8 @@ enum Plugin_Module_Supported_Features {
 };
 
 /* pre-mapped lv2 uris */
-enum Plugin_Module_URIs {
+enum Plugin_Module_URIs
+{
     Plugin_Module_URI_Null = 0,
     Plugin_Module_URI_Atom_Bool,
     Plugin_Module_URI_Atom_Double,
@@ -99,8 +101,10 @@ enum Plugin_Module_URIs {
 
 /* lv2 plugin options */
 /* mostly empty for now, plugins usually require it because of buf-size extension */
-struct Plugin_Module_Options {
-    enum OptIndex {
+struct Plugin_Module_Options
+{
+    enum OptIndex
+    {
         MaxBlockLenth = 0,
         MinBlockLenth,
         SampleRate,
@@ -250,11 +254,11 @@ struct ImplementationData
             delete rdf_data;
             rdf_data = NULL;
         }
-_Pragma("GCC diagnostic push")
-_Pragma("GCC diagnostic ignored \"-Wdeprecated-declarations\"")
+        _Pragma("GCC diagnostic push")
+        _Pragma("GCC diagnostic ignored \"-Wdeprecated-declarations\"")
         if ( features[Plugin_Feature_URI_Map] && features[Plugin_Feature_URI_Map]->data )
             delete static_cast<LV2_URI_Map_Feature*>(features[Plugin_Feature_URI_Map]->data);
-_Pragma("GCC diagnostic pop")
+        _Pragma("GCC diagnostic pop")
         if ( features[Plugin_Feature_URID_Map] && features[Plugin_Feature_URID_Map]->data )
             delete static_cast<LV2_URID_Map*>(features[Plugin_Feature_URID_Map]->data);
 
@@ -275,13 +279,13 @@ _Pragma("GCC diagnostic pop")
 
     // -------------------------------------------------------------------
     // LV2 Features
-_Pragma("GCC diagnostic push")
-_Pragma("GCC diagnostic ignored \"-Wdeprecated-declarations\"")
+    _Pragma("GCC diagnostic push")
+    _Pragma("GCC diagnostic ignored \"-Wdeprecated-declarations\"")
     static uint32_t _lv2_uri_to_id(LV2_URI_Map_Callback_Data data, const char*, const char* uri)
     {
         return _lv2_urid_map(data, uri);
     }
-_Pragma("GCC diagnostic pop")
+    _Pragma("GCC diagnostic pop")
     static LV2_URID _lv2_urid_map(LV2_URID_Map_Handle handle, const char* uri)
     {
         if ( handle == NULL || ! uri )
@@ -436,7 +440,8 @@ public:
     }
 
 private:
-    struct LV2LibraryInfo {
+    struct LV2LibraryInfo
+    {
         std::string binary;
         void*       handle;
         const LV2_Descriptor* desc;
