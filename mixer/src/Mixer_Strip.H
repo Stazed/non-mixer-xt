@@ -33,7 +33,6 @@
 #include "../../nonlib/JACK/Port.H"
 #include "../../nonlib/Loggable.H"
 
-#include <FL/Fl_Pack.H>
 #include <FL/Fl_Dial.H>
 #include <FL/Fl_Group.H>
 #include <FL/Fl_Box.H>
@@ -44,7 +43,6 @@
 
 
 class Chain;
-class Fl_Flowpack;
 class Controller_Module;
 class Meter_Indicator_Module;
 class Module;
@@ -122,11 +120,9 @@ private:
     Fl_Input *name_field;
     Fl_Choice *group_choice;
 
-    Fl_Flowpack *controls_pack;
     Fl_Group *tab_group;
     Fl_Group *signal_tab;
     Fl_Group *fader_tab;
-    Fl_Pack *panner_pack;
 
     Chain *_chain;
     Group *_group;
