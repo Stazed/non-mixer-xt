@@ -27,7 +27,6 @@
 #include <FL/Fl_Widget.H>
 #include <FL/Fl_Group.H>
 #include <FL/Fl_Scroll.H>
-#include <FL/Fl_Pack.H>
 #include "Mixer_Strip.H"
 
 #include "../../nonlib/Thread.H"
@@ -81,7 +80,6 @@ private:
 
     Fl_Menu_Bar *menubar;
     Fl_Scroll *scroll;
-    Fl_Pack *pack;
     Fl_Box *project_name;
     Fl_Box *_status;
 
@@ -138,6 +136,7 @@ public:
     }
 
     virtual int handle ( int m );
+    virtual void draw ( void );
 
     char * get_unique_track_name ( const char *name );
 
