@@ -940,11 +940,10 @@ Mixer::renumber_strips( void )
 void
 Mixer::insert( Mixer_Strip *ms, Mixer_Strip *before )
 {
-    //    mixer_strips->remove( ms );
     mixer_strips->insert ( *ms, before );
     renumber_strips ( );
     schedule_feedback ( );
-    //    scroll->redraw();
+    Loggable::set_dirty();
 }
 
 void
