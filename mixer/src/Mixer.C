@@ -313,6 +313,8 @@ Mixer::cb_menu( Fl_Widget* o )
 
         free ( path );
 
+        load_project_settings();
+
         update_menu ( );
 
         update_window_title ( );
