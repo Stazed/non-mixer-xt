@@ -728,6 +728,9 @@ Mixer_Strip::init( )
                     o->type ( Fl_Scalepack::HORIZONTAL );
                     {
                         Controller_Module *o = gain_controller = new Controller_Module ( true );
+#ifdef MODULE_RESIZE_ADJUST
+                        o->label("@#GC");   // just unique
+#endif
                         o->horizontal ( false );
                         o->clear_visible_focus ( );
                         o->pad ( false );
@@ -735,6 +738,9 @@ Mixer_Strip::init( )
                     }
                     {
                         Meter_Indicator_Module *o = meter_indicator = new Meter_Indicator_Module ( true );
+#ifdef MODULE_RESIZE_ADJUST
+                        o->label("@#MI");    // unique
+#endif
                         o->disable_context_menu ( true );
                         o->pad ( false );
                         o->size ( 38, 100 );
