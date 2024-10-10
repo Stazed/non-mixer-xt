@@ -729,7 +729,7 @@ Mixer_Strip::init( )
                     {
                         Controller_Module *o = gain_controller = new Controller_Module ( true );
 #ifdef MODULE_RESIZE_ADJUST
-                        o->label("@#GC");   // just unique
+                        o->label(GAIN_LABEL);
 #endif
                         o->horizontal ( false );
                         o->clear_visible_focus ( );
@@ -739,7 +739,7 @@ Mixer_Strip::init( )
                     {
                         Meter_Indicator_Module *o = meter_indicator = new Meter_Indicator_Module ( true );
 #ifdef MODULE_RESIZE_ADJUST
-                        o->label("@#MI");    // unique
+                        o->label(METER_LABEL);
 #endif
                         o->disable_context_menu ( true );
                         o->pad ( false );
