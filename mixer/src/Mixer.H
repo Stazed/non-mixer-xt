@@ -89,6 +89,8 @@ private:
     void save_options ( void );
     void save_translations ( void );
     void load_translations ( void );
+    void save_window_sizes ( void );
+    void load_window_sizes ( void );
 
     static void send_feedback_cb ( void *v );
     void send_feedback ( bool force );

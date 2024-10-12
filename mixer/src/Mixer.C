@@ -319,6 +319,8 @@ Mixer::cb_menu( Fl_Widget* o )
 
         update_window_title ( );
 
+        load_window_sizes( );
+
         mixer->show ( );
     }
     else if ( !strcmp ( picked, "&Project/&Save" ) )
@@ -819,6 +821,44 @@ Mixer::save_translations( void )
     fclose ( fp );
 }
 
+void
+Mixer::save_window_sizes ( void )
+{
+    FILE *fp = fopen ( "window", "w" );
+
+    if ( !fp )
+    {
+        WARNING ( "Error opening window file for writing" );
+        return;
+    }
+
+    fprintf ( fp, "%d:%d:%d:%d\n", parent()->x(), parent()->y(), parent()->w(), parent()->h());
+
+    fclose ( fp );
+}
+
+void
+Mixer::load_window_sizes ( void )
+{
+    FILE *fp = fopen ( "window", "r" );
+
+    if ( !fp )
+    {
+        WARNING ( "Error opening window file for reading" );
+        return;
+    }
+
+    int parent_X = 0, parent_Y = 0, parent_W = 800, parent_H = 600; 
+
+    while ( 4 == fscanf ( fp, "%d:%d:%d:%d\n]\n", &parent_X, &parent_Y, &parent_W, &parent_H ) )
+    {
+    }
+
+    parent()->resize ( parent_X, parent_Y, parent_W, parent_H );
+
+    fclose ( fp );
+}
+
 int
 Mixer::init_osc( const char *osc_port )
 {
@@ -1185,6 +1225,7 @@ Mixer::save( void )
     Loggable::snapshot ( full_path.c_str ( ) );
 
     save_translations ( );
+    save_window_sizes( );
 
     if ( !remove_custom_data_directories.empty ( ) )
     {
@@ -1510,6 +1551,8 @@ Mixer::command_load( const char *path, const char *display_name )
     update_menu ( );
 
     update_window_title ( );
+    
+    load_window_sizes( );
 
     auto_connect ( );
 
