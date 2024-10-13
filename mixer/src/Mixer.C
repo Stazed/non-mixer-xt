@@ -965,6 +965,9 @@ Mixer::quit( void )
         stop_process = true;
     }
 
+    if(!project_directory.empty())
+        save_window_sizes();
+
     while ( Fl::first_window ( ) ) Fl::first_window ( )->hide ( );
 }
 
@@ -1225,7 +1228,6 @@ Mixer::save( void )
     Loggable::snapshot ( full_path.c_str ( ) );
 
     save_translations ( );
-    save_window_sizes( );
 
     if ( !remove_custom_data_directories.empty ( ) )
     {
