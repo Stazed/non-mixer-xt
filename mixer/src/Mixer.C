@@ -619,7 +619,11 @@ Mixer::Mixer( int X, int Y, int W, int H, const char *L ) :
     Fl_Group( X, Y, W, H, L ),
     _update_interval( 0.0f ),
     _rows( 1 ),
-    _strip_height( 0 )
+    _strip_height( 0 ),
+    _x_parent(0),
+    _y_parent(0),
+    _w_parent(800),
+    _h_parent(600)
 {
     Loggable::dirty_callback ( &Mixer::handle_dirty, this );
     Loggable::progress_callback ( progress_cb, NULL );
@@ -824,6 +828,12 @@ Mixer::save_translations( void )
 void
 Mixer::save_window_sizes ( void )
 {
+    if( ( _x_parent == parent()->x() ) && ( _y_parent == parent()->y() ) &&
+         ( _w_parent == parent()->w() ) && (_h_parent == parent()->h() ) )
+    {
+        return; // nothing changed
+    }
+
     FILE *fp = fopen ( "window", "w" );
 
     if ( !fp )
@@ -848,13 +858,11 @@ Mixer::load_window_sizes ( void )
         return;
     }
 
-    int parent_X = 0, parent_Y = 0, parent_W = 800, parent_H = 600; 
-
-    while ( 4 == fscanf ( fp, "%d:%d:%d:%d\n]\n", &parent_X, &parent_Y, &parent_W, &parent_H ) )
+    while ( 4 == fscanf ( fp, "%d:%d:%d:%d\n]\n", &_x_parent, &_y_parent, &_w_parent, &_h_parent ) )
     {
     }
 
-    parent()->resize ( parent_X, parent_Y, parent_W, parent_H );
+    parent()->resize ( _x_parent, _y_parent, _w_parent, _h_parent );
 
     fclose ( fp );
 }

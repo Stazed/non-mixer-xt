@@ -63,6 +63,7 @@ private:
 
     int _rows;
     int _strip_height;
+    int _x_parent, _y_parent, _w_parent, _h_parent;
 
     Fl_Color system_colors[3];
 
