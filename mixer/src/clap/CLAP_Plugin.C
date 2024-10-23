@@ -892,7 +892,7 @@ CLAP_Plugin::configure_midi_outputs( )
 nframes_t
 CLAP_Plugin::get_module_latency( void ) const
 {
-    if ( _activated )
+    if ( !_activated )
         return 0;
 
     if ( _plugin )
