@@ -153,6 +153,7 @@ public:
         addPluInterfaceSupported(Vst::IEditController::iid);
         addPluInterfaceSupported(Vst::IConnectionPoint::iid);
         addPluInterfaceSupported(Vst::IUnitInfo::iid);
+        addPluInterfaceSupported(Vst::IEditControllerHostEditing::iid);
 //	addPluInterfaceSupported(Vst::IUnitData::iid);
         addPluInterfaceSupported(Vst::IProgramListData::iid);
         addPluInterfaceSupported(Vst::IMidiMapping::iid);

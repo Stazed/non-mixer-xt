@@ -830,6 +830,46 @@ VST3_Plugin::process( nframes_t nframes )
             process_jack_midi_in ( nframes, i );
         }
 
+        /* handle output parameter changes */
+        int n_changes = _cParams_out.getParameterCount ();
+        for (int i = 0; i < n_changes; ++i)
+        {
+            Vst::IParamValueQueue* data = _cParams_out.getParameterData (i);
+            if (!data)
+            {
+                continue;
+            }
+            Vst::ParamID id       = data->getParameterId ();
+            int          n_points = data->getPointCount ();
+
+            if (n_points == 0)
+            {
+                continue;
+            }
+
+            std::map<Vst::ParamID, uint32_t>::const_iterator idx = _ctrl_id_index.find (id);
+            if (idx != _ctrl_id_index.end ())
+            {
+                /* automatable parameter, or read-only output */
+                int32           offset = 0;
+                Vst::ParamValue value  = 0;
+                /* only get most recent point */
+                if (data->getPoint (n_points - 1, offset, value) == kResultOk)
+                {
+                    if (_shadow_data[idx->second] != value)
+                    {
+                        _update_ctrl[idx->second] = true;
+                        _shadow_data[idx->second] = (float)value;
+                       // DMESSAGE("PROCESS ID = %u: value = %f", idx->second, (float)value);
+                    }
+                }
+            } else
+            {
+                /* non-automatable parameter */
+                DMESSAGE("VST3: TODO non-automatable output param.."); // TODO inform UI
+            }
+        }
+
         _cParams_out.clear ( );
         _cEvents_out.clear ( );
 
@@ -1139,6 +1179,36 @@ VST3_Plugin::custom_update_ui( void *v )
     ( (VST3_Plugin*) v )->custom_update_ui_x ( );
 }
 
+
+void
+VST3_Plugin::update_controller_param ()
+{
+    /* GUI thread */
+	FUnknownPtr<Vst::IEditControllerHostEditing> host_editing (_pController);
+
+	std::map<uint32_t, Vst::ParamID>::const_iterator i;
+	for (i = _ctrl_id_index.begin (); i != _ctrl_id_index.end (); ++i)
+    {
+		if (!_update_ctrl[i->second])   // does this control need to be updated
+        {
+			continue;
+		}
+		_update_ctrl[i->second] = false;    // clear the flag
+
+		if ( host_editing )
+        {
+			host_editing->beginEditFromHost (i->first);
+		}
+
+		_pController->setParamNormalized (i->first, _shadow_data[i->second]);    // Send to custom UI
+
+		if ( host_editing )
+        {
+			host_editing->endEditFromHost (i->first);
+		}
+	}
+}
+
 /**
  The idle callback to update_custom_ui()
  */
@@ -1148,6 +1218,8 @@ VST3_Plugin::custom_update_ui_x( )
     _pEditorFrame->idle ( );
 
     _pRunloop->proccess_timers ( _timer_registered, _event_handlers_registered );
+    
+    update_controller_param();
 
     if ( _x_is_visible )
     {
@@ -2120,11 +2192,13 @@ VST3_Plugin::create_control_ports( )
                 }
 
                 bool have_control_in = false;
+                bool have_control_out = false;
 
                 if ( paramInfo.flags & Vst::ParameterInfo::kIsReadOnly )
                 {
                     d = Port::OUTPUT;
                     ++control_outs;
+                    have_control_out = true;
                 }
                 else if ( paramInfo.flags & Vst::ParameterInfo::kCanAutomate )
                 {
@@ -2199,6 +2273,12 @@ VST3_Plugin::create_control_ports( )
 
                     std::pair<uint32_t, unsigned long> prm ( p.hints.parameter_id, control_ins - 1 );
                     _mParamIds.insert ( prm );
+                }
+                if ( have_control_out )
+                {
+                    _ctrl_id_index[p.hints.parameter_id] = control_outs - 1;
+                    _shadow_data.push_back (p.hints.default_value);
+                    _update_ctrl.push_back (false);
                 }
             }
         }
