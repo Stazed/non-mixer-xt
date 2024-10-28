@@ -28,6 +28,7 @@
 
 #ifdef VST3_SUPPORT
 
+#include <regex>
 #include <filesystem>
 #include <dlfcn.h>      // dlopen, dlerror, dlsym
 #include <unordered_map>
@@ -2175,6 +2176,9 @@ VST3_Plugin::create_control_ports( )
 
     Vst::IEditController *controller = _pController;
 
+    /* From ardour */
+    std::regex dpf_midi_CC ("MIDI Ch. [0-9]+ CC [0-9]+");
+
     if ( controller )
     {
         const int32 nparams = controller->getParameterCount ( );
@@ -2193,6 +2197,18 @@ VST3_Plugin::create_control_ports( )
                 if ( !( paramInfo.flags & Vst::ParameterInfo::kIsReadOnly ) &&
                     !( paramInfo.flags & Vst::ParameterInfo::kCanAutomate ) )
                 {
+                    continue;
+                }
+
+                /* Some checks grabbed from ardour project */
+                if (utf16_to_utf8 (paramInfo.title).find ("MIDI CC ") != std::string::npos) 
+                {
+                    /* Some JUCE plugins add 16 * 128 automatable MIDI CC parameters */
+                    continue;
+                }
+                if (std::regex_search (utf16_to_utf8 (paramInfo.title), dpf_midi_CC))
+                {
+                    /* DPF plugins also adds automatable MIDI CC parameters "MIDI Ch. %d CC %d" */
                     continue;
                 }
 
