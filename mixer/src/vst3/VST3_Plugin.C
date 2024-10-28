@@ -1190,29 +1190,29 @@ void
 VST3_Plugin::update_controller_param ()
 {
     /* GUI thread */
-	FUnknownPtr<Vst::IEditControllerHostEditing> host_editing (_pController);
+    FUnknownPtr<Vst::IEditControllerHostEditing> host_editing (_pController);
 
-	std::map<uint32_t, Vst::ParamID>::const_iterator i;
-	for (i = _ctrl_id_index.begin (); i != _ctrl_id_index.end (); ++i)
+    std::map<uint32_t, Vst::ParamID>::const_iterator i;
+    for (i = _ctrl_id_index.begin (); i != _ctrl_id_index.end (); ++i)
     {
-		if (!_update_ctrl[i->second])   // does this control need to be updated
+        if (!_update_ctrl[i->second])   // does this control need to be updated?
         {
-			continue;
-		}
-		_update_ctrl[i->second] = false;    // clear the flag
+            continue;
+        }
+        _update_ctrl[i->second] = false;    // clear the flag
 
-		if ( host_editing )
+        if ( host_editing )
         {
-			host_editing->beginEditFromHost (i->first);
-		}
+            host_editing->beginEditFromHost (i->first);
+        }
 
-		_pController->setParamNormalized (i->first, _shadow_data[i->second]);    // Send to custom UI
+        _pController->setParamNormalized (i->first, _shadow_data[i->second]);    // Send to custom UI
 
-		if ( host_editing )
+        if ( host_editing )
         {
-			host_editing->endEditFromHost (i->first);
-		}
-	}
+            host_editing->endEditFromHost (i->first);
+        }
+    }
 }
 
 /**
