@@ -830,43 +830,48 @@ VST3_Plugin::process( nframes_t nframes )
             process_jack_midi_in ( nframes, i );
         }
 
-        /* handle output parameter changes */
-        int n_changes = _cParams_out.getParameterCount ();
-        for (int i = 0; i < n_changes; ++i)
+        /* Currently we only use this in the context of the custom UI update - DPF */
+        if ( _x_is_visible )
         {
-            Vst::IParamValueQueue* data = _cParams_out.getParameterData (i);
-            if (!data)
+            /* handle output parameter changes */
+            int n_changes = _cParams_out.getParameterCount ();
+            for (int i = 0; i < n_changes; ++i)
             {
-                continue;
-            }
-            Vst::ParamID id       = data->getParameterId ();
-            int          n_points = data->getPointCount ();
-
-            if (n_points == 0)
-            {
-                continue;
-            }
-
-            std::map<Vst::ParamID, uint32_t>::const_iterator idx = _ctrl_id_index.find (id);
-            if (idx != _ctrl_id_index.end ())
-            {
-                /* automatable parameter, or read-only output */
-                int32           offset = 0;
-                Vst::ParamValue value  = 0;
-                /* only get most recent point */
-                if (data->getPoint (n_points - 1, offset, value) == kResultOk)
+                Vst::IParamValueQueue* data = _cParams_out.getParameterData (i);
+                if (!data)
                 {
-                    if (_shadow_data[idx->second] != value)
-                    {
-                        _update_ctrl[idx->second] = true;
-                        _shadow_data[idx->second] = (float)value;
-                       // DMESSAGE("PROCESS ID = %u: value = %f", idx->second, (float)value);
-                    }
+                    continue;
                 }
-            } else
-            {
-                /* non-automatable parameter */
-                DMESSAGE("VST3: TODO non-automatable output param.."); // TODO inform UI
+
+                Vst::ParamID id       = data->getParameterId ();
+                int          n_points = data->getPointCount ();
+
+                if (n_points == 0)
+                {
+                    continue;
+                }
+
+                std::map<Vst::ParamID, uint32_t>::const_iterator idx = _ctrl_id_index.find (id);
+                if (idx != _ctrl_id_index.end ())
+                {
+                    /* automatable parameter, or read-only output */
+                    int32           offset = 0;
+                    Vst::ParamValue value  = 0;
+                    /* only get most recent point */
+                    if (data->getPoint (n_points - 1, offset, value) == kResultOk)
+                    {
+                        if (_shadow_data[idx->second] != (float)value)
+                        {
+                            _update_ctrl[idx->second] = true;
+                            _shadow_data[idx->second] = (float)value;
+                            // DMESSAGE("PROCESS ID = %u: value = %f", idx->second, (float)value);
+                        }
+                    }
+                } else
+                {
+                    /* non-automatable parameter */
+                    DMESSAGE("VST3: TODO non-automatable output param.."); // TODO inform UI
+                }
             }
         }
 

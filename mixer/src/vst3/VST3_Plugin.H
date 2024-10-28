@@ -173,7 +173,7 @@ private:
     volatile bool _bProcessing;
 
     VST3IMPL::ParamChanges _cParams_in;
-    VST3IMPL::ParamChanges _cParams_out;    // dummy not used, required by some plugins - DPF
+    VST3IMPL::ParamChanges _cParams_out;    // required by some DPF plugins
 
     std::map<Vst::ParamID, uint32_t> _ctrl_id_index;    // map of control out params, control index sync with below items
     std::vector<float>               _shadow_data;      // the control data value to update
