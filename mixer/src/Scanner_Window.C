@@ -108,15 +108,22 @@ scan_bundle(std::string s_command)
 
 Scanner_Window::Scanner_Window( ) :
     _box( nullptr ),
-    _cancel_button( nullptr )
+    _cancel_button( nullptr ),
+    _skip_button( nullptr )
 {
-    g_scanner_window = new Fl_Window ( 670, 60, "Scanning Plugins" );
+    g_scanner_window = new Fl_Window ( 720, 60, "Scanning Plugins" );
     _box = new Fl_Box ( 20, 10, 560, 40, "Scanning" );
     _box->box ( FL_UP_BOX );
     _box->labelsize ( 12 );
     _box->labelfont ( FL_BOLD );
     _box->show ( );
-    _cancel_button = new Fl_Button ( 600, 10, 50, 40, "Cancel" );
+    _skip_button = new Fl_Button ( 590, 10, 50, 40, "Skip" );
+    _skip_button->type ( FL_NORMAL_BUTTON );
+    _skip_button->labelsize ( 12 );
+    _skip_button->labelfont( FL_BOLD );
+    _skip_button->color( FL_DARK_BLUE );
+    _skip_button->show();
+    _cancel_button = new Fl_Button ( 650, 10, 50, 40, "Cancel" );
     _cancel_button->type ( FL_TOGGLE_BUTTON );
     _cancel_button->labelsize ( 12 );
     _cancel_button->labelfont ( FL_BOLD );
@@ -362,14 +369,25 @@ Scanner_Window::run_scanner(std::string s_command)
 
     while(!_scan_complete)
     {
+        Fl::check ( );
+        if ( _skip_button->value( ) )
+        {
+            system("pkill -f nmxt-plugin-scan");
+            continue_scan = true;
+
+            // gotta reset manually or it will still be set on next plugin
+            _skip_button->value(0);
+            break;
+        }
+
         if ( _cancel_button->value ( ) )
         {
             system("pkill -f nmxt-plugin-scan");
             continue_scan = false;
+            break;
         }
 
         usleep(1500);
-        Fl::check ( );
     }
 
     t.join();

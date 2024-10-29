@@ -47,6 +47,7 @@ private:
 
     Fl_Box *_box;
     Fl_Button *_cancel_button;
+    Fl_Button *_skip_button;
     void show_scanner_window();
     void remove_temporary_cache();
     void cancel_scanning();
