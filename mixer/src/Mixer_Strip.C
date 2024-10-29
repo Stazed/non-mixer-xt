@@ -594,13 +594,17 @@ Mixer_Strip::init( )
         o->spacing ( 2 );
 
         {
-            Fl_Box *o = color_box = new Fl_Box ( 0, 0, 25, 10 );
+            Fl_Box *o = color_box = new Fl_Box ( 0, 0, 25, 10, "1" );
             o->box ( FL_FLAT_BOX );
+            o->labelcolor ( FL_FOREGROUND_COLOR );
+            o->labeltype ( FL_NORMAL_LABEL );
+            o->labelfont ( FL_COURIER_BOLD );
+            o->labelsize ( 12 );
             o->tooltip ( "Drag and drop to move strip" );
         }
 
         {
-            NMXT_Progress* o = dsp_load_progress = new NMXT_Progress ( 61, 183, 45, 14, "group dsp" );
+            NMXT_Progress* o = dsp_load_progress = new NMXT_Progress ( 61, 183, 45, 14 );
             o->box ( FL_BORDER_BOX );
             o->type ( FL_HORIZONTAL );
             /* o->labelsize( 9 ); */
@@ -611,11 +615,6 @@ Mixer_Strip::init( )
             o->color2 ( FL_CYAN );
 
             o->color ( fl_contrast ( FL_DARK1, FL_FOREGROUND_COLOR ) );
-            o->labelcolor ( FL_FOREGROUND_COLOR );
-            /* o->labeltype(FL_NORMAL_LABEL); */
-            o->labeltype ( FL_NORMAL_LABEL );
-            o->labelfont ( FL_COURIER_BOLD );
-            o->labelsize ( 12 );
         }
 
         {
@@ -1386,11 +1385,9 @@ Mixer_Strip::number( int n )
         _number = n;
         char *s = NULL;
         asprintf ( &s, "%i", n + 1 );
-        dsp_load_progress->label ( s );
-        /* color code groups of eight */
-        dsp_load_progress->color ( ( n / 8 ) % 2 == 0 ? FL_BACKGROUND_COLOR : FL_BLACK );
-        /* dsp_load_progress->color( fl_color_average( (Fl_Color)n / 8, FL_BACKGROUND_COLOR, 0.66f )); */
-        dsp_load_progress->labelcolor ( fl_contrast ( FL_BACKGROUND_COLOR, dsp_load_progress->color ( ) ) );
+
+        color_box->label ( s );
+        color_box->labelcolor ( fl_contrast ( FL_BACKGROUND_COLOR, color_box->color ( ) ) );
     }
 }
 
