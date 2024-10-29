@@ -25,7 +25,8 @@
  * Created on July 17, 2024, 10:43 PM
  *
  */
-
+#include <thread>
+#include <unistd.h>
 #include <FL/Fl.H>
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Window.H>
@@ -48,6 +49,7 @@ std::list<Plugin_Info> g_plugin_cache;
 #endif
 
 static Fl_Window * g_scanner_window = 0;
+static bool _scan_complete = false;
 
 static void
 window_cb( Fl_Widget *, void * )
@@ -95,6 +97,13 @@ open_plugin_cache( const char *mode )
     free ( path );
 
     return fp;
+}
+
+static void 
+scan_bundle(std::string s_command)
+{
+    system ( s_command.c_str ( ) );
+    _scan_complete = true;
 }
 
 Scanner_Window::Scanner_Window( ) :
@@ -157,9 +166,7 @@ Scanner_Window::get_all_plugins( )
         s_command += q.u8string ( ).c_str ( );
         s_command += "'";
 
-        system ( s_command.c_str ( ) );
-
-        if ( _cancel_button->value ( ) )
+        if( !run_scanner( s_command ) )
         {
             cancel_scanning ( );
             return false;
@@ -175,9 +182,7 @@ Scanner_Window::get_all_plugins( )
         Fl::check ( );
     }
 
-    system ( "nmxt-plugin-scan LADSPA" );
-
-    if ( _cancel_button->value ( ) )
+    if( !run_scanner( "nmxt-plugin-scan LADSPA" ) )
     {
         cancel_scanning ( );
         return false;
@@ -192,9 +197,7 @@ Scanner_Window::get_all_plugins( )
         Fl::check ( );
     }
 
-    system ( "nmxt-plugin-scan LV2" );
-
-    if ( _cancel_button->value ( ) )
+    if( !run_scanner("nmxt-plugin-scan LV2") )
     {
         cancel_scanning ( );
         return false;
@@ -217,9 +220,7 @@ Scanner_Window::get_all_plugins( )
         s_command += q.u8string ( ).c_str ( );
         s_command += "'";
 
-        system ( s_command.c_str ( ) );
-
-        if ( _cancel_button->value ( ) )
+        if( !run_scanner( s_command ) )
         {
             cancel_scanning ( );
             return false;
@@ -243,9 +244,7 @@ Scanner_Window::get_all_plugins( )
         s_command += q.u8string ( ).c_str ( );
         s_command += "'";
 
-        system ( s_command.c_str ( ) );
-
-        if ( _cancel_button->value ( ) )
+        if( !run_scanner( s_command ) )
         {
             cancel_scanning ( );
             return false;
@@ -351,4 +350,29 @@ Scanner_Window::cancel_scanning( )
 {
     remove_temporary_cache ( );
     close_scanner_window ( );
+}
+
+bool
+Scanner_Window::run_scanner(std::string s_command)
+{
+    _scan_complete = false;
+    std::thread t(scan_bundle, s_command.c_str());
+
+    bool continue_scan = true;
+
+    while(!_scan_complete)
+    {
+        if ( _cancel_button->value ( ) )
+        {
+            system("pkill -f nmxt-plugin-scan");
+            continue_scan = false;
+        }
+
+        usleep(1500);
+        Fl::check ( );
+    }
+
+    t.join();
+
+    return continue_scan;
 }

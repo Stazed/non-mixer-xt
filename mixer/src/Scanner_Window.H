@@ -50,6 +50,7 @@ private:
     void show_scanner_window();
     void remove_temporary_cache();
     void cancel_scanning();
+    bool run_scanner(std::string s_command);
 
 };
 
