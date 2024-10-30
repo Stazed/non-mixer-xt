@@ -264,6 +264,7 @@ Mixer_Strip::color( Fl_Color c )
 {
     _color = c;
     color_box->color ( _color );
+    color_box->labelcolor ( fl_contrast ( FL_BACKGROUND_COLOR, color_box->color ( ) ) );
     color_box->redraw ( );
 }
 
