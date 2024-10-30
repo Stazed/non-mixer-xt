@@ -59,21 +59,6 @@ window_cb( Fl_Widget *, void * )
     return;
 }
 
-/**
- * When the scanner is running, it must complete the current scan before returning
- * to the mixer and checking the cancel setting. If the scanner is running on a large
- * bundle, the user might get impatient and press the cancel button a second time
- * which will un-check the cancel. So we make the cancel un-reversible here.
- */
-static void
-cancel_cb( Fl_Widget * w, void * )
-{
-    if ( ( (Fl_Button * ) w )->value ( ) )
-        return; // don't allow to un-toggle the cancel
-    else
-        ((Fl_Button*) w )->value ( 1 );
-}
-
 static void
 scanner_timeout( void* )
 {
@@ -128,7 +113,6 @@ Scanner_Window::Scanner_Window( ) :
     _cancel_button->labelsize ( 12 );
     _cancel_button->labelfont ( FL_BOLD );
     _cancel_button->color ( FL_RED );
-    _cancel_button->callback ( (Fl_Callback*) cancel_cb );
     _cancel_button->show ( );
 
     g_scanner_window->callback ( (Fl_Callback*) window_cb );
