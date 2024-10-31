@@ -48,6 +48,8 @@ std::list<Plugin_Info> g_plugin_cache;
 #include "vst3/Vst3_Discovery.H"
 #endif
 
+#define SCANNER_BINARY "nmxt-plugin-scan"
+
 static Fl_Window * g_scanner_window = 0;
 static bool _scan_complete = false;
 
@@ -153,7 +155,8 @@ Scanner_Window::get_all_plugins( )
             Fl::check ( );
         }
 
-        std::string s_command = "nmxt-plugin-scan CLAP '";
+        std::string s_command(SCANNER_BINARY);
+        s_command += " CLAP '";
         s_command += q.u8string ( ).c_str ( );
         s_command += "'";
 
@@ -173,7 +176,9 @@ Scanner_Window::get_all_plugins( )
         Fl::check ( );
     }
 
-    if( !run_scanner( "nmxt-plugin-scan LADSPA" ) )
+    std::string s_command(SCANNER_BINARY);
+    s_command += " LADSPA";
+    if( !run_scanner( s_command ) )
     {
         cancel_scanning ( );
         return false;
@@ -188,7 +193,9 @@ Scanner_Window::get_all_plugins( )
         Fl::check ( );
     }
 
-    if( !run_scanner("nmxt-plugin-scan LV2") )
+    s_command = SCANNER_BINARY;
+    s_command += " LV2";
+    if( !run_scanner( s_command ) )
     {
         cancel_scanning ( );
         return false;
@@ -207,7 +214,8 @@ Scanner_Window::get_all_plugins( )
             Fl::check ( );
         }
 
-        std::string s_command = "nmxt-plugin-scan VST2 '";
+        std::string s_command(SCANNER_BINARY);
+        s_command += " VST2 '";
         s_command += q.u8string ( ).c_str ( );
         s_command += "'";
 
@@ -231,7 +239,8 @@ Scanner_Window::get_all_plugins( )
             Fl::check ( );
         }
 
-        std::string s_command = "nmxt-plugin-scan VST3 '";
+        std::string s_command(SCANNER_BINARY);
+        s_command += " VST3 '";
         s_command += q.u8string ( ).c_str ( );
         s_command += "'";
 
@@ -351,12 +360,15 @@ Scanner_Window::run_scanner(std::string s_command)
 
     bool continue_scan = true;
 
+    std::string s_kill_command( "pkill -f " );
+    s_kill_command += SCANNER_BINARY;
+
     while(!_scan_complete)
     {
         Fl::check ( );
         if ( _skip_button->value( ) )
         {
-            system("pkill -f nmxt-plugin-scan");
+            system( s_kill_command.c_str() );
             continue_scan = true;
 
             // gotta reset manually or it will still be set on next plugin
@@ -366,7 +378,7 @@ Scanner_Window::run_scanner(std::string s_command)
 
         if ( _cancel_button->value ( ) )
         {
-            system("pkill -f nmxt-plugin-scan");
+            system( s_kill_command.c_str() );
             continue_scan = false;
             break;
         }
