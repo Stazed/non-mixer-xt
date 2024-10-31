@@ -13,6 +13,7 @@ add_definitions(-D'PACKAGE="non-mixer-xt"')
 add_definitions(-D'PIXMAP_PATH="${CMAKE_INSTALL_PREFIX}/share/pixmaps"')
 add_definitions(-D'DOCUMENT_PATH="${CMAKE_INSTALL_PREFIX}/share/doc"')
 add_definitions(-D'NMXT_CONFIG_DIRECTORY="non-mixer-xt/"')
+add_definitions(-D'BINARY_PATH="${CMAKE_INSTALL_PREFIX}/bin"')
 
 include(CheckCSourceCompiles)
 include(CheckCXXCompilerFlag)
