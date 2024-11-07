@@ -7,4 +7,5 @@ Terminal=false
 Type=Application
 Icon=non-mixer-xt
 Categories=AudioVideo;Audio;
-X-NSM-capable=true
+X-NSM-Capable=true
+X-NSM-Exec=non-mixer-xt
