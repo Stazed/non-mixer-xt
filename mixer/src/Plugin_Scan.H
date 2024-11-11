@@ -42,7 +42,7 @@ class Plugin_Scan
 {
 public:
 
-    void get_all_plugins(std::string s_type, std::string s_path);
+    void get_all_plugins(const std::string &s_type, const std::string &s_path);
 
 #ifdef LADSPA_SUPPORT
     void scan_LADSPA_plugins(std::list<Plugin_Info> & pr);
@@ -51,20 +51,18 @@ public:
     void scan_LV2_plugins(std::list<Plugin_Info> & pr);
 #endif
 #ifdef CLAP_SUPPORT
-    void scan_CLAP_plugins(std::list<Plugin_Info> & pr, std::string clap_path);
+    void scan_CLAP_plugins(std::list<Plugin_Info> & pr, const std::string &clap_path);
 #endif
 #ifdef VST2_SUPPORT
-    void scan_VST2_plugins(std::list<Plugin_Info> & pr, std::string vst2_path);
+    void scan_VST2_plugins(std::list<Plugin_Info> & pr, const std::string &vst2_path);
 #endif
 #ifdef VST3_SUPPORT
-    void scan_VST3_plugins(std::list<Plugin_Info> & pr, std::string vst3_path);
+    void scan_VST3_plugins(std::list<Plugin_Info> & pr, const std::string &vst3_path);
 #endif
 
     Plugin_Scan();
     virtual ~Plugin_Scan();
 private:
-
-    Fl_Box *_box;
 
     void save_plugin_cache(void);
 };

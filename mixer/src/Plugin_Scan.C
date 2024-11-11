@@ -84,7 +84,7 @@ Plugin_Scan::~Plugin_Scan( )
 
 /* Set global list of available plugins */
 void
-Plugin_Scan::get_all_plugins( std::string s_type, std::string s_path )
+Plugin_Scan::get_all_plugins( const std::string &s_type, const std::string &s_path )
 {
     std::list<Plugin_Info> pr;
 
@@ -350,7 +350,7 @@ Plugin_Scan::scan_LV2_plugins( std::list<Plugin_Info> & pr )
 #ifdef CLAP_SUPPORT
 
 void
-Plugin_Scan::scan_CLAP_plugins( std::list<Plugin_Info> & pr, std::string clap_path )
+Plugin_Scan::scan_CLAP_plugins( std::list<Plugin_Info> & pr, const std::string &clap_path )
 {
     // DMESSAGE("CLAP PLUG PATHS %s", q.u8string().c_str());
     auto entry = clap_discovery::entryFromCLAPPath ( clap_path );
@@ -491,12 +491,12 @@ Plugin_Scan::scan_CLAP_plugins( std::list<Plugin_Info> & pr, std::string clap_pa
 #ifdef VST2_SUPPORT
 
 void
-Plugin_Scan::scan_VST2_plugins( std::list<Plugin_Info> & pr, std::string vst2_path )
+Plugin_Scan::scan_VST2_plugins( std::list<Plugin_Info> & pr, const std::string &vst2_path )
 {
 
     vst2_PI_cache.clear ( );
 
-    vst2_discovery::vst2_discovery_scan_file ( vst2_path.c_str ( ), vst2_PI_cache );
+    vst2_discovery::vst2_discovery_scan_file ( vst2_path, vst2_PI_cache );
 
     if ( !vst2_PI_cache.empty ( ) )
     {
@@ -509,11 +509,11 @@ Plugin_Scan::scan_VST2_plugins( std::list<Plugin_Info> & pr, std::string vst2_pa
 #ifdef VST3_SUPPORT
 
 void
-Plugin_Scan::scan_VST3_plugins( std::list<Plugin_Info> & pr, std::string vst3_path )
+Plugin_Scan::scan_VST3_plugins( std::list<Plugin_Info> & pr, const std::string &vst3_path )
 {
     vst3_PI_cache.clear ( );
 
-    vst3_discovery::vst3_discovery_scan_file ( vst3_path.c_str ( ), vst3_PI_cache );
+    vst3_discovery::vst3_discovery_scan_file ( vst3_path, vst3_PI_cache );
 
     if ( !vst3_PI_cache.empty ( ) )
     {
