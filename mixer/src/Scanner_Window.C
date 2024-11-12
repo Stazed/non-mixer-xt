@@ -87,7 +87,7 @@ open_plugin_cache( const char *mode )
 }
 
 static void 
-scan_bundle(std::string s_command)
+scan_bundle(const std::string &s_command)
 {
     system ( s_command.c_str ( ) );
     _scan_complete = true;
@@ -358,7 +358,7 @@ Scanner_Window::cancel_scanning( )
 }
 
 bool
-Scanner_Window::run_scanner(std::string s_command)
+Scanner_Window::run_scanner(const std::string &s_command)
 {
     _scan_complete = false;
     std::thread t(scan_bundle, s_command.c_str());

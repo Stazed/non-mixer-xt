@@ -198,6 +198,7 @@ Mixer::sm_active( bool b )
     }
 }
 
+// never used
 void
 Mixer::redraw_windows( void )
 {
@@ -414,8 +415,7 @@ Mixer::cb_menu( Fl_Widget* o )
     {
         if ( !spatialization_console )
         {
-            Spatialization_Console *o = new Spatialization_Console ( );
-            spatialization_console = o;
+            spatialization_console = new Spatialization_Console ( );
         }
 
         if ( !menu->mvalue ( )->value ( ) )

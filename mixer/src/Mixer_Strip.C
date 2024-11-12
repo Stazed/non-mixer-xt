@@ -1170,8 +1170,7 @@ Mixer_Strip::maybe_auto_connect_output( Module::Port *p )
         return false;
     }
 
-    if ( _auto_input &&
-        matches_pattern ( _auto_input, p ) )
+    if ( matches_pattern ( _auto_input, p ) )
     {
         /* got a match, add this to list of accepted connections */
 
@@ -1428,6 +1427,7 @@ Mixer_Strip::command_close( void )
     Fl::delete_widget ( this );
 }
 
+// never used
 void
 Mixer_Strip::command_rename( const char * s )
 {

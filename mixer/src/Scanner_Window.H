@@ -45,13 +45,16 @@ public:
     bool load_plugin_cache ( void );
 private:
 
+    Scanner_Window(const Scanner_Window&) = delete;
+    Scanner_Window & operator=(const Scanner_Window&) = delete;
+
     Fl_Box *_box;
     Fl_Button *_cancel_button;
     Fl_Button *_skip_button;
     void show_scanner_window();
     void remove_temporary_cache();
     void cancel_scanning();
-    bool run_scanner(std::string s_command);
+    bool run_scanner(const std::string &s_command);
 
 };
 
