@@ -2052,11 +2052,9 @@ LV2_Plugin::get_atom_buffer_size( int port_index )
 
     LilvNode* min_size = lilv_port_get ( _lilv_plugin, lilv_port, minimumSize );
 
-    size_t buf_size = ATOM_BUFFER_SIZE;
-
     if ( min_size && lilv_node_is_int ( min_size ) )
     {
-        buf_size = lilv_node_as_int ( min_size );
+        size_t buf_size = lilv_node_as_int ( min_size );
         buf_size = buf_size * N_BUFFER_CYCLES;
 
         _atom_buffer_size = _atom_buffer_size > buf_size ? _atom_buffer_size : buf_size;

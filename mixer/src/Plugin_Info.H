@@ -51,7 +51,7 @@ public:
     int midi_outputs;
     bool favorite;
 
-    Plugin_Info ( const std::string &s_type ) :  // LADSPA, LV2, CLAP, VST2, VST3
+    explicit Plugin_Info ( const std::string &s_type ) :  // LADSPA, LV2, CLAP, VST2, VST3
         type(s_type),
         s_unique_id("(null)"),  // (null) since we have to have something for favorites save and scan
         id(0),
