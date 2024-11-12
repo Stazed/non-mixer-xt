@@ -81,7 +81,7 @@ public:
     // path and label of the plugin was stored in the configuration - current
     // versions store the Unique ID
     unsigned long GetIDFromFilenameAndLabel(const std::string &filename,
-            std::string &label);
+            const std::string &label);
 
     // Struct for plugin information returned by queries
 

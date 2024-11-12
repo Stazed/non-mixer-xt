@@ -315,7 +315,7 @@ LADSPAInfo::DiscardDescriptorByID( unsigned long unique_id )
 
 unsigned long
 LADSPAInfo::GetIDFromFilenameAndLabel( const std::string &filename,
-    std::string &label )
+    const std::string &label )
 {
     bool library_loaded = false;
 
@@ -747,21 +747,21 @@ LADSPAInfo::ExaminePluginLibrary( const string &path,
 
                         // Find number of input ports
                         unsigned long in_port_count = 0;
-                        for (unsigned long p = 0; p < desc->PortCount; p++)
+                        for (unsigned long pin = 0; pin < desc->PortCount; pin++)
                         {
-                            if ( LADSPA_IS_PORT_INPUT( desc->PortDescriptors[p] ) )
+                            if ( LADSPA_IS_PORT_INPUT( desc->PortDescriptors[pin] ) )
                             {
                                 in_port_count++;
-                                if ( LADSPA_IS_PORT_AUDIO( desc->PortDescriptors[p] ) )
+                                if ( LADSPA_IS_PORT_AUDIO( desc->PortDescriptors[pin] ) )
                                     pi.AudioInputs++;
                             }
                         }
-                        for (unsigned long p = 0; p < desc->PortCount; p++)
+                        for (unsigned long pout = 0; pout < desc->PortCount; pout++)
                         {
-                            if ( LADSPA_IS_PORT_OUTPUT( desc->PortDescriptors[p] ) )
+                            if ( LADSPA_IS_PORT_OUTPUT( desc->PortDescriptors[pout] ) )
                             {
 
-                                if ( LADSPA_IS_PORT_AUDIO( desc->PortDescriptors[p] ) )
+                                if ( LADSPA_IS_PORT_AUDIO( desc->PortDescriptors[pout] ) )
                                     pi.AudioOutputs++;
                             }
                         }
