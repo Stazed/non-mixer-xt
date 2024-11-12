@@ -59,30 +59,29 @@ public:
         bool visible;
         bool radius_enabled;
 
-        Point ( )
-        {
-            x = 1;
-            y = 0;
-            z = 0;
-            label = 0;
-            userdata = NULL;
-            visible = 1;
-            color = FL_WHITE;
-            radius_enabled = false;
-        }
+        Point ( ) :
+            x(1),
+            y(0),
+            z(0),
+            label(0),
+            userdata(NULL),
+            color(FL_WHITE),
+            visible(1),
+            radius_enabled(false)
+        { }
 
-        Point ( float D, float A )
+        Point ( float D, float A ) :
+            x(1),
+            y(0),
+            z(0),
+            label(0),
+            userdata(NULL),
+            color(FL_WHITE),
+            visible(1),
+            radius_enabled(false)
         {
-            radius_enabled = false;
-            x = 1;
-            y = 0;
-            z = 0;
             radius( D );
             azimuth( A );
-            label = 0;
-            userdata = NULL;
-            visible = 1;
-            color = FL_WHITE;
         }
 
         static inline void spherical_to_cartesian (float a, float e, float &x, float &y, float &z )
