@@ -602,14 +602,12 @@ VST2_Plugin::try_custom_ui( )
         }
     }
 
-    intptr_t value = 0;
-
     if ( _X11_UI == nullptr )
     {
         _X11_UI = new X11PluginUI ( this, false, false );
         _X11_UI->setTitle ( label ( ) );
 
-        value = (intptr_t) _X11_UI->getDisplay ( );
+        intptr_t value = (intptr_t) _X11_UI->getDisplay ( );
 
         // NOTE: there are far too many broken VST2 plugins, don't bother checking return value
         if ( vst2_dispatch ( effEditOpen, 0, value, _X11_UI->getPtr ( ), 0.0f ) != 0 || true )
@@ -1464,10 +1462,7 @@ VST2_Plugin::create_control_ports( )
                 p.hints.minimum = (float(_param_props.minInteger ) );
                 p.hints.maximum = (float(_param_props.maxInteger ) );
             }
-        }
 
-        if ( have_props )
-        {
             if ( ( _param_props.flags & kVstParameterIsSwitch ) )
                 p.hints.type = Port::Hints::BOOLEAN;
         }

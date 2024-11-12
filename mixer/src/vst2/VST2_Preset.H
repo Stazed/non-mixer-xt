@@ -40,7 +40,7 @@ class VST2_Preset
 public:
 
     // Constructor.
-    VST2_Preset(VST2_Plugin *pVst2Plugin);
+    explicit VST2_Preset(VST2_Plugin *pVst2Plugin);
 
     // File loader/saver.
     bool load(const std::string& sFilename);
