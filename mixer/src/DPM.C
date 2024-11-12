@@ -209,7 +209,7 @@ DPM::draw( void )
             hi = v;
             lo = _last_drawn_hi_segment;
         }
-        else if ( v < _last_drawn_hi_segment )
+        else // if ( v < _last_drawn_hi_segment )
         {
             hi = _last_drawn_hi_segment;
             lo = v;
@@ -242,17 +242,14 @@ DPM::draw( void )
         if ( !active )
             c = fl_inactive ( c );
 
-        int yy = 0;
-        int xx = 0;
-
         if ( type ( ) == FL_HORIZONTAL )
         {
-            xx = X + p * bw;
+            int xx = X + p * bw;
             fl_rectf ( xx + 1, Y, bw - 1, H, c );
         }
         else
         {
-            yy = Y + H - ( ( p + 1 ) * bh );
+            int yy = Y + H - ( ( p + 1 ) * bh );
             fl_rectf ( X, yy + 1, W, bh - 1, c );
         }
     }
