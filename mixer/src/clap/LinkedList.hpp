@@ -84,7 +84,7 @@ public:
 
     class Itenerator {
     public:
-        Itenerator(const ListHead& queue) noexcept
+        explicit Itenerator(const ListHead& queue) noexcept
             : fEntry(queue.next),
               fEntry2(fEntry->next),
               kQueue(queue)
@@ -138,7 +138,7 @@ public:
 
     class AutoItenerator {
     public:
-        AutoItenerator(const ListHead* entry) noexcept
+        explicit AutoItenerator(const ListHead* entry) noexcept
             : fEntry(entry),
               fEntry2(entry != nullptr ? entry->next : nullptr)
         {
@@ -146,7 +146,7 @@ public:
             CARLA_SAFE_ASSERT(fEntry2 != nullptr);
         }
 
-        bool operator!=(AutoItenerator& it) const noexcept
+        bool operator!=(const AutoItenerator& it) const noexcept
         {
             CARLA_SAFE_ASSERT_RETURN(fEntry != nullptr, false);
             CARLA_SAFE_ASSERT_RETURN(it.fEntry != nullptr, false);
