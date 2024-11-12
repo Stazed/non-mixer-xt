@@ -142,7 +142,7 @@ public:
     }
 
     int
-    process( nframes_t nframes )
+    process( nframes_t nframes ) override
     {
         ++buffers;
 
@@ -232,29 +232,29 @@ public:
     }
 
     void
-    freewheel( bool /*starting*/ )
+    freewheel( bool /*starting*/ ) override
     {
     }
 
     int
-    xrun( void )
+    xrun( void ) override
     {
         return 0;
     }
 
     int
-    buffer_size( nframes_t /*nframes*/ )
+    buffer_size( nframes_t /*nframes*/ ) override
     {
         return 0;
     }
 
     void
-    shutdown( void )
+    shutdown( void ) override
     {
     }
 
     void
-    thread_init( void )
+    thread_init( void ) override
     {
     }
 
@@ -309,17 +309,16 @@ public:
         return NULL == signal;
     }
 
-    signal_mapping( )
-    {
-        is_nrpn = false;
-        is_nrpn14 = false;
-        is_toggle = -false;
-        signal = NULL;
-        last_midi_tick = 0;
-        last_feedback_tick = 0;
-        learning_value_lsb = 0;
-        learning_value_msb = 0;
-    }
+    signal_mapping( ) :
+        is_nrpn(false),
+        is_nrpn14(false),
+        is_toggle(-false),
+        signal(NULL),
+        last_midi_tick(0),
+        last_feedback_tick(0),
+        learning_value_msb(0),
+        learning_value_lsb(0)
+    {  }
 
     ~signal_mapping( )
     {
@@ -400,7 +399,7 @@ public:
 int
 signal_handler( float value, void *user_data )
 {
-    signal_mapping *m = (signal_mapping*) user_data;
+    signal_mapping *m = static_cast<signal_mapping*> (user_data);
 
     /* DMESSAGE( "Received value: %f", value ); */
 
@@ -969,7 +968,7 @@ handle_control_change( nrpn_state *nrpn_state, midievent &e )
         COMPLETE == st->awaiting ) )
     {
 
-        snprintf ( midi_event, 50, "NRPN %d %d", e.channel ( ), get_14bit ( st->control_msb, st->control_lsb ) );
+        snprintf ( midi_event, 50, "NRPN %d %u", e.channel ( ), get_14bit ( st->control_msb, st->control_lsb ) );
 
         if ( VALUE_LSB == st->awaiting )
         {
