@@ -145,6 +145,6 @@ public:
     void refresh_file_button_label(int index);
 #endif
     int handle ( int m );
-    Module_Parameter_Editor ( Module *module );
+    explicit Module_Parameter_Editor ( Module *module );
     virtual ~Module_Parameter_Editor ( );
 };

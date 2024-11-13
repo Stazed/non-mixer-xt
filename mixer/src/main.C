@@ -118,7 +118,7 @@ ensure_dirs( void )
     asprintf ( &clipboard_dir, "%s/%s", user_config_dir, "clipboard" );
 
     int r = mkdir ( user_config_dir, 0777 );
-    r = mkdir ( clipboard_dir, 0777 );
+    mkdir ( clipboard_dir, 0777 );
 
     return r == 0 || errno == EEXIST;
 }
