@@ -227,12 +227,12 @@ Mixer_Strip::set( Log_Entry &e )
         }
         else if ( !strcmp ( s, ":group" ) )
         {
-            unsigned int i;
-            sscanf ( v, "%X", &i );
+            unsigned int ii;
+            sscanf ( v, "%X", &ii );
 
-            if ( i )
+            if ( ii )
             {
-                Group *t = (Group*) Loggable::find ( i );
+                Group *t = static_cast<Group*>( Loggable::find ( ii ) );
 
                 /* Because of strip copy/paste and import, we can't assure that the group will exist by ID*/
                 //                assert( t );
@@ -382,7 +382,7 @@ Mixer_Strip::cb_handle( Fl_Widget* o )
         }
         else
         {
-            g = (Group*) group_choice->mvalue ( )->user_data ( );
+            g = static_cast<Group*>( group_choice->mvalue ( )->user_data ( ) );
         }
 
         group ( g );
@@ -1121,7 +1121,7 @@ Mixer_Strip::disconnect_auto_inputs( const char *exclude_pattern )
 {
     if ( chain ( ) )
     {
-        JACK_Module *m = (JACK_Module*) chain ( )->module ( 0 );
+        JACK_Module *m = static_cast<JACK_Module*>( chain ( )->module ( 0 ) );
 
         if ( m )
         {
@@ -1182,7 +1182,7 @@ Mixer_Strip::maybe_auto_connect_output( Module::Port *p )
         unsigned int n = atoi ( s + 1 ) - 1;
 
         /* FIXME: safe assumption? */
-        JACK_Module *m = (JACK_Module*) chain ( )->module ( 0 );
+        JACK_Module *m = static_cast<JACK_Module*>( chain ( )->module ( 0 ) );
 
         if ( !m )
         {

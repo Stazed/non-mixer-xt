@@ -130,7 +130,7 @@ public:
     }
     Module *module ( int n ) const
     {
-        return (Module*)modules_pack->child( n );
+        return static_cast<Module*>( modules_pack->child( n ) );
     }
     void remove ( Controller_Module *m );
     bool remove ( Module *m );

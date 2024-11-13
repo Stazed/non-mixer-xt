@@ -65,7 +65,7 @@ public:
         return 333;
     }
 
-    Mixer_Strip( const char *strip_name );
+    explicit Mixer_Strip( const char *strip_name );
     Mixer_Strip();                                              /* for log create */
     virtual ~Mixer_Strip();
 
