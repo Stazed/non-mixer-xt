@@ -186,11 +186,11 @@ Spatialization_Console::cb_panner_value_handle( Fl_Widget *, void *v )
 {
     //    callback_data *cd = (callback_data*)v;
 
-    Spatialization_Console *sc = (Spatialization_Console*) v;
+    Spatialization_Console *sc = static_cast<Spatialization_Console*>( v );
 
     Panner::Point *p = sc->panner->pushed ( );
 
-    Controller_Module *cm = (Controller_Module*) p->userdata;
+    Controller_Module *cm = static_cast<Controller_Module*>( p->userdata );
 
     cm->control_output[0].control_value ( p->azimuth ( ) );
     cm->control_output[1].control_value ( p->elevation ( ) );

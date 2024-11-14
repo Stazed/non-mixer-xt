@@ -162,17 +162,16 @@ public:
         _interpolation_delay_coeff = 1.0f / (float) _interpolation_delay_samples;
     }
 
-    delay( float max_delay )
-    {
-        _interpolation_delay_samples = 0;
-        _interpolation_delay_coeff = 0;
-        _samples_since_motion = 0;
-        _max_delay = max_delay;
-        _write_index = 0;
-        _sample_rate = 0;
-        _buffer = 0;
-        _buffer_mask = 0;
-    }
+    explicit delay( float max_delay ) :
+        _sample_rate(0),
+        _buffer(0),
+        _write_index(0),
+        _buffer_mask(0),
+        _max_delay(max_delay),
+        _samples_since_motion(0),
+        _interpolation_delay_samples(0),
+        _interpolation_delay_coeff(0)
+    { }
 
     ~delay( )
     {
