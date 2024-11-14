@@ -311,7 +311,7 @@ Controller_Module::maybe_create_panner( void )
 
         o->callback ( cb_spatializer_handle, this );
 
-        control = (Fl_Valuator*) o;
+        control = static_cast<Panner*>( o );
 
         if ( _pad )
         {
