@@ -154,9 +154,9 @@ Meter_Indicator_Module::set( Log_Entry &e )
         }
         else if ( !strcmp ( s, ":module" ) )
         {
-            unsigned int i;
-            sscanf ( v, "%X", &i );
-            Module *t = (Module*) Loggable::find ( i );
+            unsigned int ii;
+            sscanf ( v, "%X", &ii );
+            Module *t = static_cast<Module*>( Loggable::find ( ii ) );
 
             assert ( t );
 
@@ -182,7 +182,7 @@ Meter_Indicator_Module::update( void )
 
         for ( int i = 0; i < dpm_pack->children ( ); ++i )
         {
-            DPM *o = (DPM*) dpm_pack->child ( i );
+            DPM *o = static_cast<DPM*>( dpm_pack->child ( i ) );
 
             float dB = CO_DB ( control_value[i] );
 

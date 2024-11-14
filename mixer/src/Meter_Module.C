@@ -112,7 +112,7 @@ Meter_Module::update( void )
 
     for ( int i = dpm_pack->children ( ); i--; )
     {
-        DPM* o = ( (DPM*) dpm_pack->child ( i ) );
+        DPM* o = static_cast<DPM*>( dpm_pack->child ( i ) );
 
         const float v = CO_DB ( control_value[i] );
 
@@ -156,7 +156,7 @@ Meter_Module::configure_inputs( int n )
     {
         for ( int i = on; i > n; --i )
         {
-            DPM *dpm = (DPM*) dpm_pack->child ( dpm_pack->children ( ) - 1 );
+            DPM *dpm = static_cast<DPM*>( dpm_pack->child ( dpm_pack->children ( ) - 1 ) );
             dpm_pack->remove ( dpm );
             delete dpm;
 
