@@ -817,7 +817,7 @@ public:
     }
 
 #define MODULE_CLONE_FUNC(class)                                \
-    virtual Module *clone_empty ( void ) const                  \
+    virtual Module *clone_empty ( void ) const override         \
         {                                                       \
             return new class ();                                \
         }

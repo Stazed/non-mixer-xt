@@ -256,7 +256,7 @@ Mixer::command_new( void )
 void
 Mixer::cb_menu( Fl_Widget* o )
 {
-    Fl_Menu_Bar *menu = (Fl_Menu_Bar*) o;
+    Fl_Menu_Bar *menu = static_cast<Fl_Menu_Bar*>( o );
 
     /*     const Fl_Menu_Item *mi = &menu->menu()[menu->value()]; */
 
@@ -984,7 +984,7 @@ Mixer::renumber_strips( void )
 {
     for ( int i = mixer_strips->children ( ); i--; )
     {
-        Mixer_Strip *o = (Mixer_Strip*) mixer_strips->child ( i );
+        Mixer_Strip *o = static_cast<Mixer_Strip*>( mixer_strips->child ( i ) );
 
         o->number ( find_strip ( o ) );
     }
@@ -1002,7 +1002,7 @@ Mixer::insert( Mixer_Strip *ms, Mixer_Strip *before )
 void
 Mixer::insert( Mixer_Strip *ms, int i )
 {
-    Mixer_Strip *before = (Mixer_Strip*) mixer_strips->child ( i );
+    Mixer_Strip *before = static_cast<Mixer_Strip*>( mixer_strips->child ( i ) );
 
     insert ( ms, before );
     renumber_strips ( );
@@ -1054,7 +1054,7 @@ Mixer::event_inside( void )
 {
     for ( int i = mixer_strips->children ( ); i--; )
         if ( Fl::event_inside ( mixer_strips->child ( i ) ) )
-            return (Mixer_Strip * ) mixer_strips->child ( i );
+            return static_cast<Mixer_Strip *>( mixer_strips->child ( i ) );
 
     return NULL;
 }
@@ -1100,7 +1100,7 @@ Mixer::rows( int ideal_rows )
 
     for ( int i = 0; i < mixer_strips->children ( ); ++i )
     {
-        Mixer_Strip *t = (Mixer_Strip*) mixer_strips->child ( i );
+        Mixer_Strip *t = static_cast<Mixer_Strip*>( mixer_strips->child ( i ) );
 
         t->size ( t->w ( ), sh );
 
@@ -1134,7 +1134,7 @@ Mixer::track_by_name( const char *name )
 {
     for ( int i = mixer_strips->children ( ); i--; )
     {
-        Mixer_Strip *t = (Mixer_Strip*) mixer_strips->child ( i );
+        Mixer_Strip *t = static_cast<Mixer_Strip*>( mixer_strips->child ( i ) );
 
         if ( !strcmp ( name, t->name ( ) ) )
             return t;
@@ -1150,7 +1150,7 @@ Mixer::track_by_number( int n )
     if ( n < 0 || n >= mixer_strips->children ( ) )
         return NULL;
 
-    return (Mixer_Strip*) mixer_strips->child ( n );
+    return static_cast<Mixer_Strip*>( mixer_strips->child ( n ) );
 }
 
 /** return a malloc'd string representing a unique name for a new track */
@@ -1293,7 +1293,7 @@ Mixer::update_window_title( )
 void
 Mixer::send_feedback_cb( void *v )
 {
-    Mixer *m = (Mixer*) v;
+    Mixer *m = static_cast<Mixer*>( v );
 
     m->send_feedback ( false );
 
@@ -1446,7 +1446,7 @@ Mixer::auto_connect( void )
     /* give strips with group affinity the first shot */
     for ( int i = 0; i < mixer_strips->children ( ); i++ )
     {
-        Mixer_Strip *s = ( (Mixer_Strip*) mixer_strips->child ( i ) );
+        Mixer_Strip *s =  static_cast<Mixer_Strip*>( mixer_strips->child ( i ) );
 
         if ( s->has_group_affinity ( ) )
             s->auto_connect_outputs ( );
@@ -1455,7 +1455,7 @@ Mixer::auto_connect( void )
     /* now do that catch-alls, first one wins! */
     for ( int i = 0; i < mixer_strips->children ( ); i++ )
     {
-        Mixer_Strip *s = ( (Mixer_Strip*) mixer_strips->child ( i ) );
+        Mixer_Strip *s = static_cast<Mixer_Strip*>( mixer_strips->child ( i ) );
 
         if ( !s->has_group_affinity ( ) )
             s->auto_connect_outputs ( );
@@ -1474,7 +1474,7 @@ Mixer::maybe_auto_connect_output( Module::Port *p )
     /* give strips with group affinity the first shot */
     for ( int i = 0; i < mixer_strips->children ( ); i++ )
     {
-        Mixer_Strip *s = ( (Mixer_Strip*) mixer_strips->child ( i ) );
+        Mixer_Strip *s = static_cast<Mixer_Strip*>( mixer_strips->child ( i ) );
 
         if ( s->has_group_affinity ( ) )
             if ( s->maybe_auto_connect_output ( p ) )
@@ -1484,7 +1484,7 @@ Mixer::maybe_auto_connect_output( Module::Port *p )
     /* now do the catch-alls, first one wins! */
     for ( int i = 0; i < mixer_strips->children ( ); i++ )
     {
-        Mixer_Strip *s = ( (Mixer_Strip*) mixer_strips->child ( i ) );
+        Mixer_Strip *s = static_cast<Mixer_Strip*>( mixer_strips->child ( i ) );
 
         if ( !s->has_group_affinity ( ) )
             if ( s->maybe_auto_connect_output ( p ) )
@@ -1501,7 +1501,7 @@ Mixer::command_toggle_fader_view( void )
 {
     for ( int i = 0; i < mixer_strips->children ( ); i++ )
     {
-        Mixer_Strip *s = ( (Mixer_Strip*) mixer_strips->child ( i ) );
+        Mixer_Strip *s = static_cast<Mixer_Strip*>( mixer_strips->child ( i ) );
         s->command_toggle_fader_view ( );
     }
 }
