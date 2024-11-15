@@ -2493,6 +2493,9 @@ CLAP_Plugin::get( Log_Entry &e ) const
 
     if ( _use_custom_data )
     {
+        /* Trickery to cast the constant module to static. Needed to update the
+           _project_directory and also the save plugin state function requires
+           non constant module. Only necessary when _use_custom_date is true. */
         Module *m = ( Module * ) this;
         CLAP_Plugin *pm = static_cast<CLAP_Plugin *> ( m );
 
@@ -2519,11 +2522,10 @@ CLAP_Plugin::get( Log_Entry &e ) const
             {
                 /* This is a new project */
                 file = pm->get_custom_data_location ( project_directory );
+                pm->_project_file = file;
             }
             if ( !file.empty ( ) )
             {
-                /* This is an existing project */
-                pm->_project_file = file;
                 pm->save_CLAP_plugin_state ( file );
 
                 std::string base_file = file.substr ( file.find_last_of ( "/\\" ) + 1 );

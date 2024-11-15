@@ -3112,6 +3112,9 @@ LV2_Plugin::get( Log_Entry &e ) const
 
     if ( _use_custom_data )
     {
+        /* Trickery to cast the constant module to static. Needed to update the
+           _project_directory and also the save plugin state function requires
+           non constant module. Only necessary when _use_custom_date is true. */
         Module *m = ( Module * ) this;
         LV2_Plugin *pm = static_cast<LV2_Plugin *> ( m );
 
@@ -3138,11 +3141,10 @@ LV2_Plugin::get( Log_Entry &e ) const
             {
                 /* This is a new project */
                 s = pm->get_custom_data_location ( project_directory );
+                pm->_project_directory = s;
             }
             if ( !s.empty ( ) )
             {
-                /* This is an existing project */
-                pm->_project_directory = s;
                 pm->save_LV2_plugin_state ( s );
 
                 std::string base_dir = s.substr ( s.find_last_of ( "/\\" ) + 1 );
