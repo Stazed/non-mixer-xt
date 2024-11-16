@@ -296,3 +296,6 @@ install (TARGETS nmxt-plugin-scan RUNTIME DESTINATION bin)
 
 install (FILES non-mixer-xt.desktop.in
     DESTINATION share/applications RENAME non-mixer-xt.desktop)
+
+install (FILES midi-mapper-xt.desktop.in
+    DESTINATION share/applications RENAME midi-mapper-xt.desktop)

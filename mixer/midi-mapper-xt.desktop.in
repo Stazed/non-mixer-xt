@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Name=midi-mapper-xt
+Comment=non-mixer-xt MIDI to OSC automation
+Exec=midi-mapper-xt
+Icon=midi-mapper-xt
+Terminal=false
+StartupNotify=false
+Version=2.0
+Categories=AudioVideo;Audio;
+X-NSM-Capable=true
+X-NSM-Exec=midi-mapper-xt
+NoDisplay=true
