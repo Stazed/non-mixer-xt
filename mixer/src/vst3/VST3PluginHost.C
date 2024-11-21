@@ -78,10 +78,15 @@ VST3PluginHost::~VST3PluginHost( void )
 tresult PLUGIN_API
 VST3PluginHost::getName( Vst::String128 name )
 {
-    const std::string str ( "VST3PluginHost" );
-    const int nsize = str.length ( ) < 127 ? str.length ( ) : 127;
+    const std::string str ( "non-mixer-xt" );
+    
+    const std::u16string u16name = VST3::StringConvert::convert(str);
+    
+    const int c_size = u16name.size();
 
-    ::memcpy ( name, str.c_str ( ), nsize - 1 );
+    const int nsize = (c_size *2) < 127 ? (c_size * 2) : 127;
+
+    ::memcpy ( name, u16name.c_str ( ), nsize - 1 );
     name[nsize] = 0;
     return kResultOk;
 }
