@@ -124,7 +124,7 @@ public:
         {
             m_pPlugin->updateParamValues ( false );
         }
-        else if ( flags & Vst::kReloadComponent )
+        else if ( (flags & Vst::kReloadComponent) || (flags & Vst::kLatencyChanged) )
         {
             m_pPlugin->deactivate ( );
             m_pPlugin->activate ( );
@@ -2361,6 +2361,8 @@ VST3_Plugin::activate( void )
 
     if ( chain ( ) )
         chain ( )->client ( )->unlock ( );
+    
+    _latency = get_module_latency();
 }
 
 void

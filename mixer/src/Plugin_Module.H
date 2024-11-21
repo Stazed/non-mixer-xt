@@ -94,6 +94,11 @@ public:
     void resize_buffers ( nframes_t buffer_size ) override;
 
     virtual void clear_midi_vectors() override {};
+    
+    nframes_t get_current_latency( void ) override
+    {
+        return _latency;
+    }
 
     LOG_CREATE_FUNC( Plugin_Module );
     MODULE_CLONE_FUNC( Plugin_Module );

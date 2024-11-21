@@ -73,6 +73,7 @@ public:
     void configure_midi_inputs () override;
     void configure_midi_outputs () override;
 
+    nframes_t get_current_latency( void ) override;
     nframes_t get_module_latency ( void ) const override;
     void process ( nframes_t ) override;
 

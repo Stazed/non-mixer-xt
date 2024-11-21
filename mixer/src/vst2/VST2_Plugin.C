@@ -516,6 +516,19 @@ VST2_Plugin::configure_midi_outputs( )
 }
 
 nframes_t
+VST2_Plugin::get_current_latency( void )
+{
+    if ( unlikely ( bypass ( ) ) )
+    {
+        return _latency;   // will be zero
+    }
+
+    _latency = get_module_latency();
+    return _latency;
+}
+
+
+nframes_t
 VST2_Plugin::get_module_latency( void ) const
 {
     const VstInt32 *pInitialDelay

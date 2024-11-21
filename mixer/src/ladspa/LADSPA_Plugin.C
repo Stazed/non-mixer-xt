@@ -529,6 +529,18 @@ LADSPA_Plugin::deactivate( void )
 }
 
 nframes_t
+LADSPA_Plugin::get_current_latency( void )
+{
+    if ( unlikely ( bypass ( ) ) )
+    {
+        return _latency;   // will be zero
+    }
+
+    _latency = get_module_latency();
+    return _latency;
+}
+
+nframes_t
 LADSPA_Plugin::get_module_latency( void ) const
 {
     for ( unsigned int i = ncontrol_outputs ( ); i--; )
@@ -562,8 +574,6 @@ LADSPA_Plugin::process( nframes_t nframes )
     {
         for ( unsigned int i = 0; i < _idata->handle.size ( ); ++i )
             _idata->descriptor->run ( _idata->handle[i], nframes );
-
-        _latency = get_module_latency ( );
     }
 }
 

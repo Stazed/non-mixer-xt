@@ -471,8 +471,6 @@ CLAP_Plugin::process_reset( )
 
     activate ( );
 
-    _latency = get_module_latency ( );
-
     return true;
 }
 
@@ -1586,6 +1584,8 @@ CLAP_Plugin::activate( void )
 
     if ( chain ( ) )
         chain ( )->client ( )->unlock ( );
+
+    _latency = get_module_latency ( );
 }
 
 void

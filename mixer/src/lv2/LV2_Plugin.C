@@ -2980,9 +2980,20 @@ LV2_Plugin::isUiResizable( ) const
 #endif  // USE_SUIL
 
 nframes_t
+LV2_Plugin::get_current_latency( void )
+{
+    if ( unlikely ( bypass ( ) ) )
+    {
+        return _latency;   // will be zero
+    }
+
+    _latency = get_module_latency();
+    return _latency;
+}
+
+nframes_t
 LV2_Plugin::get_module_latency( void ) const
 {
-    // FIXME: we should probably cache this value
     unsigned int nport = 0;
 
     for ( unsigned int i = 0; i < _idata->rdf_data->PortCount; ++i )
@@ -3066,8 +3077,6 @@ LV2_Plugin::process( nframes_t nframes )
             }
         }
 #endif
-
-        _latency = get_module_latency ( );
     }
 }
 

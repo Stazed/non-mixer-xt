@@ -123,6 +123,11 @@ public:
     }
     virtual void base_label ( const char * );
 
+    virtual nframes_t get_current_latency( void )
+    {
+        return 0;
+    }
+
     virtual nframes_t get_module_latency ( void ) const
     {
         return 0;

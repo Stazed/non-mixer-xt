@@ -218,7 +218,7 @@ void
 Module::update_tooltip( void )
 {
     char *s;
-    asprintf ( &s, "Left click to edit parameters; Ctrl + left click to select; right click or MENU key for menu. (info: latency: %lu)", (unsigned long) get_module_latency ( ) );
+    asprintf ( &s, "Left click to edit parameters; Ctrl + left click to select; right click or MENU key for menu. (info: latency: %lu)", (unsigned long) get_current_latency ( ) );
 
     copy_tooltip ( s );
     free ( s );
