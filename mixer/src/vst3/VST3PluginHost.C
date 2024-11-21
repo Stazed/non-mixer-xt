@@ -43,6 +43,14 @@ utf16_to_utf8( const std::u16string& utf16 )
     return utf8;
 }
 
+std::u16string
+utf8_to_utf16( const std::string & utf8String )
+{
+    std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> converter;
+    std::u16string utf16String = converter.from_bytes( utf8String );
+    return utf16String;
+}
+
 // Constructor.
 
 VST3PluginHost::VST3PluginHost( VST3_Plugin * plug )
@@ -78,13 +86,13 @@ VST3PluginHost::~VST3PluginHost( void )
 tresult PLUGIN_API
 VST3PluginHost::getName( Vst::String128 name )
 {
-    const std::string str ( "non-mixer-xt" );
+    const std::string host_name ( PACKAGE );
     
-    const std::u16string u16name = VST3::StringConvert::convert(str);
+    const std::u16string u16name = utf8_to_utf16(host_name);
     
     const int c_size = u16name.size();
 
-    const int nsize = (c_size *2) < 127 ? (c_size * 2) : 127;
+    const int nsize = ( c_size * 2 ) < 127 ? ( c_size * 2 ) : 127;
 
     ::memcpy ( name, u16name.c_str ( ), nsize - 1 );
     name[nsize] = 0;

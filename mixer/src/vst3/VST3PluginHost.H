@@ -51,7 +51,6 @@
 #include "pluginterfaces/base/ibstream.h"
 #include "pluginterfaces/base/ipluginbase.h"
 #include "pluginterfaces/vst/ivsthostapplication.h"
-#include "public.sdk/source/vst/utility/stringconvert.h"
 
 #include "Timer.H"
 
