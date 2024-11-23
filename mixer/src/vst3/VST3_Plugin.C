@@ -1643,6 +1643,8 @@ VST3_Plugin::process_reset( )
         _vst_process_data.outputs = nullptr;
     }
 
+    _pHostContext = static_cast<VST3PluginHost *>( VST3PluginHost::getHostContext() );
+
     _vst_process_data.processContext = _pHostContext->processContext ( );
     _vst_process_data.inputEvents = &_cEvents_in;
     _vst_process_data.outputEvents = &_cEvents_out;
@@ -1668,6 +1670,7 @@ VST3_Plugin::process_jack_transport( uint32_t nframes )
         ( rolling != _rolling || pos.frame != _position ||
         ( has_bbt && pos.beats_per_minute != _bpm ) );
 
+    _pHostContext = static_cast<VST3PluginHost *>( VST3PluginHost::getHostContext() );
     _pHostContext->updateProcessContext ( pos, xport_changed, has_bbt );
 
     // Update transport state to expected values for next cycle
