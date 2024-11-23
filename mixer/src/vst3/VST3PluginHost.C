@@ -154,18 +154,6 @@ VST3PluginHost::processContext( void )
     return &m_processContext;
 }
 
-void
-VST3PluginHost::processAddRef( void )
-{
-    ++m_processRefCount;
-}
-
-void
-VST3PluginHost::processReleaseRef( void )
-{
-    if ( m_processRefCount > 0 ) --m_processRefCount;
-}
-
 // Common host time-keeper process context.
 
 void

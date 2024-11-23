@@ -99,9 +99,6 @@ public:
     // Common host time-keeper context accessors.
     Vst::ProcessContext *processContext();
 
-    void processAddRef();
-    void processReleaseRef();
-
     // Common host time-keeper process context.
     void updateProcessContext(jack_position_t &pos, const bool &xport_changed, const bool &has_bbt);
 
