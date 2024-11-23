@@ -53,16 +53,11 @@ utf8_to_utf16( const std::string & utf8String )
 
 // Constructor.
 
-VST3PluginHost::VST3PluginHost( VST3_Plugin * plug )
+VST3PluginHost::VST3PluginHost( )
 {
     FUNKNOWN_CTOR
 
-    m_plugin = plug;
     m_plugInterfaceSupport = owned ( NEW PlugInterfaceSupport ( ) );
-
-    m_pTimer = new Timer ( m_plugin );
-
-    m_timerRefCount = 0;
 
     m_processRefCount = 0;
 }
@@ -72,8 +67,6 @@ VST3PluginHost::VST3PluginHost( VST3_Plugin * plug )
 VST3PluginHost::~VST3PluginHost( void )
 {
     clear ( );
-
-    delete m_pTimer;
 
     m_plugInterfaceSupport = nullptr;
 
@@ -153,26 +146,6 @@ VST3PluginHost::release( void )
 }
 
 // Timer stuff...
-//
-
-void
-VST3PluginHost::startTimer( int msecs )
-{
-    if ( ++m_timerRefCount == 1 ) m_pTimer->start ( msecs );
-}
-
-void
-VST3PluginHost::stopTimer( void )
-{
-    if ( m_timerRefCount > 0 && --m_timerRefCount == 0 ) m_pTimer->stop ( );
-}
-
-int
-VST3PluginHost::timerInterval( void ) const
-{
-    return m_pTimer->interval ( );
-}
-
 // Common host time-keeper context accessor.
 
 Vst::ProcessContext *
@@ -240,7 +213,6 @@ VST3PluginHost::updateProcessContext(
 void
 VST3PluginHost::clear( void )
 {
-    m_timerRefCount = 0;
     m_processRefCount = 0;
 
     ::memset ( &m_processContext, 0, sizeof (Vst::ProcessContext ) );

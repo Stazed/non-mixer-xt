@@ -371,7 +371,7 @@ VST3_Plugin::VST3_Plugin( ) :
     _pRunloop( nullptr )
 {
     _plug_type = Type_VST3;
-    _pHostContext = new VST3PluginHost ( this );
+    _pHostContext = new VST3PluginHost ( );
     _pRunloop = new Vst::EditorHost::RunLoop ( this );
 
     log_create ( );
@@ -1103,7 +1103,7 @@ VST3_Plugin::openEditor( void )
 void
 VST3_Plugin::closeEditor( void )
 {
-    _pHostContext->stopTimer ( );
+    remove_ntk_timer();
 
     if ( _pEditorFrame != nullptr )
         _pEditorFrame->hide ( );
@@ -1153,7 +1153,7 @@ VST3_Plugin::show_custom_ui( )
 
     _pRunloop->start ( _event_handlers_registered );
 
-    _pHostContext->startTimer ( DEFAULT_MSECS );
+    add_ntk_timer( DEFAULT_MSECS );
 
     return true;
 }

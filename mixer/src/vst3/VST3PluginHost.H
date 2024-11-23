@@ -52,7 +52,6 @@
 #include "pluginterfaces/base/ipluginbase.h"
 #include "pluginterfaces/vst/ivsthostapplication.h"
 
-#include "Timer.H"
 
 //#define ASRT_TMP ASSERT
 #undef ASSERT       // Fix redefinition with /nonlib/debug.h"
@@ -78,7 +77,7 @@ class VST3PluginHost : public Vst::IHostApplication
 public:
 
     // Constructor.
-    VST3PluginHost (VST3_Plugin * plug);
+    VST3PluginHost ();
 
     // Destructor.
     virtual ~VST3PluginHost ();
@@ -96,12 +95,6 @@ public:
     }
 
     // Timer stuff...
-    //
-    void startTimer (int msecs);
-    void stopTimer ();
-
-    int timerInterval() const;
-
     // Common host time-keeper context accessors.
     Vst::ProcessContext *processContext();
 
@@ -126,12 +119,6 @@ private:
 
     // Instance members.
     IPtr<PlugInterfaceSupport> m_plugInterfaceSupport;
-
-    VST3_Plugin * m_plugin;
-
-    Timer *m_pTimer;
-
-    unsigned int m_timerRefCount;
 
     Vst::ProcessContext m_processContext;
     unsigned int        m_processRefCount;
