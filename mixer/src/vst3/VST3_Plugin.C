@@ -1390,7 +1390,7 @@ VST3_Plugin::open_descriptor( unsigned long iIndex )
 
     if ( factory3 )
     {
-        factory3->setHostContext ( (FUnknown*) VST3PluginHost::getHostContext() );
+        factory3->setHostContext ( static_cast<FUnknown*>( VST3PluginHost::getHostContext() ) );
     }
 
     const int32 nclasses = factory->countClasses ( );
@@ -2354,6 +2354,7 @@ VST3_Plugin::activate( void )
             vst3_activate ( component, Vst::kEvent, Vst::kOutput, true );
             component->setActive ( true );
             _pProcessor->setProcessing ( true );
+            _pHostContext = static_cast<VST3PluginHost *>( VST3PluginHost::getHostContext() );
             _pHostContext->processAddRef ( );
             _bProcessing = true;
         }
