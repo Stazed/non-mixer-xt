@@ -2354,6 +2354,8 @@ VST3_Plugin::activate( void )
             vst3_activate ( component, Vst::kEvent, Vst::kOutput, true );
             component->setActive ( true );
             _pProcessor->setProcessing ( true );
+            _pHostContext = static_cast<VST3PluginHost *>( VST3PluginHost::getHostContext() );
+            _pHostContext->processAddRef ( );
             _bProcessing = true;
         }
     }
@@ -2386,6 +2388,7 @@ VST3_Plugin::deactivate( void )
         Vst::IComponent *component = _pComponent;
         if ( component && _pProcessor )
         {
+            _pHostContext->processReleaseRef ( );
             _pProcessor->setProcessing ( false );
             component->setActive ( false );
             _bProcessing = false;
