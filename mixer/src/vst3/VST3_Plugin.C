@@ -371,7 +371,7 @@ VST3_Plugin::VST3_Plugin( ) :
     _pRunloop( nullptr )
 {
     _plug_type = Type_VST3;
-    _pHostContext = new VST3PluginHost ( );
+    _pHostContext = static_cast<VST3PluginHost *>( VST3PluginHost::getHostContext ( ) );
     _pRunloop = new Vst::EditorHost::RunLoop ( this );
 
     log_create ( );
@@ -1390,7 +1390,7 @@ VST3_Plugin::open_descriptor( unsigned long iIndex )
 
     if ( factory3 )
     {
-        factory3->setHostContext ( _pHostContext->get ( ) );
+        factory3->setHostContext ( (FUnknown*) VST3PluginHost::getHostContext() );
     }
 
     const int32 nclasses = factory->countClasses ( );
@@ -1450,7 +1450,7 @@ VST3_Plugin::open_descriptor( unsigned long iIndex )
 
             _pComponent = owned ( component );
 
-            if ( _pComponent->initialize ( _pHostContext->get ( ) ) != kResultOk )
+            if ( _pComponent->initialize ( VST3PluginHost::getHostContext() ) != kResultOk )
             {
                 DMESSAGE ( "[%p]::open(\"%s\", %lu)"
                     " *** Failed to initialize plug-in component.", this,
@@ -1478,7 +1478,7 @@ VST3_Plugin::open_descriptor( unsigned long iIndex )
                     }
 
                     if ( controller &&
-                        controller->initialize ( _pHostContext->get ( ) ) != kResultOk )
+                        controller->initialize ( VST3PluginHost::getHostContext() ) != kResultOk )
                     {
                         DMESSAGE ( "[%p]::open(\"%s\", %lu)"
                             " *** Failed to initialize plug-in controller.", this,
@@ -2368,6 +2368,8 @@ VST3_Plugin::activate( void )
 void
 VST3_Plugin::deactivate( void )
 {
+    *_bypass = 1.0f;
+
     if ( !loaded ( ) )
         return;
 
@@ -2378,8 +2380,6 @@ VST3_Plugin::deactivate( void )
 
     if ( chain ( ) )
         chain ( )->client ( )->lock ( );
-
-    *_bypass = 1.0f;
 
     if ( _activated )
     {

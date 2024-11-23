@@ -88,10 +88,11 @@ public:
     //
     tresult PLUGIN_API getName (Vst::String128 name) override;
     tresult PLUGIN_API createInstance (TUID cid, TUID _iid, void **obj) override;
-
-    FUnknown *get()
+    
+    static Vst::IHostApplication* getHostContext ()
     {
-        return static_cast<Vst::IHostApplication *> (this);
+        static VST3PluginHost* app = new VST3PluginHost;
+        return app;
     }
 
     // Timer stuff...
