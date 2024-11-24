@@ -69,8 +69,6 @@ std::string utf16_to_utf8(const std::u16string& utf16);
 using namespace Steinberg;
 using namespace Linux;
 
-class VST3_Plugin;
-
 class VST3PluginHost : public Vst::IHostApplication
 {
 public:
@@ -87,7 +85,7 @@ public:
     //
     tresult PLUGIN_API getName (Vst::String128 name) override;
     tresult PLUGIN_API createInstance (TUID cid, TUID _iid, void **obj) override;
-    
+
     static Vst::IHostApplication* getHostContext ()
     {
         static VST3PluginHost* app = new VST3PluginHost;
