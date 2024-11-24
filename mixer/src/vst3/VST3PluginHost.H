@@ -94,12 +94,8 @@ public:
         return app;
     }
 
-    // Timer stuff...
     // Common host time-keeper context accessors.
     Vst::ProcessContext *processContext();
-
-    void processAddRef();
-    void processReleaseRef();
 
     // Common host time-keeper process context.
     void updateProcessContext(jack_position_t &pos, const bool &xport_changed, const bool &has_bbt);
@@ -121,7 +117,6 @@ private:
     IPtr<PlugInterfaceSupport> m_plugInterfaceSupport;
 
     Vst::ProcessContext m_processContext;
-    unsigned int        m_processRefCount;
 };
 
 

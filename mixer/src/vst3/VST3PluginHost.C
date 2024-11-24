@@ -58,8 +58,6 @@ VST3PluginHost::VST3PluginHost( )
     FUNKNOWN_CTOR
 
     m_plugInterfaceSupport = owned ( NEW PlugInterfaceSupport ( ) );
-
-    m_processRefCount = 0;
 }
 
 // Destructor.
@@ -145,36 +143,19 @@ VST3PluginHost::release( void )
     return 1;
 }
 
-// Timer stuff...
-// Common host time-keeper context accessor.
 
+// Common host time-keeper context accessor.
 Vst::ProcessContext *
 VST3PluginHost::processContext( void )
 {
     return &m_processContext;
 }
 
-void
-VST3PluginHost::processAddRef( void )
-{
-    ++m_processRefCount;
-}
-
-void
-VST3PluginHost::processReleaseRef( void )
-{
-    if ( m_processRefCount > 0 ) --m_processRefCount;
-}
-
 // Common host time-keeper process context.
-
 void
 VST3PluginHost::updateProcessContext(
     jack_position_t &pos, const bool &xport_changed, const bool &has_bbt )
 {
-    if ( m_processRefCount < 1 )
-        return;
-
     if ( xport_changed )
         m_processContext.state |= Vst::ProcessContext::kPlaying;
     else
@@ -213,8 +194,6 @@ VST3PluginHost::updateProcessContext(
 void
 VST3PluginHost::clear( void )
 {
-    m_processRefCount = 0;
-
     ::memset ( &m_processContext, 0, sizeof (Vst::ProcessContext ) );
 }
 
