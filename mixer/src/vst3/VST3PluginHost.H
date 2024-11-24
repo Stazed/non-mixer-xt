@@ -70,7 +70,6 @@ using namespace Steinberg;
 using namespace Linux;
 
 class VST3_Plugin;
-class Timer;
 
 class VST3PluginHost : public Vst::IHostApplication
 {
