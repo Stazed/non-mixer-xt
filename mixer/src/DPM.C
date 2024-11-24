@@ -108,7 +108,7 @@ DPM::public_draw_label( int X, int Y, int W, int H )
     {
         for ( int i = sizeof ( marks ) / sizeof ( marks[0] ); i--; )
         {
-            sprintf ( pat, "%d", marks[ i ] );
+            snprintf ( pat, sizeof(pat), "%d", marks[ i ] );
 
             int v = w ( ) * deflection ( (float) marks[ i ] );
 
@@ -120,7 +120,7 @@ DPM::public_draw_label( int X, int Y, int W, int H )
     {
         for ( int i = sizeof ( marks ) / sizeof ( marks[0] ); i--; )
         {
-            sprintf ( pat, "%d", marks[ i ] );
+            snprintf ( pat, sizeof(pat), "%d", marks[ i ] );
 
             int v = h ( ) * deflection ( (float) marks[ i ] );
 

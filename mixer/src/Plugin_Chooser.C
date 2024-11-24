@@ -293,7 +293,7 @@ Plugin_Table::draw_cell( TableContext context,
             switch ( C )
             {
                 case 0:
-                    sprintf ( s, "%s", "@circle" );
+                    snprintf ( s, sizeof(s), "%s", "@circle" );
                     c = _plugin_rows[R]->favorite ? FL_LIGHT2 : FL_BLACK;
                     symbol = 1;
                     fl_font ( FL_HELVETICA, 9 );
@@ -310,10 +310,10 @@ Plugin_Table::draw_cell( TableContext context,
                     s2 = _plugin_rows[R]->type.c_str ( );
                     break;
                 case 4:
-                    sprintf ( s, "%i : %i", _plugin_rows[R]->audio_inputs, _plugin_rows[R]->audio_outputs );
+                    snprintf ( s, sizeof(s), "%i : %i", _plugin_rows[R]->audio_inputs, _plugin_rows[R]->audio_outputs );
                     break;
                 case 5:
-                    sprintf ( s, "%i : %i", _plugin_rows[R]->midi_inputs, _plugin_rows[R]->midi_outputs );
+                    snprintf ( s, sizeof(s), "%i : %i", _plugin_rows[R]->midi_inputs, _plugin_rows[R]->midi_outputs );
                     break;
             }
 

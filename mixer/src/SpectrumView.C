@@ -247,7 +247,7 @@ SpectrumView::draw_semilog( void )
         fl_line ( x ( ), level, x ( ) + W, level );
 
         float value = ( 1 - i / 16.0 ) * ( _dbmax - _dbmin ) + _dbmin;
-        sprintf ( label, "%.1f", value );
+        snprintf ( label, sizeof(label), "%.1f", value );
         fl_draw ( label, x ( ) + 4, level + 3, w ( ) - 8, 7, FL_ALIGN_LEFT );
     }
 
@@ -272,7 +272,7 @@ SpectrumView::draw_semilog( void )
 
                 if ( j == 1 || j == 2 || j == 5 )
                 {
-                    sprintf ( label, "%0.f%s", freq < 1000.0 ? freq : freq / 1000.0, freq < 1000.0 ? "" : "k" );
+                    snprintf ( label, sizeof(label), "%0.f%s", freq < 1000.0 ? freq : freq / 1000.0, freq < 1000.0 ? "" : "k" );
                     int sx = x ( ) + xloc * W + 1;
                     if ( sx < x ( ) * W - 20 )
                         fl_draw ( label, sx, y ( ) + h ( ) );
