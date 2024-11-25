@@ -361,16 +361,14 @@ VST3_Plugin::VST3_Plugin( ) :
     _bEditorCreated( false ),
     _x_is_resizable( false ),
     _x_is_visible( false ),
-    _timer_registered( false ),
     _f_miliseconds( float(DEFAULT_MSECS ) * .001 ),
     _i_miliseconds( DEFAULT_MSECS ),
-    _event_handlers_registered( false ),
     _iPlugView( nullptr ),
     _pEditorFrame( nullptr ),
     _pRunloop( nullptr )
 {
     _plug_type = Type_VST3;
-    _pRunloop = new Vst::EditorHost::RunLoop ( this );
+    _pRunloop = new Vst::EditorHost::RunLoop ( );
 
     log_create ( );
 }
@@ -1149,7 +1147,7 @@ VST3_Plugin::show_custom_ui( )
         return _pEditorFrame->handlePlugEvent ( e );
     } );
 
-    _pRunloop->start ( _event_handlers_registered );
+    _pRunloop->start ( );
 
     add_ntk_timer( DEFAULT_MSECS );
 
@@ -1221,7 +1219,7 @@ VST3_Plugin::custom_update_ui_x( )
 {
     _pEditorFrame->idle ( );
 
-    _pRunloop->proccess_timers ( _timer_registered, _event_handlers_registered );
+    _pRunloop->proccess_timers ( );
     
     update_controller_param();
 

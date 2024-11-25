@@ -124,14 +124,6 @@ public:
     static void custom_update_ui ( void * );
     void update_controller_param ();
 
-    void timer_registered(bool reg)
-    {
-        _timer_registered = reg;
-    }
-    void event_handlers_registered(bool reg)
-    {
-        _event_handlers_registered = reg;
-    }
     int get_timer_msecs()
     {
         return _i_miliseconds;
@@ -217,10 +209,8 @@ private:
     bool _bEditorCreated;
     bool _x_is_resizable;
     bool _x_is_visible;
-    bool _timer_registered;
     float _f_miliseconds;
     int _i_miliseconds;
-    bool _event_handlers_registered;
     IPtr<IPlugView> _iPlugView;
 
     EditorFrame  *_pEditorFrame;

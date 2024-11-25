@@ -47,7 +47,6 @@
 #include <unordered_map>
 #include <vector>
 
-class VST3_Plugin;
 //------------------------------------------------------------------------
 namespace Steinberg {
 namespace Vst {
@@ -94,7 +93,7 @@ class RunLoop
 {
 public:
     
-    RunLoop(VST3_Plugin  *plug) : m_Plugin(plug) {}
+    RunLoop() : m_timer_registered(false), m_event_handlers_registered(false) {}
 
     using EventCallback = std::function<bool (const XEvent& event)>;
     using FileDescriptorCallback = std::function<void (int fd)>;
@@ -110,9 +109,9 @@ public:
     TimerID registerTimer (TimerInterval interval, const TimerCallback& callback);
     void unregisterTimer (TimerID id);
 
-    void start (bool have_register);
+    void start ();
     void stop ();
-    void proccess_timers(bool have_timers, bool have_events);
+    void proccess_timers();
 
 private:
     void select (timeval* timeout = nullptr);
@@ -126,7 +125,8 @@ private:
     TimerProcessor timerProcessor;
 
     timeval m_selectTimeout;
-    VST3_Plugin  *m_Plugin;
+    bool m_timer_registered;
+    bool m_event_handlers_registered;
 
     Display* display {nullptr};
 };

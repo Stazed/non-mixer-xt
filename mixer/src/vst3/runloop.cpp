@@ -76,7 +76,7 @@ void RunLoop::unregisterWindow (XID window)
 void RunLoop::registerFileDescriptor (int fd, const FileDescriptorCallback& callback)
 {
     DMESSAGE("RunLoop::registerFileDescriptor = %d", fd);
-    m_Plugin->event_handlers_registered(true);
+    m_event_handlers_registered = true;
     fileDescriptors.emplace (fd, callback);
 }
 
@@ -154,7 +154,7 @@ bool RunLoop::handleEvents ()
 //------------------------------------------------------------------------
 TimerID RunLoop::registerTimer (TimerInterval interval, const TimerCallback& callback)
 {
-    m_Plugin->timer_registered(true);
+    m_timer_registered = true;
     return timerProcessor.registerTimer (interval, callback);
 }
 
@@ -171,9 +171,9 @@ bool timeValEmpty (timeval& val)
 }
 
 //------------------------------------------------------------------------
-void RunLoop::start (bool have_register)
+void RunLoop::start ()
 {
-    if(have_register && (display != nullptr))
+    if(m_event_handlers_registered && (display != nullptr))
     {
         auto fd = XConnectionNumber (display);
         registerFileDescriptor (fd, [this] (int) { handleEvents (); });
@@ -192,13 +192,13 @@ void RunLoop::stop ()
     fileDescriptors.clear();
 }
 
-void RunLoop::proccess_timers(bool have_timers, bool have_events)
+void RunLoop::proccess_timers()
 {
      // process file descriptors
-    if(have_events)
+    if(m_event_handlers_registered)
         select (timeValEmpty (m_selectTimeout) ? nullptr : &m_selectTimeout);
 
-    if(!have_timers)
+    if(!m_timer_registered)
         return;
 
     // This is process timers
