@@ -332,7 +332,6 @@ IMPLEMENT_FUNKNOWN_METHODS( VST3_Plugin::Stream, IBStream, IBStream::iid )
 
 VST3_Plugin::VST3_Plugin( ) :
     Plugin_Module( ),
-    _pHostContext( nullptr ),
     _plugin_filename( ),
     _sUniqueID( ),
     _sName( ),
@@ -371,7 +370,6 @@ VST3_Plugin::VST3_Plugin( ) :
     _pRunloop( nullptr )
 {
     _plug_type = Type_VST3;
-    _pHostContext = static_cast<VST3PluginHost *>( VST3PluginHost::getHostContext ( ) );
     _pRunloop = new Vst::EditorHost::RunLoop ( this );
 
     log_create ( );
@@ -1643,9 +1641,9 @@ VST3_Plugin::process_reset( )
         _vst_process_data.outputs = nullptr;
     }
 
-    _pHostContext = static_cast<VST3PluginHost *>( VST3PluginHost::getHostContext() );
+    clear_processContext(); // memset
 
-    _vst_process_data.processContext = _pHostContext->processContext ( );
+    _vst_process_data.processContext = processContext ( );
     _vst_process_data.inputEvents = &_cEvents_in;
     _vst_process_data.outputEvents = &_cEvents_out;
     _vst_process_data.inputParameterChanges = &_cParams_in;
@@ -1670,8 +1668,7 @@ VST3_Plugin::process_jack_transport( uint32_t nframes )
         ( rolling != _rolling || pos.frame != _position ||
         ( has_bbt && pos.beats_per_minute != _bpm ) );
 
-    _pHostContext = static_cast<VST3PluginHost *>( VST3PluginHost::getHostContext() );
-    _pHostContext->updateProcessContext ( pos, xport_changed, has_bbt );
+    updateProcessContext ( pos, xport_changed, has_bbt );
 
     // Update transport state to expected values for next cycle
     _position = rolling ? pos.frame + nframes : pos.frame;
@@ -1906,6 +1903,51 @@ VST3_Plugin::process_jack_midi_out( uint32_t nframes, unsigned int port )
             }
         }
     }
+}
+
+// Common host time-keeper process context.
+void
+VST3_Plugin::updateProcessContext(
+    jack_position_t &pos, const bool &xport_changed, const bool &has_bbt )
+{
+    if ( xport_changed )
+        _processContext.state |= Vst::ProcessContext::kPlaying;
+    else
+        _processContext.state &= ~Vst::ProcessContext::kPlaying;
+
+    if ( has_bbt )
+    {
+        _processContext.sampleRate = pos.frame_rate;
+        _processContext.projectTimeSamples = pos.frame;
+
+        _processContext.state |= Vst::ProcessContext::kProjectTimeMusicValid;
+        _processContext.projectTimeMusic = pos.beat;
+        _processContext.state |= Vst::ProcessContext::kBarPositionValid;
+        _processContext.barPositionMusic = pos.bar;
+
+        _processContext.state |= Vst::ProcessContext::kTempoValid;
+        _processContext.tempo = pos.beats_per_minute;
+        _processContext.state |= Vst::ProcessContext::kTimeSigValid;
+        _processContext.timeSigNumerator = pos.beats_per_bar;
+        _processContext.timeSigDenominator = pos.beat_type;
+    }
+    else
+    {
+        _processContext.sampleRate = pos.frame_rate;
+        _processContext.projectTimeSamples = pos.frame;
+        _processContext.state |= Vst::ProcessContext::kTempoValid;
+        _processContext.tempo = 120.0;
+        _processContext.state |= Vst::ProcessContext::kTimeSigValid;
+        _processContext.timeSigNumerator = 4;
+        _processContext.timeSigDenominator = 4;
+    }
+}
+
+// Cleanup.
+void
+VST3_Plugin::clear_processContext( void )
+{
+    ::memset ( &_processContext, 0, sizeof (Vst::ProcessContext ) );
 }
 
 void

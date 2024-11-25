@@ -64,8 +64,6 @@ VST3PluginHost::VST3PluginHost( )
 
 VST3PluginHost::~VST3PluginHost( void )
 {
-    clear ( );
-
     m_plugInterfaceSupport = nullptr;
 
     FUNKNOWN_DTOR
@@ -141,60 +139,6 @@ uint32 PLUGIN_API
 VST3PluginHost::release( void )
 {
     return 1;
-}
-
-
-// Common host time-keeper context accessor.
-Vst::ProcessContext *
-VST3PluginHost::processContext( void )
-{
-    return &m_processContext;
-}
-
-// Common host time-keeper process context.
-void
-VST3PluginHost::updateProcessContext(
-    jack_position_t &pos, const bool &xport_changed, const bool &has_bbt )
-{
-    if ( xport_changed )
-        m_processContext.state |= Vst::ProcessContext::kPlaying;
-    else
-        m_processContext.state &= ~Vst::ProcessContext::kPlaying;
-
-    if ( has_bbt )
-    {
-        m_processContext.sampleRate = pos.frame_rate;
-        m_processContext.projectTimeSamples = pos.frame;
-
-        m_processContext.state |= Vst::ProcessContext::kProjectTimeMusicValid;
-        m_processContext.projectTimeMusic = pos.beat;
-        m_processContext.state |= Vst::ProcessContext::kBarPositionValid;
-        m_processContext.barPositionMusic = pos.bar;
-
-        m_processContext.state |= Vst::ProcessContext::kTempoValid;
-        m_processContext.tempo = pos.beats_per_minute;
-        m_processContext.state |= Vst::ProcessContext::kTimeSigValid;
-        m_processContext.timeSigNumerator = pos.beats_per_bar;
-        m_processContext.timeSigDenominator = pos.beat_type;
-    }
-    else
-    {
-        m_processContext.sampleRate = pos.frame_rate;
-        m_processContext.projectTimeSamples = pos.frame;
-        m_processContext.state |= Vst::ProcessContext::kTempoValid;
-        m_processContext.tempo = 120.0;
-        m_processContext.state |= Vst::ProcessContext::kTimeSigValid;
-        m_processContext.timeSigNumerator = 4;
-        m_processContext.timeSigDenominator = 4;
-    }
-}
-
-// Cleanup.
-
-void
-VST3PluginHost::clear( void )
-{
-    ::memset ( &m_processContext, 0, sizeof (Vst::ProcessContext ) );
 }
 
 IMPLEMENT_FUNKNOWN_METHODS( VST3PluginHost::AttributeList, IAttributeList, IAttributeList::iid )

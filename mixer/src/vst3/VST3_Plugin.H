@@ -137,14 +137,18 @@ public:
         return _i_miliseconds;
     }
 
+    Vst::ProcessContext *
+    processContext( void )
+    {
+        return &_processContext;
+    }
+
     // Save/Restore state
     void save_VST3_plugin_state(const std::string &filename);
     void restore_VST3_plugin_state(const std::string &filename);
 
     uint64_t getState (void** const dataPtr);
     void setProgram(int choice);
-
-    VST3PluginHost *_pHostContext;
 
     VST3_Plugin();
     virtual ~VST3_Plugin();
@@ -169,6 +173,7 @@ private:
     IPtr<Vst::IUnitInfo> m_unitInfos;   // Not implemented
 
     Vst::IAudioProcessor *_pProcessor;
+    Vst::ProcessContext _processContext;
 
     volatile bool _bProcessing;
 
@@ -245,6 +250,10 @@ private:
                           unsigned long offset, unsigned short port);
 
     void process_jack_midi_out ( uint32_t nframes, unsigned int port );
+    // Common host time-keeper process context.
+    void updateProcessContext(jack_position_t &pos, const bool &xport_changed, const bool &has_bbt);
+    // Cleanup.
+    void clear_processContext( void );
 
     // Initialize create
     void initialize_plugin();

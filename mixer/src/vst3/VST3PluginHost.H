@@ -92,15 +92,6 @@ public:
         return app;
     }
 
-    // Common host time-keeper context accessors.
-    Vst::ProcessContext *processContext();
-
-    // Common host time-keeper process context.
-    void updateProcessContext(jack_position_t &pos, const bool &xport_changed, const bool &has_bbt);
-
-    // Cleanup.
-    void clear();
-
 protected:
 
     class PlugInterfaceSupport;
@@ -113,8 +104,6 @@ private:
 
     // Instance members.
     IPtr<PlugInterfaceSupport> m_plugInterfaceSupport;
-
-    Vst::ProcessContext m_processContext;
 };
 
 
