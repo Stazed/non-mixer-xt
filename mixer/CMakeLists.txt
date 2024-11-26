@@ -48,6 +48,7 @@ set (ProgSources
     src/vst2/Vst2_Discovery.C
     src/vst2/VST2_Plugin.C
     src/vst2/VST2_Preset.C
+    src/vst3/VST3_common.C
     src/vst3/Vst3_Discovery.C
     src/vst3/VST3_Plugin.C
     src/vst3/VST3PluginHost.C
@@ -251,6 +252,7 @@ set (ScanSources
     src/clap/Clap_Discovery.C
     src/vst2/Vst2_Discovery.C
     src/vst3/Vst3_Discovery.C
+    src/vst3/VST3_common.C
     ../nonlib/debug.C
 )
 
