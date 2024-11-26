@@ -31,25 +31,10 @@
 #include "VST3PluginHost.H"
 #include "../../../nonlib/debug.h"
 #include "VST3_Plugin.H"
+#include "VST3_common.H"
 #undef WARNING      // Fix redefinition with /nonlib/debug.h"
 
 #define WARNING( fmt, args... ) warnf( W_WARNING, __MODULE__, __FILE__, __FUNCTION__, __LINE__, fmt, ## args )
-
-std::string
-utf16_to_utf8( const std::u16string& utf16 )
-{
-    std::wstring_convert < std::codecvt_utf8_utf16<char16_t>, char16_t> convert;
-    std::string utf8 = convert.to_bytes ( utf16 );
-    return utf8;
-}
-
-std::u16string
-utf8_to_utf16( const std::string & utf8String )
-{
-    std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> converter;
-    std::u16string utf16String = converter.from_bytes( utf8String );
-    return utf16String;
-}
 
 // Constructor.
 
@@ -77,7 +62,7 @@ VST3PluginHost::getName( Vst::String128 name )
 {
     const std::string host_name ( PACKAGE );
     
-    const std::u16string u16name = utf8_to_utf16(host_name);
+    const std::u16string u16name = nmxt_common::utf8_to_utf16(host_name);
     
     const int c_size = u16name.size();
 

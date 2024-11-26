@@ -31,11 +31,9 @@
 #ifdef VST3_SUPPORT
 
 #include <unordered_map>
-#include <locale>
 #include <string>
 #include <vector>
 #include <list>
-#include <codecvt>
 #include <jack/types.h>
 
 #include "pluginterfaces/vst/ivstpluginterfacesupport.h"
@@ -63,8 +61,6 @@
 #include "../../../nonlib/debug.h"
 
 #define WARNING( fmt, args... ) warnf( W_WARNING, __MODULE__, __FILE__, __FUNCTION__, __LINE__, fmt, ## args )
-
-std::string utf16_to_utf8(const std::u16string& utf16);
 
 using namespace Steinberg;
 using namespace Linux;

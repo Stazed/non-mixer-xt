@@ -33,6 +33,7 @@
 #include <algorithm>    // transform, toLower
 
 #include "Vst3_Discovery.H"
+#include "VST3_common.H"
 #include "../../../nonlib/debug.h"
 
 #include "pluginterfaces/vst/ivsthostapplication.h"
@@ -56,48 +57,9 @@
 
 #define V3_CONTENT_DIR V3_ARCHITECTURE "-" V3_PLATFORM
 
-struct GUID
-{
-    uint32_t Data1;
-    uint16_t Data2;
-    uint16_t Data3;
-    uint8_t Data4[8];
-};
 
 namespace vst3_discovery
 {
-
-std::string
-UIDtoString( bool comFormat, const char* _data )
-{
-    std::string result;
-    result.reserve ( 32 );
-    if ( comFormat )
-    {
-        const auto& g = reinterpret_cast<const GUID*> ( _data );
-
-        char tmp[21] { };
-        snprintf ( tmp, 21, "%08X%04X%04X", g->Data1, g->Data2, g->Data3 );
-        result = tmp;
-
-        for ( uint32_t i = 0; i < 8; ++i )
-        {
-            char s[3] { };
-            snprintf ( s, 3, "%02X", g->Data4[i] );
-            result += s;
-        }
-    }
-    else
-    {
-        for ( uint32_t i = 0; i < 16; ++i )
-        {
-            char s[3] { };
-            snprintf ( s, 3, "%02X", static_cast<uint8_t> ( _data[i] ) );
-            result += s;
-        }
-    }
-    return result;
-}
 
 std::vector<std::filesystem::path>
 installedVST3s( )
@@ -293,9 +255,12 @@ public:
     tresult PLUGIN_API
     getName( Vst::String128 name ) override
     {
-        const std::string str ( "non-mixer-xt-discovery" );
-        const int nsize = str.length ( ) < 127 ? str.length ( ) : 127;
-        ::memcpy ( name, str.c_str ( ), nsize - 1 );
+        const std::string host_name ( "NMXT-Plugin-Scan" );
+        const std::u16string u16name = nmxt_common::utf8_to_utf16(host_name);
+        const int c_size = u16name.size();
+        const int nsize = ( c_size * 2 ) < 127 ? ( c_size * 2 ) : 127;
+
+        ::memcpy ( name, u16name.c_str ( ), nsize - 1 );
         name[nsize] = 0;
         return kResultOk;
     }
@@ -703,7 +668,7 @@ vst3_discovery_scan::open_descriptor( unsigned long iIndex )
 
     m_sSubCategories = m_pImpl->subCategory ( );
 
-    m_iUniqueID = UIDtoString ( false, classInfo.cid );
+    m_iUniqueID = nmxt_common::UIDtoString ( false, classInfo.cid );
 
     m_iAudioIns = m_pImpl->numChannels ( Vst::kAudio, Vst::kInput );
     m_iAudioOuts = m_pImpl->numChannels ( Vst::kAudio, Vst::kOutput );

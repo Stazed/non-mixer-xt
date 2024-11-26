@@ -38,6 +38,7 @@
 #include "EditorFrame.H"
 #include "VST3_Plugin.H"
 #include "../Chain.H"
+#include "VST3_common.H"
 #include "Vst3_Discovery.H"
 #include "runloop.h"
 
@@ -1407,7 +1408,7 @@ VST3_Plugin::open_descriptor( unsigned long iIndex )
             PClassInfoW classInfoW;
             if ( factory3 && factory3->getClassInfoUnicode ( n, &classInfoW ) == kResultOk )
             {
-                _sName = utf16_to_utf8 ( classInfoW.name );
+                _sName = nmxt_common::utf16_to_utf8 ( classInfoW.name );
             }
             else
             {
@@ -1422,7 +1423,7 @@ VST3_Plugin::open_descriptor( unsigned long iIndex )
                 }
             }
 
-            std::string iUniqueID = vst3_discovery::UIDtoString ( false, classInfo.cid );
+            std::string iUniqueID = nmxt_common::UIDtoString ( false, classInfo.cid );
             if ( _sUniqueID != iUniqueID )
             {
                 continue;
@@ -2017,7 +2018,7 @@ VST3_Plugin::initialize_plugin( )
                             {
                                 std::string s_name = std::to_string ( k );
                                 s_name += " - ";
-                                s_name += utf16_to_utf8 ( name );
+                                s_name += nmxt_common::utf16_to_utf8 ( name );
                                 _PresetList.push_back ( s_name );
                                 DMESSAGE ( "Program name 1 = %s", s_name.c_str ( ) );
                             }
@@ -2041,7 +2042,7 @@ VST3_Plugin::initialize_plugin( )
                 {
                     std::string s_name = std::to_string ( k );
                     s_name += " - ";
-                    s_name += utf16_to_utf8 ( name );
+                    s_name += nmxt_common::utf16_to_utf8 ( name );
                     _PresetList.push_back ( s_name );
                     DMESSAGE ( "Program name 2 = %s", s_name.c_str ( ) );
                 }
@@ -2244,12 +2245,12 @@ VST3_Plugin::create_control_ports( )
                 }
 
                 /* Some checks grabbed from ardour project */
-                if (utf16_to_utf8 (paramInfo.title).find ("MIDI CC ") != std::string::npos) 
+                if (nmxt_common::utf16_to_utf8 (paramInfo.title).find ("MIDI CC ") != std::string::npos) 
                 {
                     /* Some JUCE plugins add 16 * 128 automatable MIDI CC parameters */
                     continue;
                 }
-                if (std::regex_search (utf16_to_utf8 (paramInfo.title), dpf_midi_CC))
+                if (std::regex_search (nmxt_common::utf16_to_utf8 (paramInfo.title), dpf_midi_CC))
                 {
                     /* DPF plugins also adds automatable MIDI CC parameters "MIDI Ch. %d CC %d" */
                     continue;
@@ -2271,14 +2272,14 @@ VST3_Plugin::create_control_ports( )
                     have_control_in = true;
                 }
 
-                std::string description = utf16_to_utf8 ( paramInfo.title );
+                std::string description = nmxt_common::utf16_to_utf8 ( paramInfo.title );
                 description += " ";
-                description += utf16_to_utf8 ( paramInfo.units );
+                description += nmxt_common::utf16_to_utf8 ( paramInfo.units );
 
                 Port p ( this, d, Port::CONTROL, strdup ( description.c_str ( ) ) );
 
                 /* Used for OSC path creation unique symbol */
-                std::string osc_symbol = strdup ( utf16_to_utf8 ( paramInfo.shortTitle ).c_str ( ) );
+                std::string osc_symbol = strdup ( nmxt_common::utf16_to_utf8 ( paramInfo.shortTitle ).c_str ( ) );
                 osc_symbol.erase ( std::remove ( osc_symbol.begin ( ), osc_symbol.end ( ), ' ' ), osc_symbol.end ( ) );
                 osc_symbol += std::to_string ( paramInfo.id );
 

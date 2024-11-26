@@ -58,7 +58,6 @@ std::vector<std::filesystem::path> validVST3SearchPaths();
 // class vst3_discovery_scan -- VST3 plugin (bare bones) interface.
 //
 
-std::string UIDtoString (bool comFormat, const char* _data);
 
 class vst3_discovery_scan
 {
