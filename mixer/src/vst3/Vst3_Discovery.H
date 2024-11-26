@@ -31,8 +31,6 @@
 
 #ifdef VST3_SUPPORT
 
-#include <filesystem>
-#include <vector>
 #include <list>
 
 #include "../Plugin_Info.H"
@@ -41,23 +39,10 @@
 
 namespace vst3_discovery
 {
-/*
- * Traverse the valid VST3 search paths looking for
- * paths to .vst3 instances
- */
-std::vector<std::filesystem::path> installedVST3s();
-
-/*
- * Return a list of the valid VST3 search paths, per the spec
- * in entry.h.
- */
-std::vector<std::filesystem::path> validVST3SearchPaths();
-
 
 //----------------------------------------------------------------------
 // class vst3_discovery_scan -- VST3 plugin (bare bones) interface.
 //
-
 
 class vst3_discovery_scan
 {
@@ -72,7 +57,6 @@ public:
     // File loader.
     bool open(const std::string& sFilename);
     bool open_descriptor(unsigned long iIndex);
-    std::string get_vst3_object_file(std::string filename);
 
     void close_descriptor();
     void close();

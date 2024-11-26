@@ -39,7 +39,6 @@
 #include "VST3_Plugin.H"
 #include "../Chain.H"
 #include "VST3_common.H"
-#include "Vst3_Discovery.H"
 #include "runloop.h"
 
 const unsigned char EVENT_NOTE_OFF = 0x80;
@@ -1290,12 +1289,11 @@ VST3_Plugin::find_vst_binary( )
     restore = file.substr ( found );
     DMESSAGE ( "Restore = %s", restore.c_str ( ) );
 
-    auto sp = vst3_discovery::installedVST3s ( ); // This to get paths
-    vst3_discovery::vst3_discovery_scan plugin;
+    auto sp = nmxt_common::installedVST3s ( ); // This to get paths
 
     for ( const auto &q : sp )
     {
-        std::string path = plugin.get_vst3_object_file ( q.u8string ( ).c_str ( ) );
+        std::string path = nmxt_common::get_vst3_object_file ( q.u8string ( ).c_str ( ) );
         DMESSAGE ( "PATH = %s", path.c_str ( ) );
 
         found = path.find_last_of ( "/\\" );

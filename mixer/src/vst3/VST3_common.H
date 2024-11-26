@@ -28,10 +28,26 @@
 #define VST3_COMMON_H
 
 #include <string>
+#include <vector>
+#include <filesystem>
 
 namespace nmxt_common
 {
-    
+
+/*
+ * Traverse the valid VST3 search paths looking for
+ * paths to .vst3 instances
+ */
+std::vector<std::filesystem::path> installedVST3s();
+
+/*
+ * Return a list of the valid VST3 search paths, per the spec
+ * in entry.h.
+ */
+std::vector<std::filesystem::path> validVST3SearchPaths();
+
+std::string get_vst3_object_file(std::string filename);
+
 std::string UIDtoString (bool comFormat, const char* _data);
 std::string utf16_to_utf8(const std::u16string& utf16);
 std::u16string utf8_to_utf16( const std::string & utf8String );

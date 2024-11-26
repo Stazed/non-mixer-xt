@@ -45,7 +45,7 @@ std::list<Plugin_Info> g_plugin_cache;
 #endif
 
 #ifdef VST3_SUPPORT
-#include "vst3/Vst3_Discovery.H"
+#include "vst3/VST3_common.H"
 #endif
 
 #define SCANNER_BINARY "/nmxt-plugin-scan"
@@ -232,7 +232,7 @@ Scanner_Window::get_all_plugins( )
 #endif
 
 #ifdef VST3_SUPPORT
-    auto vst3_sp = vst3_discovery::installedVST3s ( ); // This to get paths
+    auto vst3_sp = nmxt_common::installedVST3s ( ); // This to get paths
 
     for ( const auto &q : vst3_sp )
     {
