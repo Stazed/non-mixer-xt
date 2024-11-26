@@ -554,8 +554,8 @@ JACK_Module::handle( int m )
                 _event_state = evstate;
                 return 1;
             }
-
-            return Module::handle ( m ) || 1;
+            // This generates a warning from clang - is invalid in this case
+            return Module::handle ( m ) || 1;   // always returns 1
 
         case FL_RELEASE:
             Fl::selection_owner ( 0 );
@@ -571,8 +571,8 @@ JACK_Module::handle( int m )
                     // TODO: Pop up connection menu.
                 }
             }
-
-            return Module::handle ( m ) || 1;
+            // This generates a warning from clang - is invalid in this case
+            return Module::handle ( m ) || 1;   // always returns 1
         case FL_DRAG:
         {
             if ( Fl::event_is_click ( ) )
