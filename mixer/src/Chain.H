@@ -100,8 +100,8 @@ public:
     virtual ~Chain ( );
 
     void update ( void );
-    void draw ( void );
-    void resize ( int X, int Y, int W, int H );
+    void draw ( void ) override;
+    void resize ( int X, int Y, int W, int H ) override;
 
     Mixer_Strip *strip ( void ) const
     {

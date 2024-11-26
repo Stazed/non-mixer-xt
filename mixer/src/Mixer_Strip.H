@@ -163,8 +163,8 @@ protected:
     void get ( Log_Entry &e ) const override;
     void set ( Log_Entry &e ) override;
 
-    virtual int handle ( int m );
-    virtual void draw ( void );
+    virtual int handle ( int m ) override;
+    virtual void draw ( void ) override;
 
 public:
 

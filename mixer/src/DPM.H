@@ -61,7 +61,7 @@ class DPM : public Meter
 protected:
 
     virtual void draw ( void ) override;
-    virtual void resize ( int, int, int, int );
+    virtual void resize ( int, int, int, int ) override;
     /* virtual void draw_label ( void ); */
 
     void bbox ( int &X, int &Y, int &W, int &H );

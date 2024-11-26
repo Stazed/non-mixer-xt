@@ -840,12 +840,12 @@ protected:
     void draw_label ( int X, int Y, int W, int H );
     void draw_box ( int X, int Y, int W, int H );
 
-    virtual void draw ( void )
+    virtual void draw ( void ) override
     {
         Module::draw_box(x(),y(),w(),h());
         Module::draw_label(x(),y(),w(),h());
     }
-    virtual int handle ( int m );
+    virtual int handle ( int m ) override;
 
     virtual void get ( Log_Entry &e ) const override;
     virtual void set ( Log_Entry &e ) override;
