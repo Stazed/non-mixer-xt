@@ -33,7 +33,7 @@
 
 //------------------------------------------------------------------------
 
-inline tresult
+tresult
 ARunLoop::registerEventHandler( IEventHandler* handler,
     FileDescriptor fd )
 {
@@ -53,7 +53,7 @@ ARunLoop::registerEventHandler( IEventHandler* handler,
 
 //------------------------------------------------------------------------
 
-inline tresult
+tresult
 ARunLoop::unregisterEventHandler( IEventHandler* handler )
 {
     if ( !handler )
@@ -75,7 +75,7 @@ ARunLoop::unregisterEventHandler( IEventHandler* handler )
 
 //------------------------------------------------------------------------
 
-inline tresult
+tresult
 ARunLoop::registerTimer( ITimerHandler* handler,
     TimerInterval milliseconds )
 {
@@ -94,7 +94,7 @@ ARunLoop::registerTimer( ITimerHandler* handler,
 
 //------------------------------------------------------------------------
 
-inline tresult
+tresult
 ARunLoop::unregisterTimer( ITimerHandler* handler )
 {
     if ( !handler )
