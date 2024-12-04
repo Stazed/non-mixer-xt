@@ -45,6 +45,7 @@ Other Dependencies:
 * xfixes      (Need development packages also)
 * xinerama    (Need development packages also)
 * xcursor     (Need development packages also)
+* jpeg        (Need development packages also)
 
 Getting submodules (nonlib and FL):
 ---------------
