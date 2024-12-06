@@ -151,3 +151,7 @@ Controlling Non-Mixer-XT with OSC:
 See [OSC.md](OSC.md)
 
 *VST is a trademark of Steinberg Media Technologies GmbH, registered in Europe and other countries.
+
+## SAST Tools
+
+[PVS-Studio](https://pvs-studio.com/en/pvs-studio/?utm_source=website&utm_medium=github&utm_campaign=open_source) - static analyzer for C, C++, C#, and Java code.
