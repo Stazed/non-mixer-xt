@@ -4,14 +4,14 @@ For the most part, the original Non-Mixer OSC Control documentation applies to N
 
 http://non.tuxfamily.org/mixer/doc/MANUAL.html#n:1.2.3.1.1.
 
-Notable changes include the ability to query the value of any parameter (input and output) with an osc message, the abitily to bypass plugins with an osc message and the ability to query retrieve the vu-meter's level value).
+Notable changes include the ability to query the value of any parameter (input and output) with an osc message, the ability to bypass plugins with an osc message and the ability to query retrieve the vu-meter's level value).
 
 ## Signals
 
 ### Topology
 
 Non-Mixer-XT exposes all controllable parameters with a generic OSC API.
-Exposed parameters are refered to here as "signals".
+Exposed parameters are referred to here as "signals".
 
 There are two types of signals :
 
@@ -50,7 +50,7 @@ The meter level of a strip is also exposed with a dedicated output signal. Only 
 /strip/[STRIP_NAME]/Meter/Level%20(dB)
 ```
 
-Output parameters of plugins (e.g. a compressor's gain reduction) are not shown generic plugin interfaces but their signals can be quiered, see [Signal listing](#signal-listing).
+Output parameters of plugins (e.g. a compressor's gain reduction) are not shown generic plugin interfaces but their signals can be queried, see [Signal listing](#signal-listing).
 
 
 ### Signals under NSM
@@ -65,7 +65,7 @@ Liblo release 0.32 now requires a leading slash which was not needed in previous
 
 ## Commands
 
-Non-Mixer-XT handles a few global OSC commands to help building remote controllers. These commands are not signals and thus are not affected under Non Session Managment.  
+Non-Mixer-XT handles a few global OSC commands to help building remote controllers. These commands are not signals and thus are not affected under Non Session Management.  
 
 ### Signal listing
 
@@ -101,7 +101,7 @@ When all replies have been sent, an additional message is sent to indicate the r
 
 Works like the previous command except only signal's whose paths start with `prefix` will be listed.
 
-### Signal informations
+### Signal information
 
 ```
 /signal/infos ,s signal_path
