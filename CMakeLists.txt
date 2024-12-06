@@ -1,6 +1,6 @@
 #CMake file for non-mixer-xt
 
-cmake_minimum_required(VERSION 3.5.1)
+cmake_minimum_required(VERSION 3.5.1...3.31.1)
 project (non-mixer-xt)
 
 set (PACKAGE_VERSION "2.0.6")
