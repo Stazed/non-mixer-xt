@@ -106,6 +106,7 @@ else(EnableNTK) #FLTK Build
     find_library(FLTK_STATIC libfltk.a REQUIRED)
     find_library(FLTK_STATIC_IMAGES libfltk_images.a REQUIRED)
     find_package(FLTK REQUIRED)
+    find_package(JPEG REQUIRED)
     if(FLTK_FOUND)
         mark_as_advanced(FORCE FLTK_BASE_LIBRARY)
         mark_as_advanced(FORCE FLTK_CONFIG_SCRIPT)
@@ -123,6 +124,7 @@ else(EnableNTK) #FLTK Build
     pkg_check_modules(FONTCONFIG REQUIRED fontconfig>=0.22)
     pkg_check_modules(XFT REQUIRED xft)
     pkg_check_modules(XRENDER REQUIRED xrender)
+    pkg_check_modules(XCURSOR REQUIRED xcursor)
     add_definitions(-D'BUILD_TYPE="Built with FLTK static library"')
 endif(EnableNTK)
 
