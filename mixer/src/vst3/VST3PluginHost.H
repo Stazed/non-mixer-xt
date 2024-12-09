@@ -448,7 +448,7 @@ public:
     // Destructor.
     virtual ~Message ()
     {
-        setMessageID(nullptr);
+        VST3PluginHost::Message::setMessageID(nullptr);
 
         if (m_attributeList)
             m_attributeList->release();
