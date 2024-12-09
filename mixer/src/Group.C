@@ -294,6 +294,12 @@ Group::add( Mixer_Strip *o )
     {
         /* to call init */
         char *n = strdup ( name ( ) );
+        if ( n == NULL )
+        {
+            unlock ( );
+            return;
+        }
+
         name ( n );
         free ( n );
     }
