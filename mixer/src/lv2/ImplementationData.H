@@ -385,7 +385,7 @@ struct ImplementationData
 
         ImplementationData* self = static_cast<ImplementationData*>(handle);
 
-        if ( urid <= self->mappedURIs.size() )
+        if ( urid < self->mappedURIs.size() )
             return self->mappedURIs[urid].c_str();
 
         return NULL;
