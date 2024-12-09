@@ -28,8 +28,8 @@
 Gain_Module::Gain_Module( )
     : Module( 50, 24, name( ) )
 {
-    add_port ( Port ( this, Port::INPUT, Port::AUDIO ) );
-    add_port ( Port ( this, Port::OUTPUT, Port::AUDIO ) );
+    Module::add_port ( Port ( this, Port::INPUT, Port::AUDIO ) );
+    Module::add_port ( Port ( this, Port::OUTPUT, Port::AUDIO ) );
 
     {
         Port p ( this, Port::INPUT, Port::CONTROL, "Gain (dB)" );
@@ -42,7 +42,7 @@ Gain_Module::Gain_Module( )
         p.connect_to ( new float );
         p.control_value ( p.hints.default_value );
 
-        add_port ( p );
+        Module::add_port ( p );
     }
 
     {
@@ -56,7 +56,7 @@ Gain_Module::Gain_Module( )
         p.connect_to ( new float );
         p.control_value ( p.hints.default_value );
 
-        add_port ( p );
+        Module::add_port ( p );
     }
 
     {
@@ -69,7 +69,7 @@ Gain_Module::Gain_Module( )
         p.hints.visible = false;
         p.hints.invisible_with_signals = true;
         p.connect_to ( _bypass );
-        add_port ( p );
+        Module::add_port ( p );
     }
 
     end ( );
