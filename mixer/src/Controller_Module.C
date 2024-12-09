@@ -79,7 +79,7 @@ Controller_Module::Controller_Module( bool is_default ) :
 {
     box ( FL_NO_BOX );
 
-    add_port ( Port ( this, Port::OUTPUT, Port::CONTROL ) );
+    Module::add_port ( Port ( this, Port::OUTPUT, Port::CONTROL ) );
 
     //    mode( GUI );
     //    mode( CV );
@@ -797,6 +797,9 @@ Controller_Module::peer_callback( OSC::Signal *sig, OSC::Signal::State /*state*/
 
         unescape_url ( path );
 
+        if ( path == NULL )
+            return;
+
         asprintf ( &s, "%s%s", peer_prefix, path );
 
         peer_menu->add ( s, 0, NULL, static_cast<void*> ( sig ), 0 );
@@ -849,6 +852,9 @@ Controller_Module::add_osc_connections_to_menu( Fl_Menu_Button *, const char *pr
                 char *path = strdup ( *s );
 
                 unescape_url ( path );
+
+                if( path == NULL)
+                    continue;
 
                 char *ns;
                 asprintf ( &ns, "%s%s", a_peer_prefix, path );
