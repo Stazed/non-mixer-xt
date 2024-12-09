@@ -344,7 +344,9 @@ VST3_Plugin::VST3_Plugin( ) :
     _pController( nullptr ),
     m_unitInfos( nullptr ),
     _pProcessor( nullptr ),
+    _processContext( ),
     _bProcessing( false ),
+    m_programParamInfo( ),
     _vst_buffers_in( nullptr ),
     _vst_buffers_out( nullptr ),
     _iAudioInBuses( 0 ),
@@ -2513,6 +2515,9 @@ VST3_Plugin::restore_VST3_plugin_state( const std::string &filename )
     rewind ( fp );
 
     void *data = malloc ( size );
+
+    if ( data == NULL )
+        return;
 
     fread ( data, size, 1, fp );
     fclose ( fp );
