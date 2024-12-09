@@ -93,7 +93,7 @@ class RunLoop
 {
 public:
     
-    RunLoop() : m_timer_registered(false), m_event_handlers_registered(false) {}
+    RunLoop() : m_selectTimeout(), m_timer_registered(false), m_event_handlers_registered(false) {}
 
     using EventCallback = std::function<bool (const XEvent& event)>;
     using FileDescriptorCallback = std::function<void (int fd)>;
