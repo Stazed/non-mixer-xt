@@ -1935,7 +1935,7 @@ LV2_Plugin::non_worker_destroy( void )
 }
 
 void
-LV2_Plugin::ui_port_event( uint32_t port_index, uint32_t buffer_size, uint32_t protocol, const void* buffer )
+LV2_Plugin::ui_port_event( uint32_t port_index, uint32_t /*buffer_size*/, uint32_t /*protocol*/, const void* buffer )
 {
     /* The incoming port_index is the index from the plugin .ttl port order.
        We need the corresponding atom_input index so we have to look up
