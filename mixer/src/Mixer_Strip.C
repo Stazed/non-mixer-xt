@@ -443,6 +443,9 @@ Mixer_Strip::name( const char *name )
 
     char *s = strdup ( name );
 
+    if ( s == NULL )
+        return;
+
     if ( strlen ( s ) > Chain::maximum_name_length ( ) )
     {
         s[Chain::maximum_name_length ( ) - 1] = '\0';
@@ -1293,8 +1296,6 @@ Mixer_Strip::handle( int m )
     switch ( m )
     {
         case FL_FOCUS:
-            damage ( FL_DAMAGE_USER1 );
-            return 1;
         case FL_UNFOCUS:
             damage ( FL_DAMAGE_USER1 );
             return 1;
