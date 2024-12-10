@@ -291,6 +291,7 @@ public:
             _property(NULL),
             _lilv_symbol(NULL),
             _lilv_label(NULL),
+            _property_mapped(0),
             _clear_input_buffer(false),
             _need_file_update(false),
             _supports_time_position(false)
@@ -325,6 +326,7 @@ public:
             _property(p._property),
             _lilv_symbol(p._lilv_symbol),
             _lilv_label(p._lilv_label),
+            _property_mapped(p._property_mapped),
             _clear_input_buffer(false),
             _need_file_update(false),
             _supports_time_position(p._supports_time_position)
