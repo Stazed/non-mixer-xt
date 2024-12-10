@@ -375,7 +375,6 @@ Scanner_Window::run_scanner(const std::string &s_command)
         if ( _skip_button->value( ) )
         {
             system( s_kill_command.c_str() );
-            continue_scan = true;
 
             // gotta reset manually or it will still be set on next plugin
             _skip_button->value(0);
