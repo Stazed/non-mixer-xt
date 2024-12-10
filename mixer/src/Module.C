@@ -117,6 +117,9 @@ Module::Module( bool is_default, int W, int H, const char *L ) :
     _is_from_custom_ui( false ),
     _is_removed( false ),
     _use_custom_data( false )
+#ifdef LV2_SUPPORT
+    , _b_have_visible_atom_control_port( false )
+#endif
 {
     Module::init ( );
 }
@@ -137,6 +140,9 @@ Module::Module( ) :
     _is_from_custom_ui( false ),
     _is_removed( false ),
     _use_custom_data( false )
+#ifdef LV2_SUPPORT
+    , _b_have_visible_atom_control_port( false )
+#endif
 {
     Module::init ( );
 }
@@ -987,6 +993,9 @@ Module::set_parameters( const char *parameters )
 {
     char *s = strdup ( parameters );
 
+    if ( s == NULL )
+        return;
+
     char *start = s;
     unsigned int i = 0;
     for ( char *sp = s;; ++sp )
@@ -1118,6 +1127,9 @@ Module::draw_label( int tx, int ty, int tw, int th )
 
     char *lab = strdup ( label ( ) );
 
+    if ( lab == NULL )
+        return;
+
     Fl_Color c = fl_contrast ( FL_FOREGROUND_COLOR, color ( ) );
 
     if ( bypass ( ) )
@@ -1214,7 +1226,7 @@ Module::insert_menu_cb( const Fl_Menu_ *menu )
 
         mod = jm;
     }
-    if ( !strcmp ( s_picked, "Spatializer" ) )
+    else if ( !strcmp ( s_picked, "Spatializer" ) )
     {
         int n = 0;
         for ( int i = 0; i < chain ( )->modules ( ); i++ )
