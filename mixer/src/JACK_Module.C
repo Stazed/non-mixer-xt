@@ -591,6 +591,10 @@ JACK_Module::handle( int m )
                 DMESSAGE ( "initiation of drag" );
 
                 char *s = static_cast<char*> ( malloc ( 256 ) );
+
+                if ( s == NULL )
+                    return 0;
+
                 s[0] = 0;
 
                 for ( unsigned int i = _connection_handle_outputs[connection_handle][0];
