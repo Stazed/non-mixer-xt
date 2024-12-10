@@ -55,7 +55,10 @@ CLAP_Plugin::CLAP_Plugin( ) :
     _descriptor( nullptr ),
     _clap_path( "" ),
     _clap_id( "" ),
+    _host( ),
+    _process( ),
     _last_chunk( nullptr ),
+    _transport( ),
     _position( 0 ),
     _bpm( 120.0f ),
     _rolling( false ),
@@ -677,57 +680,54 @@ CLAP_Plugin::process_jack_midi_out( uint32_t nframes, unsigned int port )
                     {
                         const clap_event_note *en
                             = reinterpret_cast<const clap_event_note *> ( eh );
-                        if ( en )
-                        {
-                            unsigned char midi_note[3];
-                            midi_note[0] = EVENT_NOTE_ON + en->channel;
-                            midi_note[1] = en->key;
-                            midi_note[2] = en->velocity;
 
-                            size_t size = 3;
-                            int nBytes = static_cast<int> ( size );
+                        unsigned char midi_note[3];
+                        midi_note[0] = EVENT_NOTE_ON + en->channel;
+                        midi_note[1] = en->key;
+                        midi_note[2] = en->velocity;
 
-                            int ret = jack_midi_event_write ( buf, en->header.time,
-                                static_cast<jack_midi_data_t*> ( &midi_note[0] ), nBytes );
+                        size_t size = 3;
+                        int nBytes = static_cast<int> ( size );
 
-                            if ( ret )
-                                WARNING ( "Jack MIDI note on error = %d", ret );
-                        }
+                        int ret = jack_midi_event_write ( buf, en->header.time,
+                            static_cast<jack_midi_data_t*> ( &midi_note[0] ), nBytes );
+
+                        if ( ret )
+                            WARNING ( "Jack MIDI note on error = %d", ret );
+
                         break;
                     }
                     case CLAP_EVENT_NOTE_OFF:
                     {
                         const clap_event_note *en
                             = reinterpret_cast<const clap_event_note *> ( eh );
-                        if ( en )
-                        {
-                            unsigned char midi_note[3];
-                            midi_note[0] = EVENT_NOTE_OFF + en->channel;
-                            midi_note[1] = en->key;
-                            midi_note[2] = en->velocity;
 
-                            size_t size = 3;
-                            int nBytes = static_cast<int> ( size );
-                            int ret = jack_midi_event_write ( buf, en->header.time,
-                                static_cast<jack_midi_data_t*> ( &midi_note[0] ), nBytes );
+                        unsigned char midi_note[3];
+                        midi_note[0] = EVENT_NOTE_OFF + en->channel;
+                        midi_note[1] = en->key;
+                        midi_note[2] = en->velocity;
 
-                            if ( ret )
-                                WARNING ( "Jack MIDI note off error = %d", ret );
-                        }
+                        size_t size = 3;
+                        int nBytes = static_cast<int> ( size );
+                        int ret = jack_midi_event_write ( buf, en->header.time,
+                            static_cast<jack_midi_data_t*> ( &midi_note[0] ), nBytes );
+
+                        if ( ret )
+                            WARNING ( "Jack MIDI note off error = %d", ret );
+
                         break;
                     }
                     case CLAP_EVENT_MIDI:
                     {
                         const clap_event_midi *em
                             = reinterpret_cast<const clap_event_midi *> ( eh );
-                        if ( em )
-                        {
-                            int ret = jack_midi_event_write ( buf, em->header.time,
-                                static_cast<const jack_midi_data_t*> ( &em->data[0] ), sizeof (em->data ) );
 
-                            if ( ret )
-                                WARNING ( "Jack MIDI write error = %d", ret );
-                        }
+                        int ret = jack_midi_event_write ( buf, em->header.time,
+                            static_cast<const jack_midi_data_t*> ( &em->data[0] ), sizeof (em->data ) );
+
+                        if ( ret )
+                            WARNING ( "Jack MIDI write error = %d", ret );
+
                         break;
                     }
                 }
@@ -1462,8 +1462,7 @@ CLAP_Plugin::create_control_ports( )
 
                 if ( param_info.flags & CLAP_PARAM_IS_STEPPED )
                 {
-                    if ( p.hints.ranged &&
-                        0 == (int) p.hints.minimum &&
+                    if ( 0 == (int) p.hints.minimum &&
                         1 == (int) p.hints.maximum )
                         p.hints.type = Port::Hints::BOOLEAN;
                     else
@@ -1699,7 +1698,7 @@ CLAP_Plugin::update_parameters( )
         {
             const clap_event_param_gesture *ev
                 = reinterpret_cast<const clap_event_param_gesture *> ( eh );
-            if ( ev && ev->param_id != CLAP_INVALID_ID )
+            if ( ev->param_id != CLAP_INVALID_ID )
             {
                 std::pair<int, double> prm ( int(ev->param_id ), 0.0 );
                 _paramValues.insert ( prm );
@@ -1709,7 +1708,7 @@ CLAP_Plugin::update_parameters( )
         {
             const clap_event_param_gesture *ev
                 = reinterpret_cast<const clap_event_param_gesture *> ( eh );
-            if ( ev && ev->param_id != CLAP_INVALID_ID )
+            if ( ev->param_id != CLAP_INVALID_ID )
             {
                 param_id = int(ev->param_id );
 
@@ -1734,7 +1733,7 @@ CLAP_Plugin::update_parameters( )
         {
             const clap_event_param_value *ev
                 = reinterpret_cast<const clap_event_param_value *> ( eh );
-            if ( ev && ev->param_id != CLAP_INVALID_ID )
+            if ( ev->param_id != CLAP_INVALID_ID )
             {
                 param_id = ev->param_id;
                 value = ev->value;
@@ -2437,6 +2436,9 @@ CLAP_Plugin::restore_CLAP_plugin_state( const std::string &filename )
     rewind ( fp );
 
     void *data = malloc ( size );
+
+    if ( data == NULL )
+        return;
 
     fread ( data, size, 1, fp );
     fclose ( fp );
