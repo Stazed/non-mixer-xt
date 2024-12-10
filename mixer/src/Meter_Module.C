@@ -73,8 +73,8 @@ Meter_Module::Meter_Module( ) :
     p2.connect_to ( new float[1] );
     p2.control_value_no_callback ( 0 );
 
-    add_port ( p );
-    add_port ( p2 );
+    Module::add_port ( p );
+    Module::add_port ( p2 );
 
     log_create ( );
 }
