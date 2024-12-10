@@ -56,7 +56,7 @@ Meter_Indicator_Module::Meter_Indicator_Module( bool is_default ) :
     /* color( fl_darker( fl_darker( FL_BACKGROUND_COLOR ))); */
     color ( FL_BLACK );
 
-    add_port ( Port ( this, Port::INPUT, Port::CONTROL ) );
+    Module::add_port ( Port ( this, Port::INPUT, Port::CONTROL ) );
 
     control_input[0].hints.visible = false;
 
