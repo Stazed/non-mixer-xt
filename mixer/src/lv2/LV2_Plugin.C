@@ -492,8 +492,11 @@ LV2_Plugin::LV2_Plugin( ) :
     _ui_to_plugin( nullptr ),
     _ui_event_buf( nullptr ),
     _worker_response( nullptr ),
+    _zix_sem ( ),
+    _zix_thread( 0 ),
     _atom_forge( ),
     _b_threaded( false ),
+    _work_lock( ),
     _exit_process( false ),
     _safe_restore( false ),
     _atom_buffer_size( ATOM_BUFFER_SIZE ),
@@ -505,7 +508,9 @@ LV2_Plugin::LV2_Plugin( ) :
     _lilv_user_interface( nullptr ),
     _lilv_ui_type( nullptr ),
     _use_external_ui( false ),
+    _lv2_ui_widget( nullptr ),
     _lv2_ui_external_host( ),
+    _lv2_ui_external_feature( ),
     _lv2_ui_handle( nullptr ),
     _X11_UI( nullptr ),
     _x_is_resizable( false ),
@@ -2371,7 +2376,7 @@ ui_port_index( void* const controller, const char* port_symbol )
 
     DMESSAGE ( "port_index = %U", port_index );
 
-    return port ? port_index : LV2UI_INVALID_PORT_INDEX;
+    return port_index;
 }
 
 static void
