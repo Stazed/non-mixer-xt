@@ -322,9 +322,11 @@ vst2_discovery_scan::open_descriptor( unsigned long iIndex )
     switch ( vst2_dispatch ( effGetPlugCategory, 0, 0, nullptr, 0.0f ) )
     {
         case kPlugCategSynth:
+        case kPlugCategGenerator:
             m_sCategory = "Instrument Plugin";
             break;
         case kPlugCategAnalysis:
+        case kPlugCategRestoration:
             m_sCategory = "Utilities";
             break;
         case kPlugCategMastering:
@@ -333,12 +335,7 @@ vst2_discovery_scan::open_descriptor( unsigned long iIndex )
         case kPlugCategRoomFx:
             m_sCategory = "Time/Delays";
             break;
-        case kPlugCategRestoration:
-            m_sCategory = "Utilities";
-            break;
-        case kPlugCategGenerator:
-            m_sCategory = "Instrument Plugin";
-            break;
+
         default:
             if ( m_pEffect->flags & effFlagsIsSynth )
                 m_sCategory = "Instrument Plugin";
