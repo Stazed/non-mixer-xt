@@ -39,11 +39,11 @@ Mono_Pan_Module::Mono_Pan_Module( )
     p.connect_to ( new float );
     p.control_value ( p.hints.default_value );
 
-    add_port ( p );
+    Module::add_port ( p );
 
-    add_port ( Port ( this, Port::INPUT, Port::AUDIO ) );
-    add_port ( Port ( this, Port::OUTPUT, Port::AUDIO ) );
-    add_port ( Port ( this, Port::OUTPUT, Port::AUDIO ) );
+    Module::add_port ( Port ( this, Port::INPUT, Port::AUDIO ) );
+    Module::add_port ( Port ( this, Port::OUTPUT, Port::AUDIO ) );
+    Module::add_port ( Port ( this, Port::OUTPUT, Port::AUDIO ) );
 
     end ( );
 
