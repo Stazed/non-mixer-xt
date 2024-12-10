@@ -1147,7 +1147,12 @@ const LV2_RDF_Descriptor* lv2_rdf_new(const LV2_URI uri, const bool loadPresets)
                         if (presetLabelNodes.size() > 0)
                         {
                             if (const char* const label = presetLabelNodes.get_first().as_string())
-                                rdfPreset->Label = strdup(label);
+                            {
+                                if ( label == NULL )
+                                    continue;
+                                else
+                                    rdfPreset->Label = strdup(label);
+                            }
 
                             //DMESSAGE("Label = %s", rdfPreset->Label);
                         }
