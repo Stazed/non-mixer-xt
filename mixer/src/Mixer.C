@@ -1413,6 +1413,9 @@ Mixer::get_auto_connect_targets( void )
     {
         char *s = strdup ( i->c_str ( ) );
 
+        if ( s == NULL )
+            continue;
+
         *rindex ( s, '/' ) = 0;
 
         if ( !index ( s, '/' ) )
@@ -1531,8 +1534,10 @@ Mixer::command_save( void )
 bool
 Mixer::command_load( const char *path, const char *display_name )
 {
-    if ( path )
-        project_directory = path;
+    if ( path == NULL )
+        return false;
+    
+    project_directory = path;
 
     DMESSAGE ( "project_directory = %s", project_directory.c_str ( ) );
     mixer->deactivate ( );
@@ -1540,6 +1545,9 @@ Mixer::command_load( const char *path, const char *display_name )
     Project::close ( );
 
     char *pwd = (char*) malloc ( PATH_MAX + 1 );
+    if ( pwd == NULL )
+        return false;
+
     getcwd ( pwd, PATH_MAX );
     chdir ( path );
     load_project_settings ( );
