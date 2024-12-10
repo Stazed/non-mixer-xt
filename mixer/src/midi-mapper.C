@@ -312,7 +312,7 @@ public:
     signal_mapping( ) :
         is_nrpn(false),
         is_nrpn14(false),
-        is_toggle(-false),
+        is_toggle(false),
         signal(NULL),
         last_midi_tick(0),
         last_feedback_tick(0),
