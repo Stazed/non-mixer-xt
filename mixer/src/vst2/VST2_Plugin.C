@@ -863,8 +863,8 @@ VST2_Plugin::open_descriptor( unsigned long iIndex )
                 break;
             }
 
-            if ( id == 0 || !buf[0] )
-                break;
+    //        if ( id == 0 || !buf[0] )
+    //            break;
         }
         // Check if we're actually the intended plugin...
         if ( i < iIndex || id == 0 || !buf[0] )
