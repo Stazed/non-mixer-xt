@@ -2279,7 +2279,7 @@ VST3_Plugin::create_control_ports( )
                 Port p ( this, d, Port::CONTROL, strdup ( description.c_str ( ) ) );
 
                 /* Used for OSC path creation unique symbol */
-                std::string osc_symbol = strdup ( nmxt_common::utf16_to_utf8 ( paramInfo.shortTitle ).c_str ( ) );
+                std::string osc_symbol = nmxt_common::utf16_to_utf8 ( paramInfo.shortTitle );
                 osc_symbol.erase ( std::remove ( osc_symbol.begin ( ), osc_symbol.end ( ), ' ' ), osc_symbol.end ( ) );
                 osc_symbol += std::to_string ( paramInfo.id );
 
