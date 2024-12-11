@@ -1455,7 +1455,7 @@ VST2_Plugin::create_control_ports( )
 
         if ( have_props && ( _param_props.shortLabel[0] != 0 ) )
             osc_symbol = strdup ( _param_props.shortLabel );
-        else
+        else if ( szName[0] != 0 )
             osc_symbol = strdup ( szName );
 
         osc_symbol.erase ( std::remove ( osc_symbol.begin ( ), osc_symbol.end ( ), ' ' ), osc_symbol.end ( ) );
