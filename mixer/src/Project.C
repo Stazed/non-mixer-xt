@@ -323,8 +323,12 @@ Project::create( const char *name, const char *template_name )
         return false;
     }
 
-    //    mkdir( "sources", 0777 );
-    creat ( "snapshot", 0666 );
+    int ret = creat ( "snapshot", 0666 );
+    if ( ret < 0 )
+    {
+        WARNING ( "Cannot create snapshot file: %s", strerror( errno ));
+        return false;
+    }
 
     /* TODO: copy template */
 
