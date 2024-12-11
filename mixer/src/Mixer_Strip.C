@@ -1067,7 +1067,7 @@ matches_pattern( const char *pattern, Module::Port *p )
     char group_name[256];
     char port_group[256];
 
-    if ( 2 == sscanf ( pattern, "%[^/]/%[^\n]", group_name, port_group ) )
+    if ( 2 == sscanf ( pattern, "%255[^/]/%255[^\n]", group_name, port_group ) )
     {
         if ( strcmp ( group_name, "*" ) &&
             strcmp ( group_name, p->module ( )->chain ( )->strip ( )->group ( )->name ( ) ) )
