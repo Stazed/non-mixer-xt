@@ -151,6 +151,7 @@ private:
     // Project loading
     std::string _plugin_filename;
     std::string _sUniqueID;
+    FUID _fuid;
     std::string _sName;
     void* _last_chunk;
     std::string _project_file;

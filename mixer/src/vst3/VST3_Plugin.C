@@ -1430,6 +1430,7 @@ VST3_Plugin::open_descriptor( unsigned long iIndex )
             }
             else
             {
+                _fuid.toTUID(classInfo.cid);
                 _found_plugin = true;
             }
 
@@ -2475,8 +2476,8 @@ VST3_Plugin::add_port( const Port &p )
  * compare to public.sdk/source/vst/vstpresetfile.cpp
  */
 
-namespace Steinberg {
-namespace Vst {
+//namespace Steinberg {
+namespace Vst3_stream {
 
 enum ChunkType
 {
@@ -2509,13 +2510,13 @@ getChunkID (ChunkType type)
 
 struct ChunkEntry
 {
-    void start_chunk (const ChunkID& id, RAMStream& stream)
+    void start_chunk (const ChunkID& id, VST3PluginHost::RAMStream& stream)
     {
         memcpy (_id, &id, sizeof (ChunkID));
         stream.tell (&_offset);
         _size = 0;
     }
-    void end_chunk (RAMStream& stream)
+    void end_chunk (VST3PluginHost::RAMStream& stream)
     {
         int64 pos = 0;
         stream.tell (&pos);
@@ -2527,30 +2528,30 @@ struct ChunkEntry
     int64   _size;
 };
 
-} // namespace Vst
+} // namespace Vst3_stream
 
-typedef std::vector<Vst::ChunkEntry> ChunkEntryVector;
+typedef std::vector<Vst3_stream::ChunkEntry> ChunkEntryVector;
 
-} // namespace Steinberg
+//} // namespace Steinberg
 
 static bool
-is_equal_ID (const Vst::ChunkID id1, const Vst::ChunkID id2)
+is_equal_ID (const Vst3_stream::ChunkID id1, const Vst3_stream::ChunkID id2)
 {
-    return 0 == memcmp (id1, id2, sizeof (Vst::ChunkID));
+    return 0 == memcmp (id1, id2, sizeof (Vst3_stream::ChunkID));
 }
 
 static bool
-read_equal_ID (RAMStream& stream, const Vst::ChunkID id)
+read_equal_ID (VST3PluginHost::RAMStream& stream, const Vst3_stream::ChunkID id)
 {
-    Vst::ChunkID tmp;
+    Vst3_stream::ChunkID tmp;
     return stream.read_ChunkID (tmp) && is_equal_ID (tmp, id);
 }
 
 bool
-VST3_Plugin::load_state (RAMStream& stream)
+VST3_Plugin::load_state (VST3PluginHost::RAMStream& stream)
 {
     assert (stream.readonly ());
-    if (stream.size () < Vst::kHeaderSize) {
+    if (stream.size () < Vst3_stream::kHeaderSize) {
         return false;
     }
 
@@ -2558,7 +2559,7 @@ VST3_Plugin::load_state (RAMStream& stream)
     int64 list_offset = 0;
     TUID  class_id;
 
-    if (!(read_equal_ID (stream, Vst::getChunkID (Vst::kHeader))
+    if (!(read_equal_ID (stream, Vst3_stream::getChunkID (Vst3_stream::kHeader))
           && stream.read_int32 (version)
           && stream.read_TUID (class_id)
           && stream.read_int64 (list_offset)
@@ -2566,13 +2567,13 @@ VST3_Plugin::load_state (RAMStream& stream)
          )
        )
     {
-        DEBUG_TRACE (DEBUG::VST3Config, string_compose ("VST3PI::load_state: invalid header vers: %1 off: %2\n", version, list_offset));
+        DMESSAGE ("load_state: invalid header vers: %1 off: %2", version, list_offset);
         return false;
     }
 
     if (_fuid != FUID::fromTUID (class_id))
     {
-        DEBUG_TRACE (DEBUG::VST3Config, "VST3PI::load_state: class ID mismatch\n");
+        DMESSAGE ("load_state: class ID mismatch");
         return false;
     }
 
@@ -2584,23 +2585,24 @@ VST3_Plugin::load_state (RAMStream& stream)
     {
         return false;
     }
-    if (!read_equal_ID (stream, Vst::getChunkID (Vst::kChunkList)))
+    if (!read_equal_ID (stream, Vst3_stream::getChunkID (Vst3_stream::kChunkList)))
     {
         return false;
     }
 
-    PBD::Unwinder<bool> uw (_is_loading_state, true);
+    // FIXME CHECK
+ //   PBD::Unwinder<bool> uw (_is_loading_state, true);
 
     int32 count;
     stream.read_int32 (count);
     for (int32 i = 0; i < count; ++i)
     {
-        Vst::ChunkEntry c;
+        Vst3_stream::ChunkEntry c;
         stream.read_ChunkID (c._id);
         stream.read_int64 (c._offset);
         stream.read_int64 (c._size);
         entries.push_back (c);
-        DEBUG_TRACE (DEBUG::VST3Config, string_compose ("VST3PI::load_state: chunk: %1 off: %2 size: %3 type: %4\n", i, c._offset, c._size, c._id));
+        DMESSAGE("load_state: chunk: %1 off: %2 size: %3 type: %4", i, c._offset, c._size, c._id);
     }
 
     bool rv     = true;
@@ -2615,13 +2617,13 @@ VST3_Plugin::load_state (RAMStream& stream)
             rv = false;
             continue;
         }
-        if (is_equal_ID (i->_id, Vst::getChunkID (Vst::kComponentState)))
+        if (is_equal_ID (i->_id, Vst3_stream::getChunkID (Vst3_stream::kComponentState)))
         {
-            ROMStream s (stream, i->_offset, i->_size);
-            tresult   res = _component->setState (&s);
+            VST3PluginHost::ROMStream s (stream, i->_offset, i->_size);
+            tresult   res = _pComponent->setState (&s);
 
             s.rewind ();
-            tresult re2 = _controller->setComponentState (&s);
+            tresult re2 = _pController->setComponentState (&s);
 
             if (re2 == kResultOk)
             {
@@ -2630,13 +2632,13 @@ VST3_Plugin::load_state (RAMStream& stream)
 
             if (!(re2 == kResultOk || re2 == kNotImplemented || res == kResultOk || res == kNotImplemented))
             {
-                DEBUG_TRACE (DEBUG::VST3Config, "VST3PI::load_state: failed to restore component state\n");
+                DMESSAGE ("load_state: failed to restore component state");
                 rv = false;
             }
-        } else if (is_equal_ID (i->_id, Vst::getChunkID (Vst::kControllerState)))
+        } else if (is_equal_ID (i->_id, Vst3_stream::getChunkID (Vst3_stream::kControllerState)))
         {
-            ROMStream s (stream, i->_offset, i->_size);
-            tresult   res = _controller->setState (&s);
+            VST3PluginHost::ROMStream s (stream, i->_offset, i->_size);
+            tresult   res = _pController->setState (&s);
             if (res == kResultOk)
             {
                 synced = true;
@@ -2644,13 +2646,13 @@ VST3_Plugin::load_state (RAMStream& stream)
 
             if (!(res == kResultOk || res == kNotImplemented))
             {
-                DEBUG_TRACE (DEBUG::VST3Config, "VST3PI::load_state: failed to restore controller state\n");
+                DMESSAGE ("load_state: failed to restore controller state");
                 rv = false;
             }
         }
 #if 0
-		else if (is_equal_ID (i->_id, Vst::getChunkID (Vst::kProgramData))) {
-			Vst::IUnitInfo* unitInfo = unit_info ();
+		else if (is_equal_ID (i->_id, Vst3_stream::getChunkID (Vst3_stream::kProgramData))) {
+			Vst3_stream::IUnitInfo* unitInfo = unit_info ();
 			stream.seek (i->_offset, IBStream::kIBSeekSet, &seek_result);
 			int32 id = -1;
 			if (stream.read_int32 (id)) {
@@ -2662,9 +2664,10 @@ VST3_Plugin::load_state (RAMStream& stream)
 #endif
         else
         {
-            DEBUG_TRACE (DEBUG::VST3Config, "VST3PI::load_state: ignored unsupported state chunk.\n");
+            DMESSAGE ("load_state: ignored unsupported state chunk.");
         }
     }
+#if 0   // FIXME CHECK
     if (rv && !synced)
     {
         synced = synchronize_states ();
@@ -2674,6 +2677,7 @@ VST3_Plugin::load_state (RAMStream& stream)
     {
         update_shadow_data ();
     }
+#endif
     return rv;
 }
 
@@ -2681,25 +2685,25 @@ bool
 VST3_Plugin::save_state (VST3PluginHost::RAMStream& stream)
 {
     assert (!stream.readonly ());
-    Vst::ChunkEntry  c;
+    Vst3_stream::ChunkEntry  c;
     ChunkEntryVector entries;
 
     /* header */
-    stream.write_ChunkID (Vst::getChunkID (Vst::kHeader));
-    stream.write_int32 (Vst::kFormatVersion);
+    stream.write_ChunkID (Vst3_stream::getChunkID (Vst3_stream::kHeader));
+    stream.write_int32 (Vst3_stream::kFormatVersion);
     stream.write_TUID (_fuid.toTUID ()); // class ID
     stream.write_int64 (0);              // skip offset
 
     /* state chunks */
-    c.start_chunk (getChunkID (Vst::kComponentState), stream);
-    if (_component->getState (&stream) == kResultTrue)
+    c.start_chunk (Vst3_stream::getChunkID (Vst3_stream::kComponentState), stream);
+    if (_pComponent->getState (&stream) == kResultTrue)
     {
         c.end_chunk (stream);
         entries.push_back (c);
     }
 
-    c.start_chunk (getChunkID (Vst::kControllerState), stream);
-    if (_controller->getState (&stream) == kResultTrue)
+    c.start_chunk (Vst3_stream::getChunkID (Vst3_stream::kControllerState), stream);
+    if (_pController->getState (&stream) == kResultTrue)
     {
         c.end_chunk (stream);
         entries.push_back (c);
@@ -2708,12 +2712,12 @@ VST3_Plugin::save_state (VST3PluginHost::RAMStream& stream)
     /* update header */
     int64 pos;
     stream.tell (&pos);
-    stream.seek (Vst::kListOffsetPos, IBStream::kIBSeekSet, NULL);
+    stream.seek (Vst3_stream::kListOffsetPos, IBStream::kIBSeekSet, NULL);
     stream.write_int64 (pos);
     stream.seek (pos, IBStream::kIBSeekSet, NULL);
 
     /* write list */
-    stream.write_ChunkID (Vst::getChunkID (Vst::kChunkList));
+    stream.write_ChunkID (Vst3_stream::getChunkID (Vst3_stream::kChunkList));
     stream.write_int32 (entries.size ());
 
     for (ChunkEntryVector::const_iterator i = entries.begin (); i != entries.end (); ++i)
