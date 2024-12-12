@@ -1430,7 +1430,7 @@ VST3_Plugin::open_descriptor( unsigned long iIndex )
             }
             else
             {
-                _fuid.toTUID(classInfo.cid);
+                _fuid.fromTUID(classInfo.cid);
                 _found_plugin = true;
             }
 
@@ -2590,9 +2590,6 @@ VST3_Plugin::load_state (VST3PluginHost::RAMStream& stream)
         return false;
     }
 
-    // FIXME CHECK
- //   PBD::Unwinder<bool> uw (_is_loading_state, true);
-
     int32 count;
     stream.read_int32 (count);
     for (int32 i = 0; i < count; ++i)
@@ -2606,7 +2603,6 @@ VST3_Plugin::load_state (VST3PluginHost::RAMStream& stream)
     }
 
     bool rv     = true;
-    bool synced = false;
 
     /* parse chunks */
     for (ChunkEntryVector::const_iterator i = entries.begin (); i != entries.end (); ++i)
@@ -2625,11 +2621,6 @@ VST3_Plugin::load_state (VST3PluginHost::RAMStream& stream)
             s.rewind ();
             tresult re2 = _pController->setComponentState (&s);
 
-            if (re2 == kResultOk)
-            {
-                synced = true;
-            }
-
             if (!(re2 == kResultOk || re2 == kNotImplemented || res == kResultOk || res == kNotImplemented))
             {
                 DMESSAGE ("load_state: failed to restore component state");
@@ -2639,10 +2630,6 @@ VST3_Plugin::load_state (VST3PluginHost::RAMStream& stream)
         {
             VST3PluginHost::ROMStream s (stream, i->_offset, i->_size);
             tresult   res = _pController->setState (&s);
-            if (res == kResultOk)
-            {
-                synced = true;
-            }
 
             if (!(res == kResultOk || res == kNotImplemented))
             {
@@ -2650,34 +2637,12 @@ VST3_Plugin::load_state (VST3PluginHost::RAMStream& stream)
                 rv = false;
             }
         }
-#if 0
-		else if (is_equal_ID (i->_id, Vst3_stream::getChunkID (Vst3_stream::kProgramData))) {
-			Vst3_stream::IUnitInfo* unitInfo = unit_info ();
-			stream.seek (i->_offset, IBStream::kIBSeekSet, &seek_result);
-			int32 id = -1;
-			if (stream.read_int32 (id)) {
-				ROMStream s (stream, i->_offset + sizeof (int32), i->_size - sizeof (int32));
-				unit_info->setUnitProgramData (id, programIndex, s);
-				//unit_data->setUnitData (id, programIndex, s)
-			}
-		}
-#endif
         else
         {
             DMESSAGE ("load_state: ignored unsupported state chunk.");
         }
     }
-#if 0   // FIXME CHECK
-    if (rv && !synced)
-    {
-        synced = synchronize_states ();
-    }
 
-    if (rv && synced)
-    {
-        update_shadow_data ();
-    }
-#endif
     return rv;
 }
 
@@ -2735,15 +2700,10 @@ VST3_Plugin::save_state (VST3PluginHost::RAMStream& stream)
 void
 VST3_Plugin::save_VST3_plugin_state( const std::string &filename )
 {
-    void* data = nullptr;
-    if ( const std::size_t dataSize = getState ( &data ) )
+    /* New file format */
+    VST3PluginHost::RAMStream stream;
+    if (save_state (stream))
     {
-        if ( data == nullptr )
-        {
-            fl_alert ( "%s could not complete state save of %s", base_label ( ), filename.c_str ( ) );
-            return;
-        }
-
         FILE *fp;
         fp = fopen ( filename.c_str ( ), "w" );
 
@@ -2754,9 +2714,10 @@ VST3_Plugin::save_VST3_plugin_state( const std::string &filename )
         }
         else
         {
-            fwrite ( data, dataSize, 1, fp );
+            fwrite ( stream.data(), stream.size(), 1, fp );
         }
         fclose ( fp );
+        return;
     }
 }
 
@@ -2784,6 +2745,22 @@ VST3_Plugin::restore_VST3_plugin_state( const std::string &filename )
     fread ( data, size, 1, fp );
     fclose ( fp );
 
+    /* Try new file format */
+    VST3PluginHost::RAMStream stream ( (uint8_t*) data, size);
+    if (!load_state (stream))
+    {
+        DMESSAGE("VST3 <%s>: failed to load chunk-data", filename.c_str());
+        // If this fails, then it is probably the old file format so try that below
+    }
+    else
+    {
+        /* Got new format */
+        updateParamValues ( false );
+        free ( data );
+        return;
+    }
+
+    /* Above failed so try old file format */
     Stream state ( data, size );
 
     if ( _pComponent->setState ( &state ) != kResultOk )
