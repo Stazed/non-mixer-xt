@@ -133,6 +133,37 @@ IMPLEMENT_FUNKNOWN_METHODS( VST3PluginHost::Message, IMessage, IMessage::iid )
 
 /* ****************************************************************************/
 
+bool
+file_get_contents (
+  const char* filename,
+  char** contents,
+  size_t* length
+)
+{
+    FILE *fp = NULL;
+    fp = fopen ( filename, "r" );
+
+    if ( fp == NULL )
+    {
+        printf ( "Cannot open file %s\n", filename );
+        return false;
+    }
+
+    fseek ( fp, 0, SEEK_END );
+    *length = ftell ( fp );
+    rewind ( fp );
+
+    *contents = (char *) malloc ( *length );
+
+    if ( contents == NULL )
+        return false;
+
+    fread ( contents, *length, 1, fp );
+    fclose ( fp );
+
+    return true;
+}
+
 VST3PluginHost::RAMStream::RAMStream ()
     : _data (0)
     , _size (0)
@@ -169,10 +200,10 @@ VST3PluginHost::RAMStream::RAMStream (std::string const& fn)
     char* buf    = NULL;
     size_t  length = 0;
 
-    /* FIXME */
-    /*if (!g_file_get_contents (fn.c_str (), &buf, &length, NULL)) {
+    if (!file_get_contents (fn.c_str (), &buf, &length))
+    {
     	return;
-    }*/
+    }
     if (length > 0 && reallocate_buffer (length, true))
     {
         _size = length;
@@ -372,7 +403,7 @@ VST3PluginHost::RAMStream::write_int64 (int64 i)
 }
 
 bool
-VST3PluginHost::RAMStream::write_ChunkID (const ChunkID& id)
+VST3PluginHost::RAMStream::write_ChunkID (const Vst3_stream::ChunkID& id)
 {
     return write_pod (id);
 }
@@ -393,7 +424,7 @@ VST3PluginHost::RAMStream::write_TUID (const TUID& tuid)
 {
     int   i       = 0;
     int32 n_bytes = 0;
-    char  buf[kClassIDSize + 1];
+    char  buf[Vst3_stream::kClassIDSize + 1];
 
 #if COM_COMPATIBLE
     GUIDStruct guid;
@@ -406,8 +437,8 @@ VST3PluginHost::RAMStream::write_TUID (const TUID& tuid)
     {
         sprintf (buf + 2 * i, "%02X", (uint8_t)tuid[i]);
     }
-    write (buf, kClassIDSize, &n_bytes);
-    return n_bytes == kClassIDSize;
+    write (buf, Vst3_stream::kClassIDSize, &n_bytes);
+    return n_bytes == Vst3_stream::kClassIDSize;
 }
 
 bool
@@ -437,7 +468,7 @@ VST3PluginHost::RAMStream::read_int64 (int64& i)
 }
 
 bool
-VST3PluginHost::RAMStream::read_ChunkID (ChunkID& id)
+VST3PluginHost::RAMStream::read_ChunkID (Vst3_stream::ChunkID& id)
 {
     return read_pod (id);
 }
@@ -447,15 +478,15 @@ VST3PluginHost::RAMStream::read_TUID (TUID& tuid)
 {
     int   i       = 0;
     int32 n_bytes = 0;
-    char  buf[kClassIDSize + 1];
+    char  buf[Vst3_stream::kClassIDSize + 1];
 
-    read ((void*)buf, kClassIDSize, &n_bytes);
-    if (n_bytes != kClassIDSize)
+    read ((void*)buf, Vst3_stream::kClassIDSize, &n_bytes);
+    if (n_bytes != Vst3_stream::kClassIDSize)
     {
         return false;
     }
 
-    buf[kClassIDSize] = '\0';
+    buf[Vst3_stream::kClassIDSize] = '\0';
 
 #if COM_COMPATIBLE
     GUIDStruct guid;
@@ -466,7 +497,7 @@ VST3PluginHost::RAMStream::read_TUID (TUID& tuid)
     i += 16;
 #endif
 
-    for (; i < kClassIDSize; i += 2)
+    for (; i < Vst3_stream::kClassIDSize; i += 2)
     {
         uint32_t temp;
         sscanf (buf + i, "%02X", &temp);

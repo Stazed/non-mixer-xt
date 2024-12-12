@@ -67,13 +67,13 @@
 using namespace Steinberg;
 using namespace Linux;
 
-//namespace Vst {
+namespace Vst3_stream {
 /* see public.sdk/source/vst/vstpresetfile.cpp */
 typedef char       ChunkID[4];          // using ChunkID = char[4];
 static const int32 kClassIDSize   = 32; // ASCII-encoded FUID
 static const int32 kHeaderSize    = sizeof (ChunkID) + sizeof (int32) + kClassIDSize + sizeof (TSize);
 static const int32 kListOffsetPos = kHeaderSize - sizeof (TSize);
-//} // namespace Vst
+} // namespace Vst3_stream
 
 class VST3PluginHost : public Vst::IHostApplication
 {
@@ -527,6 +527,15 @@ protected:
 
 /* RAMStream and ROMStream grabbed from the ardour project with modifications */
 
+bool
+file_get_contents (
+  const char* filename,
+  char** contents,
+  size_t* length
+);
+
+
+
 class VST3PluginHost::RAMStream : public IBStream, public ISizeableStream, public Vst::IStreamAttributes
 {
 public:
@@ -579,12 +588,12 @@ public:
 
     bool write_int32 (int32 i);
     bool write_int64 (int64 i);
-    bool write_ChunkID (const ChunkID& id);
+    bool write_ChunkID (const Vst3_stream::ChunkID& id);
     bool write_TUID (const TUID& tuid);
 
     bool read_int32 (int32& i);
     bool read_int64 (int64& i);
-    bool read_ChunkID (ChunkID& id);
+    bool read_ChunkID (Vst3_stream::ChunkID& id);
     bool read_TUID (TUID& tuid);
 
     /* direct access */
