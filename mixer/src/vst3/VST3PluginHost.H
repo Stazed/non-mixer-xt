@@ -1,5 +1,6 @@
 /*******************************************************************************/
 /* Copyright (C) 2005-2023, rncbc aka Rui Nuno Capela. All rights reserved.    */
+/* Copyright (C) 2019-2020 Robin Gareus <robin@gareus.org>                     */
 /* Copyright (C) 2024- Stazed                                                  */
 /*                                                                             */
 /* This file is part of Non-Mixer-XT                                           */
@@ -496,6 +497,141 @@ protected:
     AttributeList *m_attributeList;
 };
 
-//IMPLEMENT_FUNKNOWN_METHODS (VST3PluginHost::Message, IMessage, IMessage::iid)
+/* RAMStream and ROMStream grabbed from the ardour project with modifications */
+
+class LIBARDOUR_API RAMStream : public IBStream, public ISizeableStream, public Vst::IStreamAttributes
+{
+public:
+	RAMStream ();
+	RAMStream (uint8_t* data, size_t size);
+	RAMStream (std::string const& fn);
+
+	virtual ~RAMStream ();
+
+	tresult PLUGIN_API queryInterface (const TUID _iid, void** obj) SMTG_OVERRIDE;
+
+	uint32 PLUGIN_API addRef () SMTG_OVERRIDE
+	{
+		return 1;
+	}
+
+	uint32 PLUGIN_API release () SMTG_OVERRIDE
+	{
+		return 1;
+	}
+
+	/* IBStream API */
+	tresult PLUGIN_API read  (void* buffer, int32 numBytes, int32* numBytesRead) SMTG_OVERRIDE;
+	tresult PLUGIN_API write (void* buffer, int32 numBytes, int32* numBytesWritten) SMTG_OVERRIDE;
+	tresult PLUGIN_API seek  (int64 pos, int32 mode, int64* result) SMTG_OVERRIDE;
+	tresult PLUGIN_API tell  (int64* pos) SMTG_OVERRIDE;
+
+	/* ISizeableStream API */
+	tresult PLUGIN_API getStreamSize (int64&) SMTG_OVERRIDE;
+	tresult PLUGIN_API setStreamSize (int64) SMTG_OVERRIDE;
+
+	/* IStreamAttributes API */
+	tresult PLUGIN_API   getFileName (Vst::String128 name) SMTG_OVERRIDE;
+	Vst::IAttributeList* PLUGIN_API getAttributes () SMTG_OVERRIDE;
+
+	/* convenience API for state I/O */
+	void rewind ()
+	{
+		_pos = 0;
+	}
+
+	bool readonly () const
+	{
+		return _readonly;
+	}
+
+	bool write_int32 (int32 i);
+	bool write_int64 (int64 i);
+	bool write_ChunkID (const Vst::ChunkID& id);
+	bool write_TUID (const TUID& tuid);
+
+	bool read_int32 (int32& i);
+	bool read_int64 (int64& i);
+	bool read_ChunkID (Vst::ChunkID& id);
+	bool read_TUID (TUID& tuid);
+
+	/* direct access */
+	uint8_t const* data () const
+	{
+		return _data;
+	}
+
+	int64 size () const
+	{
+		return _size;
+	}
+
+#ifndef NDEBUG
+	void hexdump (int64 max_len = 64) const;
+#endif
+
+private:
+	bool reallocate_buffer (int64 size, bool exact);
+
+	template <typename T>
+	bool read_pod (T& t)
+	{
+		int32 n_read = 0;
+		read ((void*)&t, sizeof (T), &n_read);
+		return n_read == sizeof (T);
+	}
+
+	template <typename T>
+	bool write_pod (const T& t)
+	{
+		int32 written = 0;
+		write (const_cast<void*> ((const void*)&t), sizeof (T), &written);
+		return written == sizeof (T);
+	}
+
+	uint8_t* _data;
+	int64    _size;
+	int64    _alloc;
+	int64    _pos;
+	bool     _readonly;
+
+	HostAttributeList attribute_list;
+};
+
+class LIBARDOUR_API ROMStream : public IBStream
+{
+public:
+	ROMStream (IBStream& src, TSize offset, TSize size);
+	virtual ~ROMStream ();
+
+	tresult PLUGIN_API queryInterface (const TUID _iid, void** obj) SMTG_OVERRIDE;
+
+	uint32 PLUGIN_API addRef () SMTG_OVERRIDE
+	{
+		return 1;
+	}
+
+	uint32 PLUGIN_API release () SMTG_OVERRIDE
+	{
+		return 1;
+	}
+
+	/* IBStream API */
+	tresult PLUGIN_API read  (void* buffer, int32 numBytes, int32* numBytesRead) SMTG_OVERRIDE;
+	tresult PLUGIN_API write (void* buffer, int32 numBytes, int32* numBytesWritten) SMTG_OVERRIDE;
+	tresult PLUGIN_API seek  (int64 pos, int32 mode, int64* result) SMTG_OVERRIDE;
+	tresult PLUGIN_API tell  (int64* pos) SMTG_OVERRIDE;
+
+	void rewind ()
+	{
+		_pos = 0;
+	}
+
+protected:
+	IBStream& _stream;
+	int64     _offset;
+	int64     _size;
+	int64     _pos;
+};
 
 #endif  // VST3_SUPPORT
