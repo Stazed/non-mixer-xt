@@ -53,7 +53,6 @@
 #include "pluginterfaces/vst/ivstattributes.h"
 #include "pluginterfaces/base/ftypes.h"
 
-
 //#define ASRT_TMP ASSERT
 #undef ASSERT       // Fix redefinition with /nonlib/debug.h"
 #undef WARNING      // Fix redefinition with /nonlib/debug.h"
@@ -69,11 +68,11 @@ using namespace Steinberg;
 using namespace Linux;
 
 //namespace Vst {
-	/* see public.sdk/source/vst/vstpresetfile.cpp */
-	typedef char       ChunkID[4];          // using ChunkID = char[4];
-	static const int32 kClassIDSize   = 32; // ASCII-encoded FUID
-	static const int32 kHeaderSize    = sizeof (ChunkID) + sizeof (int32) + kClassIDSize + sizeof (TSize);
-	static const int32 kListOffsetPos = kHeaderSize - sizeof (TSize);
+/* see public.sdk/source/vst/vstpresetfile.cpp */
+typedef char       ChunkID[4];          // using ChunkID = char[4];
+static const int32 kClassIDSize   = 32; // ASCII-encoded FUID
+static const int32 kHeaderSize    = sizeof (ChunkID) + sizeof (int32) + kClassIDSize + sizeof (TSize);
+static const int32 kListOffsetPos = kHeaderSize - sizeof (TSize);
 //} // namespace Vst
 
 class VST3PluginHost : public Vst::IHostApplication
@@ -93,7 +92,8 @@ public:
     tresult PLUGIN_API getName (Vst::String128 name) override;
     tresult PLUGIN_API createInstance (TUID cid, TUID _iid, void **obj) override;
 
-    static Vst::IHostApplication* getHostContext ()
+    static Vst::IHostApplication*
+    getHostContext ()
     {
         static VST3PluginHost* app = new VST3PluginHost;
         return app;
@@ -115,7 +115,6 @@ private:
     IPtr<PlugInterfaceSupport> m_plugInterfaceSupport;
 };
 
-
 //-----------------------------------------------------------------------------
 //
 class VST3PluginHost::PlugInterfaceSupport
@@ -132,10 +131,10 @@ public:
         addPluInterfaceSupported(Vst::IConnectionPoint::iid);
         addPluInterfaceSupported(Vst::IUnitInfo::iid);
         addPluInterfaceSupported(Vst::IEditControllerHostEditing::iid);
-//	addPluInterfaceSupported(Vst::IUnitData::iid);
+        //	addPluInterfaceSupported(Vst::IUnitData::iid);
         addPluInterfaceSupported(Vst::IProgramListData::iid);
         addPluInterfaceSupported(Vst::IMidiMapping::iid);
-//	addPluInterfaceSupported(Vst::IEditController2::iid);
+        //	addPluInterfaceSupported(Vst::IEditController2::iid);
     }
 
     OBJ_METHODS (PlugInterfaceSupport, FObject)
@@ -159,7 +158,8 @@ public:
 
 protected:
 
-    void addPluInterfaceSupported(const TUID& _iid)
+    void
+    addPluInterfaceSupported(const TUID& _iid)
     {
         m_fuids.push_back(_iid);
     }
@@ -169,7 +169,6 @@ private:
     // Instance members.
     std::vector<std::string> m_fuids;
 };
-
 
 //-----------------------------------------------------------------------------
 //
@@ -218,29 +217,34 @@ public:
     }
 
     // Accessors.
-    int64 intValue () const
+    int64
+    intValue () const
     {
         return m_v.intValue;
     }
 
-    double floatValue () const
+    double
+    floatValue () const
     {
         return m_v.floatValue;
     }
 
-    const Vst::TChar *stringValue ( uint32& stringSize )
+    const Vst::TChar *
+    stringValue ( uint32& stringSize )
     {
         stringSize = m_size;
         return m_v.stringValue;
     }
 
-    const void *binaryValue ( uint32& binarySize )
+    const void *
+    binaryValue ( uint32& binarySize )
     {
         binarySize = m_size;
         return m_v.binaryValue;
     }
 
-    Type getType () const
+    Type
+    getType () const
     {
         return m_type;
     }
@@ -261,7 +265,6 @@ protected:
     Type m_type;
 };
 
-
 //-----------------------------------------------------------------------------
 //
 class VST3PluginHost::AttributeList : public Vst::IAttributeList
@@ -275,7 +278,8 @@ public:
     }
 
     // Destructor.
-    virtual ~AttributeList ()
+    virtual
+    ~AttributeList ()
     {
         for (auto i : m_list)
         {
@@ -290,7 +294,8 @@ public:
 
     //--- IAttributeList ---
     //
-    tresult PLUGIN_API setInt (AttrID aid, int64 value) override
+    tresult PLUGIN_API
+    setInt (AttrID aid, int64 value) override
     {
         removeAttrID(aid);
 
@@ -300,7 +305,8 @@ public:
         return kResultTrue;
     }
 
-    tresult PLUGIN_API getInt (AttrID aid, int64& value) override
+    tresult PLUGIN_API
+    getInt (AttrID aid, int64& value) override
     {
         std::unordered_map<std::string, Attribute *>::const_iterator got
             = m_list.find (aid);
@@ -321,7 +327,8 @@ public:
         return kResultFalse;
     }
 
-    tresult PLUGIN_API setFloat (AttrID aid, double value) override
+    tresult PLUGIN_API
+    setFloat (AttrID aid, double value) override
     {
         removeAttrID(aid);
 
@@ -331,7 +338,8 @@ public:
         return kResultTrue;
     }
 
-    tresult PLUGIN_API getFloat (AttrID aid, double& value) override
+    tresult PLUGIN_API
+    getFloat (AttrID aid, double& value) override
     {
         std::unordered_map<std::string, Attribute *>::const_iterator got
             = m_list.find (aid);
@@ -352,7 +360,8 @@ public:
         return kResultFalse;
     }
 
-    tresult PLUGIN_API setString (AttrID aid, const Vst::TChar *string) override
+    tresult PLUGIN_API
+    setString (AttrID aid, const Vst::TChar *string) override
     {
         size_t szof = (Steinberg::strlen16(string) + 1) * sizeof(Steinberg::Vst::TChar);
         removeAttrID(aid);
@@ -363,7 +372,8 @@ public:
         return kResultTrue;
     }
 
-    tresult PLUGIN_API getString (AttrID aid, Vst::TChar *string, uint32 size) override
+    tresult PLUGIN_API
+    getString (AttrID aid, Vst::TChar *string, uint32 size) override
     {
         std::unordered_map<std::string, Attribute *>::const_iterator got
             = m_list.find (aid);
@@ -378,14 +388,15 @@ public:
         {
             uint32 size2 = 0;
             const Vst::TChar *string2 = attr->stringValue(size2);
-            ::memcpy(string, string2, size < size2 ? size: size2);
+            ::memcpy(string, string2, size < size2 ? size : size2);
 
             return kResultTrue;
         }
         return kResultFalse;
     }
 
-    tresult PLUGIN_API setBinary (AttrID aid, const void* data, uint32 size) override
+    tresult PLUGIN_API
+    setBinary (AttrID aid, const void* data, uint32 size) override
     {
         removeAttrID(aid);
 
@@ -395,7 +406,8 @@ public:
         return kResultTrue;
     }
 
-    tresult PLUGIN_API getBinary (AttrID aid, const void*& data, uint32& size) override
+    tresult PLUGIN_API
+    getBinary (AttrID aid, const void*& data, uint32& size) override
     {
         std::unordered_map<std::string, Attribute *>::const_iterator got
             = m_list.find (aid);
@@ -418,7 +430,8 @@ public:
 
 protected:
 
-    void removeAttrID (AttrID aid)
+    void
+    removeAttrID (AttrID aid)
     {
         std::unordered_map<std::string, Attribute *>::const_iterator got
             = m_list.find (aid);
@@ -445,7 +458,6 @@ private:
 
 //IMPLEMENT_FUNKNOWN_METHODS (VST3PluginHost::AttributeList, IAttributeList, IAttributeList::iid)
 
-
 //-----------------------------------------------------------------------------
 //
 class VST3PluginHost::Message : public Vst::IMessage
@@ -459,7 +471,8 @@ public:
     }
 
     // Destructor.
-    virtual ~Message ()
+    virtual
+    ~Message ()
     {
         VST3PluginHost::Message::setMessageID(nullptr);
 
@@ -473,12 +486,14 @@ public:
 
     //--- IMessage ---
     //
-    const char *PLUGIN_API getMessageID () override
+    const char *PLUGIN_API
+    getMessageID () override
     {
         return m_messageId;
     }
 
-    void PLUGIN_API setMessageID (const char *messageId) override
+    void PLUGIN_API
+    setMessageID (const char *messageId) override
     {
         if (m_messageId)
             delete [] m_messageId;
@@ -493,7 +508,8 @@ public:
         }
     }
 
-    Vst::IAttributeList* PLUGIN_API getAttributes () override
+    Vst::IAttributeList* PLUGIN_API
+    getAttributes () override
     {
         if (!m_attributeList)
             m_attributeList = new AttributeList();
@@ -514,136 +530,147 @@ protected:
 class VST3PluginHost::RAMStream : public IBStream, public ISizeableStream, public Vst::IStreamAttributes
 {
 public:
-	RAMStream ();
-	RAMStream (uint8_t* data, size_t size);
-	RAMStream (std::string const& fn);
+    RAMStream ();
+    RAMStream (uint8_t* data, size_t size);
+    RAMStream (std::string const& fn);
 
-	virtual ~RAMStream ();
+    virtual ~RAMStream ();
 
-	tresult PLUGIN_API queryInterface (const TUID _iid, void** obj) SMTG_OVERRIDE;
+    tresult PLUGIN_API queryInterface (const TUID _iid, void** obj) SMTG_OVERRIDE;
 
-	uint32 PLUGIN_API addRef () SMTG_OVERRIDE
-	{
-		return 1;
-	}
+    uint32 PLUGIN_API
+    addRef () SMTG_OVERRIDE
+    {
+        return 1;
+    }
 
-	uint32 PLUGIN_API release () SMTG_OVERRIDE
-	{
-		return 1;
-	}
+    uint32 PLUGIN_API
+    release () SMTG_OVERRIDE
+    {
+        return 1;
+    }
 
-	/* IBStream API */
-	tresult PLUGIN_API read  (void* buffer, int32 numBytes, int32* numBytesRead) SMTG_OVERRIDE;
-	tresult PLUGIN_API write (void* buffer, int32 numBytes, int32* numBytesWritten) SMTG_OVERRIDE;
-	tresult PLUGIN_API seek  (int64 pos, int32 mode, int64* result) SMTG_OVERRIDE;
-	tresult PLUGIN_API tell  (int64* pos) SMTG_OVERRIDE;
+    /* IBStream API */
+    tresult PLUGIN_API read  (void* buffer, int32 numBytes, int32* numBytesRead) SMTG_OVERRIDE;
+    tresult PLUGIN_API write (void* buffer, int32 numBytes, int32* numBytesWritten) SMTG_OVERRIDE;
+    tresult PLUGIN_API seek  (int64 pos, int32 mode, int64* result) SMTG_OVERRIDE;
+    tresult PLUGIN_API tell  (int64* pos) SMTG_OVERRIDE;
 
-	/* ISizeableStream API */
-	tresult PLUGIN_API getStreamSize (int64&) SMTG_OVERRIDE;
-	tresult PLUGIN_API setStreamSize (int64) SMTG_OVERRIDE;
+    /* ISizeableStream API */
+    tresult PLUGIN_API getStreamSize (int64&) SMTG_OVERRIDE;
+    tresult PLUGIN_API setStreamSize (int64) SMTG_OVERRIDE;
 
-	/* IStreamAttributes API */
-	tresult PLUGIN_API   getFileName (Vst::String128 name) SMTG_OVERRIDE;
-	Vst::IAttributeList* PLUGIN_API getAttributes () SMTG_OVERRIDE;
+    /* IStreamAttributes API */
+    tresult PLUGIN_API   getFileName (Vst::String128 name) SMTG_OVERRIDE;
+    Vst::IAttributeList* PLUGIN_API getAttributes () SMTG_OVERRIDE;
 
-	/* convenience API for state I/O */
-	void rewind ()
-	{
-		_pos = 0;
-	}
+    /* convenience API for state I/O */
+    void
+    rewind ()
+    {
+        _pos = 0;
+    }
 
-	bool readonly () const
-	{
-		return _readonly;
-	}
+    bool
+    readonly () const
+    {
+        return _readonly;
+    }
 
-	bool write_int32 (int32 i);
-	bool write_int64 (int64 i);
-	bool write_ChunkID (const ChunkID& id);
-	bool write_TUID (const TUID& tuid);
+    bool write_int32 (int32 i);
+    bool write_int64 (int64 i);
+    bool write_ChunkID (const ChunkID& id);
+    bool write_TUID (const TUID& tuid);
 
-	bool read_int32 (int32& i);
-	bool read_int64 (int64& i);
-	bool read_ChunkID (ChunkID& id);
-	bool read_TUID (TUID& tuid);
+    bool read_int32 (int32& i);
+    bool read_int64 (int64& i);
+    bool read_ChunkID (ChunkID& id);
+    bool read_TUID (TUID& tuid);
 
-	/* direct access */
-	uint8_t const* data () const
-	{
-		return _data;
-	}
+    /* direct access */
+    uint8_t const*
+    data () const
+    {
+        return _data;
+    }
 
-	int64 size () const
-	{
-		return _size;
-	}
+    int64
+    size () const
+    {
+        return _size;
+    }
 
 #ifndef NDEBUG
-	void hexdump (int64 max_len = 64) const;
+    void hexdump (int64 max_len = 64) const;
 #endif
 
 private:
-	bool reallocate_buffer (int64 size, bool exact);
+    bool reallocate_buffer (int64 size, bool exact);
 
-	template <typename T>
-	bool read_pod (T& t)
-	{
-		int32 n_read = 0;
-		read ((void*)&t, sizeof (T), &n_read);
-		return n_read == sizeof (T);
-	}
+    template <typename T>
+    bool
+    read_pod (T& t)
+    {
+        int32 n_read = 0;
+        read ((void*)&t, sizeof (T), &n_read);
+        return n_read == sizeof (T);
+    }
 
-	template <typename T>
-	bool write_pod (const T& t)
-	{
-		int32 written = 0;
-		write (const_cast<void*> ((const void*)&t), sizeof (T), &written);
-		return written == sizeof (T);
-	}
+    template <typename T>
+    bool
+    write_pod (const T& t)
+    {
+        int32 written = 0;
+        write (const_cast<void*> ((const void*)&t), sizeof (T), &written);
+        return written == sizeof (T);
+    }
 
-	uint8_t* _data;
-	int64    _size;
-	int64    _alloc;
-	int64    _pos;
-	bool     _readonly;
+    uint8_t* _data;
+    int64    _size;
+    int64    _alloc;
+    int64    _pos;
+    bool     _readonly;
 
-	AttributeList attribute_list;
+    AttributeList attribute_list;
 };
 
 class VST3PluginHost::ROMStream : public IBStream
 {
 public:
-	ROMStream (IBStream& src, TSize offset, TSize size);
-	virtual ~ROMStream ();
+    ROMStream (IBStream& src, TSize offset, TSize size);
+    virtual ~ROMStream ();
 
-	tresult PLUGIN_API queryInterface (const TUID _iid, void** obj) SMTG_OVERRIDE;
+    tresult PLUGIN_API queryInterface (const TUID _iid, void** obj) SMTG_OVERRIDE;
 
-	uint32 PLUGIN_API addRef () SMTG_OVERRIDE
-	{
-		return 1;
-	}
+    uint32 PLUGIN_API
+    addRef () SMTG_OVERRIDE
+    {
+        return 1;
+    }
 
-	uint32 PLUGIN_API release () SMTG_OVERRIDE
-	{
-		return 1;
-	}
+    uint32 PLUGIN_API
+    release () SMTG_OVERRIDE
+    {
+        return 1;
+    }
 
-	/* IBStream API */
-	tresult PLUGIN_API read  (void* buffer, int32 numBytes, int32* numBytesRead) SMTG_OVERRIDE;
-	tresult PLUGIN_API write (void* buffer, int32 numBytes, int32* numBytesWritten) SMTG_OVERRIDE;
-	tresult PLUGIN_API seek  (int64 pos, int32 mode, int64* result) SMTG_OVERRIDE;
-	tresult PLUGIN_API tell  (int64* pos) SMTG_OVERRIDE;
+    /* IBStream API */
+    tresult PLUGIN_API read  (void* buffer, int32 numBytes, int32* numBytesRead) SMTG_OVERRIDE;
+    tresult PLUGIN_API write (void* buffer, int32 numBytes, int32* numBytesWritten) SMTG_OVERRIDE;
+    tresult PLUGIN_API seek  (int64 pos, int32 mode, int64* result) SMTG_OVERRIDE;
+    tresult PLUGIN_API tell  (int64* pos) SMTG_OVERRIDE;
 
-	void rewind ()
-	{
-		_pos = 0;
-	}
+    void
+    rewind ()
+    {
+        _pos = 0;
+    }
 
 protected:
-	IBStream& _stream;
-	int64     _offset;
-	int64     _size;
-	int64     _pos;
+    IBStream& _stream;
+    int64     _offset;
+    int64     _size;
+    int64     _pos;
 };
 
 #endif  // VST3_SUPPORT
