@@ -50,6 +50,8 @@
 #include "pluginterfaces/base/ibstream.h"
 #include "pluginterfaces/base/ipluginbase.h"
 #include "pluginterfaces/vst/ivsthostapplication.h"
+#include "pluginterfaces/vst/ivstattributes.h"
+#include "pluginterfaces/base/ftypes.h"
 
 
 //#define ASRT_TMP ASSERT
@@ -65,6 +67,14 @@
 
 using namespace Steinberg;
 using namespace Linux;
+
+//namespace Vst {
+	/* see public.sdk/source/vst/vstpresetfile.cpp */
+	typedef char       ChunkID[4];          // using ChunkID = char[4];
+	static const int32 kClassIDSize   = 32; // ASCII-encoded FUID
+	static const int32 kHeaderSize    = sizeof (ChunkID) + sizeof (int32) + kClassIDSize + sizeof (TSize);
+	static const int32 kListOffsetPos = kHeaderSize - sizeof (TSize);
+//} // namespace Vst
 
 class VST3PluginHost : public Vst::IHostApplication
 {
@@ -96,6 +106,8 @@ protected:
     class Attribute;
     class AttributeList;
     class Message;
+    class RAMStream;
+    class ROMStream;
 
 private:
 
@@ -499,7 +511,7 @@ protected:
 
 /* RAMStream and ROMStream grabbed from the ardour project with modifications */
 
-class LIBARDOUR_API RAMStream : public IBStream, public ISizeableStream, public Vst::IStreamAttributes
+class VST3PluginHost::RAMStream : public IBStream, public ISizeableStream, public Vst::IStreamAttributes
 {
 public:
 	RAMStream ();
@@ -547,12 +559,12 @@ public:
 
 	bool write_int32 (int32 i);
 	bool write_int64 (int64 i);
-	bool write_ChunkID (const Vst::ChunkID& id);
+	bool write_ChunkID (const ChunkID& id);
 	bool write_TUID (const TUID& tuid);
 
 	bool read_int32 (int32& i);
 	bool read_int64 (int64& i);
-	bool read_ChunkID (Vst::ChunkID& id);
+	bool read_ChunkID (ChunkID& id);
 	bool read_TUID (TUID& tuid);
 
 	/* direct access */
@@ -595,10 +607,10 @@ private:
 	int64    _pos;
 	bool     _readonly;
 
-	HostAttributeList attribute_list;
+	AttributeList attribute_list;
 };
 
-class LIBARDOUR_API ROMStream : public IBStream
+class VST3PluginHost::ROMStream : public IBStream
 {
 public:
 	ROMStream (IBStream& src, TSize offset, TSize size);

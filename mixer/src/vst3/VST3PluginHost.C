@@ -133,7 +133,7 @@ IMPLEMENT_FUNKNOWN_METHODS( VST3PluginHost::Message, IMessage, IMessage::iid )
         
 /* ****************************************************************************/
 
-RAMStream::RAMStream ()
+VST3PluginHost::RAMStream::RAMStream ()
 	: _data (0)
 	, _size (0)
 	, _alloc (0)
@@ -142,7 +142,7 @@ RAMStream::RAMStream ()
 {
 }
 
-RAMStream::RAMStream (uint8_t* data, size_t size)
+VST3PluginHost::RAMStream::RAMStream (uint8_t* data, size_t size)
 	: _data (0)
 	, _size (size)
 	, _alloc (0)
@@ -156,33 +156,35 @@ RAMStream::RAMStream (uint8_t* data, size_t size)
 	}
 }
 
-RAMStream::RAMStream (std::string const& fn)
+VST3PluginHost::RAMStream::RAMStream (std::string const& fn)
 	: _data (0)
 	, _size (0)
 	, _alloc (0)
 	, _pos (0)
 	, _readonly (true)
 {
-	gchar* buf    = NULL;
-	gsize  length = 0;
+	char* buf    = NULL;
+	size_t  length = 0;
 
-	if (!g_file_get_contents (fn.c_str (), &buf, &length, NULL)) {
+        /* FIXME */
+	/*if (!g_file_get_contents (fn.c_str (), &buf, &length, NULL)) {
 		return;
-	}
+	}*/
 	if (length > 0 && reallocate_buffer (length, true)) {
 		_size = length;
 		memcpy (_data, buf, _size);
 	}
-	g_free (buf);
+        if ( buf )
+            free (buf);
 }
 
-RAMStream::~RAMStream ()
+VST3PluginHost::RAMStream::~RAMStream ()
 {
 	free (_data);
 }
 
 tresult
-RAMStream::queryInterface (const TUID _iid, void** obj)
+VST3PluginHost::RAMStream::queryInterface (const TUID _iid, void** obj)
 {
 	QUERY_INTERFACE (_iid, obj, FUnknown::iid, IBStream)
 	QUERY_INTERFACE (_iid, obj, IBStream::iid, IBStream)
@@ -196,7 +198,7 @@ RAMStream::queryInterface (const TUID _iid, void** obj)
 }
 
 bool
-RAMStream::reallocate_buffer (int64 size, bool exact)
+VST3PluginHost::RAMStream::reallocate_buffer (int64 size, bool exact)
 {
 	if (size <= 0) {
 		free (_data);
@@ -233,7 +235,7 @@ RAMStream::reallocate_buffer (int64 size, bool exact)
 }
 
 tresult
-RAMStream::read (void* buffer, int32 n_bytes, int32* n_read)
+VST3PluginHost::RAMStream::read (void* buffer, int32 n_bytes, int32* n_read)
 {
 	assert (_pos >= 0 && _pos <= _size);
 	int64 available = _size - _pos;
@@ -255,7 +257,7 @@ RAMStream::read (void* buffer, int32 n_bytes, int32* n_read)
 }
 
 tresult
-RAMStream::write (void* buffer, int32 n_bytes, int32* n_written)
+VST3PluginHost::RAMStream::write (void* buffer, int32 n_bytes, int32* n_written)
 {
 	if (n_written) {
 		*n_written = 0;
@@ -286,7 +288,7 @@ RAMStream::write (void* buffer, int32 n_bytes, int32* n_written)
 }
 
 tresult
-RAMStream::seek (int64 pos, int32 mode, int64* result)
+VST3PluginHost::RAMStream::seek (int64 pos, int32 mode, int64* result)
 {
 	switch (mode) {
 		case kIBSeekSet:
@@ -311,7 +313,7 @@ RAMStream::seek (int64 pos, int32 mode, int64* result)
 }
 
 tresult
-RAMStream::tell (int64* pos)
+VST3PluginHost::RAMStream::tell (int64* pos)
 {
 	if (!pos) {
 		return kInvalidArgument;
@@ -321,7 +323,7 @@ RAMStream::tell (int64* pos)
 }
 
 bool
-RAMStream::write_int32 (int32 i)
+VST3PluginHost::RAMStream::write_int32 (int32 i)
 {
 	/* pluginterfaces/base/ftypes.h */
 #if BYTEORDER == kBigEndian
@@ -331,7 +333,7 @@ RAMStream::write_int32 (int32 i)
 }
 
 bool
-RAMStream::write_int64 (int64 i)
+VST3PluginHost::RAMStream::write_int64 (int64 i)
 {
 	/* pluginterfaces/base/ftypes.h */
 #if BYTEORDER == kBigEndian
@@ -341,7 +343,7 @@ RAMStream::write_int64 (int64 i)
 }
 
 bool
-RAMStream::write_ChunkID (const Vst::ChunkID& id)
+VST3PluginHost::RAMStream::write_ChunkID (const ChunkID& id)
 {
 	return write_pod (id);
 }
@@ -357,11 +359,11 @@ struct GUIDStruct {
 #endif
 
 bool
-RAMStream::write_TUID (const TUID& tuid)
+VST3PluginHost::RAMStream::write_TUID (const TUID& tuid)
 {
 	int   i       = 0;
 	int32 n_bytes = 0;
-	char  buf[Vst::kClassIDSize + 1];
+	char  buf[kClassIDSize + 1];
 
 #if COM_COMPATIBLE
 	GUIDStruct guid;
@@ -373,12 +375,12 @@ RAMStream::write_TUID (const TUID& tuid)
 	for (; i < (int)sizeof (TUID); ++i) {
 		sprintf (buf + 2 * i, "%02X", (uint8_t)tuid[i]);
 	}
-	write (buf, Vst::kClassIDSize, &n_bytes);
-	return n_bytes == Vst::kClassIDSize;
+	write (buf, kClassIDSize, &n_bytes);
+	return n_bytes == kClassIDSize;
 }
 
 bool
-RAMStream::read_int32 (int32& i)
+VST3PluginHost::RAMStream::read_int32 (int32& i)
 {
 	if (!read_pod (i)) {
 		return false;
@@ -390,7 +392,7 @@ RAMStream::read_int32 (int32& i)
 }
 
 bool
-RAMStream::read_int64 (int64& i)
+VST3PluginHost::RAMStream::read_int64 (int64& i)
 {
 	if (!read_pod (i)) {
 		return false;
@@ -402,24 +404,24 @@ RAMStream::read_int64 (int64& i)
 }
 
 bool
-RAMStream::read_ChunkID (Vst::ChunkID& id)
+VST3PluginHost::RAMStream::read_ChunkID (ChunkID& id)
 {
 	return read_pod (id);
 }
 
 bool
-RAMStream::read_TUID (TUID& tuid)
+VST3PluginHost::RAMStream::read_TUID (TUID& tuid)
 {
 	int   i       = 0;
 	int32 n_bytes = 0;
-	char  buf[Vst::kClassIDSize + 1];
+	char  buf[kClassIDSize + 1];
 
-	read ((void*)buf, Vst::kClassIDSize, &n_bytes);
-	if (n_bytes != Vst::kClassIDSize) {
+	read ((void*)buf, kClassIDSize, &n_bytes);
+	if (n_bytes != kClassIDSize) {
 		return false;
 	}
 
-	buf[Vst::kClassIDSize] = '\0';
+	buf[kClassIDSize] = '\0';
 
 #if COM_COMPATIBLE
 	GUIDStruct guid;
@@ -430,7 +432,7 @@ RAMStream::read_TUID (TUID& tuid)
 	i += 16;
 #endif
 
-	for (; i < Vst::kClassIDSize; i += 2) {
+	for (; i < kClassIDSize; i += 2) {
 		uint32_t temp;
 		sscanf (buf + i, "%02X", &temp);
 		tuid[i >> 1] = temp;
@@ -440,14 +442,14 @@ RAMStream::read_TUID (TUID& tuid)
 }
 
 tresult
-RAMStream::getStreamSize (int64& size)
+VST3PluginHost::RAMStream::getStreamSize (int64& size)
 {
 	size = _alloc;
 	return kResultTrue;
 }
 
 tresult
-RAMStream::setStreamSize (int64 size)
+VST3PluginHost::RAMStream::setStreamSize (int64 size)
 {
 	if (_readonly) {
 		return kResultFalse;
@@ -456,13 +458,13 @@ RAMStream::setStreamSize (int64 size)
 }
 
 tresult
-RAMStream::getFileName (Vst::String128 name)
+VST3PluginHost::RAMStream::getFileName (Vst::String128 name)
 {
 	return kNotImplemented;
 }
 
 Vst::IAttributeList*
-RAMStream::getAttributes ()
+VST3PluginHost::RAMStream::getAttributes ()
 {
 	return &attribute_list;
 }
@@ -474,7 +476,7 @@ RAMStream::getAttributes ()
 #include <sstream>
 
 void
-RAMStream::hexdump (int64 max_len) const
+VST3PluginHost::RAMStream::hexdump (int64 max_len) const
 {
 	std::ostringstream out;
 
@@ -509,7 +511,7 @@ RAMStream::hexdump (int64 max_len) const
 }
 #endif
 
-ROMStream::ROMStream (IBStream& src, TSize offset, TSize size)
+VST3PluginHost::ROMStream::ROMStream (IBStream& src, TSize offset, TSize size)
 	: _stream (src)
 	, _offset (offset)
 	, _size   (size)
@@ -518,13 +520,13 @@ ROMStream::ROMStream (IBStream& src, TSize offset, TSize size)
 	_stream.addRef ();
 }
 
-ROMStream::~ROMStream ()
+VST3PluginHost::ROMStream::~ROMStream ()
 {
 	_stream.release ();
 }
 
 tresult
-ROMStream::queryInterface (const TUID _iid, void** obj)
+VST3PluginHost::ROMStream::queryInterface (const TUID _iid, void** obj)
 {
 	QUERY_INTERFACE (_iid, obj, FUnknown::iid, IBStream)
 	QUERY_INTERFACE (_iid, obj, IBStream::iid, IBStream)
@@ -534,7 +536,7 @@ ROMStream::queryInterface (const TUID _iid, void** obj)
 }
 
 tresult
-ROMStream::read (void* buffer, int32 n_bytes, int32* n_read)
+VST3PluginHost::ROMStream::read (void* buffer, int32 n_bytes, int32* n_read)
 {
 	int64 available = _size - _pos;
 
@@ -570,7 +572,7 @@ ROMStream::read (void* buffer, int32 n_bytes, int32* n_read)
 }
 
 tresult
-ROMStream::write (void* buffer, int32 n_bytes, int32* n_written)
+VST3PluginHost::ROMStream::write (void* buffer, int32 n_bytes, int32* n_written)
 {
 	if (n_written) {
 		*n_written = 0;
@@ -579,7 +581,7 @@ ROMStream::write (void* buffer, int32 n_bytes, int32* n_written)
 }
 
 tresult
-ROMStream::seek (int64 pos, int32 mode, int64* result)
+VST3PluginHost::ROMStream::seek (int64 pos, int32 mode, int64* result)
 {
 	switch (mode) {
 		case kIBSeekSet:
@@ -608,7 +610,7 @@ ROMStream::seek (int64 pos, int32 mode, int64* result)
 }
 
 tresult
-ROMStream::tell (int64* pos)
+VST3PluginHost::ROMStream::tell (int64* pos)
 {
 	if (!pos) {
 		return kInvalidArgument;
