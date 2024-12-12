@@ -2470,6 +2470,264 @@ VST3_Plugin::add_port( const Port &p )
         midi_output.push_back ( p );
 }
 
+/* ****************************************************************************
+ * State
+ * compare to public.sdk/source/vst/vstpresetfile.cpp
+ */
+
+namespace Steinberg {
+namespace Vst {
+
+enum ChunkType
+{
+    kHeader,
+    kComponentState,
+    kControllerState,
+    kProgramData,
+    kMetaInfo,
+    kChunkList,
+    kNumPresetChunks
+};
+
+static const ChunkID commonChunks[kNumPresetChunks] =
+{
+    { 'V', 'S', 'T', '3' }, // kHeader
+    { 'C', 'o', 'm', 'p' }, // kComponentState
+    { 'C', 'o', 'n', 't' }, // kControllerState
+    { 'P', 'r', 'o', 'g' }, // kProgramData
+    { 'I', 'n', 'f', 'o' }, // kMetaInfo
+    { 'L', 'i', 's', 't' }  // kChunkList
+};
+
+static const int32 kFormatVersion = 1;
+
+static const ChunkID&
+getChunkID (ChunkType type)
+{
+    return commonChunks[type];
+}
+
+struct ChunkEntry
+{
+    void start_chunk (const ChunkID& id, RAMStream& stream)
+    {
+        memcpy (_id, &id, sizeof (ChunkID));
+        stream.tell (&_offset);
+        _size = 0;
+    }
+    void end_chunk (RAMStream& stream)
+    {
+        int64 pos = 0;
+        stream.tell (&pos);
+        _size = pos - _offset;
+    }
+
+    ChunkID _id;
+    int64   _offset;
+    int64   _size;
+};
+
+} // namespace Vst
+
+typedef std::vector<Vst::ChunkEntry> ChunkEntryVector;
+
+} // namespace Steinberg
+
+static bool
+is_equal_ID (const Vst::ChunkID id1, const Vst::ChunkID id2)
+{
+    return 0 == memcmp (id1, id2, sizeof (Vst::ChunkID));
+}
+
+static bool
+read_equal_ID (RAMStream& stream, const Vst::ChunkID id)
+{
+    Vst::ChunkID tmp;
+    return stream.read_ChunkID (tmp) && is_equal_ID (tmp, id);
+}
+
+bool
+VST3_Plugin::load_state (RAMStream& stream)
+{
+    assert (stream.readonly ());
+    if (stream.size () < Vst::kHeaderSize) {
+        return false;
+    }
+
+    int32 version     = 0;
+    int64 list_offset = 0;
+    TUID  class_id;
+
+    if (!(read_equal_ID (stream, Vst::getChunkID (Vst::kHeader))
+          && stream.read_int32 (version)
+          && stream.read_TUID (class_id)
+          && stream.read_int64 (list_offset)
+          && list_offset > 0
+         )
+       )
+    {
+        DEBUG_TRACE (DEBUG::VST3Config, string_compose ("VST3PI::load_state: invalid header vers: %1 off: %2\n", version, list_offset));
+        return false;
+    }
+
+    if (_fuid != FUID::fromTUID (class_id))
+    {
+        DEBUG_TRACE (DEBUG::VST3Config, "VST3PI::load_state: class ID mismatch\n");
+        return false;
+    }
+
+    /* read chunklist */
+    ChunkEntryVector entries;
+    int64            seek_result = 0;
+    stream.seek (list_offset, IBStream::kIBSeekSet, &seek_result);
+    if (seek_result != list_offset)
+    {
+        return false;
+    }
+    if (!read_equal_ID (stream, Vst::getChunkID (Vst::kChunkList)))
+    {
+        return false;
+    }
+
+    PBD::Unwinder<bool> uw (_is_loading_state, true);
+
+    int32 count;
+    stream.read_int32 (count);
+    for (int32 i = 0; i < count; ++i)
+    {
+        Vst::ChunkEntry c;
+        stream.read_ChunkID (c._id);
+        stream.read_int64 (c._offset);
+        stream.read_int64 (c._size);
+        entries.push_back (c);
+        DEBUG_TRACE (DEBUG::VST3Config, string_compose ("VST3PI::load_state: chunk: %1 off: %2 size: %3 type: %4\n", i, c._offset, c._size, c._id));
+    }
+
+    bool rv     = true;
+    bool synced = false;
+
+    /* parse chunks */
+    for (ChunkEntryVector::const_iterator i = entries.begin (); i != entries.end (); ++i)
+    {
+        stream.seek (i->_offset, IBStream::kIBSeekSet, &seek_result);
+        if (seek_result != i->_offset)
+        {
+            rv = false;
+            continue;
+        }
+        if (is_equal_ID (i->_id, Vst::getChunkID (Vst::kComponentState)))
+        {
+            ROMStream s (stream, i->_offset, i->_size);
+            tresult   res = _component->setState (&s);
+
+            s.rewind ();
+            tresult re2 = _controller->setComponentState (&s);
+
+            if (re2 == kResultOk)
+            {
+                synced = true;
+            }
+
+            if (!(re2 == kResultOk || re2 == kNotImplemented || res == kResultOk || res == kNotImplemented))
+            {
+                DEBUG_TRACE (DEBUG::VST3Config, "VST3PI::load_state: failed to restore component state\n");
+                rv = false;
+            }
+        } else if (is_equal_ID (i->_id, Vst::getChunkID (Vst::kControllerState)))
+        {
+            ROMStream s (stream, i->_offset, i->_size);
+            tresult   res = _controller->setState (&s);
+            if (res == kResultOk)
+            {
+                synced = true;
+            }
+
+            if (!(res == kResultOk || res == kNotImplemented))
+            {
+                DEBUG_TRACE (DEBUG::VST3Config, "VST3PI::load_state: failed to restore controller state\n");
+                rv = false;
+            }
+        }
+#if 0
+		else if (is_equal_ID (i->_id, Vst::getChunkID (Vst::kProgramData))) {
+			Vst::IUnitInfo* unitInfo = unit_info ();
+			stream.seek (i->_offset, IBStream::kIBSeekSet, &seek_result);
+			int32 id = -1;
+			if (stream.read_int32 (id)) {
+				ROMStream s (stream, i->_offset + sizeof (int32), i->_size - sizeof (int32));
+				unit_info->setUnitProgramData (id, programIndex, s);
+				//unit_data->setUnitData (id, programIndex, s)
+			}
+		}
+#endif
+        else
+        {
+            DEBUG_TRACE (DEBUG::VST3Config, "VST3PI::load_state: ignored unsupported state chunk.\n");
+        }
+    }
+    if (rv && !synced)
+    {
+        synced = synchronize_states ();
+    }
+
+    if (rv && synced)
+    {
+        update_shadow_data ();
+    }
+    return rv;
+}
+
+bool
+VST3_Plugin::save_state (VST3PluginHost::RAMStream& stream)
+{
+    assert (!stream.readonly ());
+    Vst::ChunkEntry  c;
+    ChunkEntryVector entries;
+
+    /* header */
+    stream.write_ChunkID (Vst::getChunkID (Vst::kHeader));
+    stream.write_int32 (Vst::kFormatVersion);
+    stream.write_TUID (_fuid.toTUID ()); // class ID
+    stream.write_int64 (0);              // skip offset
+
+    /* state chunks */
+    c.start_chunk (getChunkID (Vst::kComponentState), stream);
+    if (_component->getState (&stream) == kResultTrue)
+    {
+        c.end_chunk (stream);
+        entries.push_back (c);
+    }
+
+    c.start_chunk (getChunkID (Vst::kControllerState), stream);
+    if (_controller->getState (&stream) == kResultTrue)
+    {
+        c.end_chunk (stream);
+        entries.push_back (c);
+    }
+
+    /* update header */
+    int64 pos;
+    stream.tell (&pos);
+    stream.seek (Vst::kListOffsetPos, IBStream::kIBSeekSet, NULL);
+    stream.write_int64 (pos);
+    stream.seek (pos, IBStream::kIBSeekSet, NULL);
+
+    /* write list */
+    stream.write_ChunkID (Vst::getChunkID (Vst::kChunkList));
+    stream.write_int32 (entries.size ());
+
+    for (ChunkEntryVector::const_iterator i = entries.begin (); i != entries.end (); ++i)
+    {
+        stream.write_ChunkID (i->_id);
+        stream.write_int64 (i->_offset);
+        stream.write_int64 (i->_size);
+    }
+
+    return entries.size () > 0;
+}
+
+/****************************************************************************/
+
 void
 VST3_Plugin::save_VST3_plugin_state( const std::string &filename )
 {

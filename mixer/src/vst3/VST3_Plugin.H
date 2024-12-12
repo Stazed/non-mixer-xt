@@ -136,6 +136,8 @@ public:
     }
 
     // Save/Restore state
+    bool load_state (VST3PluginHost::RAMStream& stream);
+    bool save_state (VST3PluginHost::RAMStream& stream);
     void save_VST3_plugin_state(const std::string &filename);
     void restore_VST3_plugin_state(const std::string &filename);
 

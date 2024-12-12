@@ -99,6 +99,8 @@ public:
         return app;
     }
 
+    class RAMStream;
+    class ROMStream;
 protected:
 
     class PlugInterfaceSupport;
@@ -106,8 +108,6 @@ protected:
     class Attribute;
     class AttributeList;
     class Message;
-    class RAMStream;
-    class ROMStream;
 
 private:
 
