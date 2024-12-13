@@ -2766,11 +2766,11 @@ VST3_Plugin::restore_VST3_plugin_state( const std::string &filename )
         goto restore_error;
     }
 
-    if ( _pController->setComponentState ( &state ) != kResultOk )
+    // this was never saved
+/*    if ( _pController->setComponentState ( &state ) != kResultOk )
     {
         MESSAGE ( "IEditController::setComponentState() FAILED! %s", filename.c_str ( ) );
-        //goto restore_error;
-    }
+    }*/
 
     updateParamValues ( false );
 
