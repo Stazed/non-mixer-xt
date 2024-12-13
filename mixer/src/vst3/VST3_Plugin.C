@@ -2476,7 +2476,6 @@ VST3_Plugin::add_port( const Port &p )
  * compare to public.sdk/source/vst/vstpresetfile.cpp
  */
 
-//namespace Steinberg {
 namespace Vst3_stream {
 
 enum ChunkType
@@ -2532,8 +2531,6 @@ struct ChunkEntry
 
 typedef std::vector<Vst3_stream::ChunkEntry> ChunkEntryVector;
 
-//} // namespace Steinberg
-
 static bool
 is_equal_ID (const Vst3_stream::ChunkID id1, const Vst3_stream::ChunkID id2)
 {
@@ -2567,7 +2564,7 @@ VST3_Plugin::load_state (VST3PluginHost::RAMStream& stream)
          )
        )
     {
-        DMESSAGE ("load_state: invalid header vers: %1 off: %2", version, list_offset);
+        DMESSAGE ("load_state: invalid header vers: %d off: %ld", version, list_offset);
         return false;
     }
 
@@ -2599,7 +2596,7 @@ VST3_Plugin::load_state (VST3PluginHost::RAMStream& stream)
         stream.read_int64 (c._offset);
         stream.read_int64 (c._size);
         entries.push_back (c);
-        DMESSAGE("load_state: chunk: %1 off: %2 size: %3 type: %4", i, c._offset, c._size, c._id);
+        DMESSAGE("load_state: chunk: %d off: %ld size: %ld type: %ld", i, c._offset, c._size, c._id);
     }
 
     bool rv     = true;
