@@ -527,21 +527,11 @@ protected:
 
 /* RAMStream and ROMStream grabbed from the ardour project with modifications */
 
-bool
-file_get_contents (
-  const char* filename,
-  char** contents,
-  size_t* length
-);
-
-
-
 class VST3PluginHost::RAMStream : public IBStream, public ISizeableStream, public Vst::IStreamAttributes
 {
 public:
     RAMStream ();
     RAMStream (uint8_t* data, size_t size);
-    RAMStream (std::string const& fn);
 
     virtual ~RAMStream ();
 
@@ -608,10 +598,6 @@ public:
     {
         return _size;
     }
-
-#ifndef NDEBUG
-    void hexdump (int64 max_len = 64) const;
-#endif
 
 private:
     bool reallocate_buffer (int64 size, bool exact);

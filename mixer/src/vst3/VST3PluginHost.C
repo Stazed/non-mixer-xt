@@ -133,37 +133,6 @@ IMPLEMENT_FUNKNOWN_METHODS( VST3PluginHost::Message, IMessage, IMessage::iid )
 
 /* ****************************************************************************/
 
-bool
-file_get_contents (
-  const char* filename,
-  char** contents,
-  size_t* length
-)
-{
-    FILE *fp = NULL;
-    fp = fopen ( filename, "r" );
-
-    if ( fp == NULL )
-    {
-        printf ( "Cannot open file %s\n", filename );
-        return false;
-    }
-
-    fseek ( fp, 0, SEEK_END );
-    *length = ftell ( fp );
-    rewind ( fp );
-
-    *contents = (char *) malloc ( *length );
-
-    if ( contents == NULL )
-        return false;
-
-    fread ( contents, *length, 1, fp );
-    fclose ( fp );
-
-    return true;
-}
-
 VST3PluginHost::RAMStream::RAMStream ()
     : _data (0)
     , _size (0)
@@ -190,28 +159,6 @@ VST3PluginHost::RAMStream::RAMStream (uint8_t* data, size_t size)
     }
 }
 
-VST3PluginHost::RAMStream::RAMStream (std::string const& fn)
-    : _data (0)
-    , _size (0)
-    , _alloc (0)
-    , _pos (0)
-    , _readonly (true)
-{
-    char* buf    = NULL;
-    size_t  length = 0;
-
-    if (!file_get_contents (fn.c_str (), &buf, &length))
-    {
-    	return;
-    }
-    if (length > 0 && reallocate_buffer (length, true))
-    {
-        _size = length;
-        memcpy (_data, buf, _size);
-    }
-    if ( buf )
-        free (buf);
-}
 
 VST3PluginHost::RAMStream::~RAMStream ()
 {
@@ -408,16 +355,6 @@ VST3PluginHost::RAMStream::write_ChunkID (const Vst3_stream::ChunkID& id)
     return write_pod (id);
 }
 
-#if COM_COMPATIBLE
-/* pluginterfaces/base/funknown.cpp */
-struct GUIDStruct
-{
-    uint32_t data1;
-    uint16_t data2;
-    uint16_t data3;
-    uint8_t  data4[8];
-};
-#endif
 
 bool
 VST3PluginHost::RAMStream::write_TUID (const TUID& tuid)
@@ -425,13 +362,6 @@ VST3PluginHost::RAMStream::write_TUID (const TUID& tuid)
     int   i       = 0;
     int32 n_bytes = 0;
     char  buf[Vst3_stream::kClassIDSize + 1];
-
-#if COM_COMPATIBLE
-    GUIDStruct guid;
-    memcpy (&guid, tuid, sizeof (GUIDStruct));
-    sprintf (buf, "%08X%04X%04X", guid.data1, guid.data2, guid.data3);
-    i += 8;
-#endif
 
     for (; i < (int)sizeof (TUID); ++i)
     {
@@ -488,15 +418,6 @@ VST3PluginHost::RAMStream::read_TUID (TUID& tuid)
 
     buf[Vst3_stream::kClassIDSize] = '\0';
 
-#if COM_COMPATIBLE
-    GUIDStruct guid;
-    sscanf (buf,      "%08x", &guid.data1);
-    sscanf (buf + 8,  "%04hx", &guid.data2);
-    sscanf (buf + 12, "%04hx", &guid.data3);
-    memcpy (tuid, &guid, sizeof (TUID) >> 1);
-    i += 16;
-#endif
-
     for (; i < Vst3_stream::kClassIDSize; i += 2)
     {
         uint32_t temp;
@@ -525,7 +446,7 @@ VST3PluginHost::RAMStream::setStreamSize (int64 size)
 }
 
 tresult
-VST3PluginHost::RAMStream::getFileName (Vst::String128 name)
+VST3PluginHost::RAMStream::getFileName (Vst::String128 /* name */)
 {
     return kNotImplemented;
 }
@@ -535,59 +456,6 @@ VST3PluginHost::RAMStream::getAttributes ()
 {
     return &attribute_list;
 }
-
-#ifndef NDEBUG
-
-#include <iomanip>
-#include <iostream>
-#include <sstream>
-
-void
-VST3PluginHost::RAMStream::hexdump (int64 max_len) const
-{
-    std::ostringstream out;
-
-    size_t row_size = 16;
-    size_t length   = max_len > 0 ? std::min (max_len, _size) : _size;
-
-    out << std::setfill ('0');
-    for (size_t i = 0; i < length; i += row_size)
-    {
-        out << "0x" << std::setw (6) << std::hex << i << ": ";
-        for (size_t j = 0; j < row_size; ++j)
-        {
-            if (i + j < length)
-            {
-                out << std::hex << std::setw (2) << static_cast<int> (_data[i + j]) << " ";
-            }
-            else
-            {
-                out << "   ";
-            }
-        }
-        out << " ";
-        if (true)
-        {
-            for (size_t j = 0; j < row_size; ++j)
-            {
-                if (i + j < length)
-                {
-                    if (isprint (_data[i + j]))
-                    {
-                        out << static_cast<char> (_data[i + j]);
-                    }
-                    else
-                    {
-                        out << ".";
-                    }
-                }
-            }
-        }
-        out << std::endl;
-    }
-    std::cout << out.str ();
-}
-#endif
 
 VST3PluginHost::ROMStream::ROMStream (IBStream& src, TSize offset, TSize size)
     : _stream (src)
@@ -656,7 +524,7 @@ VST3PluginHost::ROMStream::read (void* buffer, int32 n_bytes, int32* n_read)
 }
 
 tresult
-VST3PluginHost::ROMStream::write (void* buffer, int32 n_bytes, int32* n_written)
+VST3PluginHost::ROMStream::write (void* /* buffer */, int32 /* n_bytes */, int32* n_written)
 {
     if (n_written)
     {
