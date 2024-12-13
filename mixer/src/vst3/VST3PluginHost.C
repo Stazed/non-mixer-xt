@@ -204,10 +204,8 @@ VST3PluginHost::RAMStream::reallocate_buffer (int64 size, bool exact)
             assert (_data);
             return true;
         }
-        if (size > _alloc)
-        {
-            size = (((size - 1) / 8192) + 1) * 8192;
-        }
+
+        size = (((size - 1) / 8192) + 1) * 8192;
     }
 
     _data = (uint8_t*)realloc (_data, size);
