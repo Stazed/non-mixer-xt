@@ -1382,7 +1382,6 @@ VST3_Plugin::open_descriptor( unsigned long iIndex )
         return false;
     }
 
-    IPluginFactory2 *factory2 = FUnknownPtr<IPluginFactory2> ( factory );
     IPluginFactory3 *factory3 = FUnknownPtr<IPluginFactory3> ( factory );
 
     if ( factory3 )
@@ -1412,15 +1411,7 @@ VST3_Plugin::open_descriptor( unsigned long iIndex )
             }
             else
             {
-                PClassInfo2 classInfo2;
-                if ( factory2 && factory2->getClassInfo2 ( n, &classInfo2 ) == kResultOk )
-                {
-                    _sName = classInfo2.name;
-                }
-                else
-                {
-                    _sName = classInfo.name;
-                }
+                _sName = classInfo.name;
             }
 
             std::string iUniqueID = nmxt_common::UIDtoString ( false, classInfo.cid );
