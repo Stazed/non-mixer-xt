@@ -111,8 +111,7 @@ add_executable (non-mixer-xt
 
 if(EnableNTK)
     set(ExternLibraries
-        ${NTK_IMAGES_LIBRARIES}
-        ${NTK_LIBRARIES}
+        ${FONTCONFIG_LIBRARIES}
         ${JACK_LINK_LIBRARIES}
         ${CMAKE_THREAD_LIBS_INIT}
         ${X11_LIBRARIES}
@@ -121,6 +120,15 @@ if(EnableNTK)
         ${SUIL_LIBRARIES}
         ${ZIX_LIBRARIES}
         ${PangoCairo_LIBRARIES}
+        ${XFT_LIBRARIES}
+        ${XRENDER_LIBRARIES}
+        ${XINERAMA_LIBRARIES}
+        cairo
+        fontconfig
+        Xcursor
+        Xfixes
+        jpeg
+        png
         dl
         m
         lrdf
@@ -128,16 +136,18 @@ if(EnableNTK)
 
     target_include_directories (
         non-mixer-xt PRIVATE
-        ${NTK_INCLUDE_DIRS}
+        ${FONTCONFIG_INCLUDE_DIRS}
         ${JACK_INCLUDE_DIRS}
         ${LRDF_INCLUDE_DIRS}
         ${LILV_INCLUDE_DIRS}
         ${SUIL_INCLUDE_DIRS}
-        ${X11_INCLUDE_DIRS}
         ${LIBLO_INCLUDE_DIRS}
         ${ZIX_INCLUDE_DIRS}
         ${CLAP_INCLUDEDIR}
         ${PangoCairo_INCLUDE_DIRS}
+        ${XFT_INCLUDE_DIRS}
+        ${XRENDER_INCLUDE_DIRS}
+        ${XINERAMA_INCLUDE_DIRS}
     )
 
 else(EnableNTK) #FLTK Build
@@ -186,7 +196,7 @@ if (EnableVST3Support AND CONFIG_VST3SDK)
 endif()
 
 if(EnableNTK)
-    target_link_libraries (non-mixer-xt ${ExternLibraries})
+    target_link_libraries (non-mixer-xt ${NTK_STATIC} ${NTK_STATIC_IMAGES} ${ExternLibraries})
 else(EnableNTK) #FLTK
     target_link_libraries (non-mixer-xt ${FLTK_STATIC} ${FLTK_STATIC_IMAGES} ${ExternLibraries})
 endif(EnableNTK)
