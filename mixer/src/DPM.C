@@ -122,7 +122,7 @@ DPM::public_draw_label( int X, int Y, int W, int H )
         {
             snprintf ( pat, sizeof(pat), "%d", marks[ i ] );
 
-            int v = h ( ) * deflection ( (float) marks[ i ] );
+            int v = H * deflection ( (float) marks[ i ] );
 
             fl_draw ( pat, X, ( Y + H - 4 ) - v, W, 8, (Fl_Align) ( FL_ALIGN_RIGHT | FL_ALIGN_TOP ) );
         }

@@ -139,7 +139,6 @@ public:
     }
 
     virtual int handle ( int m );
-    virtual void draw ( void );
 
     char * get_unique_track_name ( const char *name );
 

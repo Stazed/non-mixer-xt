@@ -1387,15 +1387,6 @@ Mixer::handle( int m )
     return 0;
 }
 
-void
-Mixer::draw ( void )
-{
-    // force redraw to fix Meter_Indicator_Module scale garbled on first draw - hack
-    scroll->redraw();
-
-    Fl_Group::draw ( );
-}
-
 #include <algorithm>
 
 std::list <std::string>
