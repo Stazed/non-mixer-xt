@@ -190,6 +190,11 @@ Mixer::sm_active( bool b )
 {
     sm_blinker->value ( b );
     sm_blinker->tooltip ( nsm->session_manager_name ( ) );
+#ifdef FLTK_SUPPORT
+    // cosmetics - the deactivated color is very dark for FLTK - button does not do anything on callback.
+    if (sm_blinker->value())
+        sm_blinker->activate();
+#endif
 
     if ( b )
     {
