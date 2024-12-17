@@ -66,10 +66,15 @@ If your distribution does not have ZIX available, you can get it at:
 Getting NTK:
 ------------
 
-Your distribution will likely have NTK available. If not then you can get NTK at:
+Your distribution may have NTK available. If not then you can get NTK at:
 
 ```bash
     git clone https://github.com/linuxaudio/ntk.git
+```
+
+There is an "unofficial" updated fork of NTK at:
+```bash
+    git clone https://Stazed@github.com/Stazed/ntk.git
 ```
 
 Getting CLAP:
@@ -101,6 +106,9 @@ To uninstall:
 ```
 
 To build with NTK:
+
+If building with a local install, for the NTK static build, you may need to set some environment variables. See the README of the "unofficial" [NTK](https://Stazed@github.com/Stazed/ntk.git) for how to set them.
+
 ```bash
     mkdir build
     cd build
