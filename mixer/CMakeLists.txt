@@ -124,7 +124,6 @@ if(EnableNTK)
         ${XRENDER_LIBRARIES}
         ${XINERAMA_LIBRARIES}
         cairo
-        fontconfig
         Xcursor
         Xfixes
         jpeg
