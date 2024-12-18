@@ -98,8 +98,24 @@ pkg_check_modules(JACK REQUIRED jack>=0.115.6)
 pkg_check_modules(LIBLO liblo>=0.26 REQUIRED)
 
 if(EnableNTK)
-    find_library(NTK_STATIC libntk.a REQUIRED)
-    find_library(NTK_STATIC_IMAGES libntk_images.a REQUIRED)
+    find_library(NTK_STATIC
+        NAMES
+        libntk.a
+        libntk.a.1
+        libntk.a.1.3.1001
+        PATHS
+        /usr/local/lib
+        /usr/local/lib64
+        REQUIRED)
+    find_library(NTK_STATIC_IMAGES
+        NAMES
+        libntk_images.a
+        libntk_images.a.1
+        libntk_images.a.1.3.1001
+        PATHS
+        /usr/local/lib
+        /usr/local/lib64
+        REQUIRED)
     find_package(JPEG REQUIRED)
     pkg_check_modules(XFIXES REQUIRED xfixes)
     pkg_check_modules(XINERAMA REQUIRED xinerama)
