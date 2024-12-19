@@ -89,6 +89,10 @@
 #include "../../FL/themes.H"
 #endif
 
+#ifdef NTK_EXTENDED
+#include <FL/themes.H>
+#endif
+
 #define USER_CONFIG_DIR NMXT_CONFIG_DIRECTORY
 
 const double NSM_CHECK_INTERVAL = 0.25f;
@@ -381,6 +385,10 @@ main( int argc, char **argv )
 
 #ifdef FLTK_SUPPORT
     fl_register_themes ( USER_CONFIG_DIR );
+#endif
+
+#ifdef NTK_EXTENDED
+    ntk_register_themes(USER_CONFIG_DIR);
 #endif
 
     if ( !no_ui && !nsm_url )
