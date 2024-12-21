@@ -628,7 +628,8 @@ Mixer::Mixer( int X, int Y, int W, int H, const char *L ) :
     _x_parent(0),
     _y_parent(0),
     _w_parent(800),
-    _h_parent(600)
+    _h_parent(600),
+    _hide_project_name(false)
 {
     Loggable::dirty_callback ( &Mixer::handle_dirty, this );
     Loggable::progress_callback ( progress_cb, NULL );
@@ -940,6 +941,32 @@ Mixer::resize( int X, int Y, int W, int H )
     mixer_strips->resize ( X, Y + 24, W, H - ( 18 * 2 ) - 24 );
 
     rows ( _rows );
+
+    /* Hide the project name if we resize too small so it does not overlap menu items */
+    if(Project::name())
+    {
+        std::string s_name = Project::name();
+
+        /* The magic number extra 10 for padding. 6 is best guess for pixel width */
+        int x_hide = (int) MINIMUM_WINDOW_WIDTH + 10 + (s_name.length() * 6);
+
+        if( W < x_hide )
+        {
+            if( !_hide_project_name )
+            {
+                project_name->label(0);     // hide
+                _hide_project_name = true;
+            }
+        }
+        else
+        {
+            if ( _hide_project_name )
+            {
+                project_name->label(Project::name());   // reset
+                _hide_project_name = false;
+            }
+        }
+    }
 }
 
 void

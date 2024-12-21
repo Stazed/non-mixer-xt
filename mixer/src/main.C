@@ -112,6 +112,7 @@ std::vector<std::string>remove_custom_data_directories;
 
 /* Maximum number of audio, aux, control ports*/
 const int MAX_PORTS = 100; // extern
+const int MINIMUM_WINDOW_WIDTH = 400;   // extern
 
 #include <errno.h>
 
@@ -331,7 +332,7 @@ main( int argc, char **argv )
         }
         o->end ( );
 
-        o->size_range ( main_window->w ( ) - 400 , mixer->min_h ( ), 0, 0 );
+        o->size_range ( MINIMUM_WINDOW_WIDTH , mixer->min_h ( ), 0, 0 );
 
         o->callback ( (Fl_Callback*) cb_main, main_window );
 

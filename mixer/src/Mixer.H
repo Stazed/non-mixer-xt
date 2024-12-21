@@ -34,6 +34,7 @@
 
 extern std::string project_directory;
 extern std::string export_import_strip;
+extern const int MINIMUM_WINDOW_WIDTH;
 
 class Fl_Blink_Button;
 class Fl_Flowpack;
@@ -64,6 +65,7 @@ private:
     int _rows;
     int _strip_height;
     int _x_parent, _y_parent, _w_parent, _h_parent;
+    bool _hide_project_name;
 
     Fl_Color system_colors[3];
 
