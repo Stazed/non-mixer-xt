@@ -116,6 +116,7 @@ if(EnableNTK)
         /usr/local/lib
         /usr/local/lib64
         REQUIRED)
+    pkg_check_modules(NTK ntk REQUIRED)
     find_package(JPEG REQUIRED)
     pkg_check_modules(XFIXES REQUIRED xfixes)
     pkg_check_modules(XINERAMA REQUIRED xinerama)
