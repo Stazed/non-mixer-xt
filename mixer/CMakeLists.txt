@@ -83,9 +83,11 @@ else(EnableNTK)
         ../FL/Fl_Panzoomer.C
         ../FL/Fl_Theme_Chooser.cxx
         ../FL/Fl_Theme.cxx
+        ../FL/GTK_Theme.cxx
         ../FL/Clean_Theme.cxx
         ../FL/Crystal_Theme.cxx
         ../FL/Gleam_Theme.cxx
+        ../FL/Vector_Theme.cxx
         ../FL/themes.cxx
     )
 endif(EnableNTK)
