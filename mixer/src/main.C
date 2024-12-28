@@ -152,6 +152,7 @@ void
 sigterm_handler( int )
 {
     stop_process = true; // if NSM, stop jack process calls
+    mixer->save_window_sizes ( );
     got_sigterm = 1;
 }
 
@@ -161,7 +162,6 @@ check_sigterm( void * )
     if ( got_sigterm )
     {
         MESSAGE ( "Got SIGTERM, quitting..." );
-        mixer->quit ( );
     }
     Fl::repeat_timeout ( 0.1f, check_sigterm );
 }

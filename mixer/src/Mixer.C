@@ -834,6 +834,9 @@ Mixer::save_translations( void )
 void
 Mixer::save_window_sizes ( void )
 {
+    if(project_directory.empty())
+        return;
+
     if( ( _x_parent == parent()->x() ) && ( _y_parent == parent()->y() ) &&
          ( _w_parent == parent()->w() ) && (_h_parent == parent()->h() ) )
     {
@@ -1005,8 +1008,7 @@ Mixer::quit( void )
         stop_process = true;
     }
 
-    if(!project_directory.empty())
-        save_window_sizes();
+    save_window_sizes();
 
     while ( Fl::first_window ( ) ) Fl::first_window ( )->hide ( );
 }

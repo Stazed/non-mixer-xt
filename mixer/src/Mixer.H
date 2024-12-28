@@ -92,7 +92,6 @@ private:
     void save_options ( void );
     void save_translations ( void );
     void load_translations ( void );
-    void save_window_sizes ( void );
     void load_window_sizes ( void );
 
     static void send_feedback_cb ( void *v );
@@ -124,6 +123,7 @@ public:
 
     void update_menu ( void );
     void update_window_title( void );
+    void save_window_sizes ( void );
 
 
     static Spatialization_Console *spatialization_console;
