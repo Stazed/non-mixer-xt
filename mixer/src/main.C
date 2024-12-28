@@ -162,6 +162,7 @@ check_sigterm( void * )
     if ( got_sigterm )
     {
         MESSAGE ( "Got SIGTERM, quitting..." );
+        return;
     }
     Fl::repeat_timeout ( 0.1f, check_sigterm );
 }
