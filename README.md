@@ -66,13 +66,8 @@ If your distribution does not have ZIX available, you can get it at:
 Getting NTK:
 ------------
 
-Your distribution may have NTK available. If not then you can get NTK at:
+Your distribution may have NTK available. If not, you can get an "unofficial" updated NTK at:
 
-```bash
-    git clone https://github.com/linuxaudio/ntk.git
-```
-
-There is an "unofficial" updated fork of NTK at:
 ```bash
     git clone https://github.com/Stazed/ntk-unofficial.git
 ```
