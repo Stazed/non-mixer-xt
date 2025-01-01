@@ -137,6 +137,7 @@ if(EnableNTK)
 
     target_include_directories (
         non-mixer-xt PRIVATE
+        ${NTK_INCLUDE_DIRS}
         ${FONTCONFIG_INCLUDE_DIRS}
         ${JACK_INCLUDE_DIRS}
         ${LRDF_INCLUDE_DIRS}
