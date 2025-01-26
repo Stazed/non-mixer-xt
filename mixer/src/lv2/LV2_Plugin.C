@@ -2664,6 +2664,7 @@ LV2_Plugin::try_X11_ui( const char* native_ui_type )
                 lilv_node_free ( host_type );
                 host_type = NULL;
                 native_ui = ui;
+                break;
             }
         }
 
@@ -2697,6 +2698,7 @@ LV2_Plugin::try_external_ui( const char* native_ui_type )
                 lilv_node_free ( host_type );
                 host_type = NULL;
                 native_ui = ui;
+                break;
             }
         }
 
