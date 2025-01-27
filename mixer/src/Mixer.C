@@ -379,15 +379,29 @@ Mixer::cb_menu( Fl_Widget* o )
     }
     else if ( !strcmp ( picked, "&Remote Control/Start Learning" ) )
     {
-        Controller_Module::learn_mode ( true );
-        tooltip ( "Now in learn mode. Click on a highlighted control to teach it something." );
-        redraw ( );
+        if ( nsm->is_active() )
+        {
+            Controller_Module::learn_mode ( true );
+            tooltip ( "Now in learn mode. Click on a highlighted control to teach it something." );
+            redraw ( );
+        }
+        else
+        {
+            fl_alert ( "Remote Control Learning is only valid within an NSM session" );
+        }
     }
     else if ( !strcmp ( picked, "&Remote Control/Stop Learning" ) )
     {
-        Controller_Module::learn_mode ( false );
-        tooltip ( "Learning complete" );
-        redraw ( );
+        if ( nsm->is_active() )
+        {
+            Controller_Module::learn_mode ( false );
+            tooltip ( "Learning complete" );
+            redraw ( );
+        }
+        else
+        {
+            fl_alert ( "Remote Control Learning is only valid within an NSM session" );
+        }
     }
     else if ( !strcmp ( picked, "&Remote Control/Send State" ) )
     {
