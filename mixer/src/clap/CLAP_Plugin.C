@@ -516,7 +516,7 @@ CLAP_Plugin::process_jack_transport( uint32_t nframes )
         else
         {
             // Tempo
-            _transport.tempo = 120.0;
+            _transport.tempo = _bpm;
             _transport.flags |= CLAP_TRANSPORT_HAS_TEMPO;
 
             // Time Signature

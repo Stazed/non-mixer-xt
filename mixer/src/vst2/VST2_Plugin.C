@@ -1666,7 +1666,7 @@ VST2_Plugin::process_jack_transport( uint32_t nframes )
         else
         {
             // Tempo
-            _fTimeInfo.tempo = 120.0;
+            _fTimeInfo.tempo = _bpm;
             _fTimeInfo.flags |= kVstTempoValid;
 
             // Time Signature
