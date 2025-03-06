@@ -79,6 +79,9 @@ extern std::list<Plugin_Info> g_plugin_cache;
 extern NSM_Client *nsm;
 extern std::vector<std::string>remove_custom_data_directories;
 
+bool b_use_escape_key = true;
+bool b_use_ctrl_w_key = true;
+
 Spatialization_Console *Mixer::spatialization_console = 0;
 
 struct both_slashes
@@ -467,6 +470,14 @@ Mixer::cb_menu( Fl_Widget* o )
 
         return;
     }
+    else if ( !strcmp ( picked, "&Mixer/Toggle Esc Key to Close Editor" ) )
+    {
+        b_use_escape_key = !b_use_escape_key;
+    }
+    else if ( !strcmp ( picked, "&Mixer/Toggle CTRL W to Close Editor" ) )
+    {
+        b_use_ctrl_w_key = !b_use_ctrl_w_key;
+    }
     else if ( !strcmp ( picked, "&Help/&About" ) )
     {
         About_Dialog ab ( PIXMAP_PATH "/non-mixer-xt/icon-256x256.png" );
@@ -683,6 +694,8 @@ Mixer::Mixer( int X, int Y, int W, int H, const char *L ) :
             o->add ( "&Mixer/Paste", FL_CTRL + 'v', 0, 0 );
             o->add ( "&Mixer/&Spatialization Console", FL_F + 8, 0, 0, FL_MENU_TOGGLE );
             o->add ( "&Mixer/Toggle &Fader View", FL_ALT + 'f', 0, 0, FL_MENU_TOGGLE );
+            o->add ( "&Mixer/Toggle Esc Key to Close Editor",0, 0, 0, FL_MENU_TOGGLE );
+            o->add ( "&Mixer/Toggle CTRL W to Close Editor", 0, 0, 0, FL_MENU_TOGGLE );
             //            o->add( "&Mixer/&Signal View", FL_ALT + 's', 0, 0, FL_MENU_TOGGLE );
             o->add ( "&Remote Control/Start Learning", FL_F + 9, 0, 0 );
             o->add ( "&Remote Control/Stop Learning", FL_F + 10, 0, 0 );
@@ -750,6 +763,12 @@ Mixer::Mixer( int X, int Y, int W, int H, const char *L ) :
     Mixer::resize ( X, Y, W, H );
 
     update_frequency ( 24 );
+
+    Fl_Menu_Item *m = const_cast<Fl_Menu_Item*>( menubar->find_item( "&Mixer/Toggle Esc Key to Close Editor" ) );
+    m->set();
+
+    m = const_cast<Fl_Menu_Item*>( menubar->find_item( "&Mixer/Toggle CTRL W to Close Editor" ) );
+    m->set();
 
     update_menu ( );
 

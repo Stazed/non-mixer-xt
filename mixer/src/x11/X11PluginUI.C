@@ -56,6 +56,9 @@ temporaryErrorHandler( Display*, XErrorEvent* )
     return 0;
 }
 
+extern bool b_use_escape_key;
+extern bool b_use_ctrl_w_key;
+
 X11PluginUI::X11PluginUI( Callback * const cb, const bool isResizable, const bool canMonitorChildren, bool is_vst3 ) :
     fCallback( cb ),
     fIsIdling( false ),
@@ -98,8 +101,17 @@ X11PluginUI::X11PluginUI( Callback * const cb, const bool isResizable, const boo
 
     //    XSetStandardProperties(fDisplay, fHostWindow, label(), label(), None, NULL, 0, NULL);
 
-    XGrabKey ( fDisplay, X11Key_Escape, AnyModifier, fHostWindow, 1, GrabModeAsync, GrabModeAsync );
-    XGrabKey ( fDisplay, X11Key_W, AnyModifier, fHostWindow, 1, GrabModeAsync, GrabModeAsync );
+    // These keys can sometimes be useful for some plugins, so we can toggle the usages. Otherwise
+    // they are used for closing the custom window editor.
+    if( b_use_escape_key )
+    {
+        XGrabKey ( fDisplay, X11Key_Escape, AnyModifier, fHostWindow, 1, GrabModeAsync, GrabModeAsync );
+    }
+
+    if( b_use_ctrl_w_key )
+    {
+        XGrabKey ( fDisplay, X11Key_W, AnyModifier, fHostWindow, 1, GrabModeAsync, GrabModeAsync );
+    }
 
     Atom wmDelete = XInternAtom ( fDisplay, "WM_DELETE_WINDOW", True );
     XSetWMProtocols ( fDisplay, fHostWindow, &wmDelete, 1 );
