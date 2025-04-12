@@ -96,6 +96,7 @@ validVST3SearchPaths( )
 
     /* These are the standard locations for linux */
     res.emplace_back ( "/usr/lib/vst3" );
+    res.emplace_back ( "/usr/lib/x86_64-linux-gnu/vst3" );
 
     // some distros make /usr/lib64 a symlink to /usr/lib so don't include it
     // or we get duplicates.

@@ -80,6 +80,7 @@ validCLAPSearchPaths( )
 
     /* These are the standard locations for linux */
     res.emplace_back ( "/usr/lib/clap" );
+    res.emplace_back ( "/usr/lib/x86_64-linux-gnu/clap" );
 
     // some distros make /usr/lib64 a symlink to /usr/lib so don't include it
     // or we get duplicates.

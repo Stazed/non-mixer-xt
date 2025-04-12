@@ -77,6 +77,7 @@ validVST2SearchPaths( )
 
     /* These are the standard locations for linux */
     res.emplace_back ( "/usr/lib/vst" );
+    res.emplace_back ( "/usr/lib/x86_64-linux-gnu/vst" );
 
     // some distros make /usr/lib64 a symlink to /usr/lib so don't include it
     // or we get duplicates.
