@@ -1575,10 +1575,12 @@ CLAP_Plugin::activate( void )
         chain ( )->client ( )->lock ( );
 
     *_bypass = 0.0f;
-
+    
     if ( !_activated )
     {
-        _activated = _plugin->activate ( _plugin, (double) sample_rate ( ), buffer_size ( ), buffer_size ( ) );
+        /* For pipewire, it seems the buffer_size() is not set some times, so set a default if not. */
+        _activated = _plugin->activate ( _plugin, (double) sample_rate ( ),
+              buffer_size ( ) > 0 ? buffer_size(): 256 , buffer_size ( ) > 0 ? buffer_size(): 256 );
     }
 
     if ( chain ( ) )
