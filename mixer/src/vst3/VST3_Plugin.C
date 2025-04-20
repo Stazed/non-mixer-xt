@@ -120,15 +120,40 @@ public:
     {
         DMESSAGE ( "Handler[%p]::restartComponent(0x%08x)", this, flags );
 
+#if 0
+        if (m_pPlugin->_bProcessing)
+        {
+            DMESSAGE("Plugin called restart while processing - ignoring");
+            return kResultFalse;
+        }
+#endif
+
         if ( flags & Vst::kParamValuesChanged )
         {
+            DMESSAGE("Vst::kParamValuesChanged");
             m_pPlugin->updateParamValues ( false );
         }
         else if ( (flags & Vst::kReloadComponent) || (flags & Vst::kLatencyChanged) )
         {
+            DMESSAGE("Vst::kReloadComponent or Vst::kLatencyChangedVst::kLatencyChanged");
             m_pPlugin->deactivate ( );
             m_pPlugin->activate ( );
         }
+        else if ( flags & Vst::kIoTitlesChanged)
+        {
+            DMESSAGE("VST3: Vst::kIoTitlesChanged (not implemented)");
+            return kNotImplemented;
+        }
+        else if ( flags & Vst::kParamTitlesChanged )
+        {
+            DMESSAGE("VST3: Vst::kParamTitlesChanged (not implemented)");
+            return kNotImplemented;
+        }
+        else if (flags & Vst::kIoChanged)
+        {
+            DMESSAGE("VST3: Vst::kIoChanged (not implemented)");
+            return kNotImplemented;
+	}
 
         return kResultOk;
     }
