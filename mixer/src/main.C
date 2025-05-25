@@ -86,6 +86,7 @@
 #include "FL/Fl_PNG_Image.H"
 
 #ifdef FLTK_SUPPORT
+#include <FL/platform.H>
 #include "../../FL/themes.H"
 #endif
 

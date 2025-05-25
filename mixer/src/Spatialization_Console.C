@@ -42,6 +42,10 @@
 
 #include <FL/Fl_Menu_Bar.H>
 
+#ifdef FLTK_SUPPORT
+#include <FL/platform.H>
+#endif
+
 Spatialization_Console::Spatialization_Console( void ) :
     Fl_Double_Window( 850, 850 ),
     _resized( false )

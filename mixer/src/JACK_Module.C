@@ -46,6 +46,10 @@
 
 #include <FL/Fl_PNG_Image.H>
 
+#ifdef FLTK_SUPPORT
+#include <FL/platform.H>
+#endif
+
 static Fl_PNG_Image *input_connector_image = NULL;
 static Fl_PNG_Image *output_connector_image = NULL;
 
