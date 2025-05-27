@@ -81,13 +81,14 @@
 #include <signal.h>
 #include <unistd.h>
 
-#include "FL/Fl.H"
-#include "FL/x.H"
-#include "FL/Fl_PNG_Image.H"
+#include <FL/Fl.H>
+#include <FL/Fl_PNG_Image.H>
 
 #ifdef FLTK_SUPPORT
 #include <FL/platform.H>
 #include "../../FL/themes.H"
+#else
+#include <FL/x.H>
 #endif
 
 #ifdef NTK_EXTENDED

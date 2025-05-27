@@ -22,7 +22,11 @@
 /*******************************************************************************/
 
 #include "Panner.H"
+#ifdef FLTK_SUPPORT
+#include <FL/platform.H>
+#else
 #include <FL/x.H>
+#endif
 #include <FL/Fl.H>
 #include <stdio.h>
 #include <math.h>
