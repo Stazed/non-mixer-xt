@@ -200,7 +200,7 @@ public:
     bool _x_is_visible;
     uint     _x_width;
     uint     _x_height;
-    bool isUiResizable() const;
+    bool isUiResizable(LilvWorld* const world, const LilvUI* const ui) const;
     void show_custom_ui();
     void hide_custom_ui();
     bool try_custom_ui();

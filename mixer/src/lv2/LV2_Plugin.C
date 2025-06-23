@@ -449,7 +449,9 @@ x_resize( LV2UI_Feature_Handle handle, int width, int height )
         return 1;
 
     pLv2Plugin->_X11_UI->setSize ( width, height, true, false );
-    pLv2Plugin->_X11_UI->setMinimumSize( width, height );
+
+    if(!pLv2Plugin->_x_is_resizable)
+        pLv2Plugin->_X11_UI->setMinimumSize( width, height );
 
     DMESSAGE ( "X-width = %d: X-height = %d", width, height );
 
@@ -2566,7 +2568,7 @@ LV2_Plugin::custom_ui_instantiate( )
     if ( _use_X11_interface ) /* If embedded X11 */
     {
         /* We seem to have an accepted ui, so lets try to embed it in an X window*/
-        _x_is_resizable = isUiResizable ( );
+        _x_is_resizable = isUiResizable ( get_lilv_world(), _lilv_user_interface );
         _X11_UI = new X11PluginUI ( this, _x_is_resizable, true );
         _X11_UI->setTitle ( label ( ) );
         parent = (LV2UI_Widget) _X11_UI->getPtr ( );
@@ -2969,20 +2971,28 @@ LV2_Plugin::hide_custom_ui( )
 }
 
 bool
-LV2_Plugin::isUiResizable( ) const
+LV2_Plugin::isUiResizable(LilvWorld* const world, const LilvUI* const ui ) const
 {
-    NON_SAFE_ASSERT_RETURN ( _idata->rdf_data != nullptr, false );
-
-    for ( uint32_t i = 0; i < _idata->rdf_data->FeatureCount; ++i )
+    if (!ui)
     {
-        if ( std::strcmp ( _idata->rdf_data->Features[i].URI, LV2_UI__fixedSize ) == 0 )
-            return false;
-
-        if ( std::strcmp ( _idata->rdf_data->Features[i].URI, LV2_UI__noUserResize ) == 0 )
-            return false;
+        return false;
     }
 
-    return true;
+    const LilvNode* s   = lilv_ui_get_uri(ui);
+    LilvNode*       p   = lilv_new_uri(world, LV2_CORE__optionalFeature);
+    LilvNode*       fs  = lilv_new_uri(world, LV2_UI__fixedSize);
+    LilvNode*       nrs = lilv_new_uri(world, LV2_UI__noUserResize);
+
+    LilvNodes* fs_matches  = lilv_world_find_nodes(world, s, p, fs);
+    LilvNodes* nrs_matches = lilv_world_find_nodes(world, s, p, nrs);
+
+    lilv_nodes_free(nrs_matches);
+    lilv_nodes_free(fs_matches);
+    lilv_node_free(nrs);
+    lilv_node_free(fs);
+    lilv_node_free(p);
+
+    return !fs_matches && !nrs_matches;
 }
 #endif  // USE_SUIL
 
