@@ -1310,11 +1310,27 @@ Module_Parameter_Editor::handle( int m )
 
         case FL_KEYBOARD:
         {
+            // CTRL-W to close the parameter editor window
             if ( ( Fl::event_key ( FL_Control_L ) || Fl::event_key ( FL_Control_R ) ) && Fl::event_key ( 119 ) )
             {
                 // ctrl + w -> close editor
                 hide ( );
                 return 1;
+            }
+
+            // CRTL-C for copy of the OSC path location to the system clipboard
+            if ( ( Fl::event_key ( FL_Control_L ) || Fl::event_key ( FL_Control_R ) ) && Fl::event_key ( 99 ) )
+            {
+                for ( unsigned int i = 0; i < controls_by_port.size ( ); i++ )
+                {
+                    if ( Fl::event_inside ( controls_by_port[i] ) && controls_by_port[i]->visible ( ) )
+                    {
+                        if(controls_by_port[i]->tooltip())
+                            Fl::copy(controls_by_port[i]->tooltip(), strlen(controls_by_port[i]->tooltip()), 1, Fl::clipboard_plain_text);
+
+                        return 1;
+                    }
+                }
             }
         }
     }
