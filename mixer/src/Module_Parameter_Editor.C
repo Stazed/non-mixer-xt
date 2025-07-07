@@ -1326,7 +1326,11 @@ Module_Parameter_Editor::handle( int m )
                     if ( Fl::event_inside ( controls_by_port[i] ) && controls_by_port[i]->visible ( ) )
                     {
                         if(controls_by_port[i]->tooltip())
+#ifdef FLTK_SUPPORT
                             Fl::copy(controls_by_port[i]->tooltip(), strlen(controls_by_port[i]->tooltip()), 1, Fl::clipboard_plain_text);
+#else
+                            Fl::copy(controls_by_port[i]->tooltip(), strlen(controls_by_port[i]->tooltip()), 1);
+#endif
 
                         return 1;
                     }
