@@ -795,7 +795,7 @@ LV2_Plugin::get_plugin_extensions( )
 #ifdef LV2_WORKER_SUPPORT
         else
         {
-            _safe_restore = true;
+            _safe_restore = _use_custom_data = true;
         }
 #endif
         if ( _idata->ext.worker != NULL && _idata->ext.worker->work == NULL )
@@ -809,12 +809,6 @@ LV2_Plugin::get_plugin_extensions( )
 
             lv2_atom_forge_init ( &_atom_forge, _uridMapFt );
             non_worker_init ( this, _idata->ext.worker, true );
-
-            if ( _safe_restore ) // FIXME
-            {
-                DMESSAGE ( "Plugin Has safe_restore - TODO" );
-                // non_worker_init(this, _idata->ext.state, false);
-            }
         }
 #endif
     }
