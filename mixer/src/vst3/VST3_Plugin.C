@@ -1739,7 +1739,7 @@ VST3_Plugin::process_midi_in(
             continue;
         }
 
-        // after-touch
+        // Channel Pressure
         if ( status == 0xd0 )
         {
             const MidiMapKey mkey ( port, channel, Vst::kAfterTouch );

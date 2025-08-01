@@ -188,7 +188,10 @@ UIDtoString( bool comFormat, const char* _data )
 std::string
 utf16_to_utf8( const std::u16string& utf16 )
 {
+_Pragma("GCC diagnostic push")
+_Pragma("GCC diagnostic ignored \"-Wdeprecated-declarations\"")
     std::wstring_convert < std::codecvt_utf8_utf16<char16_t>, char16_t> convert;
+_Pragma("GCC diagnostic pop")
     std::string utf8 = convert.to_bytes ( utf16 );
     return utf8;
 }
@@ -196,7 +199,10 @@ utf16_to_utf8( const std::u16string& utf16 )
 std::u16string
 utf8_to_utf16( const std::string & utf8String )
 {
+_Pragma("GCC diagnostic push")
+_Pragma("GCC diagnostic ignored \"-Wdeprecated-declarations\"")
     std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> converter;
+_Pragma("GCC diagnostic pop")
     std::u16string utf16String = converter.from_bytes( utf8String );
     return utf16String;
 }
