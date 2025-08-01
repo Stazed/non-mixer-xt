@@ -174,6 +174,7 @@ else(EnableNTK) #FLTK Build
         dl
         m
         lrdf
+        z   # needed for FLTK 1.4 build
     )
 
     target_include_directories (
