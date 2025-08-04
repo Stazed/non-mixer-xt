@@ -1635,6 +1635,14 @@ VST2_Plugin::process_jack_transport( uint32_t nframes )
 
     if ( xport_changed )
     {
+        _fTimeInfo.samplePos = double(pos.frame);
+        _fTimeInfo.sampleRate = double(sample_rate ( ));
+
+        if(_rolling)
+        {
+            _fTimeInfo.flags |= (kVstTransportChanged | kVstTransportPlaying);
+        }
+
         if ( has_bbt )
         {
             const double positionBeats = static_cast<double> ( pos.frame )
@@ -1642,26 +1650,22 @@ VST2_Plugin::process_jack_transport( uint32_t nframes )
 
             const double ppqBar = static_cast<double> ( pos.beats_per_bar ) * ( pos.bar - 1 );
 
-            _fTimeInfo.flags |= kVstTransportChanged;
-            _fTimeInfo.samplePos = double(pos.frame );
-            _fTimeInfo.sampleRate = sample_rate ( );
-
             // PPQ Pos
-            _fTimeInfo.ppqPos = positionBeats;
             _fTimeInfo.flags |= kVstPpqPosValid;
+            _fTimeInfo.ppqPos = positionBeats;
 
             // Tempo
-            _fTimeInfo.tempo = pos.beats_per_minute;
             _fTimeInfo.flags |= kVstTempoValid;
+            _fTimeInfo.tempo = pos.beats_per_minute;
 
             // Bars
-            _fTimeInfo.barStartPos = ppqBar;
             _fTimeInfo.flags |= kVstBarsValid;
+            _fTimeInfo.barStartPos = ppqBar;
 
             // Time Signature
+            _fTimeInfo.flags |= kVstTimeSigValid;
             _fTimeInfo.timeSigNumerator = static_cast<int32_t> ( pos.beats_per_bar + 0.5f );
             _fTimeInfo.timeSigDenominator = static_cast<int32_t> ( pos.beat_type + 0.5f );
-            _fTimeInfo.flags |= kVstTimeSigValid;
         }
         else
         {
@@ -1680,8 +1684,8 @@ VST2_Plugin::process_jack_transport( uint32_t nframes )
         }
     }
 
-    // Update transport state to expected values for next cycle
-    _position = rolling ? pos.frame + nframes : pos.frame;
+    // Update transport state for next cycle
+    _position = pos.frame;
     _bpm = has_bbt ? pos.beats_per_minute : _bpm;
     _rolling = rolling;
 }
