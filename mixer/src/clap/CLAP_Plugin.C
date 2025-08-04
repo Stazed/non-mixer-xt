@@ -493,25 +493,34 @@ CLAP_Plugin::process_jack_transport( uint32_t nframes )
 
     if ( xport_changed )
     {
+        if(rolling)
+            _transport.flags |=  CLAP_TRANSPORT_IS_PLAYING;
+        else
+            _transport.flags &= ~CLAP_TRANSPORT_IS_PLAYING;
+
         if ( has_bbt )
         {
             const double positionBeats = static_cast<double> ( pos.frame )
                 / ( sample_rate ( ) * 60 / pos.beats_per_minute );
 
+            _transport.flags |= CLAP_TRANSPORT_HAS_SECONDS_TIMELINE;
+            _transport.song_pos_seconds = CLAP_SECTIME_FACTOR *
+		double(pos.frame) / (double) sample_rate ( );
+
             // Bar/ Beats
-            _transport.bar_start = std::round ( CLAP_BEATTIME_FACTOR * pos.bar_start_tick );
-            _transport.bar_number = pos.bar - 1;
-            _transport.song_pos_beats = std::round ( CLAP_BEATTIME_FACTOR * positionBeats );
             _transport.flags |= CLAP_TRANSPORT_HAS_BEATS_TIMELINE;
+            _transport.song_pos_beats = CLAP_BEATTIME_FACTOR * positionBeats;
+            _transport.bar_start = CLAP_BEATTIME_FACTOR * double(pos.bar_start_tick);
+            _transport.bar_number = pos.bar;
 
             // Tempo
-            _transport.tempo = pos.beats_per_minute;
             _transport.flags |= CLAP_TRANSPORT_HAS_TEMPO;
+            _transport.tempo = pos.beats_per_minute;
 
             // Time Signature
+            _transport.flags |= CLAP_TRANSPORT_HAS_TIME_SIGNATURE;
             _transport.tsig_num = static_cast<uint16_t> ( pos.beats_per_bar + 0.5f );
             _transport.tsig_denom = static_cast<uint16_t> ( pos.beat_type + 0.5f );
-            _transport.flags |= CLAP_TRANSPORT_HAS_TIME_SIGNATURE;
         }
         else
         {
@@ -526,8 +535,8 @@ CLAP_Plugin::process_jack_transport( uint32_t nframes )
         }
     }
 
-    // Update transport state to expected values for next cycle
-    _position = rolling ? pos.frame + nframes : pos.frame;
+    // Update transport state values for next cycle
+    _position = pos.frame;
     _bpm = has_bbt ? pos.beats_per_minute : _bpm;
     _rolling = rolling;
 }
