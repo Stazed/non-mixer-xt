@@ -1686,8 +1686,8 @@ VST3_Plugin::process_jack_transport( uint32_t nframes )
 
     updateProcessContext ( pos, xport_changed, has_bbt );
 
-    // Update transport state to expected values for next cycle
-    _position = rolling ? pos.frame + nframes : pos.frame;
+    // Update transport state for next cycle
+    _position = pos.frame;
     _bpm = has_bbt ? pos.beats_per_minute : _bpm;
     _rolling = rolling;
 }
@@ -1926,26 +1926,32 @@ void
 VST3_Plugin::updateProcessContext(
     jack_position_t &pos, const bool &xport_changed, const bool &has_bbt )
 {
-    if ( xport_changed )
+    if( !xport_changed )
+        return;
+
+    if ( _rolling )
         _processContext.state |= Vst::ProcessContext::kPlaying;
     else
         _processContext.state &= ~Vst::ProcessContext::kPlaying;
 
+    const double positionBeats = static_cast<double> ( pos.frame )
+                / ( sample_rate ( ) * 60 / pos.beats_per_minute );
+
     if ( has_bbt )
     {
-        _processContext.sampleRate = pos.frame_rate;
+        _processContext.sampleRate = sample_rate();
         _processContext.projectTimeSamples = pos.frame;
 
         _processContext.state |= Vst::ProcessContext::kProjectTimeMusicValid;
-        _processContext.projectTimeMusic = pos.beat;
+        _processContext.projectTimeMusic = positionBeats;
         _processContext.state |= Vst::ProcessContext::kBarPositionValid;
-        _processContext.barPositionMusic = pos.bar;
+        _processContext.barPositionMusic = pos.bar - 1;
 
         _processContext.state |= Vst::ProcessContext::kTempoValid;
         _processContext.tempo = pos.beats_per_minute;
         _processContext.state |= Vst::ProcessContext::kTimeSigValid;
-        _processContext.timeSigNumerator = pos.beats_per_bar;
-        _processContext.timeSigDenominator = pos.beat_type;
+        _processContext.timeSigNumerator = static_cast<int32_t> ( pos.beats_per_bar + 0.5f );
+        _processContext.timeSigDenominator = static_cast<int32_t> ( pos.beat_type + 0.5f );
     }
     else
     {
