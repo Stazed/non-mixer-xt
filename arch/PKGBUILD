@@ -1,7 +1,7 @@
 # Maintainer: Your name here <your@email.here>
 
 pkgname=non-mixer-xt
-pkgver=2.0.0
+pkgver=2.0.9
 pkgrel=1
 pkgdesc="Jack audio mixer (non-mixer) with eXTended LV2, CLAP, VST3 support"
 arch=('x86_64' 'i686')
