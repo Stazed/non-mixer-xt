@@ -172,7 +172,7 @@ check_sigterm( void * )
 void
 show_help(const char * argv)
 {
-    fprintf(stderr, "\nUsage: %s [OPTION]\n\n", argv);
+    fprintf(stderr, "\nUsage: %s [option] [path_to_project]\n\n", argv);
     fprintf(stderr,
             "  --h ,     --help \t\t\t display command-line help and exit\n");
     fprintf(stderr, "  --i Name, --instance \t\t\t JACK instance client name\n");
