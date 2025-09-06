@@ -169,6 +169,18 @@ check_sigterm( void * )
     Fl::repeat_timeout ( 0.1f, check_sigterm );
 }
 
+void
+show_help(const char * argv)
+{
+    fprintf(stderr, "\nUsage: %s [OPTION]\n\n", argv);
+    fprintf(stderr,
+            "  --h ,     --help \t\t\t display command-line help and exit\n");
+    fprintf(stderr, "  --i Name, --instance \t\t\t JACK instance client name\n");
+    fprintf(stderr, "  --p Port, --osc-port \t\t\t osc port number\n");
+    fprintf(stderr, "  --n ,     --no-gui \t\t\t disable GUI\n");
+    fprintf(stderr, "\n");
+}
+
 int
 main( int argc, char **argv )
 {
@@ -280,7 +292,7 @@ main( int argc, char **argv )
                 no_ui = true;
                 break;
             case '?':
-                printf ( "\nUsage: %s [--instance instance_name] [--osc-port portnum] [path_to_project]\n\n", argv[0] );
+                show_help(argv[0]);
                 exit ( 0 );
                 break;
         }
