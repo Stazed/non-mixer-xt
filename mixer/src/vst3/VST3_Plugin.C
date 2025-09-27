@@ -382,6 +382,7 @@ VST3_Plugin::VST3_Plugin( ) :
     _audio_out_buffers( nullptr ),
     _activated( false ),
     _bEditor( false ),
+    _restoring_state( false ),
     _position( 0 ),
     _bpm( 120.0f ),
     _rolling( false ),
@@ -824,6 +825,11 @@ VST3_Plugin::get_module_latency( void ) const
 void
 VST3_Plugin::process( nframes_t nframes )
 {
+    /* Flag to stop processing while restoring the state, as some plugins 
+       would freeze jack intermittently. */
+    if(_restoring_state)
+        return;
+
     handle_port_connection_change ( );
 
     if ( unlikely ( bypass ( ) ) )
@@ -1671,7 +1677,7 @@ VST3_Plugin::process_reset( )
 }
 
 void
-VST3_Plugin::process_jack_transport( uint32_t nframes )
+VST3_Plugin::process_jack_transport( uint32_t /* nframes */ )
 {
     // Get Jack transport position
     jack_position_t pos;
@@ -2743,12 +2749,17 @@ VST3_Plugin::save_VST3_plugin_state( const std::string &filename )
 void
 VST3_Plugin::restore_VST3_plugin_state( const std::string &filename )
 {
+    /* Flag to stop processing while restoring the state, as some plugins 
+       would freeze jack intermittently. */
+    _restoring_state = true;
+
     FILE *fp = NULL;
     fp = fopen ( filename.c_str ( ), "r" );
 
     if ( fp == NULL )
     {
         fl_alert ( "Cannot open file %s", filename.c_str ( ) );
+        _restoring_state = false;
         return;
     }
 
@@ -2759,7 +2770,10 @@ VST3_Plugin::restore_VST3_plugin_state( const std::string &filename )
     void *data = malloc ( size );
 
     if ( data == NULL )
+    {
+        _restoring_state = false;
         return;
+    }
 
     fread ( data, size, 1, fp );
     fclose ( fp );
@@ -2776,6 +2790,7 @@ VST3_Plugin::restore_VST3_plugin_state( const std::string &filename )
         /* Got new format */
         updateParamValues ( false );
         free ( data );
+        _restoring_state = false;
         return;
     }
 
@@ -2785,20 +2800,17 @@ VST3_Plugin::restore_VST3_plugin_state( const std::string &filename )
     if ( _pComponent->setState ( &state ) != kResultOk )
     {
         fl_alert ( "IComponent::setState() FAILED! %s", filename.c_str ( ) );
-        goto restore_error;
+        free ( data );
+        _restoring_state = false;
+        return;
     }
-
-    // this was never saved
-/*    if ( _pController->setComponentState ( &state ) != kResultOk )
+    else
     {
-        MESSAGE ( "IEditController::setComponentState() FAILED! %s", filename.c_str ( ) );
-    }*/
-
-    updateParamValues ( false );
-
-restore_error:
-
-    free ( data );
+        updateParamValues ( false );
+        free ( data );
+        _restoring_state = false;
+        return;
+    }
 }
 
 uint64_t
