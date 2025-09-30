@@ -540,6 +540,9 @@ VST2_Plugin::get_module_latency( void ) const
 void
 VST2_Plugin::process( nframes_t nframes )
 {
+    if(_restoring_state)
+        return;
+
     handle_port_connection_change ( );
 
     if ( unlikely ( bypass ( ) ) )
@@ -1884,8 +1887,12 @@ VST2_Plugin::save_VST2_plugin_state( const std::string &filename )
 void
 VST2_Plugin::restore_VST2_plugin_state( const std::string &filename )
 {
+    _restoring_state = true;
+
     VST2_Preset pGetLoad ( this );
     pGetLoad.load ( filename );
+
+    _restoring_state = false;
 }
 
 void

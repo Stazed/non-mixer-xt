@@ -921,6 +921,9 @@ CLAP_Plugin::get_module_latency( void ) const
 void
 CLAP_Plugin::process( nframes_t nframes )
 {
+    if(_restoring_state)
+        return;
+
     handle_port_connection_change ( );
 
     if ( unlikely ( bypass ( ) ) )
@@ -2433,12 +2436,15 @@ CLAP_Plugin::save_CLAP_plugin_state( const std::string &filename )
 void
 CLAP_Plugin::restore_CLAP_plugin_state( const std::string &filename )
 {
+    _restoring_state = true;
+
     FILE *fp = NULL;
     fp = fopen ( filename.c_str ( ), "r" );
 
     if ( fp == NULL )
     {
         fl_alert ( "Cannot open file %s", filename.c_str ( ) );
+        _restoring_state = false;
         return;
     }
 
@@ -2449,7 +2455,10 @@ CLAP_Plugin::restore_CLAP_plugin_state( const std::string &filename )
     void *data = malloc ( size );
 
     if ( data == NULL )
+    {
+        _restoring_state = false;
         return;
+    }
 
     fread ( data, size, 1, fp );
     fclose ( fp );
@@ -2464,6 +2473,7 @@ CLAP_Plugin::restore_CLAP_plugin_state( const std::string &filename )
         fl_alert ( "%s could not complete state restore of %s", base_label ( ), filename.c_str ( ) );
     }
 
+    _restoring_state = false;
     free ( data );
 }
 

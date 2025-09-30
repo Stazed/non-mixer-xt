@@ -203,7 +203,6 @@ private:
 
     bool _activated;
     bool _bEditor;  // unused??
-    bool _restoring_state;
 
     uint32_t  _position;        ///< Transport position in frames
     float     _bpm;             ///< Transport tempo in beats per minute

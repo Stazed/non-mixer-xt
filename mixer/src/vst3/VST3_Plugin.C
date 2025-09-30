@@ -382,7 +382,6 @@ VST3_Plugin::VST3_Plugin( ) :
     _audio_out_buffers( nullptr ),
     _activated( false ),
     _bEditor( false ),
-    _restoring_state( false ),
     _position( 0 ),
     _bpm( 120.0f ),
     _rolling( false ),

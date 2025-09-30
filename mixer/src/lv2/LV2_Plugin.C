@@ -1630,7 +1630,9 @@ LV2_Plugin::restore_LV2_plugin_state( const std::string &directory )
 
     DMESSAGE ( "Restoring plugin state from %s", path.c_str ( ) );
 
+    _restoring_state = true;
     lilv_state_restore ( state, _lilv_instance, mixer_lv2_set_port_value, this, 0, _idata->features );
+    _restoring_state = false;
 
     lilv_state_free ( state );
 }
@@ -3024,6 +3026,9 @@ LV2_Plugin::get_module_latency( void ) const
 void
 LV2_Plugin::process( nframes_t nframes )
 {
+    if(_restoring_state)
+        return;
+
     handle_port_connection_change ( );
 
     if ( unlikely ( bypass ( ) ) )

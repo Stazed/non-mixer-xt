@@ -49,6 +49,7 @@ public:
     int _plugin_ins;
     int _plugin_outs;
     bool _crosswire;
+    bool _restoring_state;
 
 private:
 

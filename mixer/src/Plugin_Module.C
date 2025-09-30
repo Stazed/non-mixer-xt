@@ -48,6 +48,7 @@ Plugin_Module::Plugin_Module( ) :
     _plugin_ins( 0 ),
     _plugin_outs( 0 ),
     _crosswire( false ),
+    _restoring_state( false ),
     _latency( 0 )
 {
     color ( fl_color_average ( fl_rgb_color ( 0x99, 0x7c, 0x3a ), FL_BACKGROUND_COLOR, 1.0f ) );
