@@ -174,7 +174,7 @@ Chain::Chain( ) : Fl_Group( 0, 0, 100, 100, "" )
             o->box ( FL_NO_BOX );
             o->type ( Fl_Scroll::VERTICAL );
             {
-                Fl_Pack *cp = controls_pack = new Fl_Pack ( X, Y, W, H );
+                NMXT_Pack *cp = controls_pack = new NMXT_Pack ( X, Y, W, H );
                 cp->type ( Fl_Pack::VERTICAL );
                 cp->spacing ( 5 );
                 //            cp->color( FL_RED );
