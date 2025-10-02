@@ -96,6 +96,7 @@
 #include "FL/Fl_Scroll.H"
 #include <FL/fl_draw.H>
 
+#include "NMXT_Pack.H"
 #include "Group.H"
 #include "Mixer_Strip.H"
 #include "Mixer.H"
@@ -151,7 +152,7 @@ Chain::Chain( ) : Fl_Group( 0, 0, 100, 100, "" )
             o->box ( FL_THIN_UP_BOX );
             o->type ( Fl_Scroll::VERTICAL );
             {
-                Fl_Pack *mp = modules_pack = new Fl_Pack ( X, Y, W, H );
+                NMXT_Pack *mp = modules_pack = new NMXT_Pack ( X, Y, W, H );
                 mp->type ( Fl_Pack::VERTICAL );
                 mp->spacing ( 6 );
                 mp->end ( );

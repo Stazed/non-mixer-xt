@@ -31,6 +31,7 @@ set (ProgSources
     ../FL/test_press.C
     ../FL/focus_frame.C
 
+    src/NMXT_Pack.cxx
     src/Plugin_Chooser_UI.C
     src/Chain.C
     src/Controller_Module.C

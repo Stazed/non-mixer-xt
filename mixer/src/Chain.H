@@ -26,7 +26,7 @@
 #include <FL/Fl.H>
 #include <FL/Fl_Pack.H>
 #include <FL/Fl_Button.H>
-
+#include "NMXT_Pack.H"
 #include "../../nonlib/Loggable.H"
 #include "../../nonlib/JACK/Port.H"
 
@@ -49,7 +49,7 @@ class Chain : public Fl_Group, public Loggable
     Fl_Pack *controls_pack;
     Fl_Group *chain_tab;
     Fl_Group *control_tab;
-    Fl_Pack *modules_pack;
+    NMXT_Pack *modules_pack;
 
     Mixer_Strip *_strip;
     const char *_name;
