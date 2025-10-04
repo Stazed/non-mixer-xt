@@ -29,7 +29,6 @@
 #include "../../nonlib/Loggable.H"
 
 
-class Fl_Pack;
 class Fl_Flowpack;
 class Module;
 class Fl_Menu_Button;

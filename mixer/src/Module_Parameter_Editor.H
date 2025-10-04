@@ -26,7 +26,6 @@
 #include <FL/Fl_Double_Window.H>
 #include <FL/Fl_Choice.H>
 
-class Fl_Pack;
 class Fl_Flowpack;
 class Module;
 class Fl_Menu_Button;
