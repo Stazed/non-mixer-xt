@@ -63,6 +63,7 @@
 #include <FL/Fl_File_Chooser.H>
 #include <FL/Fl_Choice.H>
 #include "Group.H"
+#include "NMXT_Pack.H"
 
 extern Mixer *mixer;
 extern char *clipboard_dir;
@@ -622,7 +623,7 @@ Mixer_Strip::init( )
         }
 
         {
-            Fl_Pack *o = new Fl_Pack ( 2, 2, 114, 100 );
+            NMXT_Pack *o = new NMXT_Pack ( 2, 2, 114, 100 );
             o->type ( Fl_Pack::VERTICAL );
             o->spacing ( 2 );
             {
@@ -711,7 +712,7 @@ Mixer_Strip::init( )
                 o->box ( FL_NO_BOX );
                 o->labeltype ( FL_NO_LABEL );
                 {
-                    Fl_Pack *o = new Fl_Pack ( 2, 116, 105, 15 );
+                    NMXT_Pack *o = new NMXT_Pack ( 2, 116, 105, 15 );
                     o->type ( FL_VERTICAL );
                     {
                         Controller_Module *m = jack_input_controller = new Controller_Module ( true );
