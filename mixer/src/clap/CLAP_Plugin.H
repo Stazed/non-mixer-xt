@@ -115,6 +115,7 @@ private:
     bool _activated;
     bool _plug_needs_callback;
     bool _plug_request_restart;
+    bool _plug_needs_rescan;
 
     // GUI Editor stuff...
     bool _bEditorCreated;

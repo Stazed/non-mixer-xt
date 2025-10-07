@@ -66,6 +66,7 @@ CLAP_Plugin::CLAP_Plugin( ) :
     _activated( false ),
     _plug_needs_callback( false ),
     _plug_request_restart( false ),
+    _plug_needs_rescan( false ),
     _bEditorCreated( false ),
     _X11_UI( nullptr ),
     _x_is_visible( false ),
@@ -1226,6 +1227,8 @@ CLAP_Plugin::rescan_parameters( )
     addParamInfos ( );
     addParams ( );
     activate ( );
+
+    updateParamValues ( false ); // false means do not update the custom UI
 }
 
 /**
@@ -1804,6 +1807,15 @@ CLAP_Plugin::update_parameters( )
             _plugin->on_main_thread ( _plugin );
         }
     }
+    
+    if ( _plug_needs_rescan )
+    {
+        if ( Thread::is ( "UI" ) )
+        {
+            _plug_needs_rescan = false;
+            rescan_parameters( );
+        }
+    }
 
     Fl::repeat_timeout ( F_DEFAULT_MSECS, &CLAP_Plugin::parameter_update, this );
 }
@@ -2247,8 +2259,7 @@ CLAP_Plugin::plugin_params_rescan(
     else if ( flags & ( CLAP_PARAM_RESCAN_INFO | CLAP_PARAM_RESCAN_TEXT | CLAP_PARAM_RESCAN_ALL ) )
     {
         DMESSAGE ( "RESCAN INFO & ALL" );
-        rescan_parameters ( );
-        updateParamValues ( false ); // false means do not update the custom UI
+        _plug_needs_rescan = false;
     }
 }
 
@@ -2263,8 +2274,7 @@ CLAP_Plugin::plugin_params_clear(
         return;
 
     // We cannot delete individual parameters so rescan all and restart
-    rescan_parameters ( );
-    updateParamValues ( false ); // false means do not update the custom UI
+    _plug_needs_rescan = false;
 }
 
 void
