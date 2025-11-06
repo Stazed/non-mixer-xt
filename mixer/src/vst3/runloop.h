@@ -66,6 +66,7 @@ public:
 
     static constexpr uint64_t noTimers = std::numeric_limits<uint64_t>::max ();
     uint64_t handleTimersAndReturnNextFireTimeInMs ();
+    bool timers_empty(){return timers.empty();}
 
 private:
     using Clock = std::chrono::steady_clock;

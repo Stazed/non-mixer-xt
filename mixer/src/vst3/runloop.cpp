@@ -162,6 +162,12 @@ TimerID RunLoop::registerTimer (TimerInterval interval, const TimerCallback& cal
 void RunLoop::unregisterTimer (TimerID id)
 {
     timerProcessor.unregisterTimer (id);
+
+    if(timerProcessor.timers_empty())
+    {
+        DMESSAGE("Timers Empty");
+        m_timer_registered = false;
+    }
 }
 
 //------------------------------------------------------------------------

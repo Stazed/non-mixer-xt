@@ -82,13 +82,31 @@ ARunLoop::registerTimer( ITimerHandler* handler,
     if ( !handler || milliseconds == 0 )
         return kInvalidArgument;
 
+    // Check if already registered. This does not matter for
+    // the unordered map, but does matter for the runloop which
+    // is a vector.
+    for (const auto& pair : timerHandlers)
+    {
+        if(pair.second == handler)
+        {
+            DMESSAGE("Got duplicate TIMER");
+            return kResultTrue;
+        }
+    }
+
+    // No duplicates so add it to the runloop vector
+    DMESSAGE("REGISTER TIMER EditorFrame %p", handler);
+
     auto id = m_plugin->get_runloop ( )->registerTimer (
         milliseconds, [handler] ( auto )
     {
         handler->onTimer ( );
     } );
 
+    // Add to EditorFrame unordered pair
     timerHandlers.emplace ( id, handler );
+    DMESSAGE("timerHandles size = %d", timerHandlers.size());
+
     return kResultTrue;
 }
 
@@ -108,6 +126,7 @@ ARunLoop::unregisterTimer( ITimerHandler* handler )
     if ( it == timerHandlers.end ( ) )
         return kResultFalse;
 
+    DMESSAGE("UN_REGISTER TIMER EditorFrame = %p", handler);
     m_plugin->get_runloop ( )->unregisterTimer ( it->first );
 
     timerHandlers.erase ( it );
