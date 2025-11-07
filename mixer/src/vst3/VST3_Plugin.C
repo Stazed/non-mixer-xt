@@ -1119,8 +1119,6 @@ VST3_Plugin::init_custom_ui( )
 bool
 VST3_Plugin::openEditor( void )
 {
-    closeEditor ( );
-
     Vst::IEditController *controller = _pController;
     if ( controller )
         _iPlugView = owned ( controller->createView ( Vst::ViewType::kEditor ) );
