@@ -562,8 +562,6 @@ Mixer::update_cb( void *v )
 void
 Mixer::update_cb( void )
 {
-    Fl::repeat_timeout ( _update_interval, &Mixer::update_cb, this );
-
     /* if ( active_r() && visible_r() ) */
     {
         for ( int i = 0; i < mixer_strips->children ( ); i++ )
@@ -571,6 +569,8 @@ Mixer::update_cb( void )
             ( (Mixer_Strip*) mixer_strips->child ( i ) )->update ( );
         }
     }
+
+    Fl::repeat_timeout ( _update_interval, &Mixer::update_cb, this );
 }
 
 static void
