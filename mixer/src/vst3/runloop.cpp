@@ -86,7 +86,7 @@ void RunLoop::unregisterFileDescriptor (int fd)
     DMESSAGE("RunLoop::unregisterFileDescriptor = %d", fd);
     auto it = fileDescriptors.find (fd);
     if (it == fileDescriptors.end ())
-            return;
+        return;
     fileDescriptors.erase (it);
 }
 
@@ -120,6 +120,11 @@ void RunLoop::select (timeval* timeout)
                 FD_ISSET (e.first, &exceptFDs))
                     e.second (e.first);
         }
+    }
+    else
+    {
+        // WHAT TO DO HERE?
+        DMESSAGE("GOT AN ERROR IN FD SET: ERRNO = %d: nfds = %d", errno, nfds);
     }
 }
 
@@ -196,10 +201,14 @@ void RunLoop::start ()
 void RunLoop::stop ()
 {
     fileDescriptors.clear();
+    m_event_handlers_registered = false;
 }
 
 void RunLoop::proccess_timers()
 {
+    if(map.empty())
+        return;
+
      // process file descriptors
     if(m_event_handlers_registered)
         select (timeValEmpty (m_selectTimeout) ? nullptr : &m_selectTimeout);

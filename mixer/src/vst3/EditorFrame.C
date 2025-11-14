@@ -37,9 +37,16 @@ tresult
 ARunLoop::registerEventHandler( IEventHandler* handler,
     FileDescriptor fd )
 {
-    DMESSAGE ( "HAVE REGISTER FROM PLUGIN" );
-    if ( !handler || eventHandlers.find ( fd ) != eventHandlers.end ( ) )
+    DMESSAGE ( "HAVE REGISTER FROM PLUGIN: fd == %d: PLUGIN PTR = %p", fd, m_plugin );
+
+    if (handler == nullptr)
         return kInvalidArgument;
+
+    if ( eventHandlers.find ( fd ) != eventHandlers.end ( ) )
+    {
+        DMESSAGE("ALREADY REGISTERED!: FD = %d: eventHandlers.end", fd);
+        return kResultTrue;
+    }
 
     m_plugin->get_runloop ( )->registerFileDescriptor (
         fd, [handler] (int fd)
