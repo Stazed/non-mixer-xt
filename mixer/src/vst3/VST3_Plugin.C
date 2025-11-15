@@ -2456,9 +2456,10 @@ VST3_Plugin::deactivate( void )
         Vst::IComponent *component = _pComponent;
         if ( component && _pProcessor )
         {
-            _pProcessor->setProcessing ( false );
-            component->setActive ( false );
             _bProcessing = false;
+            component->setActive ( false );
+            _pProcessor->setProcessing ( false );
+
             vst3_activate ( component, Vst::kEvent, Vst::kOutput, false );
             vst3_activate ( component, Vst::kEvent, Vst::kInput, false );
             vst3_activate ( component, Vst::kAudio, Vst::kOutput, false );
