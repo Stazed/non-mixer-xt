@@ -169,15 +169,20 @@ check_sigterm( void * )
     Fl::repeat_timeout ( 0.1f, check_sigterm );
 }
 
+/*
+ Unambiguous abbreviations of long options are converted to long options.
+ This is why the short options of -h, -i, -o, -n work as they abbreviate
+ 'help', 'instance', 'osc-port', 'no-ui'. Instead of the values in the switch
+ statement of getopt_long_only which are ?, i, p, u.
+*/
 void
 show_help(const char * argv)
 {
     fprintf(stderr, "\nUsage: %s [option] [path_to_project]\n\n", argv);
-    fprintf(stderr,
-            "  --h ,     --help \t\t\t display command-line help and exit\n");
-    fprintf(stderr, "  --i Name, --instance \t\t\t JACK instance client name\n");
-    fprintf(stderr, "  --p Port, --osc-port \t\t\t osc port number\n");
-    fprintf(stderr, "  --n ,     --no-gui \t\t\t disable GUI\n");
+    fprintf(stderr, "  -h ,     --help \t\t\t display command-line help and exit\n");
+    fprintf(stderr, "  -i Name, --instance \t\t\t JACK instance client name\n");
+    fprintf(stderr, "  -o Port, --osc-port \t\t\t osc port number\n");
+    fprintf(stderr, "  -n ,     --no-ui \t\t\t disable GUI\n");
     fprintf(stderr, "\n");
 }
 
@@ -261,12 +266,13 @@ main( int argc, char **argv )
     instance_name = strdup ( APP_NAME );
     bool instance_override = false;
 
+    // Unambiguous abbreviations of long options (short options) are converted to long options.
     static struct option long_options[] =
-    {
-        { "help", no_argument, 0, '?' },
-        { "instance", required_argument, 0, 'i' },
-        { "osc-port", required_argument, 0, 'p' },
-        { "no-ui", no_argument, 0, 'u' },
+    {                                               // Short options
+        { "help", no_argument, 0, '?' },            // -h
+        { "instance", required_argument, 0, 'i' },  // -i
+        { "osc-port", required_argument, 0, 'p' },  // -o
+        { "no-ui", no_argument, 0, 'u' },           // -n
         { 0, 0, 0, 0 }
     };
 
