@@ -46,7 +46,7 @@
 
 #include <FL/Fl_PNG_Image.H>
 
-#ifdef FLTK_SUPPORT
+#ifdef FLTK_VERSION_1_4
 #include <FL/platform.H>
 #endif
 
