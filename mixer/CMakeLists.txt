@@ -153,45 +153,69 @@ if(EnableNTK)
     )
 
 else(EnableNTK) #FLTK Build
-    set(ExternLibraries
-        ${FONTCONFIG_LIBRARIES}
-        ${JACK_LINK_LIBRARIES}
-        ${CMAKE_THREAD_LIBS_INIT}
-        ${X11_LIBRARIES}
-        ${LIBLO_LIBRARIES}
-        ${LILV_LIBRARIES}
-        ${SUIL_LIBRARIES}
-        ${ZIX_LIBRARIES}
-        ${PangoCairo_LIBRARIES}
-        ${XFT_LIBRARIES}
-        ${XRENDER_LIBRARIES}
-        ${XINERAMA_LIBRARIES}
-        fontconfig
-        Xcursor
-        Xfixes
-        jpeg
-        png
-        dl
-        m
-        lrdf
-        z   # needed for FLTK 1.4 build
-    )
-
-    target_include_directories (
-        non-mixer-xt PRIVATE
-        ${FONTCONFIG_INCLUDE_DIRS}
-        ${JACK_INCLUDE_DIRS}
-        ${LRDF_INCLUDE_DIRS}
-        ${LILV_INCLUDE_DIRS}
-        ${SUIL_INCLUDE_DIRS}
-        ${LIBLO_INCLUDE_DIRS}
-        ${ZIX_INCLUDE_DIRS}
-        ${CLAP_INCLUDEDIR}
-        ${PangoCairo_INCLUDE_DIRS}
-        ${XFT_INCLUDE_DIRS}
-        ${XRENDER_INCLUDE_DIRS}
-        ${XINERAMA_INCLUDE_DIRS}
-    )
+    if(TARGET fltk::fltk)    # Modern cmake
+        set(ExternLibraries
+            ${JACK_LINK_LIBRARIES}
+            ${CMAKE_THREAD_LIBS_INIT}
+            ${LIBLO_LIBRARIES}
+            ${LILV_LIBRARIES}
+            ${SUIL_LIBRARIES}
+            ${ZIX_LIBRARIES}
+            ${PangoCairo_LIBRARIES}
+            dl
+            m
+            lrdf
+        )
+        target_include_directories (
+            non-mixer-xt PRIVATE
+            ${JACK_INCLUDE_DIRS}
+            ${LRDF_INCLUDE_DIRS}
+            ${LILV_INCLUDE_DIRS}
+            ${SUIL_INCLUDE_DIRS}
+            ${LIBLO_INCLUDE_DIRS}
+            ${ZIX_INCLUDE_DIRS}
+            ${CLAP_INCLUDEDIR}
+            ${PangoCairo_INCLUDE_DIRS}
+        )
+    else()                          # Legacy cmake
+        set(ExternLibraries
+            ${FONTCONFIG_LIBRARIES}
+            ${JACK_LINK_LIBRARIES}
+            ${CMAKE_THREAD_LIBS_INIT}
+            ${X11_LIBRARIES}
+            ${LIBLO_LIBRARIES}
+            ${LILV_LIBRARIES}
+            ${SUIL_LIBRARIES}
+            ${ZIX_LIBRARIES}
+            ${PangoCairo_LIBRARIES}
+            ${XFT_LIBRARIES}
+            ${XRENDER_LIBRARIES}
+            ${XINERAMA_LIBRARIES}
+            fontconfig
+            Xcursor
+            Xfixes
+            jpeg
+            png
+            dl
+            m
+            lrdf
+        )
+        target_include_directories (
+            non-mixer-xt PRIVATE
+            ${FONTCONFIG_INCLUDE_DIRS}
+            ${JACK_INCLUDE_DIRS}
+            ${LRDF_INCLUDE_DIRS}
+            ${LILV_INCLUDE_DIRS}
+            ${SUIL_INCLUDE_DIRS}
+            ${LIBLO_INCLUDE_DIRS}
+            ${ZIX_INCLUDE_DIRS}
+            ${CLAP_INCLUDEDIR}
+            ${PangoCairo_INCLUDE_DIRS}
+            ${XFT_INCLUDE_DIRS}
+            ${XRENDER_INCLUDE_DIRS}
+            ${XINERAMA_INCLUDE_DIRS}
+        )
+    endif()
 endif(EnableNTK)
 
 if (EnableVST3Support AND CONFIG_VST3SDK)
@@ -199,9 +223,13 @@ if (EnableVST3Support AND CONFIG_VST3SDK)
 endif()
 
 if(EnableNTK)
-    target_link_libraries (non-mixer-xt ${NTK_STATIC} ${NTK_STATIC_IMAGES} ${ExternLibraries})
+    target_link_libraries (non-mixer-xt PRIVATE ${NTK_STATIC} ${NTK_STATIC_IMAGES} ${ExternLibraries})
 else(EnableNTK) #FLTK
-    target_link_libraries (non-mixer-xt ${FLTK_STATIC} ${FLTK_STATIC_IMAGES} ${ExternLibraries})
+    if(TARGET fltk::fltk)   # Modern cmake
+        target_link_libraries (non-mixer-xt PRIVATE fltk::fltk fltk::images ${ExternLibraries})
+    else()                  # Legacy cmake
+        target_link_libraries (non-mixer-xt PRIVATE ${FLTK_STATIC} ${FLTK_STATIC_IMAGES} ${ExternLibraries})
+    endif()
 endif(EnableNTK)
 
 install (TARGETS non-mixer-xt RUNTIME DESTINATION bin)
