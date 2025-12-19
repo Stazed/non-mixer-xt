@@ -185,26 +185,122 @@ UIDtoString( bool comFormat, const char* _data )
     return result;
 }
 
-std::string
-utf16_to_utf8( const std::u16string& utf16 )
+std::string utf16_to_utf8(const std::u16string& utf16)
 {
-_Pragma("GCC diagnostic push")
-_Pragma("GCC diagnostic ignored \"-Wdeprecated-declarations\"")
-    std::wstring_convert < std::codecvt_utf8_utf16<char16_t>, char16_t> convert;
-_Pragma("GCC diagnostic pop")
-    std::string utf8 = convert.to_bytes ( utf16 );
+    std::string utf8;
+    utf8.reserve(utf16.size());
+
+    for (size_t i = 0; i < utf16.size(); ++i)
+    {
+        uint32_t codepoint = utf16[i];
+
+        // Handle surrogate pairs
+        if (codepoint >= 0xD800 && codepoint <= 0xDBFF)
+        {
+            if (i + 1 >= utf16.size())
+                throw std::runtime_error("Invalid UTF-16");
+
+            uint32_t low = utf16[++i];
+            if (low < 0xDC00 || low > 0xDFFF)
+                throw std::runtime_error("Invalid UTF-16");
+
+            codepoint = ((codepoint - 0xD800) << 10)
+                      + (low - 0xDC00)
+                      + 0x10000;
+        }
+        else if (codepoint >= 0xDC00 && codepoint <= 0xDFFF)
+        {
+            throw std::runtime_error("Invalid UTF-16");
+        }
+
+        // Encode UTF-8
+        if (codepoint <= 0x7F)
+            utf8.push_back(static_cast<char>(codepoint));
+        else if (codepoint <= 0x7FF)
+        {
+            utf8.push_back(static_cast<char>(0xC0 | (codepoint >> 6)));
+            utf8.push_back(static_cast<char>(0x80 | (codepoint & 0x3F)));
+        }
+        else if (codepoint <= 0xFFFF)
+        {
+            utf8.push_back(static_cast<char>(0xE0 | (codepoint >> 12)));
+            utf8.push_back(static_cast<char>(0x80 | ((codepoint >> 6) & 0x3F)));
+            utf8.push_back(static_cast<char>(0x80 | (codepoint & 0x3F)));
+        }
+        else
+        {
+            utf8.push_back(static_cast<char>(0xF0 | (codepoint >> 18)));
+            utf8.push_back(static_cast<char>(0x80 | ((codepoint >> 12) & 0x3F)));
+            utf8.push_back(static_cast<char>(0x80 | ((codepoint >> 6) & 0x3F)));
+            utf8.push_back(static_cast<char>(0x80 | (codepoint & 0x3F)));
+        }
+    }
+
     return utf8;
 }
 
-std::u16string
-utf8_to_utf16( const std::string & utf8String )
+std::u16string utf8_to_utf16(const std::string& utf8)
 {
-_Pragma("GCC diagnostic push")
-_Pragma("GCC diagnostic ignored \"-Wdeprecated-declarations\"")
-    std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> converter;
-_Pragma("GCC diagnostic pop")
-    std::u16string utf16String = converter.from_bytes( utf8String );
-    return utf16String;
-}
+    std::u16string utf16;
 
+    for (size_t i = 0; i < utf8.size();)
+    {
+        uint32_t codepoint = 0;
+        unsigned char c = utf8[i];
+
+        if (c <= 0x7F)
+        {
+            codepoint = c;
+            i += 1;
+        }
+        else if ((c & 0xE0) == 0xC0)
+        {
+            if (i + 1 >= utf8.size())
+                throw std::runtime_error("Invalid UTF-8");
+
+            codepoint = ((c & 0x1F) << 6)
+                      | (utf8[i + 1] & 0x3F);
+            i += 2;
+        }
+        else if ((c & 0xF0) == 0xE0)
+        {
+            if (i + 2 >= utf8.size())
+                throw std::runtime_error("Invalid UTF-8");
+
+            codepoint = ((c & 0x0F) << 12)
+                      | ((utf8[i + 1] & 0x3F) << 6)
+                      | (utf8[i + 2] & 0x3F);
+            i += 3;
+        }
+        else if ((c & 0xF8) == 0xF0)
+        {
+            if (i + 3 >= utf8.size())
+                throw std::runtime_error("Invalid UTF-8");
+
+            codepoint = ((c & 0x07) << 18)
+                      | ((utf8[i + 1] & 0x3F) << 12)
+                      | ((utf8[i + 2] & 0x3F) << 6)
+                      | (utf8[i + 3] & 0x3F);
+            i += 4;
+        }
+        else
+        {
+            throw std::runtime_error("Invalid UTF-8");
+        }
+
+        // Encode UTF-16
+        if (codepoint <= 0xFFFF)
+        {
+            utf16.push_back(static_cast<char16_t>(codepoint));
+        }
+        else
+        {
+            codepoint -= 0x10000;
+            utf16.push_back(static_cast<char16_t>((codepoint >> 10) + 0xD800));
+            utf16.push_back(static_cast<char16_t>((codepoint & 0x3FF) + 0xDC00));
+        }
+    }
+
+    return utf16;
+}
 }   // namespace nmxt_common
