@@ -2,7 +2,7 @@
 
 project (non-mixer-xt)
 
-set (ProgSources
+set(NONLIB_SOURCES
     ../nonlib/JACK/Client.C
     ../nonlib/JACK/Port.C
     ../nonlib/Log_Entry.C
@@ -13,12 +13,14 @@ set (ProgSources
     ../nonlib/debug.C
     ../nonlib/dsp.C
     ../nonlib/file.C
-    ../nonlib/MIDI/midievent.C
     ../nonlib/string_util.C
-    ../nonlib/MIDI/event_list.C
-    ../nonlib/MIDI/event.C
-    ../nonlib/MIDI/midievent.C
 
+    ../nonlib/MIDI/event.C
+    ../nonlib/MIDI/event_list.C
+    ../nonlib/MIDI/midievent.C
+)
+
+set(FL_SOURCES
     ../FL/About_Dialog.C
     ../FL/Fl_Menu_Settings.C
     ../FL/Fl_Scalepack.C
@@ -30,7 +32,9 @@ set (ProgSources
     ../FL/menu_popup.C
     ../FL/test_press.C
     ../FL/focus_frame.C
+)
 
+set(CORE_SOURCES
     src/Plugin_Chooser_UI.C
     src/Chain.C
     src/Controller_Module.C
@@ -39,21 +43,28 @@ set (ProgSources
     src/Spatializer_Module.C
     src/JACK_Module.C
     src/AUX_Module.C
+
     src/ladspa/LADSPAInfo.C
     src/ladspa/LADSPA_Plugin.C
+
     src/lv2/LV2_Plugin.C
+    src/lv2/lv2_evbuf.c
+
     src/clap/CLAP_Plugin.C
     src/clap/Clap_Discovery.C
     src/clap/Time.cpp
+
     src/vst2/Vst2_Discovery.C
     src/vst2/VST2_Plugin.C
     src/vst2/VST2_Preset.C
+
     src/vst3/VST3_common.C
     src/vst3/Vst3_Discovery.C
     src/vst3/VST3_Plugin.C
     src/vst3/VST3PluginHost.C
     src/vst3/runloop.cpp
     src/vst3/EditorFrame.C
+
     src/Meter_Indicator_Module.C
     src/Meter_Module.C
     src/Mixer.C
@@ -62,16 +73,22 @@ set (ProgSources
     src/Module_Parameter_Editor.C
     src/Mono_Pan_Module.C
     src/Plugin_Chooser.C
-    src/NSM.C
-    src/Panner.C
     src/Plugin_Module.C
+    src/Panner.C
     src/Project.C
     src/Group.C
     src/SpectrumView.C
     src/Spatialization_Console.C
     src/Scanner_Window.C
-    src/lv2/lv2_evbuf.c
+    src/NSM.C
+
     src/x11/X11PluginUI.C
+)
+
+set(ProgSources
+    ${NONLIB_SOURCES}
+    ${FL_SOURCES}
+    ${CORE_SOURCES}
 )
 
 if(EnableNTK)
