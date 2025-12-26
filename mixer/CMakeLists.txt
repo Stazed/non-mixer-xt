@@ -34,8 +34,45 @@ set(FL_SOURCES
     ../FL/focus_frame.C
 )
 
+set(PLUGIN_SOURCES
+    # LADSPA
+    src/ladspa/LADSPAInfo.C
+    src/ladspa/LADSPA_Plugin.C
+
+    # LV2
+    src/lv2/LV2_Plugin.C
+    src/lv2/lv2_evbuf.c
+
+    # CLAP
+    src/clap/CLAP_Plugin.C
+    src/clap/Clap_Discovery.C
+    src/clap/Time.cpp
+
+    # VST2
+    src/vst2/Vst2_Discovery.C
+    src/vst2/VST2_Plugin.C
+    src/vst2/VST2_Preset.C
+
+    # VST3
+    src/vst3/VST3_common.C
+    src/vst3/Vst3_Discovery.C
+    src/vst3/VST3_Plugin.C
+    src/vst3/VST3PluginHost.C
+    src/vst3/runloop.cpp
+    src/vst3/EditorFrame.C
+
+    # Platform-specific plugin UI
+    src/x11/X11PluginUI.C
+)
+
 set(CORE_SOURCES
+    # Generic plugin infrastructure
+    src/Plugin_Chooser.C
     src/Plugin_Chooser_UI.C
+    src/Plugin_Module.C
+    src/Scanner_Window.C
+
+    # Engine / processing
     src/Chain.C
     src/Controller_Module.C
     src/DPM.C
@@ -44,27 +81,7 @@ set(CORE_SOURCES
     src/JACK_Module.C
     src/AUX_Module.C
 
-    src/ladspa/LADSPAInfo.C
-    src/ladspa/LADSPA_Plugin.C
-
-    src/lv2/LV2_Plugin.C
-    src/lv2/lv2_evbuf.c
-
-    src/clap/CLAP_Plugin.C
-    src/clap/Clap_Discovery.C
-    src/clap/Time.cpp
-
-    src/vst2/Vst2_Discovery.C
-    src/vst2/VST2_Plugin.C
-    src/vst2/VST2_Preset.C
-
-    src/vst3/VST3_common.C
-    src/vst3/Vst3_Discovery.C
-    src/vst3/VST3_Plugin.C
-    src/vst3/VST3PluginHost.C
-    src/vst3/runloop.cpp
-    src/vst3/EditorFrame.C
-
+    # Mixing / metering
     src/Meter_Indicator_Module.C
     src/Meter_Module.C
     src/Mixer.C
@@ -72,23 +89,21 @@ set(CORE_SOURCES
     src/Module.C
     src/Module_Parameter_Editor.C
     src/Mono_Pan_Module.C
-    src/Plugin_Chooser.C
-    src/Plugin_Module.C
     src/Panner.C
+
+    # Project / UI / misc
     src/Project.C
     src/Group.C
     src/SpectrumView.C
     src/Spatialization_Console.C
-    src/Scanner_Window.C
     src/NSM.C
-
-    src/x11/X11PluginUI.C
 )
 
 set(ProgSources
     ${NONLIB_SOURCES}
     ${FL_SOURCES}
     ${CORE_SOURCES}
+    ${PLUGIN_SOURCES}
 )
 
 if(EnableNTK)
