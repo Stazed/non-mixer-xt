@@ -1321,6 +1321,30 @@ CLAP_Plugin::updateParamValues( bool update_custom_ui )
 }
 
 void
+CLAP_Plugin::setPreset(int choice)
+{
+    if (!_presets_metadata.empty())
+    {
+        auto* load =
+            (const clap_plugin_preset_load_t*)
+            _plugin->get_extension(
+                _plugin,
+                CLAP_EXT_PRESET_LOAD);
+
+        if (load)
+        {
+            load->from_location(
+                _plugin,
+                CLAP_PRESET_DISCOVERY_LOCATION_FILE,
+                _presets_metadata[choice].location.c_str(),
+                _presets_metadata[choice].load_key.empty()
+                    ? nullptr
+                    : _presets_metadata[choice].load_key.c_str());
+        }
+    }
+}
+
+void
 CLAP_Plugin::initialize_plugin( )
 {
     _params = static_cast<const clap_plugin_params *> (

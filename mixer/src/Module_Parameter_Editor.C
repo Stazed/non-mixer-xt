@@ -113,6 +113,43 @@ Module_Parameter_Editor::Module_Parameter_Editor( Module *module ) :
 
     {
         Fl_Group *g = new Fl_Group ( 0, 0, w ( ), 25 );
+#ifdef CLAP_SUPPORT
+        if ( _module->_plug_type == Type_CLAP )
+        {
+            CLAP_Plugin *pm = static_cast<CLAP_Plugin *> ( _module );
+
+            if ( !pm->_PresetList.empty ( ) )
+            {
+                {
+                    Fl_Choice *o = _presets_choice_button = new Fl_Choice ( 5, 0, 200, 24 );
+                    for ( unsigned i = 0; i < pm->_PresetList.size ( ); ++i )
+                    {
+                        std::string temp = pm->_PresetList[i];
+
+                        /* FLTK assumes '/' to be sub-menu, so we have to search the Label and escape it */
+                        for ( unsigned ii = 0; ii < temp.size ( ); ++ii )
+                        {
+                            if ( temp[ii] == '/' )
+                            {
+                                temp.insert ( ii, "\\" );
+                                ++ii;
+                                continue;
+                            }
+                        }
+
+                        o->add ( temp.c_str ( ) );
+                    }
+
+                    o->label ( "Presets" );
+                    o->align ( FL_ALIGN_RIGHT );
+                    o->value ( 0 );
+                    o->when ( FL_WHEN_CHANGED | FL_WHEN_NOT_CHANGED );
+                    o->callback ( cb_preset_handle, this );
+                }
+            }
+        }
+#endif  // CLAP_SUPPORT
+
 #ifdef LV2_SUPPORT
         if ( _module->_plug_type == Type_LV2 )
         {
@@ -681,11 +718,18 @@ Module_Parameter_Editor::make_controls( void )
     update_control_visibility ( );
 }
 
-#if defined LV2_SUPPORT || defined VST2_SUPPORT || defined VST3_SUPPORT
+#if defined LV2_SUPPORT || defined VST2_SUPPORT || defined VST3_SUPPORT || defined(CLAP_SUPPORT)
 
 void
 Module_Parameter_Editor::set_preset_controls( int choice )
 {
+#ifdef CLAP_SUPPORT
+    if ( _module->_plug_type == Type_CLAP )
+    {
+        CLAP_Plugin *pm = static_cast<CLAP_Plugin *> ( _module );
+        pm->setPreset ( choice );
+    }
+#endif
 #ifdef LV2_SUPPORT
     if ( _module->_plug_type == Type_LV2 )
     {

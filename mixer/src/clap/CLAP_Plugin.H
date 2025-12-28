@@ -194,6 +194,9 @@ public:
     // Parameters update methods.
     void updateParamValues(bool update_custom_ui);
 
+    // Set Preset
+    void setPreset(int choice);
+
     void addParams();
     void clearParams();
     void rescan_parameters();

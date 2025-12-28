@@ -86,7 +86,7 @@ class Module_Parameter_Editor : public Fl_Double_Window
     static void cb_value_handle ( Fl_Widget *w, void *v );
     static void cb_panner_value_handle ( Fl_Widget *w, void *v );
     static void cb_mode_handle ( Fl_Widget *w, void *v );
-#if defined LV2_SUPPORT || defined VST2_SUPPORT || defined VST3_SUPPORT
+#if defined LV2_SUPPORT || defined VST2_SUPPORT || defined VST3_SUPPORT || defined(CLAP_SUPPORT)
     static void cb_enumeration_handle ( Fl_Widget *w, void *v );
     static void cb_preset_handle ( Fl_Widget *w, void *v );
     void set_preset_controls(int choice);
