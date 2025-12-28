@@ -46,6 +46,8 @@ set(PLUGIN_SOURCES
     # CLAP
     src/clap/CLAP_Plugin.C
     src/clap/Clap_Discovery.C
+    src/clap/PresetIndexer.cpp
+    src/clap/PresetMetadataReceiver.cpp
     src/clap/Time.cpp
 
     # VST2

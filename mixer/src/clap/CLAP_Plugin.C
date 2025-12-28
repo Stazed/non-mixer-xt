@@ -32,6 +32,7 @@
 #include "Clap_Discovery.H"
 #include "Time.h"
 #include "CarlaClapUtils.H"
+#include "PresetIndexer.h"
 
 #include "../Chain.H"
 #include "../../../nonlib/dsp.h"
@@ -268,6 +269,8 @@ CLAP_Plugin::load_plugin( Module::Picked picked )
         return false;
     }
 
+    get_presets();
+    
     setup_host ( &_host, this );
 
     _plugin = _factory->create_plugin ( _factory, &_host, _descriptor->id );
@@ -1526,6 +1529,65 @@ CLAP_Plugin::create_control_ports( )
     }
 
     MESSAGE ( "Plugin has %i control ins and %i control outs", control_ins, control_outs );
+}
+
+void
+CLAP_Plugin::get_presets()
+{
+    auto* preset_factory =
+        (const clap_preset_discovery_factory_t*)
+        _entry->get_factory(
+            CLAP_PRESET_DISCOVERY_FACTORY_ID);
+
+    if (!preset_factory)
+    {
+        DMESSAGE("Preset discovery not supported");
+    }
+    else
+    {
+        PresetIndexer indexer;
+
+        uint32_t count = preset_factory->count(preset_factory);
+        DMESSAGE("Preset providers: %d", count);
+
+        for (uint32_t i = 0; i < count; ++i)
+        {
+            auto* desc = preset_factory->get_descriptor(preset_factory, i);
+            if (!desc)
+                continue;
+
+            DMESSAGE("Using provider: %s", desc->name);
+
+            auto* provider =
+                preset_factory->create(
+                    preset_factory,
+                    indexer.indexer(),
+                    desc->id);
+
+            if (!provider)
+                continue;
+
+            if (provider->init(provider))
+                indexer.crawl(provider);
+
+            provider->destroy(provider);
+        }
+
+        _presets_metadata = indexer.presets();
+        
+        for (unsigned ii = 0; ii < _presets_metadata.size(); ++ii)
+        {
+            std::string menu_name = std::to_string ( ii );
+            menu_name += " - ";
+            menu_name += _presets_metadata[ii].name;
+
+            _PresetList.push_back(menu_name);
+            DMESSAGE("Preset Name: %s", _presets_metadata[ii].name.c_str());
+            DMESSAGE("Preset Location: %s", _presets_metadata[ii].location.c_str());
+        }
+
+        DMESSAGE("Indexed presets: %d", _presets_metadata.size());
+    }
 }
 
 void

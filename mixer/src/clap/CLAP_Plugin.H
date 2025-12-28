@@ -39,6 +39,7 @@
 
 #include "EventList.H"
 #include "LinkedList.hpp"
+#include "PresetModel.h"
 
 extern std::string project_directory;
 extern std::string export_import_strip;
@@ -86,6 +87,9 @@ public:
 
     std::vector<Port> note_input;
     std::vector<Port> note_output;
+
+    std::vector<std::string> _PresetList;
+    std::vector<Preset> _presets_metadata;
 
     CLAP_Plugin();
     virtual ~CLAP_Plugin();
@@ -250,6 +254,7 @@ private:
     void create_audio_ports();
     void create_note_ports();
     void create_control_ports();
+    void get_presets();
     void activate ( void );
     void deactivate ( void );
     void add_port ( const Port &p ) override;
