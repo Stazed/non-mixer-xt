@@ -1598,8 +1598,11 @@ CLAP_Plugin::get_presets()
         }
 
         _presets_metadata = indexer.presets();
+
+        // Create the indexed preset list for the Module Parameter Editor
+        unsigned max_preset_list_size = _presets_metadata.size() > C_MAX_PRESET_LIST_SIZE ? C_MAX_PRESET_LIST_SIZE : _presets_metadata.size();
         
-        for (unsigned ii = 0; ii < _presets_metadata.size(); ++ii)
+        for (unsigned ii = 0; ii < max_preset_list_size; ++ii)
         {
             std::string menu_name = std::to_string ( ii );
             menu_name += " - ";

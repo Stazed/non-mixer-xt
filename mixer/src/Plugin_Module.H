@@ -27,6 +27,8 @@
 
 #include "../../nonlib/Loggable.H"
 
+const unsigned C_MAX_PRESET_LIST_SIZE = 200;
+
 class Fl_Menu_Button;
 
 class Plugin_Module : public Module
