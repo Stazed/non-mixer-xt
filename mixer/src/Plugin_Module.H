@@ -27,6 +27,9 @@
 
 #include "../../nonlib/Loggable.H"
 
+// This hard limit is due to FLTK/NTK display limit on the Fl_Choice widget.
+// Some plugins have huge number of presets, but they also have preset browsers
+// so this really does not matter if we limit.
 const unsigned C_MAX_PRESET_LIST_SIZE = 200;
 
 class Fl_Menu_Button;
