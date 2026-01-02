@@ -48,6 +48,7 @@
 
 #include <unordered_map>
 #include <atomic>
+#include <thread>
 #include "../x11/X11PluginUI.H"
 #include "VST3_Plugin.H"
 
@@ -56,6 +57,8 @@ class ARunLoop : public IRunLoop
 public:
 
     ARunLoop(VST3_Plugin *plug) : m_plugin(plug) {}
+
+    void beginDestruction();
 
     //--- IRunLoop ---
     //
@@ -78,22 +81,14 @@ public:
         return kNoInterface;
     }
 
-    uint32 PLUGIN_API addRef  () override
-    {
-        return ++m_refCount;
-    }
-    uint32 PLUGIN_API release () override
-    {
-        uint32 r = --m_refCount;
-        if (r == 0)
-            delete this;
-        return r;
-    }
+    uint32 PLUGIN_API addRef() override;
+    uint32 PLUGIN_API release() override;
 
 private:
 
     VST3_Plugin * m_plugin;
     std::atomic<uint32> m_refCount{1};
+    std::atomic<bool>   m_destroying { false };
     using TimerID = uint64_t;
     using EventHandler = IPtr<Linux::IEventHandler>;
     using TimerHandler = IPtr<Linux::ITimerHandler>;
@@ -151,9 +146,7 @@ public:
     // Destructor.
     virtual ~EditorFrame ()
     {
-        m_plugView->removed();
-        m_plugView->setFrame(nullptr);
-        m_runLoop = nullptr;
+        beginDestruction();
     }
 
     // Accessors.
@@ -225,17 +218,8 @@ public:
         return m_runLoop->queryInterface(_iid, obj);
     }
 
-    uint32 PLUGIN_API addRef  () override
-    {
-        return ++m_refCount;
-    }
-    uint32 PLUGIN_API release () override
-    {
-        uint32 r = --m_refCount;
-        if (r == 0)
-            delete this;
-        return r;
-    }
+    uint32 PLUGIN_API addRef() override;
+    uint32 PLUGIN_API release() override;
 
 private:
 
@@ -245,6 +229,10 @@ private:
     IPtr<ARunLoop> m_runLoop;
     bool m_resizing;
     std::atomic<uint32> m_refCount{1};
+    std::atomic<bool>   m_destroying { false };
+    std::atomic<int>    m_callbackDepth { 0 };
+
+    void beginDestruction();
 
 protected:
     void handlePluginUIClosed() override;

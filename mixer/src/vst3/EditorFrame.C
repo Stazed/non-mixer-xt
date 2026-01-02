@@ -51,7 +51,8 @@ ARunLoop::registerEventHandler( IEventHandler* handler,
     m_plugin->get_runloop ( )->registerFileDescriptor (
         fd, [handler] (int fd)
     {
-        handler->onFDIsSet ( fd );
+        if (handler)
+            handler->onFDIsSet ( fd );
     } );
 
     eventHandlers.emplace ( fd, handler );
@@ -107,7 +108,8 @@ ARunLoop::registerTimer( ITimerHandler* handler,
     auto id = m_plugin->get_runloop ( )->registerTimer (
         milliseconds, [handler] ( auto )
     {
-        handler->onTimer ( );
+        if (handler)
+            handler->onTimer ( );
     } );
 
     // Add to EditorFrame unordered pair
@@ -140,20 +142,91 @@ ARunLoop::unregisterTimer( ITimerHandler* handler )
     return kResultTrue;
 }
 
+uint32 ARunLoop::addRef()
+{
+    return ++m_refCount;
+}
+
+uint32 ARunLoop::release()
+{
+    uint32 r = --m_refCount;
+    if (r == 0)
+        delete this;
+    return r;
+}
+
+void ARunLoop::beginDestruction()
+{
+    m_destroying.store(true, std::memory_order_release);
+
+    for (auto& it : eventHandlers)
+        m_plugin->get_runloop()->unregisterFileDescriptor(it.first);
+
+    for (auto& it : timerHandlers)
+        m_plugin->get_runloop()->unregisterTimer(it.first);
+
+    eventHandlers.clear();
+    timerHandlers.clear();
+}
+
+uint32 EditorFrame::addRef()
+{
+    return ++m_refCount;
+}
+
+uint32 EditorFrame::release()
+{
+    uint32 r = --m_refCount;
+    if (r == 0)
+        delete this;
+    return r;
+}
+
+void EditorFrame::beginDestruction()
+{
+    m_destroying.store(true, std::memory_order_release);
+
+    if (m_plugView)
+    {
+        m_plugView->removed();
+        m_plugView->setFrame(nullptr);
+    }
+
+    if (m_runLoop)
+        m_runLoop->beginDestruction();
+
+    while (m_callbackDepth.load(std::memory_order_acquire) > 0)
+        std::this_thread::sleep_for(std::chrono::microseconds(100));
+
+    m_runLoop = nullptr;
+}
+
 void
 EditorFrame::handlePluginUIClosed( )
 {
+    if (m_destroying.load())
+        return;
+
+    m_callbackDepth.fetch_add(1);
     m_plugin->set_visibility ( false );
+    m_callbackDepth.fetch_sub(1);
 }
 
 void
 EditorFrame::handlePluginUIResized( const uint width, const uint height )
 {
     // DMESSAGE("Handle Resized W = %d: H = %d", width, height);
+    if (m_destroying.load())
+        return;
+
+    m_callbackDepth.fetch_add(1);
 
     ViewRect rect0;
     if ( m_plugView->getSize ( &rect0 ) != kResultOk )
+    {
+        m_callbackDepth.fetch_sub(1);
         return;
+    }
 
     Size a_size = getSize ( );
 
@@ -166,6 +239,8 @@ EditorFrame::handlePluginUIResized( const uint width, const uint height )
         rect0.bottom = rect0.top + height;
         m_plugView->onSize ( &rect0 );
     }
+
+    m_callbackDepth.fetch_sub(1);
 }
 
 #endif  // VST3_SUPPORT
