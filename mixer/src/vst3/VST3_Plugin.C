@@ -32,7 +32,6 @@
 #include <filesystem>
 #include <dlfcn.h>      // dlopen, dlerror, dlsym
 #include <unordered_map>
-#include <atomic>
 #include <FL/fl_ask.H>  // fl_alert()
 
 #include "../../../nonlib/dsp.h"
@@ -439,6 +438,9 @@ VST3_Plugin::VST3_Plugin( ) :
 VST3_Plugin::~VST3_Plugin( )
 {
     log_destroy ( );
+
+    beginDestruction();
+    waitForAudioExit();
 
     if ( _x_is_visible )
         hide_custom_ui ( );
@@ -864,10 +866,18 @@ VST3_Plugin::get_module_latency( void ) const
 void
 VST3_Plugin::process( nframes_t nframes )
 {
+    if (_destroying.load(std::memory_order_acquire))
+        return;
+
+    _processDepth.fetch_add(1, std::memory_order_acq_rel);
+
     /* Flag to stop processing while restoring the state, as some plugins 
        would freeze jack intermittently. */
     if(_restoring_state)
+    {
+        _processDepth.fetch_sub(1, std::memory_order_acq_rel);
         return;
+    }
 
     handle_port_connection_change ( );
 
@@ -886,10 +896,16 @@ VST3_Plugin::process( nframes_t nframes )
     else
     {
         if ( !_pProcessor )
+        {
+            _processDepth.fetch_sub(1, std::memory_order_acq_rel);
             return;
+        }
 
         if ( !_bProcessing )
+        {
+            _processDepth.fetch_sub(1, std::memory_order_acq_rel);
             return;
+        }
 
         process_jack_transport ( nframes );
 
@@ -985,6 +1001,8 @@ VST3_Plugin::process( nframes_t nframes )
         _cEvents_in.clear ( );
         _cParams_in.clear ( );
     }
+
+    _processDepth.fetch_sub(1, std::memory_order_acq_rel);
 }
 
 // Set/add a parameter value/point.
@@ -1318,6 +1336,19 @@ VST3_Plugin::hide_custom_ui( )
     }
 
     return true;
+}
+
+void
+VST3_Plugin::beginDestruction()
+{
+    _destroying.store(true, std::memory_order_release);
+}
+
+void
+VST3_Plugin::waitForAudioExit()
+{
+    while (_processDepth.load(std::memory_order_acquire) > 0)
+        std::this_thread::sleep_for(std::chrono::microseconds(50));
 }
 
 // Parameter finder (by id).

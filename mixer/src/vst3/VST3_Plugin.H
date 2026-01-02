@@ -32,6 +32,7 @@
 #ifdef VST3_SUPPORT
 
 #include <unordered_map>
+#include <atomic>
 
 #include "../Mixer_Strip.H"
 #include "../Plugin_Module.H"
@@ -221,6 +222,13 @@ private:
 
     // Identififier-parameter map.
     std::unordered_map<uint32_t, unsigned long> _mParamIds;
+
+    std::atomic<bool> _destroying { false };
+    std::atomic<int>  _processDepth { 0 };
+
+    void beginDestruction();
+    void waitForAudioExit();
+
     // Parameter finder (by id).
     unsigned long findParamId ( uint32_t id ) const;
 
