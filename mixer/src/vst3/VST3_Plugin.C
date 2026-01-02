@@ -32,6 +32,7 @@
 #include <filesystem>
 #include <dlfcn.h>      // dlopen, dlerror, dlsym
 #include <unordered_map>
+#include <atomic>
 #include <FL/fl_ask.H>  // fl_alert()
 
 #include "../../../nonlib/dsp.h"
@@ -183,6 +184,7 @@ private:
 
     // Instance client.
     VST3_Plugin *m_pPlugin;
+    std::atomic<uint32> refCount{1};
 };
 
 tresult PLUGIN_API
@@ -200,13 +202,16 @@ VST3_Plugin::Handler::queryInterface(
 uint32 PLUGIN_API
 VST3_Plugin::Handler::addRef( void )
 {
-    return 1000;
+    return ++refCount;
 }
 
 uint32 PLUGIN_API
 VST3_Plugin::Handler::release( void )
 {
-    return 1000;
+    uint32 r = --refCount;
+    if (r == 0)
+        delete this;
+    return r;
 }
 
 //------------------------------------------------------------------------
