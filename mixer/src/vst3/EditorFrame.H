@@ -47,6 +47,7 @@
 #include "pluginterfaces/base/ftypes.h"
 
 #include <unordered_map>
+#include <atomic>
 #include "../x11/X11PluginUI.H"
 #include "VST3_Plugin.H"
 
@@ -79,16 +80,20 @@ public:
 
     uint32 PLUGIN_API addRef  () override
     {
-        return 1001;
+        return ++m_refCount;
     }
     uint32 PLUGIN_API release () override
     {
-        return 1001;
+        uint32 r = --m_refCount;
+        if (r == 0)
+            delete this;
+        return r;
     }
 
 private:
 
     VST3_Plugin * m_plugin;
+    std::atomic<uint32> m_refCount{1};
     using TimerID = uint64_t;
     using EventHandler = IPtr<Linux::IEventHandler>;
     using TimerHandler = IPtr<Linux::ITimerHandler>;
@@ -146,6 +151,7 @@ public:
     // Destructor.
     virtual ~EditorFrame ()
     {
+        m_plugView->removed();
         m_plugView->setFrame(nullptr);
         m_runLoop = nullptr;
     }
@@ -221,11 +227,14 @@ public:
 
     uint32 PLUGIN_API addRef  () override
     {
-        return 1002;
+        return ++m_refCount;
     }
     uint32 PLUGIN_API release () override
     {
-        return 1002;
+        uint32 r = --m_refCount;
+        if (r == 0)
+            delete this;
+        return r;
     }
 
 private:
@@ -235,6 +244,7 @@ private:
     IPlugView *m_plugView;
     IPtr<ARunLoop> m_runLoop;
     bool m_resizing;
+    std::atomic<uint32> m_refCount{1};
 
 protected:
     void handlePluginUIClosed() override;
