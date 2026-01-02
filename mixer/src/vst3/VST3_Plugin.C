@@ -85,12 +85,20 @@ public:
 
     DECLARE_FUNKNOWN_METHODS
 
+    void invalidate()
+    {
+        m_pPlugin.store(nullptr, std::memory_order_release);
+    }
+
     //--- IComponentHandler ---
     //
     tresult PLUGIN_API
     beginEdit( Vst::ParamID id ) override
     {
         DMESSAGE ( "Handler[%p]::beginEdit(%d)", this, int(id ) );
+        if (!m_pPlugin.load())
+            return kResultFalse;
+
         return kResultOk;
     }
 
@@ -98,21 +106,27 @@ public:
     performEdit( Vst::ParamID id, Vst::ParamValue value ) override
     {
         DMESSAGE ( "Handler[%p]::performEdit(%d, %g)", this, int(id ), float(value ) );
+        if (auto* p = m_pPlugin.load(std::memory_order_acquire))
+        {
+            p->setParameter ( id, value, 0 );
 
-        m_pPlugin->setParameter ( id, value, 0 );
+            unsigned long index = p->findParamId ( id );
 
-        unsigned long index = m_pPlugin->findParamId ( id );
+            // false means don't update custom UI cause that is were it came from
+            p->set_control_value ( index, value, false );
+            return kResultOk;
+        }
 
-        // false means don't update custom UI cause that is were it came from
-        m_pPlugin->set_control_value ( index, value, false );
-
-        return kResultOk;
+        return kResultFalse;
     }
 
     tresult PLUGIN_API
     endEdit( Vst::ParamID id ) override
     {
         DMESSAGE ( "Handler[%p]::endEdit(%d)", this, int(id ) );
+        if (!m_pPlugin.load())
+            return kResultFalse;
+
         return kResultOk;
     }
 
@@ -120,43 +134,47 @@ public:
     restartComponent( int32 flags ) override
     {
         DMESSAGE ( "Handler[%p]::restartComponent(0x%08x)", this, flags );
-
-#if 0
-        if (m_pPlugin->_bProcessing)
+        if (auto* p = m_pPlugin.load(std::memory_order_acquire))
         {
-            DMESSAGE("Plugin called restart while processing - ignoring");
-            return kResultFalse;
-        }
+#if 0
+            if (m_pPlugin->_bProcessing)
+            {
+                DMESSAGE("Plugin called restart while processing - ignoring");
+                return kResultFalse;
+            }
 #endif
 
-        if ( flags & Vst::kParamValuesChanged )
-        {
-            DMESSAGE("Vst::kParamValuesChanged");
-            m_pPlugin->updateParamValues ( false );
-        }
-        else if ( (flags & Vst::kReloadComponent) || (flags & Vst::kLatencyChanged) )
-        {
-            DMESSAGE("Vst::kReloadComponent or Vst::kLatencyChangedVst::kLatencyChanged");
-            m_pPlugin->deactivate ( );
-            m_pPlugin->activate ( );
-        }
-        else if ( flags & Vst::kIoTitlesChanged)
-        {
-            DMESSAGE("VST3: Vst::kIoTitlesChanged (not implemented)");
-            return kNotImplemented;
-        }
-        else if ( flags & Vst::kParamTitlesChanged )
-        {
-            DMESSAGE("VST3: Vst::kParamTitlesChanged (not implemented)");
-            return kNotImplemented;
-        }
-        else if (flags & Vst::kIoChanged)
-        {
-            DMESSAGE("VST3: Vst::kIoChanged (not implemented)");
-            return kNotImplemented;
-	}
+            if ( flags & Vst::kParamValuesChanged )
+            {
+                DMESSAGE("Vst::kParamValuesChanged");
+                p->updateParamValues ( false );
+            }
+            else if ( (flags & Vst::kReloadComponent) || (flags & Vst::kLatencyChanged) )
+            {
+                DMESSAGE("Vst::kReloadComponent or Vst::kLatencyChangedVst::kLatencyChanged");
+                p->deactivate ( );
+                p->activate ( );
+            }
+            else if ( flags & Vst::kIoTitlesChanged)
+            {
+                DMESSAGE("VST3: Vst::kIoTitlesChanged (not implemented)");
+                return kNotImplemented;
+            }
+            else if ( flags & Vst::kParamTitlesChanged )
+            {
+                DMESSAGE("VST3: Vst::kParamTitlesChanged (not implemented)");
+                return kNotImplemented;
+            }
+            else if (flags & Vst::kIoChanged)
+            {
+                DMESSAGE("VST3: Vst::kIoChanged (not implemented)");
+                return kNotImplemented;
+            }
 
-        return kResultOk;
+            return kResultOk;
+        }
+
+        return kResultFalse;
     }
 
     //--- IConnectionPoint ---
@@ -165,25 +183,35 @@ public:
     tresult PLUGIN_API
     connect( Vst::IConnectionPoint *other ) override
     {
+        if (!m_pPlugin.load())
+            return kResultFalse;
+
         return (other ? kResultOk : kInvalidArgument );
     }
 
     tresult PLUGIN_API
     disconnect( Vst::IConnectionPoint *other ) override
     {
+        if (!m_pPlugin.load())
+            return kResultFalse;
+
         return (other ? kResultOk : kInvalidArgument );
     }
 
     tresult PLUGIN_API
     notify( Vst::IMessage *message ) override
     {
-        return m_pPlugin->notify ( message );
+        if (auto* p = m_pPlugin.load(std::memory_order_acquire))
+        {
+            return p->notify ( message );
+        }
+        return kResultFalse;
     }
 
 private:
 
     // Instance client.
-    VST3_Plugin *m_pPlugin;
+    std::atomic<VST3_Plugin*> m_pPlugin;
     std::atomic<uint32> refCount{1};
 };
 
@@ -191,6 +219,9 @@ tresult PLUGIN_API
 VST3_Plugin::Handler::queryInterface(
     const char *_iid, void **obj )
 {
+    if (!m_pPlugin.load())
+        return kResultFalse;
+
     QUERY_INTERFACE ( _iid, obj, FUnknown::iid, IComponentHandler )
     QUERY_INTERFACE ( _iid, obj, IComponentHandler::iid, IComponentHandler )
     QUERY_INTERFACE ( _iid, obj, IConnectionPoint::iid, IConnectionPoint )
@@ -416,7 +447,11 @@ VST3_Plugin::~VST3_Plugin( )
     close_descriptor ( );
 
     _pProcessor = nullptr;
-    _pHandler = nullptr;
+    if (_pHandler)
+    {
+        _pHandler->invalidate();
+        _pHandler = nullptr;
+    }
 
     if ( _audio_in_buffers )
     {
