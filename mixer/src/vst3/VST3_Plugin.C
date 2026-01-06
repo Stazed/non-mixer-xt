@@ -493,18 +493,23 @@ VST3_Plugin::~VST3_Plugin( )
     beginDestruction();
     waitForAudioExit();
 
-    if ( _x_is_visible )
-        hide_custom_ui ( );
+    // Ensure editor/runloop is fully stopped before tearing down VST objects.
+    if (_x_is_visible)
+        hide_custom_ui();
+    else
+        closeEditor(); // safe no-op if nothing is open; prevents stale runloop callbacks
+
+    // Detach component handler early to prevent callbacks during terminate/release.
+    if (_pController)
+        _pController->setComponentHandler(nullptr);
+    if (_pHandler)
+        _pHandler->invalidate();
 
     deactivate ( );
     close_descriptor ( );
 
     _pProcessor = nullptr;
-    if (_pHandler)
-    {
-        _pHandler->invalidate();
-        _pHandler = nullptr;
-    }
+    _pHandler = nullptr;
 
     if ( _audio_in_buffers )
     {
@@ -1705,6 +1710,12 @@ VST3_Plugin::open_descriptor( unsigned long iIndex )
 void
 VST3_Plugin::close_descriptor( )
 {
+    // Make sure controller won't call back into us during shutdown.
+    // (Destructor already does this too, but keep it safe if close_descriptor()
+    // is ever called standalone.)
+    if (_pController)
+        _pController->setComponentHandler(nullptr);
+
     if ( _pComponent && _pController )
     {
         FUnknownPtr<Vst::IConnectionPoint> component_cp ( _pComponent );
