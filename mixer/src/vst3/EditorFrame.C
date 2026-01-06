@@ -42,20 +42,32 @@ ARunLoop::registerEventHandler( IEventHandler* handler,
     if (handler == nullptr)
         return kInvalidArgument;
 
+    if (m_destroying.load(std::memory_order_acquire))
+        return kResultFalse;
+
+    // NOTE: Some plugins destroy their handler objects without unregistering.
+    // Capturing an IPtr here can crash later when callbacks are cleared.
     if ( eventHandlers.find ( fd ) != eventHandlers.end ( ) )
     {
         DMESSAGE("ALREADY REGISTERED!: FD = %d: eventHandlers.end", fd);
         return kResultTrue;
     }
 
+    // Store a strong ref for host-side bookkeeping / equality checks.
+    // (If this still proves problematic for BYOD, switch the map to raw pointers too.)
+    EventHandler handlerRef(handler);
+    IEventHandler* rawHandler = handler;
+
     m_plugin->get_runloop ( )->registerFileDescriptor (
-        fd, [handler] (int fd)
+        fd, [this, rawHandler] (int fd)
     {
-        if (handler)
-            handler->onFDIsSet ( fd );
+        if (m_destroying.load(std::memory_order_acquire))
+            return;
+        if (rawHandler)
+            rawHandler->onFDIsSet ( fd );
     } );
 
-    eventHandlers.emplace ( fd, handler );
+    eventHandlers.emplace ( fd, handlerRef );
     return kResultTrue;
 }
 
@@ -66,6 +78,9 @@ ARunLoop::unregisterEventHandler( IEventHandler* handler )
 {
     if ( !handler )
         return kInvalidArgument;
+
+    if (m_destroying.load(std::memory_order_acquire))
+        return kResultFalse;
 
     auto it = std::find_if ( eventHandlers.begin ( ), eventHandlers.end ( ),
         [&] (const auto& elem )
@@ -90,6 +105,9 @@ ARunLoop::registerTimer( ITimerHandler* handler,
     if ( !handler || milliseconds == 0 )
         return kInvalidArgument;
 
+    if (m_destroying.load(std::memory_order_acquire))
+        return kResultFalse;
+
     // Check if already registered. This does not matter for
     // the unordered map, but does matter for the runloop which
     // is a vector.
@@ -105,15 +123,21 @@ ARunLoop::registerTimer( ITimerHandler* handler,
     // No duplicates so add it to the runloop vector
     DMESSAGE("REGISTER TIMER EditorFrame %p", handler);
 
+    // IMPORTANT:
+    // handler is plugin-provided. Do NOT use owned(handler) because owned() does not AddRef.
+    TimerHandler handlerRef(handler); // AddRef (normal IPtr behavior)
+
     auto id = m_plugin->get_runloop ( )->registerTimer (
-        milliseconds, [handler] ( auto )
+        milliseconds, [this, handlerRef] ( auto )
     {
-        if (handler)
-            handler->onTimer ( );
+        if (m_destroying.load(std::memory_order_acquire))
+            return;
+        if (handlerRef)
+            handlerRef->onTimer ( );
     } );
 
     // Add to EditorFrame unordered pair
-    timerHandlers.emplace ( id, handler );
+    timerHandlers.emplace ( id, handlerRef );
     DMESSAGE("timerHandles size = %d", timerHandlers.size());
 
     return kResultTrue;
@@ -126,6 +150,9 @@ ARunLoop::unregisterTimer( ITimerHandler* handler )
 {
     if ( !handler )
         return kInvalidArgument;
+
+    if (m_destroying.load(std::memory_order_acquire))
+        return kResultFalse;
 
     auto it = std::find_if ( timerHandlers.begin ( ), timerHandlers.end ( ),
         [&] (const auto& elem )
@@ -186,14 +213,18 @@ void EditorFrame::beginDestruction()
 {
     m_destroying.store(true, std::memory_order_release);
 
+    // IMPORTANT:
+    // Unregister timers/FD handlers BEFORE notifying the plugin view that the frame is removed.
+    // Some plugins destroy their handler objects in IPlugView::removed() without unregistering,
+    // and will crash later when we clear callbacks (lambda destroys captured IPtr -> release()).
+    if (m_runLoop)
+        m_runLoop->beginDestruction();
+
     if (m_plugView)
     {
         m_plugView->removed();
         m_plugView->setFrame(nullptr);
     }
-
-    if (m_runLoop)
-        m_runLoop->beginDestruction();
 
     while (m_callbackDepth.load(std::memory_order_acquire) > 0)
         std::this_thread::sleep_for(std::chrono::microseconds(100));
