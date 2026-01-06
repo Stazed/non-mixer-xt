@@ -1150,16 +1150,49 @@ VST3_Plugin::notify( Vst::IMessage *message )
 {
     DMESSAGE ( "[%p]::notify(%p)", this, message );
 
-    Vst::IComponent *component = _pComponent;
-    FUnknownPtr<Vst::IConnectionPoint> component_cp ( component );
-    if ( component_cp )
-        component_cp->notify ( message );
+    if (!message)
+        return kInvalidArgument;
 
-    Vst::IEditController *controller = _pController;
-    FUnknownPtr<Vst::IConnectionPoint> controller_cp ( controller );
-    if ( controller_cp )
-        controller_cp->notify ( message );
+    // IMPORTANT:
+    // Do NOT "broadcast" the message to both component & controller.
+    // That can create feedback loops (plugin -> host -> plugin -> host ...).
+    //
+    // Minimal, safe routing:
+    // Prefer delivering to the component connection point; if unavailable,
+    // fall back to the controller connection point.
+    //
+    // Also guard against accidental re-entrancy.
+    static thread_local bool s_inNotify = false;
+    if (s_inNotify)
+        return kResultOk;
 
+    tresult r = kResultOk;
+
+    if (Vst::IComponent* component = _pComponent)
+    {
+        FUnknownPtr<Vst::IConnectionPoint> component_cp(component);
+        if (component_cp)
+        {
+            s_inNotify = true;
+            r = component_cp->notify(message);
+            s_inNotify = false;
+            return r;
+        }
+    }
+
+    if (Vst::IEditController* controller = _pController)
+    {
+        FUnknownPtr<Vst::IConnectionPoint> controller_cp(controller);
+        if (controller_cp)
+        {
+            s_inNotify = true;
+            r = controller_cp->notify(message);
+            s_inNotify = false;
+            return r;
+        }
+    }
+
+    // No recipient connection point: treat as host-consumed and succeed.
     return kResultOk;
 }
 
@@ -2579,8 +2612,8 @@ VST3_Plugin::deactivate( void )
         if ( component && _pProcessor )
         {
             _bProcessing = false;
-            component->setActive ( false );
             _pProcessor->setProcessing ( false );
+            component->setActive ( false );
 
             vst3_activate ( component, Vst::kEvent, Vst::kOutput, false );
             vst3_activate ( component, Vst::kEvent, Vst::kInput, false );
