@@ -65,7 +65,7 @@ class VST3_Plugin::Handler
     , public Vst::IConnectionPoint
 {
 public:
-
+    // NOTE: This object is the *host-side* endpoint of IConnectionPoint for plugin->host messages.
     // Constructor.
 
     Handler( VST3_Plugin *pPlugin )
@@ -82,6 +82,7 @@ public:
         FUNKNOWN_DTOR
     }
 
+    // FUnknown
     DECLARE_FUNKNOWN_METHODS
 
     void invalidate()
@@ -89,7 +90,7 @@ public:
         m_pPlugin.store(nullptr, std::memory_order_release);
     }
 
-    //--- IComponentHandler ---
+    // --- IComponentHandler ---
     //
     tresult PLUGIN_API
     beginEdit( Vst::ParamID id ) override
@@ -182,35 +183,85 @@ public:
     tresult PLUGIN_API
     connect( Vst::IConnectionPoint *other ) override
     {
-        if (!m_pPlugin.load())
+        if (!m_pPlugin.load(std::memory_order_acquire))
             return kResultFalse;
+        if (!other)
+            return kInvalidArgument;
 
-        return (other ? kResultOk : kInvalidArgument );
+        // Keep exactly one peer connection point (minimal host pattern).
+        // This establishes a directed route for notify(): plugin->host endpoint -> peer.
+        //
+        // If the plugin calls connect() repeatedly with the same peer, be idempotent.
+        if (m_peer)
+        {
+            if (m_peer.get() == other)
+                return kResultOk;
+            return kResultFalse; // already connected to a different peer
+        }
+ 
+         m_peer = other;
+         return kResultOk;
     }
 
     tresult PLUGIN_API
     disconnect( Vst::IConnectionPoint *other ) override
     {
-        if (!m_pPlugin.load())
+        if (!m_pPlugin.load(std::memory_order_acquire))
+            return kResultFalse;
+        if (!other)
+            return kInvalidArgument;
+
+        // Only clear if it matches the current peer.
+        if (!m_peer)
             return kResultFalse;
 
-        return (other ? kResultOk : kInvalidArgument );
+        if (m_peer.get() != other)
+             return kResultFalse;
+ 
+         m_peer = nullptr;
+         return kResultOk;
     }
 
     tresult PLUGIN_API
     notify( Vst::IMessage *message ) override
     {
-        if (auto* p = m_pPlugin.load(std::memory_order_acquire))
+        if (!message)
+            return kInvalidArgument;
+
+        if (!m_pPlugin.load(std::memory_order_acquire))
+            return kResultFalse;
+
+        // IMPORTANT:
+        // Do NOT "echo" the message back into both component & controller unconditionally.
+        // That can create feedback loops (plugin -> host -> plugin -> host ...).
+        //
+        // Minimal, safe routing:
+        // - If we have a connected peer, forward ONLY to that peer.
+        // - Otherwise, treat as host-consumed and succeed.
+        //
+        // Re-entrancy guard prevents accidental ping-pong if peer routes back here.
+        static thread_local bool s_inNotify = false;
+        if (s_inNotify)
+            return kResultOk;
+
+        if (m_peer)
         {
-            return p->notify ( message );
+            s_inNotify = true;
+            const tresult r = m_peer->notify(message);
+            s_inNotify = false;
+            return r;
         }
-        return kResultFalse;
+
+        // No peer: host consumes the message (or ignore), but don't fail.
+        return kResultOk;
     }
 
 private:
 
     // Instance client.
     std::atomic<VST3_Plugin*> m_pPlugin;
+    // Optional peer for message forwarding (set via connect()).
+    IPtr<Vst::IConnectionPoint> m_peer;
     std::atomic<uint32> refCount{1};
 };
 
