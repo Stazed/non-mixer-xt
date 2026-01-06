@@ -57,6 +57,7 @@ class ARunLoop : public IRunLoop
 public:
 
     ARunLoop(VST3_Plugin *plug) : m_plugin(plug) {}
+    virtual ~ARunLoop() = default; // avoid -Wdelete-non-virtual-dtor
 
     void beginDestruction();
 
