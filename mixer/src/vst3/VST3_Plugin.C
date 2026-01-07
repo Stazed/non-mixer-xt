@@ -1278,27 +1278,33 @@ VST3_Plugin::closeEditor( void )
 {
     remove_ntk_timer();
 
-    if ( _pEditorFrame != nullptr )
-        _pEditorFrame->hide ( );
+    // IMPORTANT: stop host runloop callbacks first, while plugin UI objects still exist.
+    if (_pRunloop)
+        _pRunloop->stop();
 
-    if ( _iPlugView )
+    // If we have an EditorFrame, delete it. EditorFrame's destructor/beginDestruction
+    // should detach the frame and unregister timers/FD handlers
+    if (_pEditorFrame)
     {
-        IPlugView *plugView = _iPlugView;
-        if ( plugView && plugView->removed ( ) != kResultOk )
-        {
-            DMESSAGE ( " *** Failed to remove/detach window." );
-        }
-
-        _iPlugView = nullptr;
-    }
-
-    if ( _pEditorFrame )
-    {
-        // delete _pEditorFrame; // causes X errors, looks like the plugin should delete?
+        _pEditorFrame->hide();
+        delete _pEditorFrame;
         _pEditorFrame = nullptr;
     }
 
-    _pRunloop->stop ( );
+    // If no EditorFrame existed (or plugin created view without it), still detach view.
+    if (_iPlugView)
+     {
+        IPlugView* plugView = _iPlugView;
+
+        // Best effort: if plugin still thinks it has a frame, clear it.
+        // (Some plugins query IPlugFrame on teardown paths.)
+        plugView->setFrame(nullptr);
+
+        if (plugView->removed() != kResultOk)
+            DMESSAGE(" *** Failed to remove/detach window.");
+
+        _iPlugView = nullptr;
+     }
 }
 
 bool
