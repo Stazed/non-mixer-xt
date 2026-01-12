@@ -1588,7 +1588,7 @@ CLAP_Plugin::get_presets()
                     indexer.indexer(),
                     desc->id);
 
-            if (!provider)
+            if (!provider || !provider->get_metadata)
                 continue;
 
             if (provider->init(provider))
