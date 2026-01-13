@@ -101,6 +101,7 @@
 #include "Mixer_Strip.H"
 #include "Mixer.H"
 extern char *instance_name;
+bool dirty_slider = false;  // extern in Fl_Value_SliderX.C and Fl_SliderX.C
 static bool is_startup = true;
 
 /* Chain::Chain ( int X, int Y, int W, int H, const char *L ) : */
@@ -1141,6 +1142,12 @@ Chain::update( void )
     {
         Module *m = module ( i );
         m->update ( );
+    }
+
+    if ( dirty_slider )
+    {
+        set_dirty();
+        dirty_slider = false;
     }
 }
 
