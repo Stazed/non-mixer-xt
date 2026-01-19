@@ -32,6 +32,7 @@
 
 #include <clap/clap.h>
 #include <unordered_map>
+#include <atomic>
 
 #include "../Mixer_Strip.H"
 #include "../Plugin_Module.H"
@@ -59,6 +60,15 @@ class CLAP_Plugin : public Plugin_Module,
 public:
 
     virtual bool load_plugin ( Module::Picked picked ) override;
+
+    // Start scan if not already running.
+    void start_preset_scan();
+
+    // Join the scan thread if it is still running.
+    void join_preset_scan();
+
+    // Non-blocking status.
+    bool preset_scan_running() const { return _preset_scan_running.load(); }
 
     bool configure_inputs ( int ) override;
     void handle_port_connection_change ( void ) override;
@@ -96,6 +106,15 @@ public:
 
 private:
 
+    static void* preset_scan_entry(void* arg);
+    void preset_scan_worker();
+    Thread _preset_scan_thread {"clap_preset_scan"};
+
+    std::atomic<bool> _preset_scan_running {false};
+
+    // Protects publishing results to these members:
+    pthread_mutex_t _preset_lock = PTHREAD_MUTEX_INITIALIZER;
+    
     const clap_plugin_entry *_entry;
     const clap_plugin_factory *_factory;
 

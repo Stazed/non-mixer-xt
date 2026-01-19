@@ -269,7 +269,7 @@ CLAP_Plugin::load_plugin( Module::Picked picked )
         return false;
     }
 
-    get_presets();
+    start_preset_scan();
     
     setup_host ( &_host, this );
 
@@ -298,6 +298,47 @@ CLAP_Plugin::load_plugin( Module::Picked picked )
     Fl::add_timeout ( F_DEFAULT_MSECS, &CLAP_Plugin::parameter_update, this );
 
     return true;
+}
+
+// global lock to avoid cross-instance re-entrancy issues in some providers.
+static pthread_mutex_t g_clap_preset_discovery_lock = PTHREAD_MUTEX_INITIALIZER;
+
+void CLAP_Plugin::start_preset_scan()
+{
+    // If already running, do nothing.
+    bool expected = false;
+    if (!_preset_scan_running.compare_exchange_strong(expected, true))
+        return;
+
+    _preset_scan_thread.name("clap_preset_scan");
+
+    // Launch
+    if (!_preset_scan_thread.clone(&CLAP_Plugin::preset_scan_entry, this))
+    {
+        _preset_scan_running.store(false);
+        DMESSAGE("Failed to create preset scan thread");
+    }
+}
+
+void CLAP_Plugin::join_preset_scan()
+{
+    if (_preset_scan_running.load())
+        _preset_scan_thread.join();
+
+    // If the thread finished and you joined, ensure running reflects that.
+    _preset_scan_running.store(false);
+}
+
+void* CLAP_Plugin::preset_scan_entry(void* arg)
+{
+    auto* self = static_cast<CLAP_Plugin*>(arg);
+
+    Thread::current()->set("clap_preset_scan");
+
+    self->preset_scan_worker();
+
+    self->_preset_scan_running.store(false);
+    return nullptr;
 }
 
 void
@@ -1555,66 +1596,88 @@ CLAP_Plugin::create_control_ports( )
     MESSAGE ( "Plugin has %i control ins and %i control outs", control_ins, control_outs );
 }
 
-void
-CLAP_Plugin::get_presets()
+void CLAP_Plugin::preset_scan_worker()
 {
+    // Build results locally
+    std::vector<Preset> local_metadata;
+    std::vector<std::string> local_menu;
+
+    // avoid cross-instance issues (some providers touch global state)
+    pthread_mutex_lock(&g_clap_preset_discovery_lock);
+
     auto* preset_factory =
         (const clap_preset_discovery_factory_t*)
-        _entry->get_factory(
-            CLAP_PRESET_DISCOVERY_FACTORY_ID);
+        _entry->get_factory(CLAP_PRESET_DISCOVERY_FACTORY_ID);
 
     if (!preset_factory)
     {
+        pthread_mutex_unlock(&g_clap_preset_discovery_lock);
         DMESSAGE("Preset discovery not supported");
+        return;
     }
-    else
+
+    PresetIndexer indexer;
+
+    const uint32_t count = preset_factory->count(preset_factory);
+    DMESSAGE("Preset providers: %u", count);
+
+    for (uint32_t i = 0; i < count; ++i)
     {
-        PresetIndexer indexer;
+        auto* desc = preset_factory->get_descriptor(preset_factory, i);
+        if (!desc)
+            continue;
 
-        uint32_t count = preset_factory->count(preset_factory);
-        DMESSAGE("Preset providers: %d", count);
+        DMESSAGE("Using provider: %s", desc->name);
 
-        for (uint32_t i = 0; i < count; ++i)
+        auto* provider =
+            preset_factory->create(
+                preset_factory,
+                indexer.indexer(),
+                desc->id);
+
+        if (!provider || !provider->get_metadata)
+            continue;
+
+        if (provider->init(provider))
         {
-            auto* desc = preset_factory->get_descriptor(preset_factory, i);
-            if (!desc)
-                continue;
-
-            DMESSAGE("Using provider: %s", desc->name);
-
-            auto* provider =
-                preset_factory->create(
-                    preset_factory,
-                    indexer.indexer(),
-                    desc->id);
-
-            if (!provider || !provider->get_metadata)
-                continue;
-
-            if (provider->init(provider))
-                indexer.crawl(provider);
-
-            provider->destroy(provider);
+            indexer.crawl(provider);
         }
 
-        _presets_metadata = indexer.presets();
-
-        // Create the indexed preset list for the Module Parameter Editor
-        unsigned max_preset_list_size = _presets_metadata.size() > C_MAX_PRESET_LIST_SIZE ? C_MAX_PRESET_LIST_SIZE : _presets_metadata.size();
-        
-        for (unsigned ii = 0; ii < max_preset_list_size; ++ii)
-        {
-            std::string menu_name = std::to_string ( ii );
-            menu_name += " - ";
-            menu_name += _presets_metadata[ii].name;
-
-            _PresetList.push_back(menu_name);
-            DMESSAGE("Preset Name: %s", _presets_metadata[ii].name.c_str());
-            DMESSAGE("Preset Location: %s", _presets_metadata[ii].location.c_str());
-        }
-
-        DMESSAGE("Indexed presets: %d", _presets_metadata.size());
+        provider->destroy(provider);
     }
+
+    pthread_mutex_unlock(&g_clap_preset_discovery_lock);
+
+    local_metadata = indexer.presets();
+
+    // Build menu list locally (bounded)
+    const unsigned max_size =
+        (local_metadata.size() > C_MAX_PRESET_LIST_SIZE)
+            ? C_MAX_PRESET_LIST_SIZE
+            : (unsigned)local_metadata.size();
+
+    local_menu.reserve(max_size);
+
+    // Create the indexed preset list for the Module Parameter Editor
+    for (unsigned ii = 0; ii < max_size; ++ii)
+    {
+        std::string menu_name = std::to_string(ii);
+        menu_name += " - ";
+        menu_name += local_metadata[ii].name;
+
+        local_menu.push_back(std::move(menu_name));
+
+        DMESSAGE("Preset Name: %s", local_metadata[ii].name.c_str());
+        DMESSAGE("Preset Location: %s", local_metadata[ii].location.c_str());
+    }
+
+    DMESSAGE("Indexed presets: %u", (unsigned)local_metadata.size());
+
+    // Publish atomically (swap under lock)
+    pthread_mutex_lock(&_preset_lock);
+    _presets_metadata.swap(local_metadata);
+    _PresetList.swap(local_menu);
+    pthread_mutex_unlock(&_preset_lock);
 }
 
 void

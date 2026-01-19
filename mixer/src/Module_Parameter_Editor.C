@@ -118,6 +118,9 @@ Module_Parameter_Editor::Module_Parameter_Editor( Module *module ) :
         {
             CLAP_Plugin *pm = static_cast<CLAP_Plugin *> ( _module );
 
+            // Ensure that preset scan is complete before we check for presets.
+            pm->join_preset_scan();
+
             if ( !pm->_PresetList.empty ( ) )
             {
                 {
