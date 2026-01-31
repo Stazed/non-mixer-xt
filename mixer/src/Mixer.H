@@ -84,7 +84,7 @@ private:
     Fl_Menu_Bar *menubar;
     Fl_Scroll *scroll;
     Fl_Box *project_name;
-    Fl_Box *_status;
+    Fl_Box *_status;    // The tooltip display at the bottom of the mixer
 
     Fl_Flowpack *mixer_strips;
 
@@ -133,6 +133,7 @@ public:
 
     void update_frequency ( float f );
 
+    // This will show the passed string on the tooltip box at the bottom of the mixer
     void status ( const char *s )
     {
         if ( s ) _status->copy_label( s );

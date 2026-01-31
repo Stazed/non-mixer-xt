@@ -130,7 +130,7 @@ JACK_Module::JACK_Module( bool log )
 
             {
                 Fl_Box *o = input_connection_handle = new Fl_Box ( x ( ), y ( ), 18, 18 );
-                o->tooltip ( "Drag and drop to make and break JACK connections." );
+                o->tooltip ( "Drag and drop output connector here to make and break JACK connections." );
                 o->hide ( );
                 o->image ( input_connector_image ? input_connector_image : input_connector_image = new Fl_PNG_Image ( "input_connector", img_io_input_connector_10x10_png, img_io_input_connector_10x10_png_len ) );
 
@@ -143,6 +143,7 @@ JACK_Module::JACK_Module( bool log )
 
             {
                 Fl_Button *o = dec_button = new Fl_Button ( 0, 0, 12, h ( ), "-" );
+                o->tooltip ( "Decrement number of JACK channels." );
                 o->callback ( cb_button, this );
                 o->labelsize ( 10 );
                 o->labelfont ( FL_HELVETICA_BOLD );
@@ -150,6 +151,7 @@ JACK_Module::JACK_Module( bool log )
             }
             {
                 Fl_Button *o = inc_button = new Fl_Button ( 0, 0, 12, h ( ), "+" );
+                o->tooltip ( "Increment number of JACK channels." );
                 o->labelsize ( 10 );
                 o->labelfont ( FL_HELVETICA_BOLD );
                 o->callback ( cb_button, this );
@@ -158,14 +160,14 @@ JACK_Module::JACK_Module( bool log )
 
             {
                 Fl_Box *o = output_connection_handle = new Fl_Box ( x ( ), y ( ), 12, 12 );
-                o->tooltip ( "Drag and drop to make and break JACK connections." );
+                o->tooltip ( "Drag and drop to input connector to make and break JACK connections." );
                 o->image ( output_connector_image ? output_connector_image : output_connector_image = new Fl_PNG_Image ( "output_connector", img_io_output_connector_10x10_png, img_io_output_connector_10x10_png_len ) );
                 o->hide ( );
             }
 
             {
                 Fl_Box *o = output_connection2_handle = new Fl_Box ( x ( ), y ( ), 12, 12 );
-                o->tooltip ( "Drag and drop to make and break JACK connections." );
+                o->tooltip ( "Drag and drop to input connector to make and break JACK connections." );
                 o->image ( output_connector_image ? output_connector_image : output_connector_image = new Fl_PNG_Image ( "output_connector", img_io_output_connector_10x10_png, img_io_output_connector_10x10_png_len ) );
                 o->hide ( );
             }
@@ -544,6 +546,18 @@ JACK_Module::handle_control_changed( Port *p )
 int
 JACK_Module::handle( int m )
 {
+    if (Fl::event_inside ( input_connection_handle ))
+        mixer->status( input_connection_handle->tooltip() );
+
+    if (Fl::event_inside ( output_connection_handle ))
+        mixer->status( output_connection_handle->tooltip() );
+
+    if ( Fl::event_inside ( dec_button ) )
+        mixer->status( dec_button->tooltip() );
+
+    if ( Fl::event_inside ( inc_button ) )
+        mixer->status( inc_button->tooltip() );
+
     static unsigned long _event_state = 0;
 
     unsigned long evstate = Fl::event_state ( );
