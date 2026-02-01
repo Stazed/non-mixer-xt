@@ -546,18 +546,6 @@ JACK_Module::handle_control_changed( Port *p )
 int
 JACK_Module::handle( int m )
 {
-    if (Fl::event_inside ( input_connection_handle ))
-        mixer->status( input_connection_handle->tooltip() );
-
-    if (Fl::event_inside ( output_connection_handle ))
-        mixer->status( output_connection_handle->tooltip() );
-
-    if ( Fl::event_inside ( dec_button ) )
-        mixer->status( dec_button->tooltip() );
-
-    if ( Fl::event_inside ( inc_button ) )
-        mixer->status( inc_button->tooltip() );
-
     static unsigned long _event_state = 0;
 
     unsigned long evstate = Fl::event_state ( );
@@ -661,6 +649,19 @@ JACK_Module::handle( int m )
                 fl_cursor ( FL_CURSOR_HAND );
             else
                 fl_cursor ( FL_CURSOR_DEFAULT );
+
+            // Set the tooltip for these
+            if (Fl::event_inside ( input_connection_handle ))
+                mixer->status( input_connection_handle->tooltip() );
+
+            if (Fl::event_inside ( output_connection_handle ))
+                mixer->status( output_connection_handle->tooltip() );
+
+            if ( Fl::event_inside ( dec_button ) )
+                mixer->status( dec_button->tooltip() );
+
+            if ( Fl::event_inside ( inc_button ) )
+                mixer->status( inc_button->tooltip() );
 
             /* This calls Fl_Group::handle() which somehow prevent DND FL_PASTE event from being delivered later */
             /* Module::handle(m); */
