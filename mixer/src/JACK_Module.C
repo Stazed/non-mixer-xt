@@ -143,7 +143,7 @@ JACK_Module::JACK_Module( bool log )
 
             {
                 Fl_Button *o = dec_button = new Fl_Button ( 0, 0, 12, h ( ), "-" );
-                o->tooltip ( "Decrement number of JACK channels." );
+                o->tooltip ( "Decrease number of JACK channels." );
                 o->callback ( cb_button, this );
                 o->labelsize ( 10 );
                 o->labelfont ( FL_HELVETICA_BOLD );
@@ -151,7 +151,7 @@ JACK_Module::JACK_Module( bool log )
             }
             {
                 Fl_Button *o = inc_button = new Fl_Button ( 0, 0, 12, h ( ), "+" );
-                o->tooltip ( "Increment number of JACK channels." );
+                o->tooltip ( "Increase number of JACK channels." );
                 o->labelsize ( 10 );
                 o->labelfont ( FL_HELVETICA_BOLD );
                 o->callback ( cb_button, this );
