@@ -672,6 +672,7 @@ JACK_Module::handle( int m )
             return 1;
         case FL_LEAVE:
         case FL_DND_LEAVE:
+            mixer->status( 0 ); // clear the tooltip if any
             Module::handle ( m );
             if ( this == receptive_to_drop )
             {

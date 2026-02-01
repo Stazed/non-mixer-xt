@@ -136,6 +136,14 @@ public:
     // This will show the passed string on the tooltip box at the bottom of the mixer
     void status ( const char *s )
     {
+        if ( s  && _status->label() )
+        {
+            if ( !strcmp ( s, _status->label() ) )
+            {
+                return; // stop unneeded redraws
+            }
+        }
+
         if ( s ) _status->copy_label( s );
         else _status->label(0);
         _status->redraw();
