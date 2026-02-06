@@ -39,8 +39,21 @@ namespace nmxt_common
 
 #define CARLA_OS_SEP_STR   "/"
 
-#if defined(__linux__) || defined(__linux)
-#define V3_PLATFORM "linux"
+#if defined(__HAIKU__)
+  #define V3_PLATFORM "haiku"
+ #elif defined(__linux__) || defined(__linux)
+  #define V3_PLATFORM "linux"
+ #elif defined(__FreeBSD__)
+  #define V3_PLATFORM "freebsd"
+ #elif defined(__NetBSD__)
+  #define V3_PLATFORM "netbsd"
+ #elif defined(__OpenBSD__)
+  #define V3_PLATFORM "openbsd"
+ #elif defined(__GNU__)
+  #define V3_PLATFORM "hurd"
+ #else
+  #define V3_PLATFORM "unknown"
+ #endif
 #endif
 
 #define V3_CONTENT_DIR V3_ARCHITECTURE "-" V3_PLATFORM
