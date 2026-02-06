@@ -18,6 +18,10 @@ add_definitions(-D'BINARY_PATH="${CMAKE_INSTALL_PREFIX}/bin"')
 include(CheckCSourceCompiles)
 include(CheckCXXCompilerFlag)
 
+if(CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
+    link_directories(/usr/local/lib)
+endif()
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
