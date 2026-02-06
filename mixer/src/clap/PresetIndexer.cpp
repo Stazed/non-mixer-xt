@@ -16,6 +16,8 @@
 /* Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 /*******************************************************************************/
 
+#ifdef CLAP_SUPPORT
+
 #include "PresetIndexer.h"
 #include <iostream>
 
@@ -99,3 +101,5 @@ void PresetIndexer::crawl(
         }
     }
 }
+
+#endif  // CLAP_SUPPORT

@@ -17,6 +17,9 @@
 /*******************************************************************************/
 
 #pragma once
+
+#ifdef CLAP_SUPPORT
+
 #include <clap/factory/preset-discovery.h>
 #include "PresetModel.h"
 #include <vector>
@@ -57,3 +60,5 @@ private:
     Preset* current_ = nullptr;
     std::string current_location_;
 };
+
+#endif  // CLAP_SUPPORT

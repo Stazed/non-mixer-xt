@@ -17,6 +17,9 @@
 /*******************************************************************************/
 
 #pragma once
+
+#ifdef CLAP_SUPPORT
+
 #include <clap/factory/preset-discovery.h>
 #include <filesystem>
 #include <vector>
@@ -47,3 +50,5 @@ private:
     std::vector<std::string> extensions_;
     std::vector<std::filesystem::path> locations_;
 };
+
+#endif  // CLAP_SUPPORT

@@ -16,6 +16,8 @@
 /* Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 /*******************************************************************************/
 
+#ifdef CLAP_SUPPORT
+
 #include "PresetMetadataReceiver.h"
 #include <iostream>
 
@@ -125,3 +127,5 @@ void PresetMetadataReceiver::add_creator(
     if (self->current_ && creator)
         self->current_->creators.emplace_back(creator);
 }
+
+#endif  // CLAP_SUPPORT
