@@ -20,6 +20,8 @@ include(CheckCXXCompilerFlag)
 
 if(CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
     link_directories(/usr/local/lib)
+    include_directories(/usr/local/include)
+    set(CMAKE_REQUIRED_INCLUDES "/usr/local/include")
 endif()
 
 set(CMAKE_CXX_STANDARD 17)
