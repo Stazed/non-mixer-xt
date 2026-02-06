@@ -126,18 +126,20 @@ else(EnableNTK)
     )
 endif(EnableNTK)
 
-if (CONFIG_VST3SDK)
-  add_definitions(-DRELEASE)
-  set (VST3SDK_SOURCES
-    ${CONFIG_VST3SDK}/base/source/baseiids.cpp
-    ${CONFIG_VST3SDK}/base/source/fobject.cpp
-    ${CONFIG_VST3SDK}/base/thread/source/flock.cpp
-    ${CONFIG_VST3SDK}/public.sdk/source/common/commoniids.cpp
-    ${CONFIG_VST3SDK}/public.sdk/source/vst/vstinitiids.cpp
-    ${CONFIG_VST3SDK}/pluginterfaces/base/coreiids.cpp
-    ${CONFIG_VST3SDK}/pluginterfaces/base/funknown.cpp
-  )
-endif ()
+if (EnableVST3Support)
+    if (CONFIG_VST3SDK)
+      add_definitions(-DRELEASE)
+      set (VST3SDK_SOURCES
+        ${CONFIG_VST3SDK}/base/source/baseiids.cpp
+        ${CONFIG_VST3SDK}/base/source/fobject.cpp
+        ${CONFIG_VST3SDK}/base/thread/source/flock.cpp
+        ${CONFIG_VST3SDK}/public.sdk/source/common/commoniids.cpp
+        ${CONFIG_VST3SDK}/public.sdk/source/vst/vstinitiids.cpp
+        ${CONFIG_VST3SDK}/pluginterfaces/base/coreiids.cpp
+        ${CONFIG_VST3SDK}/pluginterfaces/base/funknown.cpp
+      )
+    endif (CONFIG_VST3SDK)
+endif (EnableVST3Support)
 
 add_executable (non-mixer-xt
     ${ProgSources}

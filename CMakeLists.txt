@@ -193,6 +193,7 @@ endif (EnableCLAPSupport)
 
 if (EnableVST2Support)
     add_definitions(-D'VST2_SUPPORT=1')
+    set(VST2_FOUND TRUE)
 endif (EnableVST2Support)
 
 if (EnableVST3Support)
@@ -358,7 +359,7 @@ if (EnableCLAPSupport)
 endif (EnableCLAPSupport)
 
 if (EnableVST2Support)
-    package_status(CONFIG_VST3SDK  "VST2 support . . . . . . . . . . . . . . . . . . . . . .:"  )
+    package_status(VST2_FOUND      "VST2 support . . . . . . . . . . . . . . . . . . . . . .:"  )
 endif (EnableVST2Support)
 
 if (EnableVST3Support)

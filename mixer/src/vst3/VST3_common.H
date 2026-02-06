@@ -24,8 +24,9 @@
  * Created on November 25, 2024, 4:28 PM
  */
 
-#ifndef VST3_COMMON_H
-#define VST3_COMMON_H
+#pragma once
+
+#ifdef VST3_SUPPORT
 
 #include <string>
 #include <vector>
@@ -54,5 +55,5 @@ std::u16string utf8_to_utf16( const std::string & utf8String );
 
 }
 
-#endif /* STRING_FORMAT_H */
+#endif  // VST3_SUPPORT
 

@@ -18,6 +18,8 @@
 /* Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 /*******************************************************************************/
 
+#ifdef VST3_SUPPORT
+
 #include <cstdint>
 #include <locale>
 #include <codecvt>
@@ -304,3 +306,5 @@ std::u16string utf8_to_utf16(const std::string& utf8)
     return utf16;
 }
 }   // namespace nmxt_common
+
+#endif  //  VST3_SUPPORT
