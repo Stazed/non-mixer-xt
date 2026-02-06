@@ -27,6 +27,9 @@
 #include "../../nonlib/debug.h"
 #include "../../nonlib/nsm.h"
 
+#ifndef __linux__
+#include <libgen.h>
+#endif
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <math.h>
