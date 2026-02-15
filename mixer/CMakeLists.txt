@@ -284,39 +284,28 @@ add_executable (midi-mapper-xt ${MapSources} src/midi-mapper.C)
 
 if(EnableNTK)
     target_include_directories (midi-mapper-xt PRIVATE
-        ${NTK_INCLUDE_DIRS}
-        ${JACK_INCLUDE_DIRS}
-        ${LRDF_INCLUDE_DIRS}
         ${JACK_INCLUDE_DIRS}
         ${LIBLO_INCLUDE_DIRS}
     )
     target_link_libraries(midi-mapper-xt PRIVATE
         ${LIBLO_LIBRARIES}
-        ${NTK_IMAGES_LIBRARIES}
-        ${NTK_LIBRARIES}
         ${JACK_LINK_LIBRARIES}
         ${CMAKE_THREAD_LIBS_INIT}
         dl
         m
-        lrdf
     )
 
 else(EnableNTK) #FLTK Build
     target_include_directories (midi-mapper-xt PRIVATE
-        ${FLTK_INCLUDE_DIRS}
-        ${JACK_INCLUDE_DIRS}
-        ${LRDF_INCLUDE_DIRS}
         ${JACK_INCLUDE_DIRS}
         ${LIBLO_INCLUDE_DIRS}
     )
     target_link_libraries(midi-mapper-xt PRIVATE
         ${LIBLO_LIBRARIES}
-        ${FLTK_LIBRARIES}
         ${JACK_LINK_LIBRARIES}
         ${CMAKE_THREAD_LIBS_INIT}
         dl
         m
-        lrdf
     )
 endif(EnableNTK)
 
