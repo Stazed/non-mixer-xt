@@ -147,45 +147,53 @@ add_executable (non-mixer-xt
     ${VST3SDK_SOURCES}
     src/main.C)
 
+set(NTK_AND_LEGACY_LIBS
+    ${FONTCONFIG_LIBRARIES}
+    ${JACK_LINK_LIBRARIES}
+    ${CMAKE_THREAD_LIBS_INIT}
+    ${X11_LIBRARIES}
+    ${LIBLO_LIBRARIES}
+    ${LILV_LIBRARIES}
+    ${SUIL_LIBRARIES}
+    ${ZIX_LIBRARIES}
+    ${PangoCairo_LIBRARIES}
+    ${XFT_LIBRARIES}
+    ${XRENDER_LIBRARIES}
+    ${XINERAMA_LIBRARIES}
+    ${JPEG_LIBRARY}
+    ${LIBPNG_LIBRARIES}
+    ${XCURSOR_LIBRARIES}
+    ${XFIXES_LIBRARIES}
+    ${DL_LIBRARY}
+    ${M_LIBRARY}
+    ${LRDF_LIBRARIES}
+)
+
+set(NTK_AND_LEGACY_DIRS
+    ${FONTCONFIG_INCLUDE_DIRS}
+    ${JACK_INCLUDE_DIRS}
+    ${LRDF_INCLUDE_DIRS}
+    ${LILV_INCLUDE_DIRS}
+    ${SUIL_INCLUDE_DIRS}
+    ${LIBLO_INCLUDE_DIRS}
+    ${ZIX_INCLUDE_DIRS}
+    ${CLAP_INCLUDEDIR}
+    ${PangoCairo_INCLUDE_DIRS}
+    ${XFT_INCLUDE_DIRS}
+    ${XRENDER_INCLUDE_DIRS}
+    ${XINERAMA_INCLUDE_DIRS}
+)
+
 if(EnableNTK)
     set(ExternLibraries
-        ${FONTCONFIG_LIBRARIES}
-        ${JACK_LINK_LIBRARIES}
-        ${CMAKE_THREAD_LIBS_INIT}
-        ${X11_LIBRARIES}
-        ${LIBLO_LIBRARIES}
-        ${LILV_LIBRARIES}
-        ${SUIL_LIBRARIES}
-        ${ZIX_LIBRARIES}
-        ${PangoCairo_LIBRARIES}
-        ${XFT_LIBRARIES}
-        ${XRENDER_LIBRARIES}
-        ${XINERAMA_LIBRARIES}
-        cairo
-        Xcursor
-        Xfixes
-        jpeg
-        png
-        dl
-        m
-        lrdf
+        ${NTK_AND_LEGACY_LIBS}
+        ${CAIRO_LIBRARIES}
     )
 
     target_include_directories (
         non-mixer-xt PRIVATE
         ${NTK_INCLUDE_DIRS}
-        ${FONTCONFIG_INCLUDE_DIRS}
-        ${JACK_INCLUDE_DIRS}
-        ${LRDF_INCLUDE_DIRS}
-        ${LILV_INCLUDE_DIRS}
-        ${SUIL_INCLUDE_DIRS}
-        ${LIBLO_INCLUDE_DIRS}
-        ${ZIX_INCLUDE_DIRS}
-        ${CLAP_INCLUDEDIR}
-        ${PangoCairo_INCLUDE_DIRS}
-        ${XFT_INCLUDE_DIRS}
-        ${XRENDER_INCLUDE_DIRS}
-        ${XINERAMA_INCLUDE_DIRS}
+        ${NTK_AND_LEGACY_DIRS}
     )
 
 else(EnableNTK) #FLTK Build
@@ -198,9 +206,9 @@ else(EnableNTK) #FLTK Build
             ${SUIL_LIBRARIES}
             ${ZIX_LIBRARIES}
             ${PangoCairo_LIBRARIES}
-            dl
-            m
-            lrdf
+            ${DL_LIBRARY}
+            ${M_LIBRARY}
+            ${LRDF_LIBRARIES}
         )
         target_include_directories (
             non-mixer-xt PRIVATE
@@ -215,41 +223,11 @@ else(EnableNTK) #FLTK Build
         )
     else()                          # Legacy cmake
         set(ExternLibraries
-            ${FONTCONFIG_LIBRARIES}
-            ${JACK_LINK_LIBRARIES}
-            ${CMAKE_THREAD_LIBS_INIT}
-            ${X11_LIBRARIES}
-            ${LIBLO_LIBRARIES}
-            ${LILV_LIBRARIES}
-            ${SUIL_LIBRARIES}
-            ${ZIX_LIBRARIES}
-            ${PangoCairo_LIBRARIES}
-            ${XFT_LIBRARIES}
-            ${XRENDER_LIBRARIES}
-            ${XINERAMA_LIBRARIES}
-            fontconfig
-            Xcursor
-            Xfixes
-            jpeg
-            png
-            dl
-            m
-            lrdf
+            ${NTK_AND_LEGACY_LIBS}
         )
         target_include_directories (
             non-mixer-xt PRIVATE
-            ${FONTCONFIG_INCLUDE_DIRS}
-            ${JACK_INCLUDE_DIRS}
-            ${LRDF_INCLUDE_DIRS}
-            ${LILV_INCLUDE_DIRS}
-            ${SUIL_INCLUDE_DIRS}
-            ${LIBLO_INCLUDE_DIRS}
-            ${ZIX_INCLUDE_DIRS}
-            ${CLAP_INCLUDEDIR}
-            ${PangoCairo_INCLUDE_DIRS}
-            ${XFT_INCLUDE_DIRS}
-            ${XRENDER_INCLUDE_DIRS}
-            ${XINERAMA_INCLUDE_DIRS}
+            ${NTK_AND_LEGACY_DIRS}
         )
     endif()
 endif(EnableNTK)
@@ -270,6 +248,7 @@ endif(EnableNTK)
 
 install (TARGETS non-mixer-xt RUNTIME DESTINATION bin)
 
+# midi-mapper-xt
 set (MapSources
     ../nonlib/JACK/Client.C
     ../nonlib/JACK/Port.C
@@ -282,36 +261,21 @@ set (MapSources
 
 add_executable (midi-mapper-xt ${MapSources} src/midi-mapper.C)
 
-if(EnableNTK)
-    target_include_directories (midi-mapper-xt PRIVATE
-        ${JACK_INCLUDE_DIRS}
-        ${LIBLO_INCLUDE_DIRS}
-    )
-    target_link_libraries(midi-mapper-xt PRIVATE
-        ${LIBLO_LIBRARIES}
-        ${JACK_LINK_LIBRARIES}
-        ${CMAKE_THREAD_LIBS_INIT}
-        dl
-        m
-    )
-
-else(EnableNTK) #FLTK Build
-    target_include_directories (midi-mapper-xt PRIVATE
-        ${JACK_INCLUDE_DIRS}
-        ${LIBLO_INCLUDE_DIRS}
-    )
-    target_link_libraries(midi-mapper-xt PRIVATE
-        ${LIBLO_LIBRARIES}
-        ${JACK_LINK_LIBRARIES}
-        ${CMAKE_THREAD_LIBS_INIT}
-        dl
-        m
-    )
-endif(EnableNTK)
+target_include_directories (midi-mapper-xt PRIVATE
+    ${JACK_INCLUDE_DIRS}
+    ${LIBLO_INCLUDE_DIRS}
+)
+target_link_libraries(midi-mapper-xt PRIVATE
+    ${LIBLO_LIBRARIES}
+    ${JACK_LINK_LIBRARIES}
+    ${CMAKE_THREAD_LIBS_INIT}
+    ${DL_LIBRARY}
+    ${M_LIBRARY}
+)
 
 install (TARGETS midi-mapper-xt RUNTIME DESTINATION bin)
 
-
+# nmxt-plugin-scan
 set (ScanSources
     src/Plugin_Scan.C
     src/ladspa/LADSPAInfo.C
@@ -324,35 +288,19 @@ set (ScanSources
 
 add_executable (nmxt-plugin-scan ${ScanSources} ${VST3SDK_SOURCES} src/nmxt-plugin-scan.C)
 
-if(EnableNTK)
-    target_include_directories (nmxt-plugin-scan PRIVATE
-            ${LRDF_INCLUDE_DIRS}
-            ${LILV_INCLUDE_DIRS}
-            ${SUIL_INCLUDE_DIRS}
-    )
+target_include_directories (nmxt-plugin-scan PRIVATE
+        ${LRDF_INCLUDE_DIRS}
+        ${LILV_INCLUDE_DIRS}
+        ${SUIL_INCLUDE_DIRS}
+)
 
-    target_link_libraries(nmxt-plugin-scan PRIVATE
-            ${LILV_LIBRARIES}
-            ${SUIL_LIBRARIES}
-            ${CMAKE_THREAD_LIBS_INIT}
-            dl
-            lrdf
-    )
-else(EnableNTK)
-    target_include_directories (nmxt-plugin-scan PRIVATE
-            ${LRDF_INCLUDE_DIRS}
-            ${LILV_INCLUDE_DIRS}
-            ${SUIL_INCLUDE_DIRS}
-    )
-
-    target_link_libraries(nmxt-plugin-scan PRIVATE
-            ${LILV_LIBRARIES}
-            ${SUIL_LIBRARIES}
-            ${CMAKE_THREAD_LIBS_INIT}
-            dl
-            lrdf
-    )
-endif(EnableNTK)
+target_link_libraries(nmxt-plugin-scan PRIVATE
+        ${LILV_LIBRARIES}
+        ${SUIL_LIBRARIES}
+        ${CMAKE_THREAD_LIBS_INIT}
+        ${DL_LIBRARY}
+        ${LRDF_LIBRARIES}
+)
 
 if (EnableVST3Support AND CONFIG_VST3SDK)
     target_include_directories (nmxt-plugin-scan PRIVATE ${CONFIG_VST3SDK})
