@@ -3,102 +3,102 @@
 project (non-mixer-xt)
 
 set(NONLIB_SOURCES
-    ../nonlib/JACK/Client.C
-    ../nonlib/JACK/Port.C
-    ../nonlib/Log_Entry.C
-    ../nonlib/Loggable.C
-    ../nonlib/NSM/Client.C
-    ../nonlib/OSC/Endpoint.C
-    ../nonlib/Thread.C
-    ../nonlib/debug.C
-    ../nonlib/dsp.C
-    ../nonlib/file.C
-    ../nonlib/string_util.C
+    ${CMAKE_SOURCE_DIR}/nonlib/JACK/Client.C
+    ${CMAKE_SOURCE_DIR}/nonlib/JACK/Port.C
+    ${CMAKE_SOURCE_DIR}/nonlib/Log_Entry.C
+    ${CMAKE_SOURCE_DIR}/nonlib/Loggable.C
+    ${CMAKE_SOURCE_DIR}/nonlib/NSM/Client.C
+    ${CMAKE_SOURCE_DIR}/nonlib/OSC/Endpoint.C
+    ${CMAKE_SOURCE_DIR}/nonlib/Thread.C
+    ${CMAKE_SOURCE_DIR}/nonlib/debug.C
+    ${CMAKE_SOURCE_DIR}/nonlib/dsp.C
+    ${CMAKE_SOURCE_DIR}/nonlib/file.C
+    ${CMAKE_SOURCE_DIR}/nonlib/string_util.C
 
-    ../nonlib/MIDI/event.C
-    ../nonlib/MIDI/event_list.C
-    ../nonlib/MIDI/midievent.C
+    ${CMAKE_SOURCE_DIR}/nonlib/MIDI/event.C
+    ${CMAKE_SOURCE_DIR}/nonlib/MIDI/event_list.C
+    ${CMAKE_SOURCE_DIR}/nonlib/MIDI/midievent.C
 )
 
 set(FL_SOURCES
-    ../FL/About_Dialog.C
-    ../FL/Fl_Menu_Settings.C
-    ../FL/Fl_Scalepack.C
-    ../FL/Fl_Text_Edit_Window.C
-    ../FL/Fl_Value_SliderX.C
-    ../FL/Fl_SliderX.C
-    ../FL/New_Project_Dialog.C
-    ../FL/event_name.C
-    ../FL/menu_popup.C
-    ../FL/test_press.C
-    ../FL/focus_frame.C
+    ${CMAKE_SOURCE_DIR}/FL/About_Dialog.C
+    ${CMAKE_SOURCE_DIR}/FL/Fl_Menu_Settings.C
+    ${CMAKE_SOURCE_DIR}/FL/Fl_Scalepack.C
+    ${CMAKE_SOURCE_DIR}/FL/Fl_Text_Edit_Window.C
+    ${CMAKE_SOURCE_DIR}/FL/Fl_Value_SliderX.C
+    ${CMAKE_SOURCE_DIR}/FL/Fl_SliderX.C
+    ${CMAKE_SOURCE_DIR}/FL/New_Project_Dialog.C
+    ${CMAKE_SOURCE_DIR}/FL/event_name.C
+    ${CMAKE_SOURCE_DIR}/FL/menu_popup.C
+    ${CMAKE_SOURCE_DIR}/FL/test_press.C
+    ${CMAKE_SOURCE_DIR}/FL/focus_frame.C
 )
 
 set(PLUGIN_SOURCES
     # LADSPA
-    src/ladspa/LADSPAInfo.C
-    src/ladspa/LADSPA_Plugin.C
+    ${CMAKE_SOURCE_DIR}/mixer/src/ladspa/LADSPAInfo.C
+    ${CMAKE_SOURCE_DIR}/mixer/src/ladspa/LADSPA_Plugin.C
 
     # LV2
-    src/lv2/LV2_Plugin.C
-    src/lv2/lv2_evbuf.c
+    ${CMAKE_SOURCE_DIR}/mixer/src/lv2/LV2_Plugin.C
+    ${CMAKE_SOURCE_DIR}/mixer/src/lv2/lv2_evbuf.c
 
     # CLAP
-    src/clap/CLAP_Plugin.C
-    src/clap/Clap_Discovery.C
-    src/clap/PresetIndexer.cpp
-    src/clap/PresetMetadataReceiver.cpp
-    src/clap/Time.cpp
+    ${CMAKE_SOURCE_DIR}/mixer/src/clap/CLAP_Plugin.C
+    ${CMAKE_SOURCE_DIR}/mixer/src/clap/Clap_Discovery.C
+    ${CMAKE_SOURCE_DIR}/mixer/src/clap/PresetIndexer.cpp
+    ${CMAKE_SOURCE_DIR}/mixer/src/clap/PresetMetadataReceiver.cpp
+    ${CMAKE_SOURCE_DIR}/mixer/src/clap/Time.cpp
 
     # VST2
-    src/vst2/Vst2_Discovery.C
-    src/vst2/VST2_Plugin.C
-    src/vst2/VST2_Preset.C
+    ${CMAKE_SOURCE_DIR}/mixer/src/vst2/Vst2_Discovery.C
+    ${CMAKE_SOURCE_DIR}/mixer/src/vst2/VST2_Plugin.C
+    ${CMAKE_SOURCE_DIR}/mixer/src/vst2/VST2_Preset.C
 
     # VST3
-    src/vst3/VST3_common.C
-    src/vst3/Vst3_Discovery.C
-    src/vst3/VST3_Plugin.C
-    src/vst3/VST3PluginHost.C
-    src/vst3/runloop.cpp
-    src/vst3/EditorFrame.C
+    ${CMAKE_SOURCE_DIR}/mixer/src/vst3/VST3_common.C
+    ${CMAKE_SOURCE_DIR}/mixer/src/vst3/Vst3_Discovery.C
+    ${CMAKE_SOURCE_DIR}/mixer/src/vst3/VST3_Plugin.C
+    ${CMAKE_SOURCE_DIR}/mixer/src/vst3/VST3PluginHost.C
+    ${CMAKE_SOURCE_DIR}/mixer/src/vst3/runloop.cpp
+    ${CMAKE_SOURCE_DIR}/mixer/src/vst3/EditorFrame.C
 
     # Platform-specific plugin UI
-    src/x11/X11PluginUI.C
+    ${CMAKE_SOURCE_DIR}/mixer/src/x11/X11PluginUI.C
 )
 
 set(CORE_SOURCES
     # Generic plugin infrastructure
-    src/Plugin_Chooser.C
-    src/Plugin_Chooser_UI.C
-    src/Plugin_Module.C
-    src/Scanner_Window.C
+    ${CMAKE_SOURCE_DIR}/mixer/src/Plugin_Chooser.C
+    ${CMAKE_SOURCE_DIR}/mixer/src/Plugin_Chooser_UI.C
+    ${CMAKE_SOURCE_DIR}/mixer/src/Plugin_Module.C
+    ${CMAKE_SOURCE_DIR}/mixer/src/Scanner_Window.C
 
     # Engine / processing
-    src/Chain.C
-    src/Controller_Module.C
-    src/DPM.C
-    src/Gain_Module.C
-    src/Spatializer_Module.C
-    src/JACK_Module.C
-    src/AUX_Module.C
+    ${CMAKE_SOURCE_DIR}/mixer/src/Chain.C
+    ${CMAKE_SOURCE_DIR}/mixer/src/Controller_Module.C
+    ${CMAKE_SOURCE_DIR}/mixer/src/DPM.C
+    ${CMAKE_SOURCE_DIR}/mixer/src/Gain_Module.C
+    ${CMAKE_SOURCE_DIR}/mixer/src/Spatializer_Module.C
+    ${CMAKE_SOURCE_DIR}/mixer/src/JACK_Module.C
+    ${CMAKE_SOURCE_DIR}/mixer/src/AUX_Module.C
 
     # Mixing / metering
-    src/Meter_Indicator_Module.C
-    src/Meter_Module.C
-    src/Mixer.C
-    src/Mixer_Strip.C
-    src/Module.C
-    src/Module_Parameter_Editor.C
-    src/Mono_Pan_Module.C
-    src/Panner.C
+    ${CMAKE_SOURCE_DIR}/mixer/src/Meter_Indicator_Module.C
+    ${CMAKE_SOURCE_DIR}/mixer/src/Meter_Module.C
+    ${CMAKE_SOURCE_DIR}/mixer/src/Mixer.C
+    ${CMAKE_SOURCE_DIR}/mixer/src/Mixer_Strip.C
+    ${CMAKE_SOURCE_DIR}/mixer/src/Module.C
+    ${CMAKE_SOURCE_DIR}/mixer/src/Module_Parameter_Editor.C
+    ${CMAKE_SOURCE_DIR}/mixer/src/Mono_Pan_Module.C
+    ${CMAKE_SOURCE_DIR}/mixer/src/Panner.C
 
     # Project / UI / misc
-    src/Project.C
-    src/Group.C
-    src/SpectrumView.C
-    src/Spatialization_Console.C
-    src/NSM.C
+    ${CMAKE_SOURCE_DIR}/mixer/src/Project.C
+    ${CMAKE_SOURCE_DIR}/mixer/src/Group.C
+    ${CMAKE_SOURCE_DIR}/mixer/src/SpectrumView.C
+    ${CMAKE_SOURCE_DIR}/mixer/src/Spatialization_Console.C
+    ${CMAKE_SOURCE_DIR}/mixer/src/NSM.C
 )
 
 set(ProgSources
@@ -113,16 +113,16 @@ if(EnableNTK)
 else(EnableNTK)
     message(STATUS "USING FLTK BUILD")
     set(FLTK_specific
-        ../FL/Fl_Tooltip.cxx
-        ../FL/Fl_Panzoomer.C
-        ../FL/Fl_Theme_Chooser.cxx
-        ../FL/Fl_Theme.cxx
-        ../FL/GTK_Theme.cxx
-        ../FL/Clean_Theme.cxx
-        ../FL/Crystal_Theme.cxx
-        ../FL/Gleam_Theme.cxx
-        ../FL/Vector_Theme.cxx
-        ../FL/themes.cxx
+        ${CMAKE_SOURCE_DIR}/FL/Fl_Tooltip.cxx
+        ${CMAKE_SOURCE_DIR}/FL/Fl_Panzoomer.C
+        ${CMAKE_SOURCE_DIR}/FL/Fl_Theme_Chooser.cxx
+        ${CMAKE_SOURCE_DIR}/FL/Fl_Theme.cxx
+        ${CMAKE_SOURCE_DIR}/FL/GTK_Theme.cxx
+        ${CMAKE_SOURCE_DIR}/FL/Clean_Theme.cxx
+        ${CMAKE_SOURCE_DIR}/FL/Crystal_Theme.cxx
+        ${CMAKE_SOURCE_DIR}/FL/Gleam_Theme.cxx
+        ${CMAKE_SOURCE_DIR}/FL/Vector_Theme.cxx
+        ${CMAKE_SOURCE_DIR}/FL/themes.cxx
     )
 endif(EnableNTK)
 
@@ -145,7 +145,7 @@ add_executable (non-mixer-xt
     ${ProgSources}
     ${FLTK_specific}
     ${VST3SDK_SOURCES}
-    src/main.C)
+    ${CMAKE_SOURCE_DIR}/mixer/src/main.C)
 
 set(NTK_AND_LEGACY_LIBS
     ${FONTCONFIG_LIBRARIES}
@@ -250,16 +250,16 @@ install (TARGETS non-mixer-xt RUNTIME DESTINATION bin)
 
 # midi-mapper-xt
 set (MapSources
-    ../nonlib/JACK/Client.C
-    ../nonlib/JACK/Port.C
-    ../nonlib/NSM/Client.C
-    ../nonlib/OSC/Endpoint.C
-    ../nonlib/Thread.C
-    ../nonlib/debug.C
-    ../nonlib/MIDI/midievent.C
+    ${CMAKE_SOURCE_DIR}/nonlib/JACK/Client.C
+    ${CMAKE_SOURCE_DIR}/nonlib/JACK/Port.C
+    ${CMAKE_SOURCE_DIR}/nonlib/NSM/Client.C
+    ${CMAKE_SOURCE_DIR}/nonlib/OSC/Endpoint.C
+    ${CMAKE_SOURCE_DIR}/nonlib/Thread.C
+    ${CMAKE_SOURCE_DIR}/nonlib/debug.C
+    ${CMAKE_SOURCE_DIR}/nonlib/MIDI/midievent.C
 )
 
-add_executable (midi-mapper-xt ${MapSources} src/midi-mapper.C)
+add_executable (midi-mapper-xt ${MapSources} ${CMAKE_SOURCE_DIR}/mixer/src/midi-mapper.C)
 
 target_include_directories (midi-mapper-xt PRIVATE
     ${JACK_INCLUDE_DIRS}
@@ -277,16 +277,16 @@ install (TARGETS midi-mapper-xt RUNTIME DESTINATION bin)
 
 # nmxt-plugin-scan
 set (ScanSources
-    src/Plugin_Scan.C
-    src/ladspa/LADSPAInfo.C
-    src/clap/Clap_Discovery.C
-    src/vst2/Vst2_Discovery.C
-    src/vst3/Vst3_Discovery.C
-    src/vst3/VST3_common.C
-    ../nonlib/debug.C
+    ${CMAKE_SOURCE_DIR}/mixer/src/Plugin_Scan.C
+    ${CMAKE_SOURCE_DIR}/mixer/src/ladspa/LADSPAInfo.C
+    ${CMAKE_SOURCE_DIR}/mixer/src/clap/Clap_Discovery.C
+    ${CMAKE_SOURCE_DIR}/mixer/src/vst2/Vst2_Discovery.C
+    ${CMAKE_SOURCE_DIR}/mixer/src/vst3/Vst3_Discovery.C
+    ${CMAKE_SOURCE_DIR}/mixer/src/vst3/VST3_common.C
+    ${CMAKE_SOURCE_DIR}/nonlib/debug.C
 )
 
-add_executable (nmxt-plugin-scan ${ScanSources} ${VST3SDK_SOURCES} src/nmxt-plugin-scan.C)
+add_executable (nmxt-plugin-scan ${ScanSources} ${VST3SDK_SOURCES} ${CMAKE_SOURCE_DIR}/mixer/src/nmxt-plugin-scan.C)
 
 target_include_directories (nmxt-plugin-scan PRIVATE
         ${LRDF_INCLUDE_DIRS}
