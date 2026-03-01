@@ -499,6 +499,14 @@ CLAP_Plugin::process_reset( )
     ::memset ( &_process, 0, sizeof (_process ) );
     ::memset ( &_transport, 0, sizeof (_transport ) );
 
+    /* Set default tempo & time sig as some plugins need it and it may not
+       get set by process unless the transport has changed */
+    _transport.tempo = _bpm;
+    _transport.flags |= CLAP_TRANSPORT_HAS_TEMPO;
+    _transport.tsig_num = 4;
+    _transport.tsig_denom = 4;
+    _transport.flags |= CLAP_TRANSPORT_HAS_TIME_SIGNATURE;
+
     if ( audio_input.size ( ) )
     {
         _process.audio_inputs = (const clap_audio_buffer_t *) _audio_ins;
