@@ -293,7 +293,6 @@ public:
             _lilv_label(NULL),
             _property_mapped(0),
             _clear_input_buffer(false),
-            _need_file_update(false),
             _supports_time_position(false)
 #endif
         {
@@ -328,7 +327,6 @@ public:
             _lilv_label(p._lilv_label),
             _property_mapped(p._property_mapped),
             _clear_input_buffer(false),
-            _need_file_update(false),
             _supports_time_position(p._supports_time_position)
 #endif
         {
@@ -616,7 +614,6 @@ public:
         LilvNode*   _lilv_label;        ///< Human readable label
         LV2_URID    _property_mapped;   ///< Iff type == PROPERTY
         bool _clear_input_buffer;
-        bool _need_file_update;
         bool _supports_time_position;
         std::string _file;
     private:

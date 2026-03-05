@@ -1960,7 +1960,7 @@ LV2_Plugin::ui_port_event( uint32_t port_index, uint32_t /*buffer_size*/, uint32
             if ( !patch_set_get ( this, obj, &property, &value ) )
             {
                 DMESSAGE ( "To set_file(): atom_input_index = %u: Value received = %s", ai, (char *) ( value + 1 ) );
-                set_file ( (char *) ( value + 1 ), ai, false ); // false means don't update the plugin, since this comes from the plugin
+                set_file ( (char *) ( value + 1 ), ai );
             }
         }
         else if ( obj->body.otype == Plugin_Module_URI_patch_Put )
@@ -3115,10 +3115,9 @@ LV2_Plugin::get_file( int port_index ) const
 }
 
 void
-LV2_Plugin::set_file( const std::string &file, int port_index, bool need_update )
+LV2_Plugin::set_file( const std::string &file, int port_index )
 {
     atom_input[port_index]._file = file;
-    atom_input[port_index]._need_file_update = need_update;
 
     /* To refresh the button label in the parameter editor */
     if ( _editor )
@@ -3177,29 +3176,6 @@ LV2_Plugin::get( Log_Entry &e ) const
             }
         }
     }
-
-#ifdef LV2_WORKER_SUPPORT
-    /* If using state restore then all the file paths are stored in the custom data file */
-    if ( !_use_custom_data )
-    {
-        Module *m = ( Module * ) this;
-        LV2_Plugin *pm = static_cast<LV2_Plugin *> ( m );
-        for ( unsigned int i = 0; i < pm->atom_input.size ( ); ++i )
-        {
-            if ( pm->atom_input[i]._file.empty ( ) )
-                continue;
-
-            char *s = pm->get_file ( i );
-
-            DMESSAGE ( "File to save = %s", s );
-
-            if ( strlen ( s ) )
-            {
-                e.add ( ":filename", s );
-            }
-        }
-    }
-#endif
 
     Module::get ( e );
 }
@@ -3274,15 +3250,6 @@ LV2_Plugin::set( Log_Entry &e )
     }
 
     Module::set ( e );
-#ifdef LV2_WORKER_SUPPORT
-    for ( unsigned int i = 0; i < atom_input.size ( ); ++i )
-    {
-        if ( atom_input[i]._need_file_update )
-        {
-            send_file_to_plugin ( i, get_file ( i ) );
-        }
-    }
-#endif
 
     if ( !restore.empty ( ) )
     {

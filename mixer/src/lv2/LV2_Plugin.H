@@ -150,7 +150,7 @@ public:
     std::vector<Port> atom_output;
 
     char *get_file ( int port_index ) const;
-    void set_file (const std::string &file, int port_index, bool need_update = false );
+    void set_file (const std::string &file, int port_index );
     void ui_port_event( uint32_t port_index, uint32_t buffer_size, uint32_t protocol, const void* buffer );
     void send_atom_to_plugin( uint32_t port_index, uint32_t buffer_size, const void* buffer);
     void send_file_to_plugin( int port, const std::string &filename );
