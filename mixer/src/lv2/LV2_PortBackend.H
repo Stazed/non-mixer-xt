@@ -27,6 +27,8 @@
 #include "lilvmm.hpp"
 #include "../Module.H"
 
+#define LV2_PORT(p) ((p)->backend<LV2_PortBackend>())
+
 class LV2_PortBackend : public Module::PortBackend
 {
 public:

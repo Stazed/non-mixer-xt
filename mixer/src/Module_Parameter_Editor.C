@@ -476,9 +476,9 @@ Module_Parameter_Editor::make_controls( void )
         {
             Fl_Choice *o = new Fl_Choice ( 75, ( y_location * 24 ) + 24, 200, 24, p->name ( ) );
             w = o;
-            for ( unsigned count = 0; count < module->control_input[i].backend<LV2_PortBackend>()->ScalePoints.size ( ); ++count )
+            for ( unsigned count = 0; count < LV2_PORT(&module->control_input[i])->ScalePoints.size ( ); ++count )
             {
-                o->add ( module->control_input[i].backend<LV2_PortBackend>()->ScalePoints[count].Label.c_str ( ) );
+                o->add ( LV2_PORT(&module->control_input[i])->ScalePoints[count].Label.c_str ( ) );
             }
 
             o->align ( FL_ALIGN_RIGHT );
@@ -486,9 +486,9 @@ Module_Parameter_Editor::make_controls( void )
             /* We set the Fl_Choice menu according to the position in the ScalePoints vector */
             int menu = 0;
 
-            for ( unsigned ii = 0; ii < p->backend<LV2_PortBackend>()->ScalePoints.size ( ); ++ii )
+            for ( unsigned ii = 0; ii < LV2_PORT(p)->ScalePoints.size ( ); ++ii )
             {
-                if ( (int) p->backend<LV2_PortBackend>()->ScalePoints[ii].Value == (int) ( p->control_value ( ) + .5 ) ) // .5 for float rounding
+                if ( (int) LV2_PORT(p)->ScalePoints[ii].Value == (int) ( p->control_value ( ) + .5 ) ) // .5 for float rounding
                 {
                     menu = ii;
                     break;
@@ -629,7 +629,7 @@ Module_Parameter_Editor::make_controls( void )
 
             Fl_Widget *w;
 
-            Fl_Button *o = new Fl_Button ( 75, ( y_location * 24 ) + 24, 200, 24, lilv_node_as_string ( p->backend<LV2_PortBackend>()->_lilv_symbol ) );
+            Fl_Button *o = new Fl_Button ( 75, ( y_location * 24 ) + 24, 200, 24, lilv_node_as_string ( LV2_PORT(p)->_lilv_symbol ) );
 
             w = o;
             o->selection_color ( fc );
@@ -637,9 +637,9 @@ Module_Parameter_Editor::make_controls( void )
             o->align ( FL_ALIGN_INSIDE | FL_ALIGN_BOTTOM );
 
             /* Put the filename on the button */
-            if ( !p->backend<LV2_PortBackend>()->_file.empty ( ) )
+            if ( !LV2_PORT(p)->_file.empty ( ) )
             {
-                std::string base_filename = p->backend<LV2_PortBackend>()->_file.substr ( p->backend<LV2_PortBackend>()->_file.find_last_of ( "/\\" ) + 1 );
+                std::string base_filename = LV2_PORT(p)->_file.substr ( LV2_PORT(p)->_file.find_last_of ( "/\\" ) + 1 );
                 o->copy_label ( base_filename.c_str ( ) );
             }
 
@@ -826,12 +826,12 @@ Module_Parameter_Editor::cb_filechooser_handle( Fl_Widget *w, void *v )
     /* Set file chooser location based on previous selected file path */
     LV2_Plugin * pm = static_cast<LV2_Plugin *> ( cd->base_widget->_module );
 
-    std::string previous_file = pm->atom_input[cd->port_number[0]].backend<LV2_PortBackend>()->_file;
+    std::string previous_file = LV2_PORT(&pm->atom_input[cd->port_number[0]])->_file;
     size_t found = previous_file.find_last_of ( "/\\" );
     std::string file_chooser_location = previous_file.substr ( 0, found );
 
     /* File chooser window title */
-    std::string title = lilv_node_as_string ( pm->atom_input[cd->port_number[0]].backend<LV2_PortBackend>()->_lilv_label );
+    std::string title = lilv_node_as_string ( LV2_PORT(&pm->atom_input[cd->port_number[0]])->_lilv_label );
 
     char *filename;
 
@@ -1162,9 +1162,9 @@ Module_Parameter_Editor::handle_control_changed( Module::Port *p )
         /* We set the Fl_Choice menu according to the position in the ScalePoints vector */
         int menu = 0;
 
-        for ( unsigned ii = 0; ii < p->backend<LV2_PortBackend>()->ScalePoints.size ( ); ++ii )
+        for ( unsigned ii = 0; ii < LV2_PORT(p)->ScalePoints.size ( ); ++ii )
         {
-            if ( (int) p->backend<LV2_PortBackend>()->ScalePoints[ii].Value == (int) ( p->control_value ( ) + .5 ) ) // .5 for float rounding
+            if ( (int) LV2_PORT(p)->ScalePoints[ii].Value == (int) ( p->control_value ( ) + .5 ) ) // .5 for float rounding
             {
                 menu = ii;
                 break;
@@ -1194,7 +1194,7 @@ Module_Parameter_Editor::refresh_file_button_label( int index )
     Module::Port *p = &pm->atom_input[index];
     if ( p->hints.type == Module::Port::Hints::PATCH_MESSAGE && p->hints.visible )
     {
-        std::string base_filename = p->backend<LV2_PortBackend>()->_file.substr ( p->backend<LV2_PortBackend>()->_file.find_last_of ( "/\\" ) + 1 );
+        std::string base_filename = LV2_PORT(p)->_file.substr ( LV2_PORT(p)->_file.find_last_of ( "/\\" ) + 1 );
         Fl_Button *w = static_cast<Fl_Button *> ( atom_port_controller[index] );
         w->copy_label ( base_filename.c_str ( ) );
     }
@@ -1247,10 +1247,10 @@ Module_Parameter_Editor::set_plugin_file( int port, const std::string &filename 
 void
 Module_Parameter_Editor::set_choice_value( int port, int menu )
 {
-    DMESSAGE ( "Menu = %d: ScalePoints Value = %f", menu, _module->control_input[port].backend<LV2_PortBackend>()->ScalePoints[menu].Value );
+    DMESSAGE ( "Menu = %d: ScalePoints Value = %f", menu, LV2_PORT(&_module->control_input[port])->ScalePoints[menu].Value );
 
     /* We have to send the port ScalePoints value not menu choice value */
-    set_value ( port, _module->control_input[port].backend<LV2_PortBackend>()->ScalePoints[menu].Value );
+    set_value ( port, LV2_PORT(&_module->control_input[port])->ScalePoints[menu].Value );
 }
 #endif  // LV2_SUPPORT
 
