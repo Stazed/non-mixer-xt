@@ -916,6 +916,9 @@ LV2_Plugin::create_control_ports( )
 
                     if ( rdfport.ScalePointCount )
                     {
+                        auto* lv2 = new LV2_PortBackend();
+                        p.backend(lv2);
+
                         for ( unsigned k = 0; k < rdfport.ScalePointCount; ++k )
                         {
                             EnumeratorScalePoints item;
@@ -1024,7 +1027,10 @@ LV2_Plugin::create_atom_ports( )
 #ifdef LV2_MIDI_SUPPORT
                 if ( LV2_PORT_SUPPORTS_MIDI_EVENT ( _idata->rdf_data->Ports[i].Types ) )
                 {
-                    add_port ( Port ( this, Port::INPUT, Port::MIDI, _idata->rdf_data->Ports[i].Name ) );
+                    Port p( this, Port::INPUT, Port::MIDI, _idata->rdf_data->Ports[i].Name );
+                    auto* lv2 = new LV2_PortBackend();
+                    p.backend(lv2);
+                    add_port ( p );
 
                     _midi_ins++;
 
@@ -1033,7 +1039,10 @@ LV2_Plugin::create_atom_ports( )
                 else
                 {
 #endif
-                    add_port ( Port ( this, Port::INPUT, Port::ATOM, _idata->rdf_data->Ports[i].Name ) );
+                    Port p( this, Port::INPUT, Port::ATOM, _idata->rdf_data->Ports[i].Name );
+                    auto* lv2 = new LV2_PortBackend();
+                    p.backend(lv2);
+                    add_port ( p );
 
                     if ( LV2_PORT_SUPPORTS_PATCH_MESSAGE ( _idata->rdf_data->Ports[i].Types ) )
                     {
@@ -1047,7 +1056,7 @@ LV2_Plugin::create_atom_ports( )
 #endif
                 if ( LV2_PORT_SUPPORTS_TIME_POSITION ( _idata->rdf_data->Ports[i].Types ) )
                 {
-                    atom_input[_atom_ins]._supports_time_position = true;
+                    atom_input[_atom_ins].backend<LV2_PortBackend>()->_supports_time_position = true;
                     DMESSAGE ( "LV2_PORT_SUPPORTS_TIME_POSITION: index = %d", i );
                 }
 
@@ -1059,7 +1068,10 @@ LV2_Plugin::create_atom_ports( )
 #ifdef LV2_MIDI_SUPPORT
                 if ( LV2_PORT_SUPPORTS_MIDI_EVENT ( _idata->rdf_data->Ports[i].Types ) )
                 {
-                    add_port ( Port ( this, Port::OUTPUT, Port::MIDI, _idata->rdf_data->Ports[i].Name ) );
+                    Port p( this, Port::OUTPUT, Port::MIDI, _idata->rdf_data->Ports[i].Name );
+                    auto* lv2 = new LV2_PortBackend();
+                    p.backend(lv2);
+                    add_port ( p );
 
                     _midi_outs++;
 
@@ -1068,7 +1080,10 @@ LV2_Plugin::create_atom_ports( )
                 else
                 {
 #endif
-                    add_port ( Port ( this, Port::OUTPUT, Port::ATOM, _idata->rdf_data->Ports[i].Name ) );
+                    Port p( this, Port::OUTPUT, Port::ATOM, _idata->rdf_data->Ports[i].Name );
+                    auto* lv2 = new LV2_PortBackend();
+                    p.backend(lv2);
+                    add_port ( p );
 
                     if ( LV2_PORT_SUPPORTS_PATCH_MESSAGE ( _idata->rdf_data->Ports[i].Types ) )
                     {
@@ -1520,48 +1535,48 @@ LV2_Plugin::plugin_instances( unsigned int n )
                 {
                     if ( LV2_IS_PORT_INPUT ( _idata->rdf_data->Ports[k].Types ) )
                     {
-                        if ( atom_input[aji].event_buffer ( ) )
-                            lv2_evbuf_free ( atom_input[aji].event_buffer ( ) );
+                        if ( atom_input[aji].backend<LV2_PortBackend>()->event_buffer ( ) )
+                            lv2_evbuf_free ( atom_input[aji].backend<LV2_PortBackend>()->event_buffer ( ) );
 
                         const size_t buf_size = get_atom_buffer_size ( k );
                         DMESSAGE ( "Atom IN buffer size = %d", buf_size );
 
-                        atom_input[aji].event_buffer (
+                        atom_input[aji].backend<LV2_PortBackend>()->event_buffer (
                             lv2_evbuf_new ( buf_size,
                             Plugin_Module_URI_Atom_Chunk,
                             Plugin_Module_URI_Atom_Sequence )
                         );
 
-                        _idata->descriptor->connect_port ( h, k, lv2_evbuf_get_buffer ( atom_input[aji].event_buffer ( ) ) );
+                        _idata->descriptor->connect_port ( h, k, lv2_evbuf_get_buffer ( atom_input[aji].backend<LV2_PortBackend>()->event_buffer ( ) ) );
 
-                        DMESSAGE ( "ATOM IN event_buffer = %p", lv2_evbuf_get_buffer ( atom_input[aji].event_buffer ( ) ) );
+                        DMESSAGE ( "ATOM IN event_buffer = %p", lv2_evbuf_get_buffer ( atom_input[aji].backend<LV2_PortBackend>()->event_buffer ( ) ) );
 
                         /* This sets the capacity */
-                        lv2_evbuf_reset ( atom_input[aji].event_buffer ( ), true );
+                        lv2_evbuf_reset ( atom_input[aji].backend<LV2_PortBackend>()->event_buffer ( ), true );
 
                         aji++;
                     }
                     else if ( LV2_IS_PORT_OUTPUT ( _idata->rdf_data->Ports[k].Types ) )
                     {
 
-                        if ( atom_output[ajo].event_buffer ( ) )
-                            lv2_evbuf_free ( atom_output[ajo].event_buffer ( ) );
+                        if ( atom_output[ajo].backend<LV2_PortBackend>()->event_buffer ( ) )
+                            lv2_evbuf_free ( atom_output[ajo].backend<LV2_PortBackend>()->event_buffer ( ) );
 
                         const size_t buf_size = get_atom_buffer_size ( k );
                         DMESSAGE ( "Atom OUT buffer size = %d", buf_size );
 
-                        atom_output[ajo].event_buffer (
+                        atom_output[ajo].backend<LV2_PortBackend>()->event_buffer (
                             lv2_evbuf_new ( buf_size,
                             Plugin_Module_URI_Atom_Chunk,
                             Plugin_Module_URI_Atom_Sequence )
                         );
 
-                        _idata->descriptor->connect_port ( h, k, lv2_evbuf_get_buffer ( atom_output[ajo].event_buffer ( ) ) );
+                        _idata->descriptor->connect_port ( h, k, lv2_evbuf_get_buffer ( atom_output[ajo].backend<LV2_PortBackend>()->event_buffer ( ) ) );
 
                         /* This sets the capacity */
-                        lv2_evbuf_reset ( atom_output[ajo].event_buffer ( ), false );
+                        lv2_evbuf_reset ( atom_output[ajo].backend<LV2_PortBackend>()->event_buffer ( ), false );
 
-                        DMESSAGE ( "ATOM OUT event_buffer = %p", lv2_evbuf_get_buffer ( atom_output[ajo].event_buffer ( ) ) );
+                        DMESSAGE ( "ATOM OUT event_buffer = %p", lv2_evbuf_get_buffer ( atom_output[ajo].backend<LV2_PortBackend>()->event_buffer ( ) ) );
 
                         ajo++;
                     }
@@ -2074,7 +2089,7 @@ LV2_Plugin::send_file_to_plugin( int port, const std::string &filename )
     DMESSAGE ( "File = %s", filename.c_str ( ) );
 
     /* Set the file for non-mixer-xt here - may be redundant some times */
-    atom_input[port]._file = filename;
+    atom_input[port].backend<LV2_PortBackend>()->_file = filename;
 
     uint32_t size = filename.size ( ) + 1;
 
@@ -2086,7 +2101,7 @@ LV2_Plugin::send_file_to_plugin( int port, const std::string &filename )
 
     lv2_atom_forge_object ( &forge, &frame, 0, Plugin_Module_URI_patch_Set );
     lv2_atom_forge_key ( &forge, Plugin_Module_URI_patch_Property );
-    lv2_atom_forge_urid ( &forge, atom_input[port]._property_mapped );
+    lv2_atom_forge_urid ( &forge, atom_input[port].backend<LV2_PortBackend>()->_property_mapped );
     lv2_atom_forge_key ( &forge, Plugin_Module_URI_patch_Value );
     lv2_atom_forge_atom ( &forge, size, this->_atom_forge.Path );
     lv2_atom_forge_write ( &forge, static_cast<const void*> ( filename.c_str ( ) ), size );
@@ -2142,7 +2157,7 @@ LV2_Plugin::apply_ui_events( uint32_t nframes )
                 /* Check if we are sending this to the correct atom port */
                 if ( atom_input[port].hints.plug_port_index == ev.index )
                 {
-                    LV2_Evbuf_Iterator e = lv2_evbuf_end ( atom_input[port].event_buffer ( ) );
+                    LV2_Evbuf_Iterator e = lv2_evbuf_end ( atom_input[port].backend<LV2_PortBackend>()->event_buffer ( ) );
                     const LV2_Atom * const atom = &buffer.head.atom;
 
                     DMESSAGE ( "LV2 ATOM eventTransfer atom type = %d: port = %d: index = %d", atom->type, port, ev.index );
@@ -2150,7 +2165,7 @@ LV2_Plugin::apply_ui_events( uint32_t nframes )
                     lv2_evbuf_write ( &e, nframes, 0, atom->type, atom->size,
                         (const uint8_t*) LV2_ATOM_BODY_CONST ( atom ) );
 
-                    atom_input[port]._clear_input_buffer = true;
+                    atom_input[port].backend<LV2_PortBackend>()->_clear_input_buffer = true;
                     break;
                 }
             }
@@ -2167,9 +2182,9 @@ LV2_Plugin::apply_ui_events( uint32_t nframes )
 void
 LV2_Plugin::process_atom_in_events( uint32_t nframes, unsigned int port )
 {
-    LV2_Evbuf_Iterator iter = lv2_evbuf_begin ( atom_input[port].event_buffer ( ) );
+    LV2_Evbuf_Iterator iter = lv2_evbuf_begin ( atom_input[port].backend<LV2_PortBackend>()->event_buffer ( ) );
 
-    if ( atom_input[port]._supports_time_position )
+    if ( atom_input[port].backend<LV2_PortBackend>()->_supports_time_position )
     {
         // Get Jack transport position
         jack_position_t pos;
@@ -2223,7 +2238,7 @@ LV2_Plugin::process_atom_in_events( uint32_t nframes, unsigned int port )
             lv2_evbuf_write (
                 &iter, 0, 0, lv2_pos->type, lv2_pos->size, LV2_ATOM_BODY ( lv2_pos ) );
         }
-        atom_input[port]._clear_input_buffer = true;
+        atom_input[port].backend<LV2_PortBackend>()->_clear_input_buffer = true;
     }
 
     /* Process any MIDI events from jack */
@@ -2239,7 +2254,7 @@ LV2_Plugin::process_atom_in_events( uint32_t nframes, unsigned int port )
             lv2_evbuf_write (
                 &iter, ev.time, 0, Plugin_Module_URI_Midi_event, ev.size, ev.buffer );
         }
-        atom_input[port]._clear_input_buffer = true;
+        atom_input[port].backend<LV2_PortBackend>()->_clear_input_buffer = true;
     }
     // DMESSAGE("ATOM PORT number = %d", port);
     // atom_input[port]._clear_input_buffer = true;
@@ -2256,7 +2271,7 @@ LV2_Plugin::process_atom_out_events( uint32_t nframes, unsigned int port )
         jack_midi_clear_buffer ( buf );
     }
 
-    for ( LV2_Evbuf_Iterator i = lv2_evbuf_begin ( atom_output[port].event_buffer ( ) );
+    for ( LV2_Evbuf_Iterator i = lv2_evbuf_begin ( atom_output[port].backend<LV2_PortBackend>()->event_buffer ( ) );
         lv2_evbuf_is_valid ( i );
         i = lv2_evbuf_next ( i ) )
     {
@@ -2281,7 +2296,7 @@ LV2_Plugin::process_atom_out_events( uint32_t nframes, unsigned int port )
         }
     }
 
-    lv2_evbuf_reset ( atom_output[port].event_buffer ( ), false );
+    lv2_evbuf_reset ( atom_output[port].backend<LV2_PortBackend>()->event_buffer ( ), false );
 }
 
 #endif  // LV2_MIDI_SUPPORT
@@ -2322,7 +2337,7 @@ LV2_Plugin::set_lv2_port_properties( Port * port, bool writable )
             writable ? patch_writable : patch_readable,
             property ) )
         {
-            port->_property = property;
+            port->backend<LV2_PortBackend>()->_property = property;
             break;
         }
     }
@@ -2330,13 +2345,13 @@ LV2_Plugin::set_lv2_port_properties( Port * port, bool writable )
     LilvNode* rdfs_label;
     rdfs_label = lilv_new_uri ( world, LILV_NS_RDFS "label" );
 
-    port->_lilv_label = lilv_world_get ( world, port->_property, rdfs_label, NULL );
-    port->_lilv_symbol = lilv_world_get_symbol ( world, port->_property );
-    port->_property_mapped = _idata->_lv2_urid_map ( _idata, lilv_node_as_uri ( port->_property ) );
+    port->backend<LV2_PortBackend>()->_lilv_label = lilv_world_get ( world, port->backend<LV2_PortBackend>()->_property, rdfs_label, NULL );
+    port->backend<LV2_PortBackend>()->_lilv_symbol = lilv_world_get_symbol ( world, port->backend<LV2_PortBackend>()->_property );
+    port->backend<LV2_PortBackend>()->_property_mapped = _idata->_lv2_urid_map ( _idata, lilv_node_as_uri ( port->backend<LV2_PortBackend>()->_property ) );
 
-    DMESSAGE ( "Properties label = %s", lilv_node_as_string ( port->_lilv_label ) );
-    DMESSAGE ( "Properties symbol = %s", lilv_node_as_string ( port->_lilv_symbol ) );
-    DMESSAGE ( "Property mapped = %u", port->_property_mapped );
+    DMESSAGE ( "Properties label = %s", lilv_node_as_string ( port->backend<LV2_PortBackend>()->_lilv_label ) );
+    DMESSAGE ( "Properties symbol = %s", lilv_node_as_string ( port->backend<LV2_PortBackend>()->_lilv_symbol ) );
+    DMESSAGE ( "Property mapped = %u", port->backend<LV2_PortBackend>()->_property_mapped );
 
     lilv_nodes_free ( properties );
 
@@ -3050,11 +3065,11 @@ LV2_Plugin::process( nframes_t nframes )
 #ifdef LV2_WORKER_SUPPORT
         for ( unsigned int i = 0; i < atom_input.size ( ); ++i )
         {
-            if ( atom_input[i]._clear_input_buffer )
+            if ( atom_input[i].backend<LV2_PortBackend>()->_clear_input_buffer )
             {
                 // DMESSAGE("GOT atom input clear buffer");
-                atom_input[i]._clear_input_buffer = false;
-                lv2_evbuf_reset ( atom_input[i].event_buffer ( ), true );
+                atom_input[i].backend<LV2_PortBackend>()->_clear_input_buffer = false;
+                lv2_evbuf_reset ( atom_input[i].backend<LV2_PortBackend>()->event_buffer ( ), true );
             }
 
 #ifdef LV2_MIDI_SUPPORT
@@ -3111,13 +3126,13 @@ LV2_Plugin::process( nframes_t nframes )
 char *
 LV2_Plugin::get_file( int port_index ) const
 {
-    return (char *) atom_input[port_index]._file.c_str ( );
+    return (char *) atom_input[port_index].backend<LV2_PortBackend>()->_file.c_str ( );
 }
 
 void
 LV2_Plugin::set_file( const std::string &file, int port_index )
 {
-    atom_input[port_index]._file = file;
+    atom_input[port_index].backend<LV2_PortBackend>()->_file = file;
 
     /* To refresh the button label in the parameter editor */
     if ( _editor )

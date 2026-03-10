@@ -629,7 +629,7 @@ Module_Parameter_Editor::make_controls( void )
 
             Fl_Widget *w;
 
-            Fl_Button *o = new Fl_Button ( 75, ( y_location * 24 ) + 24, 200, 24, lilv_node_as_string ( p->_lilv_symbol ) );
+            Fl_Button *o = new Fl_Button ( 75, ( y_location * 24 ) + 24, 200, 24, lilv_node_as_string ( p->backend<LV2_PortBackend>()->_lilv_symbol ) );
 
             w = o;
             o->selection_color ( fc );
@@ -637,9 +637,9 @@ Module_Parameter_Editor::make_controls( void )
             o->align ( FL_ALIGN_INSIDE | FL_ALIGN_BOTTOM );
 
             /* Put the filename on the button */
-            if ( !p->_file.empty ( ) )
+            if ( !p->backend<LV2_PortBackend>()->_file.empty ( ) )
             {
-                std::string base_filename = p->_file.substr ( p->_file.find_last_of ( "/\\" ) + 1 );
+                std::string base_filename = p->backend<LV2_PortBackend>()->_file.substr ( p->backend<LV2_PortBackend>()->_file.find_last_of ( "/\\" ) + 1 );
                 o->copy_label ( base_filename.c_str ( ) );
             }
 
@@ -826,12 +826,12 @@ Module_Parameter_Editor::cb_filechooser_handle( Fl_Widget *w, void *v )
     /* Set file chooser location based on previous selected file path */
     LV2_Plugin * pm = static_cast<LV2_Plugin *> ( cd->base_widget->_module );
 
-    std::string previous_file = pm->atom_input[cd->port_number[0]]._file;
+    std::string previous_file = pm->atom_input[cd->port_number[0]].backend<LV2_PortBackend>()->_file;
     size_t found = previous_file.find_last_of ( "/\\" );
     std::string file_chooser_location = previous_file.substr ( 0, found );
 
     /* File chooser window title */
-    std::string title = lilv_node_as_string ( pm->atom_input[cd->port_number[0]]._lilv_label );
+    std::string title = lilv_node_as_string ( pm->atom_input[cd->port_number[0]].backend<LV2_PortBackend>()->_lilv_label );
 
     char *filename;
 
@@ -1194,7 +1194,7 @@ Module_Parameter_Editor::refresh_file_button_label( int index )
     Module::Port *p = &pm->atom_input[index];
     if ( p->hints.type == Module::Port::Hints::PATCH_MESSAGE && p->hints.visible )
     {
-        std::string base_filename = p->_file.substr ( p->_file.find_last_of ( "/\\" ) + 1 );
+        std::string base_filename = p->backend<LV2_PortBackend>()->_file.substr ( p->backend<LV2_PortBackend>()->_file.find_last_of ( "/\\" ) + 1 );
         Fl_Button *w = static_cast<Fl_Button *> ( atom_port_controller[index] );
         w->copy_label ( base_filename.c_str ( ) );
     }

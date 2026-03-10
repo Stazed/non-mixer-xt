@@ -201,6 +201,15 @@ public:
         EnumeratorScalePoints() : Value(0.0) {}
     };
 #endif
+    
+#ifdef LV2_SUPPORT
+    class PortBackend 
+    {
+    public:
+        virtual ~PortBackend() {}
+        virtual PortBackend* clone() const = 0;
+    };
+#endif
 
     class Port
     {
@@ -218,11 +227,23 @@ public:
                 connected_port()->_buf = _buf;
         }
 
-
     public:
 
         enum Direction { INPUT, OUTPUT };
         enum Type { AUDIO, CONTROL, AUX_AUDIO, ATOM, MIDI };
+
+#ifdef LV2_SUPPORT
+        template<typename T>
+        T* backend() const
+        {
+            return static_cast<T*>(_backend);
+        }
+
+        void backend(PortBackend* b)
+        {
+            _backend = b;
+        }
+#endif
 
         /* hints for control ports (specifically control inputs) */
         struct Hints
@@ -287,13 +308,7 @@ public:
             _by_number_number(-1),
             _by_number_path(0)
 #ifdef LV2_SUPPORT
-            ,_evbuf(NULL),
-            _property(NULL),
-            _lilv_symbol(NULL),
-            _lilv_label(NULL),
-            _property_mapped(0),
-            _clear_input_buffer(false),
-            _supports_time_position(false)
+            ,_backend(nullptr)
 #endif
         {
             /* On port creation, we set _symbol to name for internal/LADSPA plugins that don't
@@ -321,15 +336,11 @@ public:
             _by_number_number(-1),
             _by_number_path(0)
 #ifdef LV2_SUPPORT
-            ,_evbuf(p._evbuf),
-            _property(p._property),
-            _lilv_symbol(p._lilv_symbol),
-            _lilv_label(p._lilv_label),
-            _property_mapped(p._property_mapped),
-            _clear_input_buffer(false),
-            _supports_time_position(p._supports_time_position)
+            ,_backend(nullptr)
 #endif
         {
+            if (p._backend)
+                _backend = p._backend->clone();
 #ifdef LV2_SUPPORT
             hints.ScalePoints = p.hints.ScalePoints;
 #endif
@@ -344,9 +355,8 @@ public:
                 free( _by_number_path );
             _by_number_path = NULL;
 #ifdef LV2_SUPPORT
-            if ( _evbuf )
-                lv2_evbuf_free( _evbuf );
-            _evbuf = NULL;
+            if (_backend)
+                delete _backend;
 #endif
         }
 
@@ -393,16 +403,7 @@ public:
         {
             return _buf;
         }
-#ifdef LV2_SUPPORT
-        void event_buffer ( LV2_Evbuf * evbuf )
-        {
-            _evbuf = evbuf;
-        }
-        LV2_Evbuf* event_buffer ( void ) const
-        {
-            return _evbuf;
-        }
-#endif
+
         OSC::Signal *scaled_signal ( void )
         {
             return _scaled_signal;
@@ -607,16 +608,7 @@ public:
         char *_by_number_path;
 
 #ifdef LV2_SUPPORT
-        LV2_Evbuf* _evbuf;
-    public:
-        const LilvNode* _property;
-        LilvNode*   _lilv_symbol;       ///< Symbol
-        LilvNode*   _lilv_label;        ///< Human readable label
-        LV2_URID    _property_mapped;   ///< Iff type == PROPERTY
-        bool _clear_input_buffer;
-        bool _supports_time_position;
-        std::string _file;
-    private:
+        PortBackend* _backend {nullptr};
 #endif
 
         static void handle_signal_connection_state_changed ( OSC::Signal *, void *o );

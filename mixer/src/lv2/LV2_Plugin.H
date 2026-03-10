@@ -44,6 +44,7 @@
 #include "LV2_RDF_Utils.hpp"
 #include "ImplementationData.H"
 #include "atom-forge.h"
+#include "LV2_PortBackend.H"
 
 #define PRESET_SUPPORT 1
 #define LV2_STATE_SAVE 1
