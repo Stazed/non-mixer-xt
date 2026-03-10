@@ -188,9 +188,7 @@ public:
 
 #ifdef LV2_SUPPORT
     bool _b_have_visible_atom_control_port;
-#endif
-    
-#ifdef LV2_SUPPORT
+
     class PortBackend 
     {
     public:
@@ -324,8 +322,10 @@ public:
             ,_backend(nullptr)
 #endif
         {
+#ifdef LV2_SUPPORT
             if (p._backend)
                 _backend = p._backend->clone();
+#endif
         }
 
         virtual ~Port ( )
