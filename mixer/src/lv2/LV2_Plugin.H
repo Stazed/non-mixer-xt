@@ -35,6 +35,7 @@
 #include <zix-0/zix/ring.h>
 #include <zix-0/zix/sem.h>
 #include <zix-0/zix/thread.h>
+#include <suil/suil.h>
 
 #include "../Mixer_Strip.H"
 #include "../Module.H"

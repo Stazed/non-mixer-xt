@@ -41,12 +41,6 @@
 #include <algorithm>
 
 
-#ifdef LV2_SUPPORT
-#include "lv2/lv2_evbuf.h"
-#include "lv2/lilvmm.hpp"
-#include <suil/suil.h>
-#endif
-
 class Chain;
 class Module_Parameter_Editor;
 class Fl_Menu_;
