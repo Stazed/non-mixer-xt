@@ -12,16 +12,16 @@ public:
 
     struct EnumeratorScalePoints
     {
-        std::string label;
-        float value {0.f};
+        std::string Label;
+        float Value {0.f};
 
         static bool before(const EnumeratorScalePoints& a, const EnumeratorScalePoints& b)
         {
-            return a.value < b.value;
+            return a.Value < b.Value;
         }
     };
 
-    std::vector<EnumeratorScalePoints> scale_points;
+    std::vector<EnumeratorScalePoints> ScalePoints;
 
     LV2_Evbuf* _evbuf {nullptr};
 

@@ -49,6 +49,7 @@
 // needed for mixer->endpoint
 #include "Mixer.H"
 #include "Spatialization_Console.H"
+#include "lv2/LV2_PortBackend.H"
 
 bool Controller_Module::learn_by_number = false;
 bool Controller_Module::_learn_mode = false;
@@ -420,7 +421,12 @@ Controller_Module::connect_to( Port *p )
 #ifdef LV2_SUPPORT
     /* The controller needs the ScalePoints vector to set the Fl_Choice menu based on
        ScalePoints Value since the Fl_Menu value may differ from the controller value */
-    control_output[0].hints.ScalePoints = p->hints.ScalePoints;
+    if(p->backend<LV2_PortBackend>())
+    {
+        auto* lv2 = new LV2_PortBackend();
+        control_output[0].backend(lv2);
+        control_output[0].backend<LV2_PortBackend>()->ScalePoints = p->backend<LV2_PortBackend>()->ScalePoints;
+    }
 #endif
     clear ( );
 
@@ -466,9 +472,9 @@ Controller_Module::connect_to( Port *p )
         o->selection_color ( fl_color_average ( FL_GRAY, FL_CYAN, 0.5 ) );
 
         /* Add the choice labels */
-        for ( unsigned count = 0; count < p->hints.ScalePoints.size ( ); ++count )
+        for ( unsigned count = 0; count < p->backend<LV2_PortBackend>()->ScalePoints.size ( ); ++count )
         {
-            o->add ( p->hints.ScalePoints[count].Label.c_str ( ) );
+            o->add ( p->backend<LV2_PortBackend>()->ScalePoints[count].Label.c_str ( ) );
         }
 
         control = static_cast<Fl_Choice*> ( o );
@@ -479,9 +485,9 @@ Controller_Module::connect_to( Port *p )
         /* We set the Fl_Choice menu according to the position in the ScalePoints vector */
         int menu_location = 0;
 
-        for ( unsigned i = 0; i < p->hints.ScalePoints.size ( ); ++i )
+        for ( unsigned i = 0; i < p->backend<LV2_PortBackend>()->ScalePoints.size ( ); ++i )
         {
-            if ( (int) p->hints.ScalePoints[i].Value == (int) ( p->control_value ( ) + .5 ) ) // .5 for float rounding
+            if ( (int) p->backend<LV2_PortBackend>()->ScalePoints[i].Value == (int) ( p->control_value ( ) + .5 ) ) // .5 for float rounding
             {
                 menu_location = i;
                 break;
@@ -635,7 +641,7 @@ Controller_Module::cb_handle( Fl_Widget *w )
     {
         /* We set the control value according to the menu position in the ScalePoints vector */
         int menu_location = (int) ( (Fl_Choice*) w )->value ( );
-        control_value = control_output[0].hints.ScalePoints[menu_location].Value;
+        control_value = control_output[0].backend<LV2_PortBackend>()->ScalePoints[menu_location].Value;
     }
 #endif
     else
@@ -1055,9 +1061,9 @@ Controller_Module::handle_control_changed( Port *p )
             /* We set the Fl_Choice menu according to the position in the ScalePoints vector */
             int menu_location = 0;
 
-            for ( unsigned i = 0; i < p->hints.ScalePoints.size ( ); ++i )
+            for ( unsigned i = 0; i < p->backend<LV2_PortBackend>()->ScalePoints.size ( ); ++i )
             {
-                if ( (int) p->hints.ScalePoints[i].Value == (int) ( control_value + .5 ) ) // .5 for float rounding
+                if ( (int) p->backend<LV2_PortBackend>()->ScalePoints[i].Value == (int) ( control_value + .5 ) ) // .5 for float rounding
                 {
                     menu_location = i;
                     break;

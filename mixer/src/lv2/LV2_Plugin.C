@@ -921,7 +921,7 @@ LV2_Plugin::create_control_ports( )
 
                         for ( unsigned k = 0; k < rdfport.ScalePointCount; ++k )
                         {
-                            EnumeratorScalePoints item;
+                            LV2_PortBackend::EnumeratorScalePoints item;
                             item.Label = std::to_string ( (int) rdfport.ScalePoints[k].Value );
                             item.Label += " - ";
 
@@ -940,14 +940,15 @@ LV2_Plugin::create_control_ports( )
 
                             item.Label += temp;
                             item.Value = rdfport.ScalePoints[k].Value;
-                            p.hints.ScalePoints.push_back ( item );
+                            p.backend<LV2_PortBackend>()->ScalePoints.push_back ( item );
                             // DMESSAGE("Label = %s: Value = %f", rdfport.ScalePoints[i].Label, rdfport.ScalePoints[i].Value);
                         }
 
-                        std::sort ( p.hints.ScalePoints.begin ( ), p.hints.ScalePoints.end ( ), EnumeratorScalePoints::before );
+                        std::sort ( p.backend<LV2_PortBackend>()->ScalePoints.begin ( ),
+                                p.backend<LV2_PortBackend>()->ScalePoints.end ( ), LV2_PortBackend::EnumeratorScalePoints::before );
 
-                        p.hints.minimum = p.hints.ScalePoints[0].Value;
-                        p.hints.maximum = p.hints.ScalePoints[ p.hints.ScalePoints.size ( ) - 1 ].Value;
+                        p.hints.minimum = p.backend<LV2_PortBackend>()->ScalePoints[0].Value;
+                        p.hints.maximum = p.backend<LV2_PortBackend>()->ScalePoints[ p.backend<LV2_PortBackend>()->ScalePoints.size ( ) - 1 ].Value;
                     }
                     else // Integer enumerator with no scale points
                     {

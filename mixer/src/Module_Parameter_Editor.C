@@ -476,9 +476,9 @@ Module_Parameter_Editor::make_controls( void )
         {
             Fl_Choice *o = new Fl_Choice ( 75, ( y_location * 24 ) + 24, 200, 24, p->name ( ) );
             w = o;
-            for ( unsigned count = 0; count < module->control_input[i].hints.ScalePoints.size ( ); ++count )
+            for ( unsigned count = 0; count < module->control_input[i].backend<LV2_PortBackend>()->ScalePoints.size ( ); ++count )
             {
-                o->add ( module->control_input[i].hints.ScalePoints[count].Label.c_str ( ) );
+                o->add ( module->control_input[i].backend<LV2_PortBackend>()->ScalePoints[count].Label.c_str ( ) );
             }
 
             o->align ( FL_ALIGN_RIGHT );
@@ -486,9 +486,9 @@ Module_Parameter_Editor::make_controls( void )
             /* We set the Fl_Choice menu according to the position in the ScalePoints vector */
             int menu = 0;
 
-            for ( unsigned ii = 0; ii < p->hints.ScalePoints.size ( ); ++ii )
+            for ( unsigned ii = 0; ii < p->backend<LV2_PortBackend>()->ScalePoints.size ( ); ++ii )
             {
-                if ( (int) p->hints.ScalePoints[ii].Value == (int) ( p->control_value ( ) + .5 ) ) // .5 for float rounding
+                if ( (int) p->backend<LV2_PortBackend>()->ScalePoints[ii].Value == (int) ( p->control_value ( ) + .5 ) ) // .5 for float rounding
                 {
                     menu = ii;
                     break;
@@ -1162,9 +1162,9 @@ Module_Parameter_Editor::handle_control_changed( Module::Port *p )
         /* We set the Fl_Choice menu according to the position in the ScalePoints vector */
         int menu = 0;
 
-        for ( unsigned ii = 0; ii < p->hints.ScalePoints.size ( ); ++ii )
+        for ( unsigned ii = 0; ii < p->backend<LV2_PortBackend>()->ScalePoints.size ( ); ++ii )
         {
-            if ( (int) p->hints.ScalePoints[ii].Value == (int) ( p->control_value ( ) + .5 ) ) // .5 for float rounding
+            if ( (int) p->backend<LV2_PortBackend>()->ScalePoints[ii].Value == (int) ( p->control_value ( ) + .5 ) ) // .5 for float rounding
             {
                 menu = ii;
                 break;
@@ -1237,7 +1237,6 @@ Module_Parameter_Editor::resize( int X, int Y, int W, int H )
 }
 
 #ifdef LV2_SUPPORT
-
 void
 Module_Parameter_Editor::set_plugin_file( int port, const std::string &filename )
 {
@@ -1248,10 +1247,10 @@ Module_Parameter_Editor::set_plugin_file( int port, const std::string &filename 
 void
 Module_Parameter_Editor::set_choice_value( int port, int menu )
 {
-    DMESSAGE ( "Menu = %d: ScalePoints Value = %f", menu, _module->control_input[port].hints.ScalePoints[menu].Value );
+    DMESSAGE ( "Menu = %d: ScalePoints Value = %f", menu, _module->control_input[port].backend<LV2_PortBackend>()->ScalePoints[menu].Value );
 
     /* We have to send the port ScalePoints value not menu choice value */
-    set_value ( port, _module->control_input[port].hints.ScalePoints[menu].Value );
+    set_value ( port, _module->control_input[port].backend<LV2_PortBackend>()->ScalePoints[menu].Value );
 }
 #endif  // LV2_SUPPORT
 

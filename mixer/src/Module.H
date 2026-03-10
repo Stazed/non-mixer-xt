@@ -188,18 +188,6 @@ public:
 
 #ifdef LV2_SUPPORT
     bool _b_have_visible_atom_control_port;
-    struct EnumeratorScalePoints
-    {
-        std::string Label;
-        float Value;
-
-        static bool before( const EnumeratorScalePoints& c1, const EnumeratorScalePoints& c2 )
-        {
-            return c1.Value < c2.Value;
-        }
-
-        EnumeratorScalePoints() : Value(0.0) {}
-    };
 #endif
     
 #ifdef LV2_SUPPORT
@@ -262,9 +250,6 @@ public:
             uint32_t plug_port_index;     ///< plugin Index of port control
 #if defined(CLAP_SUPPORT) || defined(VST3_SUPPORT)
             uint32_t parameter_id;
-#endif
-#ifdef LV2_SUPPORT
-            std::vector<EnumeratorScalePoints>ScalePoints;
 #endif
 
             Hints ( ) :
@@ -341,9 +326,6 @@ public:
         {
             if (p._backend)
                 _backend = p._backend->clone();
-#ifdef LV2_SUPPORT
-            hints.ScalePoints = p.hints.ScalePoints;
-#endif
         }
 
         virtual ~Port ( )
