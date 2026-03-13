@@ -49,6 +49,9 @@ ensure_dirs( void )
 int
 main( int /*argc*/, char** argv )
 {
+#if !defined(__GLIBC__)
+    debug_set_program_name(argv[0]);
+#endif
     if ( !ensure_dirs ( ) )
     {
         fprintf(stderr, "Warning! Cannot create/open user config directory! Scanning aborted...");

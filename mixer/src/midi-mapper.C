@@ -1004,6 +1004,9 @@ handle_control_change( nrpn_state *nrpn_state, midievent &e )
 int
 main( int /*argc*/, char **argv )
 {
+#if !defined(__GLIBC__)
+    debug_set_program_name(argv[0]);
+#endif
     nrpn_state nrpn_state[16];
 
     memset ( &nrpn_state, 0, sizeof (struct nrpn_state ) * 16 );

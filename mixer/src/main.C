@@ -192,6 +192,9 @@ show_help(const char * argv)
 int
 main( int argc, char **argv )
 {
+#if !defined(__GLIBC__)
+    debug_set_program_name(argv[0]);
+#endif
 #ifdef LV2_SUPPORT
     suil_init ( &argc, &argv, SUIL_ARG_NONE );
 #endif
