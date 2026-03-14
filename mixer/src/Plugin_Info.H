@@ -65,7 +65,7 @@ public:
         midi_outputs(0),
         favorite(false) {}
 
-    bool operator< ( const Plugin_Info &rhs )
+    bool operator< ( const Plugin_Info &rhs ) const
     {
         return strcmp( name.c_str(), rhs.name.c_str() ) < 1;
     }

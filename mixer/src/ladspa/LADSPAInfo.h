@@ -91,7 +91,8 @@ public:
         std::string Name;
         std::string Category;
 
-        bool operator<(const PluginEntry& pe) {
+        bool operator<(const PluginEntry& pe) const
+        {
             return (Name < pe.Name);
         }
     };
