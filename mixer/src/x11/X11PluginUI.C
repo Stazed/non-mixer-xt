@@ -230,7 +230,7 @@ X11PluginUI::show( )
 
             Atom actualType;
             int actualFormat;
-            ulong nitems, bytesAfter;
+            unsigned long nitems, bytesAfter;
             uchar* data = nullptr;
 
             XGetWindowProperty ( fDisplay, childWindow, _xevp, 0, 1, False, AnyPropertyType,
