@@ -166,14 +166,11 @@ endif(EnableNTK)
 if (EnableLADSPASupport)
     pkg_check_modules(LRDF REQUIRED lrdf>=0.4.0)
 
-    check_include_file (ladspa.h HAVE_LADSPA_H)
-    if (NOT HAVE_LADSPA_H)
+    find_path(LADSPA_INCLUDE_DIR NAMES ladspa.h)
+    if (NOT LADSPA_INCLUDE_DIR)
         message(FATAL_ERROR "Ladspa required but not found")
-    endif ()
-
-    if (HAVE_LADSPA_H)
-        add_definitions(-D'LADSPA_SUPPORT=1')
     endif()
+    add_definitions(-DLADSPA_SUPPORT=1)
 endif (EnableLADSPASupport)
 
 if (EnableLV2Support)
