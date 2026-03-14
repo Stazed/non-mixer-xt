@@ -29,11 +29,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/fcntl.h>
 #include <errno.h>
 #include <unistd.h>
+#include <string>
+#include <limits.h> // realpath()
 
 #include "const.h"
 
@@ -69,29 +72,115 @@ int Project::_lockfd = 0;
 
 /***********/
 
+namespace
+{
+
+static void
+copy_cstr( char *dst, size_t dst_size, const char *src )
+{
+    if ( !dst || dst_size == 0 )
+        return;
+
+    if ( !src )
+        src = "";
+
+    snprintf( dst, dst_size, "%s", src );
+}
+
+class Scoped_Cwd
+{
+    char _cwd[1024];
+    bool _valid;
+
+public:
+
+    Scoped_Cwd ( )
+        : _valid( getcwd( _cwd, sizeof( _cwd ) ) != NULL )
+    {
+    }
+
+    ~Scoped_Cwd ( )
+    {
+        if ( _valid )
+            chdir( _cwd );
+    }
+
+private:
+
+    Scoped_Cwd( const Scoped_Cwd & );
+    Scoped_Cwd & operator=( const Scoped_Cwd & );
+};
+
+static bool
+make_absolute_path( const char *path, char *out, size_t out_size )
+{
+    if ( !path || !out || out_size == 0 )
+        return false;
+
+    char *resolved = realpath( path, out );
+    if ( !resolved )
+        return false;
+
+    out[ out_size - 1 ] = '\0';
+    return true;
+}
+
+static bool
+read_info_pair( FILE *fp, std::string &name, std::string &value )
+{
+    char key[256];
+    char val[1024];
+
+    if ( !fgets( key, sizeof( key ), fp ) )
+        return false;
+
+    if ( !fgets( val, sizeof( val ), fp ) )
+        return false;
+
+    const size_t key_len = strlen( key );
+    if ( key_len > 0 && key[ key_len - 1 ] == '\n' )
+        key[ key_len - 1 ] = '\0';
+
+    char *v = val;
+    if ( *v == '\t' )
+        ++v;
+
+    const size_t val_len = strlen( v );
+    if ( val_len > 0 && v[ val_len - 1 ] == '\n' )
+        v[ val_len - 1 ] = '\0';
+
+    name = key;
+    value = v;
+    return true;
+}
+
+} /* namespace */
+
 void
 Project::set_name( const char *name )
 {
-    strcpy ( Project::_name, name );
+    std::string s = name ? name : "";
 
-    if ( Project::_name[ strlen ( Project::_name ) - 1 ] == '/' )
-        Project::_name[ strlen ( Project::_name ) - 1 ] = '\0';
+    while ( !s.empty() && s[ s.size() - 1 ] == '/' )
+        s.erase( s.size() - 1 );
 
-    char *s = rindex ( Project::_name, '/' );
+    const std::string::size_type pos = s.find_last_of( '/' );
+    if ( pos != std::string::npos )
+        s.erase( 0, pos + 1 );
 
-    s = s ? s + 1 : Project::_name;
+    for ( std::string::size_type i = 0; i < s.size(); ++i )
+    {
+        if ( s[i] == '_' || s[i] == '-' )
+            s[i] = ' ';
+    }
 
-    memmove ( Project::_name, s, strlen ( s ) + 1 );
-
-    for ( s = Project::_name; *s; ++s )
-        if ( *s == '_' || *s == '-' )
-            *s = ' ';
+    copy_cstr( Project::_name, sizeof( Project::_name ), s.c_str() );
 }
 
 void
 Project::name( const char *name )
 {
-    strcpy ( Project::_name, name );
+    copy_cstr( Project::_name, sizeof( Project::_name ), name );
 }
 
 bool
@@ -109,13 +198,16 @@ Project::write_info( void )
 
     if ( ! *_created_on )
     {
-        time_t t = time ( NULL );
+        const time_t t = time ( NULL );
         ctime_r ( &t, s );
-        s[ strlen ( s ) - 1 ] = '\0';
+        s[ sizeof( s ) - 1 ] = '\0';
+        const size_t len = strlen( s );
+        if ( len > 0 && s[ len - 1 ] == '\n' )
+            s[ len - 1 ] = '\0';
     }
     else
-        strcpy ( s, _created_on );
-
+        copy_cstr( s, sizeof( s ), _created_on );
+    
     fprintf ( fp, "created by\n\t%s\ncreated on\n\t%s\nversion\n\t%d\n",
         APP_TITLE " " VERSION,
         s,
@@ -141,21 +233,25 @@ Project::read_info( int *version, char **creation_date, char **created_by )
     *creation_date = 0;
     *created_by = 0;
 
-    char *name, *value;
+    std::string name;
+    std::string value;
 
-    while ( fscanf ( fp, "%m[^\n]\n\t%m[^\n]\n", &name, &value ) == 2 )
+    while ( read_info_pair( fp, name, value ) )
     {
-        MESSAGE ( "Info: %s = %s", name, value );
+        MESSAGE ( "Info: %s = %s", name.c_str(), value.c_str() );
 
-        if ( !strcmp ( name, "version" ) )
-            *version = atoi ( value );
-        else if ( !strcmp ( name, "created on" ) )
-            *creation_date = strdup ( value );
-        else if ( !strcmp ( name, "created by" ) )
-            *created_by = strdup ( value );
-
-        free ( name );
-        free ( value );
+        if ( name == "version" )
+            *version = atoi ( value.c_str() );
+        else if ( name == "created on" )
+        {
+            free( *creation_date );
+            *creation_date = strdup ( value.c_str() );
+        }
+        else if ( name == "created by" )
+        {
+            free( *created_by );
+            *created_by = strdup ( value.c_str() );
+        }
     }
 
     fclose ( fp );
@@ -203,6 +299,7 @@ Project::close( void )
 
     *Project::_name = '\0';
     *Project::_created_on = '\0';
+    *Project::_path = '\0';
 
     release_lock ( &_lockfd, ".lock" );
 
@@ -215,26 +312,30 @@ Project::close( void )
 bool
 Project::validate( const char *name )
 {
-    bool r = true;
+    Scoped_Cwd restore_cwd;
+    char abs_path[1024];
 
-    char pwd[512];
-
-    fl_filename_absolute ( pwd, sizeof ( pwd ), "." );
-
-    if ( chdir ( name ) )
+    if ( !make_absolute_path( name, abs_path, sizeof( abs_path ) ) )
     {
-        WARNING ( "Cannot change to project dir \"%s\"", name );
+        WARNING ( "Cannot resolve project path: \"%s\": %s",
+                  name ? name : "(null)", strerror( errno ) );
         return false;
     }
+
+    if ( chdir ( abs_path ) )
+    {
+        WARNING ( "Cannot change to project dir \"%s\"", abs_path );
+        return false;
+    }
+
+    bool r = true;
 
     if ( !exists ( "info" ) ||
         !exists ( "snapshot" ) )
     {
-        WARNING ( "Not a Non-Mixer-XT project: \"%s\"", name );
+        WARNING ( "Not a Non-Mixer-XT project: \"%s\"", abs_path );
         r = false;
     }
-
-    chdir ( pwd );
 
     return r;
 }
@@ -244,54 +345,89 @@ Project::validate( const char *name )
 int
 Project::open( const char *name )
 {
-    if ( !validate ( name ) )
+    char abs_path[1024];
+
+    if ( !make_absolute_path( name, abs_path, sizeof( abs_path ) ) )
+    {
+        WARNING ( "Cannot resolve project path: \"%s\": %s",
+                  name ? name : "(null)", strerror( errno ) );
         return E_INVALID;
+    }
+
+    if ( !validate ( abs_path ) )
+    {
+        WARNING ( "Cannot validate abs_path: \"%s\"", abs_path );
+        return E_INVALID;
+    }
 
     close ( );
 
-    chdir ( name );
+    if ( chdir ( abs_path ) )
+    {
+        WARNING ( "Cannot chdir abs_path: \"%s\"", abs_path );
+        return E_INVALID;
+    }
 
     if ( !acquire_lock ( &_lockfd, ".lock" ) )
         return E_LOCKED;
 
-    int version;
-    char *creation_date;
-    char *created_by;
+    int version = 0;
+    char *creation_date = NULL;
+    char *created_by = NULL;
 
     if ( !read_info ( &version, &creation_date, &created_by ) )
+    {
+        WARNING ( "Cannot read_info: \"%s\"", abs_path );
+        release_lock( &_lockfd, ".lock" );
         return E_INVALID;
+    }
 
-    if ( strncmp ( created_by, APP_TITLE, strlen ( APP_TITLE ) ) )
+    if ( !created_by || strncmp ( created_by, APP_TITLE, strlen ( APP_TITLE ) ) )
+    {
+        free( creation_date );
+        free( created_by );
+        release_lock( &_lockfd, ".lock" );
         return E_INVALID;
+    }
 
     if ( version != PROJECT_VERSION )
+    {
+        free( creation_date );
+        free( created_by );
+        release_lock( &_lockfd, ".lock" );
         return E_VERSION;
+    }
 
     _is_opening_closing = true;
 
     if ( !Loggable::replay ( "snapshot" ) )
+    {
+        _is_opening_closing = false;
+        free( creation_date );
+        free( created_by );
+        release_lock( &_lockfd, ".lock" );
         return E_INVALID;
+    }
 
     if ( creation_date )
     {
-        strcpy ( _created_on, creation_date );
+        copy_cstr ( _created_on, sizeof( _created_on ), creation_date );
         free ( creation_date );
     }
     else
         *_created_on = 0;
 
-    getcwd ( _path, sizeof ( _path ) );
+    if ( !getcwd ( _path, sizeof ( _path ) ) )
+    {
+        copy_cstr( _path, sizeof( _path ), abs_path );
+    }
 
     set_name ( _path );
 
     _is_open = true;
 
     _is_opening_closing = false;
-    //    tle->load_timeline_settings();
-
-    //    timeline->zoom_fit();
-
-    //    Loggable::clear_dirty();
+    free( created_by );
 
     MESSAGE ( "Loaded project \"%s\"", name );
 
@@ -305,6 +441,7 @@ Project::create( const char *name, const char *template_name )
 {
     if ( exists ( name ) )
     {
+        (void)template_name;
         WARNING ( "Project already exists" );
         return false;
     }
@@ -314,6 +451,14 @@ Project::create( const char *name, const char *template_name )
     if ( mkdir ( name, 0777 ) )
     {
         WARNING ( "Cannot create project directory: %s", name );
+        return false;
+    }
+
+    char abs_path[1024];
+    if ( !make_absolute_path( name, abs_path, sizeof( abs_path ) ) )
+    {
+        WARNING ( "Cannot resolve project path: \"%s\": %s",
+                  name ? name : "(null)", strerror( errno ) );
         return false;
     }
 
@@ -330,11 +475,18 @@ Project::create( const char *name, const char *template_name )
         return false;
     }
 
+    ::close( ret );
+
     /* TODO: copy template */
 
-    write_info ( );
+    if ( !write_info ( ) )
+        return false;
 
-    if ( open ( name ) == 0 )
+    /*
+     * We are already inside the newly-created directory here.
+     * Re-opening via the original relative name is incorrect.
+     */
+    if ( open ( abs_path ) == 0 )
     {
         //        /* add the bare essentials */
         //        timeline->beats_per_minute( 0, 120 );
