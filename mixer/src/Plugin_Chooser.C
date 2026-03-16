@@ -442,13 +442,34 @@ Plugin_Chooser::load_favorites( void )
         return 0;
     }
 
-    unsigned long id;
-    char *type;
-    char *c_unique_id;
     int favorites = 0;
+    char line[4096];
 
-    while ( 3 == fscanf ( fp, "%m[^:]:%lu:%m[^]\n]\n", &type, &id, &c_unique_id ) )
+    while ( fgets ( line, sizeof ( line ), fp ) )
     {
+        const size_t len = strlen ( line );
+        if ( len > 0 && line[len - 1] == '\n' )
+            line[len - 1] = '\0';
+
+        char *type = line;
+        char *sep1 = strchr ( type, ':' );
+        if ( !sep1 )
+            continue;
+        *sep1++ = '\0';
+
+        char *id_text = sep1;
+        char *sep2 = strchr ( id_text, ':' );
+        if ( !sep2 )
+            continue;
+        *sep2++ = '\0';
+
+        char *c_unique_id = sep2;
+
+        char *endptr = NULL;
+        unsigned long id = strtoul ( id_text, &endptr, 10 );
+        if ( endptr == id_text || *endptr != '\0' )
+            continue;
+
         for ( std::list<Plugin_Info>::iterator i = _plugins.begin ( );
             i != _plugins.end ( );
             ++i )
@@ -502,9 +523,6 @@ Plugin_Chooser::load_favorites( void )
 #endif
             }
         }
-
-        free ( c_unique_id );
-        free ( type );
     }
 
     fclose ( fp );
