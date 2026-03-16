@@ -285,44 +285,70 @@ Scanner_Window::load_plugin_cache( void )
         return false;
     }
 
-    char *c_type;
-    char *c_unique_id;
-    unsigned long u_id;
-    char *c_plug_path;
-    char *c_name;
-    char *c_author;
-    char *c_category;
-    int i_audio_inputs;
-    int i_audio_outputs;
-    int i_midi_inputs;
-    int i_midi_outputs;
-
     g_plugin_cache.clear ( );
 
-    while ( 11 == fscanf ( fp, "%m[^|]|%m[^|]|%lu|%m[^|]|%m[^|]|%m[^|]|%m[^|]|%d|%d|%d|%d\n]\n",
-        &c_type, &c_unique_id, &u_id, &c_plug_path, &c_name, &c_author,
-        &c_category, &i_audio_inputs, &i_audio_outputs, &i_midi_inputs, &i_midi_outputs ) )
+    char line[8192];
+
+    while ( fgets ( line, sizeof ( line ), fp ) )
     {
-        Plugin_Info pi ( c_type );
-        pi.s_unique_id = c_unique_id;
+        size_t len = strlen ( line );
+        if ( len > 0 && line[len - 1] == '\n' )
+            line[len - 1] = '\0';
+
+        char *fields[11];
+        int field_count = 0;
+
+        char *p = line;
+        fields[field_count++] = p;
+
+        while ( *p && field_count < 11 )
+        {
+            if ( *p == '|' )
+            {
+                *p = '\0';
+                fields[field_count++] = p + 1;
+            }
+            ++p;
+        }
+
+        if ( field_count != 11 )
+            continue;
+
+        char *endptr = NULL;
+
+        unsigned long u_id = strtoul ( fields[2], &endptr, 10 );
+        if ( endptr == fields[2] || *endptr != '\0' )
+            continue;
+
+        int i_audio_inputs = strtol ( fields[7], &endptr, 10 );
+        if ( endptr == fields[7] || *endptr != '\0' )
+            continue;
+
+        int i_audio_outputs = strtol ( fields[8], &endptr, 10 );
+        if ( endptr == fields[8] || *endptr != '\0' )
+            continue;
+
+        int i_midi_inputs = strtol ( fields[9], &endptr, 10 );
+        if ( endptr == fields[9] || *endptr != '\0' )
+            continue;
+
+        int i_midi_outputs = strtol ( fields[10], &endptr, 10 );
+        if ( endptr == fields[10] || *endptr != '\0' )
+            continue;
+
+        Plugin_Info pi ( fields[0] );
+        pi.s_unique_id = fields[1];
         pi.id = u_id;
-        pi.plug_path = c_plug_path;
-        pi.name = c_name;
-        pi.author = c_author;
-        pi.category = c_category;
+        pi.plug_path = fields[3];
+        pi.name = fields[4];
+        pi.author = fields[5];
+        pi.category = fields[6];
         pi.audio_inputs = i_audio_inputs;
         pi.audio_outputs = i_audio_outputs;
         pi.midi_inputs = i_midi_inputs;
         pi.midi_outputs = i_midi_outputs;
 
         g_plugin_cache.push_back ( pi );
-
-        free ( c_type );
-        free ( c_unique_id );
-        free ( c_plug_path );
-        free ( c_name );
-        free ( c_author );
-        free ( c_category );
     }
 
     fclose ( fp );
