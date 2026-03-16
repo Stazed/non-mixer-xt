@@ -365,10 +365,10 @@ public:
     deserialize( const char *s )
     {
         int channel;
-        char *opcode;
+        char opcode[16];
         int control;
 
-        if ( 3 == sscanf ( s, "%ms %d %d", &opcode, &channel, &control ) )
+        if ( 3 == sscanf ( s, "%15s %d %d", opcode, &channel, &control ) )
         {
             event.channel ( channel );
             event.opcode ( MIDI::midievent::CONTROL_CHANGE );
@@ -386,8 +386,6 @@ public:
             {
                 event.lsb ( control );
             }
-
-            free ( opcode );
         }
         else
         {
@@ -584,47 +582,6 @@ load_settings( void )
 
         free ( signal_name );
         free ( midi_event );
-
-        /* if ( sig_map.find( s ) == sig_map.end() ) */
-        /* {             */
-        /*     int channel, control; */
-
-        /*     if ( 2 == sscanf( s, "/midi/%d/CC/%d", &channel, &control ) ) */
-        /*     { */
-        /*         signal_mapping m; */
-
-        /*         m.event.channel( channel ); */
-        /*         m.event.opcode( MIDI::midievent::CONTROL_CHANGE ); */
-        /*         m.event.lsb( control ); */
-
-        /*         MESSAGE( "creating signal %s", s ); */
-        /*         sig_map[s] = m; */
-
-        /*         sig_map[s].signal = osc->add_signal( s, OSC::Signal::Output, 0, 1, 0, signal_handler, &sig_map[s] ); */
-
-        /*     } */
-        /*     if ( 2 == sscanf( s, "/midi/%d/NRPN/%d", &channel, &control ) ) */
-        /*     { */
-        /*         signal_mapping m; */
-
-        /*         m.event.channel( channel ); */
-        /*         m.event.opcode( MIDI::midievent::CONTROL_CHANGE ); */
-        /*         m.event.lsb( get_lsb( control ) ); */
-        /*         m.event.msb( get_msb( control ) ); */
-
-        /*         m.is_nrpn = true; */
-
-        /*         MESSAGE( "creating signal %s", s ); */
-        /*         sig_map[s] = m; */
-
-        /*         sig_map[s].signal = osc->add_signal( s, OSC::Signal::Output, 0, 1, 0, signal_handler, &sig_map[s] ); */
-
-        /*     } */
-        /*     else */
-        /*         WARNING( "Could not decode signal spec \"%s\"", s ); */
-        /* } */
-
-        /* free(s); */
     }
 
     return true;
