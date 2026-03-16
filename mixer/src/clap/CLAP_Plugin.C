@@ -1643,7 +1643,7 @@ void CLAP_Plugin::preset_scan_worker()
                 indexer.indexer(),
                 desc->id);
 
-        if (!provider)
+        if (!provider || !provider->get_metadata)
             continue;
 
         DMESSAGE("Provider callbacks: init=%p destroy=%p get_metadata=%p",
@@ -1656,8 +1656,7 @@ void CLAP_Plugin::preset_scan_worker()
 
         if (provider->init(provider))
         {
-            if (provider->get_metadata)
-                indexer.crawl(provider);
+            indexer.crawl(provider);
         }
 
         provider->destroy(provider);
