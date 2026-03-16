@@ -222,6 +222,123 @@ get_connections_for_ports( const std::vector<Module::Port> &ports )
 {
     std::list<std::string> names;
 
+    auto starts_with = [] ( const std::string &s, const char *prefix ) -> bool
+    {
+        const size_t n = strlen( prefix );
+        return s.size() >= n && s.compare( 0, n, prefix ) == 0;
+    };
+
+    auto extract_between = [] ( const std::string &s,
+                                size_t start,
+                                const char *end_chars,
+                                std::string &out ) -> bool
+    {
+        const size_t end = s.find_first_of( end_chars, start );
+        if ( end == std::string::npos || end <= start )
+            return false;
+
+        out.assign( s, start, end - start );
+        return true;
+    };
+
+    auto parse_connection_name =
+        [&starts_with, &extract_between] ( const char *connection,
+                                           bool is_output,
+                                           std::string &result ) -> bool
+    {
+        if ( !connection )
+            return false;
+
+        const std::string s( connection );
+        const std::string rprefix = is_output ? "@r" : "";
+
+        std::string client_id;
+        std::string strip_name;
+
+        if ( starts_with( s, "Non-Mixer-XT." ) )
+        {
+            const size_t p = strlen( "Non-Mixer-XT." );
+
+            size_t slash = s.find( '/', p );
+            if ( slash != std::string::npos )
+            {
+                client_id.assign( s, p, slash - p );
+
+                const size_t name_start = slash + 1;
+                const size_t colon = s.find( ':', name_start );
+                if ( colon != std::string::npos && colon > name_start )
+                {
+                    strip_name.assign( s, name_start, colon - name_start );
+                    result = rprefix + strip_name;
+                    return true;
+                }
+            }
+
+            size_t lparen = s.find( " (", p );
+            if ( lparen != std::string::npos )
+            {
+                client_id.assign( s, p, lparen - p );
+
+                const size_t name_start = lparen + 2;
+                const size_t rparen_colon = s.find( "):", name_start );
+                if ( rparen_colon != std::string::npos && rparen_colon > name_start )
+                {
+                    strip_name.assign( s, name_start, rparen_colon - name_start );
+                    result = rprefix + strip_name;
+                    return true;
+                }
+            }
+        }
+        else if ( starts_with( s, "Non-Timeline." ) )
+        {
+            const size_t p = strlen( "Non-Timeline." );
+            const size_t colon = s.find( ':', p );
+            if ( colon != std::string::npos && colon > p )
+            {
+                client_id.assign( s, p, colon - p );
+
+                const size_t name_start = colon + 1;
+                const size_t slash = s.find( '/', name_start );
+                if ( slash != std::string::npos && slash > name_start )
+                {
+                    strip_name.assign( s, name_start, slash - name_start );
+                    result = "@C2" + rprefix + strip_name;
+                    return true;
+                }
+            }
+        }
+        else if ( starts_with( s, "Non-DAW." ) )
+        {
+            const size_t p = strlen( "Non-DAW." );
+            const size_t colon = s.find( ':', p );
+            if ( colon != std::string::npos && colon > p )
+            {
+                client_id.assign( s, p, colon - p );
+
+                const size_t name_start = colon + 1;
+                const size_t slash = s.find( '/', name_start );
+                if ( slash != std::string::npos && slash > name_start )
+                {
+                    strip_name.assign( s, name_start, slash - name_start );
+                    result = "@C2" + rprefix + strip_name;
+                    return true;
+                }
+            }
+        }
+        else
+        {
+            const size_t colon = s.find( ':' );
+            if ( colon != std::string::npos && colon > 0 )
+            {
+                strip_name.assign( s, 0, colon );
+                result = "@C3" + rprefix + strip_name;
+                return true;
+            }
+        }
+
+        return false;
+    };
+
     for ( unsigned int i = 0; i < ports.size ( ); ++i )
     {
         const char **connections = ports[i].jack_port ( )->connections ( );
@@ -233,59 +350,17 @@ get_connections_for_ports( const std::vector<Module::Port> &ports )
 
         for ( const char **c = connections; *c; c++ )
         {
-            char *client_id = 0;
-            char *strip_name = 0;
-            //      char *client_name = 0;
+            std::string strip_name;
 
-            if ( 2 == sscanf ( *c, "Non-Mixer-XT.%m[^:/]/%m[^:]:", &client_id, &strip_name ) )
-            {
-                free ( client_id );
-                char *s = NULL;
-                asprintf ( &s, "%s%s", is_output ? "@r" : "", strip_name );
-                free ( strip_name );
-                strip_name = s;
-            }
-            else if ( 2 == sscanf ( *c, "Non-Mixer-XT.%m[^:(] (%m[^:)]):", &client_id, &strip_name ) )
-            {
-                free ( client_id );
-                char *s = NULL;
-                asprintf ( &s, "%s%s", is_output ? "@r" : "", strip_name );
-                free ( strip_name );
-                strip_name = s;
-            }
-            else if ( 2 == sscanf ( *c, "Non-Timeline.%m[^:/]:%m[^/]/", &client_id, &strip_name ) )
-            {
-                free ( client_id );
-                char *s = NULL;
-                asprintf ( &s, "@C2%s%s", is_output ? "@r" : "", strip_name );
-                free ( strip_name );
-                strip_name = s;
-            }
-            else if ( 2 == sscanf ( *c, "Non-DAW.%m[^:/]:%m[^/]/", &client_id, &strip_name ) )
-            {
-                free ( client_id );
-                char *s = NULL;
-                asprintf ( &s, "@C2%s%s", is_output ? "@r" : "", strip_name );
-                free ( strip_name );
-                strip_name = s;
-            }
-            else if ( 1 == sscanf ( *c, "%m[^:]:", &strip_name ) )
-            {
-                char *s = NULL;
-                asprintf ( &s, "@C3%s%s", is_output ? "@r" : "", strip_name );
-                free ( strip_name );
-                strip_name = s;
-            }
-            else
-            {
+            if ( !parse_connection_name( *c, is_output, strip_name ) )
                 continue;
-            }
+
 
             for ( std::list<std::string>::const_iterator j = names.begin ( );
                 j != names.end ( );
                 ++j )
             {
-                if ( !strcmp ( j->c_str ( ), strip_name ) )
+                if ( *j == strip_name )
                 {
                     goto skip;
                 }
@@ -294,8 +369,6 @@ get_connections_for_ports( const std::vector<Module::Port> &ports )
             names.push_back ( strip_name );
 
 skip:
-            free ( strip_name );
-
             ;
 
         }
