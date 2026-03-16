@@ -400,27 +400,52 @@ Module::Port::osc_number_path( void )
     if ( _by_number_path )
         free ( _by_number_path );
 
-    char *rem;
-    char *client_name;
-    char *strip_name;
-
     std::string s_scaled_signal_path = _scaled_signal->path ( );
 
-    // remove leading '/' so sscanf below will work - necessary since liblo now requires leading '/'
+    if ( s_scaled_signal_path.empty ( ) || s_scaled_signal_path[0] != '/' )
+        return NULL;
+
+    // remove leading '/' because liblo paths are absolute and this parser expects path components
     s_scaled_signal_path.erase ( 0, 1 );
 
-    if ( 3 != sscanf ( s_scaled_signal_path.c_str ( ), "%m[^/]/strip/%m[^/]/%m[^\n]", &client_name, &strip_name, &rem ) )
+    const std::string::size_type first_slash = s_scaled_signal_path.find ( '/' );
+    if ( first_slash == std::string::npos )
     {
         return NULL;
     }
 
-    free ( strip_name );
+    const std::string client_name = s_scaled_signal_path.substr ( 0, first_slash );
+    const std::string::size_type strip_pos = first_slash + 1;
+    static const char strip_component[] = "strip/";
+    static const size_t strip_component_len = sizeof ( strip_component ) - 1;
 
-    char *path;
-    asprintf ( &path, "%s/strip#/%i/%s", client_name, n, rem );
+    if ( s_scaled_signal_path.compare ( strip_pos, strip_component_len, strip_component ) != 0 )
+    {
+        return NULL;
+    }
 
-    free ( client_name );
-    free ( rem );
+    const std::string::size_type strip_name_start = strip_pos + strip_component_len;
+    const std::string::size_type strip_name_end = s_scaled_signal_path.find ( '/', strip_name_start );
+
+    if ( strip_name_end == std::string::npos || strip_name_end == strip_name_start )
+    {
+        return NULL;
+    }
+
+    const std::string::size_type rem_start = strip_name_end + 1;
+    if ( rem_start >= s_scaled_signal_path.size ( ) )
+    {
+        return NULL;
+    }
+
+    const std::string rem = s_scaled_signal_path.substr ( rem_start );
+    const std::string by_number = client_name + "/strip#/" + std::to_string ( n ) + "/" + rem;
+
+    char *path = strdup ( by_number.c_str ( ) );
+    if ( !path )
+    {
+        return NULL;
+    }
 
     _by_number_path = path;
     _by_number_number = n;
