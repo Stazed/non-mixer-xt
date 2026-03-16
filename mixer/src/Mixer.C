@@ -859,14 +859,29 @@ Mixer::load_translations( void )
         return;
     }
 
-    char *to;
-    char *from;
+    char line[4096];
 
-    while ( 2 == fscanf ( fp, "%m[^|> ] |> %m[^ \n]\n", &from, &to ) )
+    while ( fgets ( line, sizeof ( line ), fp ) )
     {
-        osc_endpoint->add_translation ( from, to );
-        free ( from );
-        free ( to );
+        size_t len = strlen ( line );
+        if ( len > 0 && line[len - 1] == '\n' )
+            line[len - 1] = '\0';
+
+        char *sep = strstr ( line, " |> " );
+        if ( !sep )
+            continue;
+
+        *sep = '\0';
+        sep += 3;
+
+        while ( *sep == ' ' )
+            ++sep;
+
+        char *from = line;
+        char *to = sep;
+
+        if ( *from && *to )
+            osc_endpoint->add_translation ( from, to );
     }
 
     fclose ( fp );
