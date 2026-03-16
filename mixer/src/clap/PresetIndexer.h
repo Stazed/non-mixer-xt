@@ -43,6 +43,16 @@ private:
         const clap_preset_discovery_indexer_t*,
         const clap_preset_discovery_location_t*);
 
+    static bool declare_soundpack(
+        const clap_preset_discovery_indexer_t*,
+        const clap_preset_discovery_soundpack_t*);
+
+    static const void* get_extension(
+        const clap_preset_discovery_indexer_t*,
+        const char* extension_id);
+
+    bool has_supported_extension(const std::filesystem::path& p) const;
+
 private:
     clap_preset_discovery_indexer_t indexer_{};
 

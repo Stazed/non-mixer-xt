@@ -19,6 +19,7 @@
 #ifdef CLAP_SUPPORT
 
 #include "PresetIndexer.h"
+#include <system_error>
 #include <iostream>
 
 namespace fs = std::filesystem;
@@ -33,8 +34,8 @@ PresetIndexer::PresetIndexer() {
         this,
         declare_filetype,
         declare_location,
-        nullptr,
-        nullptr
+        declare_soundpack,
+        get_extension
     };
 }
 
@@ -56,7 +57,7 @@ bool PresetIndexer::declare_filetype(
     auto* self =
         static_cast<PresetIndexer*>(i->indexer_data);
 
-    if (ft->file_extension && *ft->file_extension)
+    if (ft && ft->file_extension && *ft->file_extension)
         self->extensions_.emplace_back(ft->file_extension);
 
     return true;
@@ -69,11 +70,46 @@ bool PresetIndexer::declare_location(
     auto* self =
         static_cast<PresetIndexer*>(i->indexer_data);
 
-    if (loc->kind == CLAP_PRESET_DISCOVERY_LOCATION_FILE &&
-        loc->location) {
+    if (loc &&
+        loc->kind == CLAP_PRESET_DISCOVERY_LOCATION_FILE &&
+        loc->location &&
+        *loc->location) {
         self->locations_.emplace_back(loc->location);
     }
     return true;
+}
+
+bool PresetIndexer::declare_soundpack(
+    const clap_preset_discovery_indexer_t*,
+    const clap_preset_discovery_soundpack_t*) {
+
+    // Host does not currently index soundpack metadata.
+    // Accept and ignore.
+    return true;
+}
+
+const void* PresetIndexer::get_extension(
+    const clap_preset_discovery_indexer_t*,
+    const char*) {
+
+    // No indexer extensions supported by this host yet.
+    return nullptr;
+}
+
+bool PresetIndexer::has_supported_extension(const fs::path& p) const {
+    if (extensions_.empty())
+        return true;
+
+    std::string ext = p.extension().string();
+    if (!ext.empty() && ext[0] == '.')
+        ext.erase(0, 1);
+
+    for (const auto& e : extensions_) {
+        if (ext == e)
+            return true;
+    }
+
+    return false;
 }
 
 /* ---------- crawl ---------- */
@@ -81,22 +117,43 @@ bool PresetIndexer::declare_location(
 void PresetIndexer::crawl(
     const clap_preset_discovery_provider_t* provider) {
 
+    if (!provider || !provider->get_metadata)
+        return;
+
     for (const auto& root : locations_) {
-        if (!fs::exists(root))
+        std::error_code ec;
+
+        if (!fs::exists(root, ec) || ec)
             continue;
 
-        for (const auto& e :
-             fs::recursive_directory_iterator(root)) {
+        fs::recursive_directory_iterator it(
+            root,
+            fs::directory_options::skip_permission_denied,
+            ec);
+        fs::recursive_directory_iterator end;
 
-            if (!e.is_regular_file())
+        if (ec)
+            continue;
+
+        for (; it != end; it.increment(ec)) {
+            if (ec) {
+                ec.clear();
+                continue;
+            }
+
+            std::error_code file_ec;
+            if (!it->is_regular_file(file_ec) || file_ec)
                 continue;
 
-            receiver_.setCurrentLocation(e.path().string());
+            if (!has_supported_extension(it->path()))
+                continue;
+
+            receiver_.setCurrentLocation(it->path().string());
 
             provider->get_metadata(
                 provider,
                 CLAP_PRESET_DISCOVERY_LOCATION_FILE,
-                e.path().string().c_str(),
+                it->path().string().c_str(),
                 receiver_.receiver());
         }
     }

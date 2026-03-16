@@ -1632,10 +1632,10 @@ void CLAP_Plugin::preset_scan_worker()
     for (uint32_t i = 0; i < count; ++i)
     {
         auto* desc = preset_factory->get_descriptor(preset_factory, i);
-        if (!desc)
+        if (!desc || !desc->id)
             continue;
 
-        DMESSAGE("Using provider: %s", desc->name);
+        DMESSAGE("Using provider: %s", desc->name ? desc->name : "(null)");
 
         auto* provider =
             preset_factory->create(
@@ -1643,12 +1643,21 @@ void CLAP_Plugin::preset_scan_worker()
                 indexer.indexer(),
                 desc->id);
 
-        if (!provider || !provider->get_metadata)
+        if (!provider)
+            continue;
+
+        DMESSAGE("Provider callbacks: init=%p destroy=%p get_metadata=%p",
+                 (void*)provider->init,
+                 (void*)provider->destroy,
+                 (void*)provider->get_metadata);
+
+        if (!provider->init || !provider->destroy)
             continue;
 
         if (provider->init(provider))
         {
-            indexer.crawl(provider);
+            if (provider->get_metadata)
+                indexer.crawl(provider);
         }
 
         provider->destroy(provider);
