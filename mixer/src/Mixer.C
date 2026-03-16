@@ -779,14 +779,43 @@ Mixer::Mixer( int X, int Y, int W, int H, const char *L ) :
 int
 Mixer::osc_strip_by_number( const char *path, const char * /*types*/, lo_arg ** /*argv*/, int /*argc*/, lo_message msg, void *user_data )
 {
-    int n;
-    char *rem;
-    char *client_name;
-
     OSC::Endpoint *ep = ( OSC::Endpoint* )user_data;
 
-    if ( 3 != sscanf ( path, "%m[^/]/strip#/%d/%m[^\n]", &client_name, &n, &rem ) )
+    if ( !path )
         return -1;
+
+    const std::string s_path( path );
+
+    const std::string::size_type first_slash = s_path.find( '/' );
+    if ( first_slash == std::string::npos || first_slash == 0 )
+        return -1;
+
+    const std::string client_name = s_path.substr( 0, first_slash );
+
+    static const char strip_number_component[] = "/strip#/";
+    const std::string::size_type strip_pos = first_slash;
+
+    if ( s_path.compare( strip_pos, sizeof( strip_number_component ) - 1, strip_number_component ) != 0 )
+        return -1;
+
+    const std::string::size_type number_start = strip_pos + sizeof( strip_number_component ) - 1;
+    const std::string::size_type number_end = s_path.find( '/', number_start );
+    if ( number_end == std::string::npos || number_end == number_start )
+        return -1;
+
+    char *endptr = NULL;
+    const std::string n_text = s_path.substr( number_start, number_end - number_start );
+    const long parsed_n = strtol( n_text.c_str(), &endptr, 10 );
+    if ( endptr == n_text.c_str() || *endptr != '\0' )
+        return -1;
+
+    const int n = static_cast<int>( parsed_n );
+
+    const std::string::size_type rem_start = number_end + 1;
+    if ( rem_start >= s_path.size() )
+        return -1;
+
+    const std::string rem = s_path.substr( rem_start );
 
     Mixer_Strip *o = mixer->track_by_number ( n );
 
@@ -796,17 +825,21 @@ Mixer::osc_strip_by_number( const char *path, const char * /*types*/, lo_arg ** 
         return 0;
     }
 
-    char *new_path;
-
     char *stripname = escape_url ( o->name ( ) );
+    if ( !stripname )
+        return -1;
 
-    asprintf ( &new_path, "%s/strip/%s/%s", client_name, stripname, rem );
+    const std::string forwarded =
+        client_name + "/strip/" + stripname + "/" + rem;
+
+    char *new_path = strdup( forwarded.c_str() );
 
     free ( stripname );
 
-    /* DMESSAGE( "Forwarding by-number OSC path: %s === %s", path, new_path ); */
+    if ( !new_path )
+        return -1;
 
-    free ( rem );
+    /* DMESSAGE( "Forwarding by-number OSC path: %s === %s", path, new_path ); */
 
     lo_send_message ( ep->address ( ), new_path, msg );
 
