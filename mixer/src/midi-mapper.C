@@ -531,10 +531,6 @@ load_settings( void )
     sig_map.clear ( );
     sig_map_ordered.clear ( );
 
-    char *signal_name;
-    char *midi_event;
-    char *flags = NULL;
-
     max_signal = 0;
 
     int version = 0;
@@ -550,14 +546,64 @@ load_settings( void )
 
     DMESSAGE ( "Detected file version %i", version );
 
-    while (
-        ( 1 == version &&
-        3 == fscanf ( fp, "%m[^\t]\t%m[^\t]\t%m[^\n]\n", &midi_event, &flags, &signal_name ) )
-        ||
-        ( 0 == version &&
-        2 == fscanf ( fp, "[%m[^]]] %m[^\n]\n", &midi_event, &signal_name ) ) )
+    char line[4096];
+
+    while ( fgets ( line, sizeof ( line ), fp ) )
     {
-        DMESSAGE ( "Read mapping: %s, %s (%s)", midi_event, signal_name, flags );
+        size_t len = strlen ( line );
+        if ( len > 0 && line[len - 1] == '\n' )
+            line[len - 1] = '\0';
+
+        std::string midi_event;
+        std::string signal_name;
+        std::string flags;
+
+        bool parsed = false;
+
+        if ( 1 == version )
+        {
+            char *p = line;
+            char *tab1 = strchr ( p, '\t' );
+            if ( tab1 )
+            {
+                *tab1 = '\0';
+                char *tab2 = strchr ( tab1 + 1, '\t' );
+                if ( tab2 )
+                {
+                    *tab2 = '\0';
+
+                    midi_event = p;
+                    flags = tab1 + 1;
+                    signal_name = tab2 + 1;
+                    parsed = true;
+                }
+            }
+        }
+        else if ( 0 == version )
+        {
+            char *p = line;
+            if ( *p == '[' )
+            {
+                ++p;
+                char *close = strchr ( p, ']' );
+                if ( close && close[1] == ' ' )
+                {
+                    *close = '\0';
+                    midi_event = p;
+                    signal_name = close + 2;
+                    flags.clear();
+                    parsed = true;
+                }
+            }
+        }
+
+        if ( !parsed )
+            continue;
+
+        DMESSAGE ( "Read mapping: %s, %s (%s)",
+                   midi_event.c_str(),
+                   signal_name.c_str(),
+                   flags.c_str() );
 
         if ( sig_map.find ( midi_event ) == sig_map.end ( ) )
         {
@@ -565,25 +611,24 @@ load_settings( void )
 
             signal_mapping m;
 
-            m.deserialize ( midi_event );
+            m.deserialize ( midi_event.c_str() );
 
-            if ( flags )
+            if ( !flags.empty() )
             {
-                m.is_toggle = !strcmp ( "1-BIT", flags );
-                m.is_nrpn14 = !strcmp ( "14-BIT", flags );
+                m.is_toggle = ( flags == "1-BIT" );
+                m.is_nrpn14 = ( flags == "14-BIT" );
             }
 
             sig_map[midi_event] = m;
             sig_map[midi_event].signal_name = signal_name;
-            sig_map[midi_event].signal = osc->add_signal ( signal_name, OSC::Signal::Output, 0, 1, 0, signal_handler, NULL, &sig_map[midi_event] );
-
+            sig_map[midi_event].signal =
+                osc->add_signal ( signal_name.c_str(), OSC::Signal::Output, 0, 1, 0, signal_handler, NULL, &sig_map[midi_event] );
+ 
             sig_map_ordered[max_signal] = midi_event;
         }
-
-        free ( signal_name );
-        free ( midi_event );
     }
 
+    fclose ( fp );
     return true;
 }
 
