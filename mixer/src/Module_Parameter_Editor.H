@@ -37,14 +37,6 @@ class SpectrumView;
 #include <list>
 #include <unordered_map>
 
-#ifdef LV2_SUPPORT
-#include "lv2/LV2_Plugin.H"
-#endif
-
-#ifdef VST3_SUPPORT
-#include "vst3/VST3_Plugin.H"
-#endif
-
 class Module_Parameter_Editor : public Fl_Double_Window
 {
     Module *_module;

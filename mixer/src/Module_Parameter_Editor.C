@@ -49,6 +49,14 @@
 #include "Chain.H"
 #include "Panner.H"
 
+#ifdef LV2_SUPPORT
+#include "lv2/LV2_Plugin.H"
+#endif
+
+#ifdef VST3_SUPPORT
+#include "vst3/VST3_Plugin.H"
+#endif
+
 #ifdef CLAP_SUPPORT
 #include "clap/CLAP_Plugin.H"
 #endif
