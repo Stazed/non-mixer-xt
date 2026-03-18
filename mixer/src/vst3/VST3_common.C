@@ -42,7 +42,9 @@ namespace nmxt_common
 #define CARLA_OS_SEP_STR   "/"
 
 #if defined(__linux__) || defined(__linux)
-#define V3_PLATFORM "linux"
+  #define V3_PLATFORM "linux"
+#elif defined(__FreeBSD__)
+  #define V3_PLATFORM "linux"
 #endif
 
 #define V3_CONTENT_DIR V3_ARCHITECTURE "-" V3_PLATFORM
