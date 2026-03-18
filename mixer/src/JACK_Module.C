@@ -797,15 +797,30 @@ JACK_Module::handle( int m )
 
             std::vector<std::string> port_names;
 
-            char *port_name;
-            int end;
-            while ( sscanf ( text, "jack.port://%m[^\r\n]\r\n%n", &port_name, &end ) > 0 )
+            while ( text && *text )
             {
-                DMESSAGE ( "Scanning %s", port_name );
-                port_names.push_back ( port_name );
-                free ( port_name );
+                static const char prefix[] = "jack.port://";
+                static const size_t prefix_len = sizeof ( prefix ) - 1;
+                if ( strncmp ( text, prefix, prefix_len ) != 0 )
+                    break;
 
-                text += end;
+                const char *start = text + prefix_len;
+                const char *end = start;
+
+                while ( *end && *end != '\r' && *end != '\n' )
+                    ++end;
+
+                std::string port_name ( start, end - start );
+
+                DMESSAGE ( "Scanning %s", port_name.c_str ( ) );
+                port_names.push_back ( port_name );
+
+                text = end;
+
+                if ( *text == '\r' )
+                    ++text;
+                if ( *text == '\n' )
+                    ++text;
             }
 
             for ( unsigned int i = 0; i < aux_audio_input.size ( ) && i < port_names.size ( ); i++ )
