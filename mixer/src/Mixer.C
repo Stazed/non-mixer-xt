@@ -1458,13 +1458,24 @@ Mixer::handle( int m )
 
             const char *text = Fl::event_text ( );
 
-            char *file;
+            const char *prefix = "file://";
+            const size_t prefix_len = strlen ( prefix );
 
-            if ( !sscanf ( text, "file://%m[^\r\n]\n", &file ) )
+            if ( !text || strncmp ( text, prefix, prefix_len ) != 0 )
             {
                 WARNING ( "invalid drop \"%s\"\n", text );
                 return 0;
             }
+
+            const char *start = text + prefix_len;
+            const char *end = start;
+
+            while ( *end && *end != '\r' && *end != '\n' )
+                ++end;
+
+            std::string sfile(start, end - start);
+            if(sfile.empty())
+                return 0;
 
             /* In the case of a paste without previous copy, there may be garbage in the event_text
                buffer. In this case, the file would sometimes cause the unescape_url() function to crash.
@@ -1472,17 +1483,18 @@ Mixer::handle( int m )
                "clipboard" which is the folder where copied strips are stored. No "clipboard",
                 means not a valid paste path.
              */
-            std::string svalid = file;
 
-            if ( svalid.find ( "clipboard" ) != std::string::npos )
+            if ( sfile.find ( "clipboard" ) != std::string::npos )
             {
                 MESSAGE ( "Found clipboard!" );
             }
             else
             {
-                MESSAGE ( "Invalid paste path, 'clipboard' not found: %s", file );
+                MESSAGE ( "Invalid paste path, 'clipboard' not found: %s", sfile.c_str() );
                 return 0;
             }
+
+            char *file = strdup(sfile.c_str());
 
             unescape_url ( file );
 
@@ -1495,6 +1507,7 @@ Mixer::handle( int m )
                 fl_alert ( "%s", "Failed to import strip!" );
 
             export_import_strip = "";
+            free( file );
             return 1;
         }
     }
