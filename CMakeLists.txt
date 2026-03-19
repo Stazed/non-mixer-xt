@@ -72,11 +72,18 @@ elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     )
 endif()
 
-set (BuildOptionsDebug
-    "-std=c++17 -Wno-cast-function-type -O0 -g3 -ggdb -Wall -Wextra -Wpointer-arith"
-#    "-std=c++17 -Wno-cast-function-type -Wno-unused-result -O3 -g3 -ggdb -Wall -Wextra -Wpointer-arith -fomit-frame-pointer -ffast-math -pipe -flto=auto -ffat-lto-objects -fexceptions -g -grecord-gcc-switches -pipe -Wall -Werror=format-security -Wp,-U_FORTIFY_SOURCE,-D_FORTIFY_SOURCE=3 -Wp,-D_GLIBCXX_ASSERTIONS -m64 -march=x86-64 -mtune=generic -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer"
-    CACHE STRING "Debug build flags"
+if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    set (BuildOptionsDebug
+        "-std=c++17 -Wno-cast-function-type-mismatch -O0 -g3 -ggdb -Wall -Wextra -Wpointer-arith"
+        CACHE STRING "Debug build flags"
+    )
+elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    set (BuildOptionsDebug
+        "-std=c++17 -Wno-cast-function-type -O0 -g3 -ggdb -Wall -Wextra -Wpointer-arith"
+    #    "-std=c++17 -Wno-cast-function-type -Wno-unused-result -O3 -g3 -ggdb -Wall -Wextra -Wpointer-arith -fomit-frame-pointer -ffast-math -pipe -flto=auto -ffat-lto-objects -fexceptions -g -grecord-gcc-switches -pipe -Wall -Werror=format-security -Wp,-U_FORTIFY_SOURCE,-D_FORTIFY_SOURCE=3 -Wp,-D_GLIBCXX_ASSERTIONS -m64 -march=x86-64 -mtune=generic -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer"
+        CACHE STRING "Debug build flags"
 )
+endif()
 
 if(CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
     message(STATUS "Building on FreeBSD")
@@ -355,7 +362,7 @@ if (NOT TARGET fltk::fltk)
 endif()
 
 if (EnableLADSPASupport)
-    package_status(HAVE_LADSPA_H   "LADSPA support . . . . . . . . . . . . . . . . . . . . .:"  )
+    package_status(LADSPA_INCLUDE_DIR   "LADSPA support . . . . . . . . . . . . . . . . . . . . .:"  )
 endif (EnableLADSPASupport)
 
 if (EnableLV2Support)
