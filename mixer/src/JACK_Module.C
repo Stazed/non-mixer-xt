@@ -228,21 +228,8 @@ get_connections_for_ports( const std::vector<Module::Port> &ports )
         return s.size() >= n && s.compare( 0, n, prefix ) == 0;
     };
 
-    auto extract_between = [] ( const std::string &s,
-                                size_t start,
-                                const char *end_chars,
-                                std::string &out ) -> bool
-    {
-        const size_t end = s.find_first_of( end_chars, start );
-        if ( end == std::string::npos || end <= start )
-            return false;
-
-        out.assign( s, start, end - start );
-        return true;
-    };
-
     auto parse_connection_name =
-        [&starts_with, &extract_between] ( const char *connection,
+        [&starts_with] ( const char *connection,
                                            bool is_output,
                                            std::string &result ) -> bool
     {
