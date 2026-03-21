@@ -36,7 +36,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include <string>
-#include <limits.h> // realpath()
+#include <limits.h> // realpath(), PATH_MAX
 
 #include "const.h"
 
@@ -89,7 +89,7 @@ copy_cstr( char *dst, size_t dst_size, const char *src )
 
 class Scoped_Cwd
 {
-    char _cwd[1024];
+    char _cwd[ PATH_MAX ];
     bool _valid;
 
 public:
@@ -313,7 +313,7 @@ bool
 Project::validate( const char *name )
 {
     Scoped_Cwd restore_cwd;
-    char abs_path[1024];
+    char abs_path[ PATH_MAX ];
 
     if ( !make_absolute_path( name, abs_path, sizeof( abs_path ) ) )
     {
@@ -345,7 +345,7 @@ Project::validate( const char *name )
 int
 Project::open( const char *name )
 {
-    char abs_path[1024];
+    char abs_path[ PATH_MAX ];
 
     if ( !make_absolute_path( name, abs_path, sizeof( abs_path ) ) )
     {
@@ -454,7 +454,7 @@ Project::create( const char *name, const char *template_name )
         return false;
     }
 
-    char abs_path[1024];
+    char abs_path[ PATH_MAX ];
     if ( !make_absolute_path( name, abs_path, sizeof( abs_path ) ) )
     {
         WARNING ( "Cannot resolve project path: \"%s\": %s",
