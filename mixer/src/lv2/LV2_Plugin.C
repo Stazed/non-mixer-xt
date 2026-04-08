@@ -753,6 +753,74 @@ LV2_Plugin::load_plugin( Module::Picked picked )
 }
 
 void
+LV2_Plugin::detect_plugin_extensions( bool& hasOptions,
+    bool& hasState,
+    bool& hasWorker ) const
+{
+    hasOptions = false;
+    hasState   = false;
+    hasWorker  = false;
+
+    for ( uint32_t i = 0, count = _idata->rdf_data->ExtensionCount; i < count; ++i )
+    {
+        const char* const extension ( _idata->rdf_data->Extensions[i] );
+
+        if ( !extension )
+            continue;
+        else if ( ::strcmp ( extension, LV2_OPTIONS__interface ) == 0 )
+            hasOptions = true;
+        else if ( ::strcmp ( extension, LV2_STATE__interface ) == 0 )
+            hasState = true;
+        else if ( ::strcmp ( extension, LV2_WORKER__interface ) == 0 )
+            hasWorker = true;
+    }
+}
+
+void
+LV2_Plugin::fetch_plugin_extensions( bool hasOptions,
+    bool hasState,
+    bool hasWorker )
+{
+    if ( hasOptions )
+        _idata->ext.options = static_cast<const LV2_Options_Interface*> (
+            _idata->descriptor->extension_data ( LV2_OPTIONS__interface ) );
+
+    if ( hasState )
+        _idata->ext.state = static_cast<const LV2_State_Interface*> (
+            _idata->descriptor->extension_data ( LV2_STATE__interface ) );
+
+    if ( hasWorker )
+        _idata->ext.worker = static_cast<const LV2_Worker_Interface*> (
+            _idata->descriptor->extension_data ( LV2_WORKER__interface ) );
+}
+
+void
+LV2_Plugin::validate_plugin_extensions()
+{
+    if ( _idata->ext.options != NULL &&
+         _idata->ext.options->get == NULL &&
+         _idata->ext.options->set == NULL )
+        _idata->ext.options = NULL;
+
+    if ( _idata->ext.state != NULL &&
+         ( _idata->ext.state->save == NULL || _idata->ext.state->restore == NULL ) )
+        _idata->ext.state = NULL;
+
+    if ( _idata->ext.worker != NULL && _idata->ext.worker->work == NULL )
+        _idata->ext.worker = NULL;
+}
+
+#ifdef LV2_WORKER_SUPPORT
+void
+LV2_Plugin::initialize_worker_support()
+{
+    _safe_restore = _use_custom_data = true;
+    lv2_atom_forge_init ( &_atom_forge, _uridMapFt );
+    non_worker_init ( this, _idata->ext.worker, true );
+}
+#endif
+
+void
 LV2_Plugin::get_plugin_extensions( )
 {
     if ( _idata->descriptor->extension_data )
@@ -761,54 +829,20 @@ LV2_Plugin::get_plugin_extensions( )
         bool hasState = false;
         bool hasWorker = false;
 
-        for ( uint32_t i = 0, count = _idata->rdf_data->ExtensionCount; i < count; ++i )
-        {
-            const char* const extension ( _idata->rdf_data->Extensions[i] );
+        detect_plugin_extensions ( hasOptions, hasState, hasWorker );
+        fetch_plugin_extensions ( hasOptions, hasState, hasWorker );
+        validate_plugin_extensions();
 
-            /**/ if ( !extension )
-                continue;
-            else if ( ::strcmp ( extension, LV2_OPTIONS__interface ) == 0 )
-                hasOptions = true;
-            else if ( ::strcmp ( extension, LV2_STATE__interface ) == 0 )
-                hasState = true;
-            else if ( ::strcmp ( extension, LV2_WORKER__interface ) == 0 )
-                hasWorker = true;
-        }
-
-        if ( hasOptions )
-            _idata->ext.options = static_cast<const LV2_Options_Interface * > ( _idata->descriptor->extension_data ( LV2_OPTIONS__interface ) );
-
-        if ( hasState )
-            _idata->ext.state = static_cast<const LV2_State_Interface * > ( _idata->descriptor->extension_data ( LV2_STATE__interface ) );
-
-        if ( hasWorker )
-            _idata->ext.worker = static_cast<const LV2_Worker_Interface * > ( _idata->descriptor->extension_data ( LV2_WORKER__interface ) );
-
-        // check if invalid
-        if ( _idata->ext.options != NULL && _idata->ext.options->get == NULL && _idata->ext.options->set == NULL )
-            _idata->ext.options = NULL;
-
-        if ( _idata->ext.state != NULL && ( _idata->ext.state->save == NULL || _idata->ext.state->restore == NULL ) )
-        {
-            _idata->ext.state = NULL;
-        }
 #ifdef LV2_WORKER_SUPPORT
-        else
+        if ( _idata->ext.state != NULL )
         {
             _safe_restore = _use_custom_data = true;
         }
-#endif
-        if ( _idata->ext.worker != NULL && _idata->ext.worker->work == NULL )
-        {
-            _idata->ext.worker = NULL;
-        }
-#ifdef LV2_WORKER_SUPPORT
-        else
+
+        if ( _idata->ext.worker != NULL )
         {
             DMESSAGE ( "Setting worker initialization" );
-
-            lv2_atom_forge_init ( &_atom_forge, _uridMapFt );
-            non_worker_init ( this, _idata->ext.worker, true );
+            initialize_worker_support();
         }
 #endif
     }

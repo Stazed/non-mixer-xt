@@ -243,6 +243,17 @@ private:
     void set_output_buffer ( int n, void *buf );
     bool loaded ( void ) const;
 
+    void detect_plugin_extensions( bool& hasOptions,
+                                   bool& hasState,
+                                   bool& hasWorker ) const;
+    void fetch_plugin_extensions( bool hasOptions,
+                                  bool hasState,
+                                  bool hasWorker );
+    void validate_plugin_extensions();
+#ifdef LV2_WORKER_SUPPORT
+    void initialize_worker_support();
+#endif
+
     void activate ( void );
     void deactivate ( void );
     void add_port ( const Port &p ) override;
