@@ -174,7 +174,7 @@ get_port_value( const char* port_symbol,
     LilvNode *symbol = lilv_new_string ( world, port_symbol );
 
     const LilvPort *port = lilv_plugin_get_port_by_symbol ( plugin, symbol );
-    free ( symbol );
+    lilv_node_free( symbol );
 
     if ( port )
     {
