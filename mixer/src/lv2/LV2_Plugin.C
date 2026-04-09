@@ -525,7 +525,7 @@ LV2_Plugin::~LV2_Plugin( )
 
 #ifdef LV2_WORKER_SUPPORT
     _worker.exit_process = true;
-    if ( _idata->ext.worker )
+    if ( _idata->descriptor->extension_data )
     {
         _worker.finish();
         _worker.destroy();
@@ -804,6 +804,7 @@ LV2_Plugin::validate_plugin_extensions()
 void
 LV2_Plugin::initialize_worker_support()
 {
+    DMESSAGE ( "Setting worker initialization" );
     _safe_restore = _use_custom_data = true;
     lv2_atom_forge_init ( &_atom_forge, _uridMapFt );
     _worker.init ( *this, _idata->ext.worker, true );
@@ -829,11 +830,10 @@ LV2_Plugin::get_plugin_extensions( )
             _safe_restore = _use_custom_data = true;
         }
 
-        if ( _idata->ext.worker != NULL )
-        {
-            DMESSAGE ( "Setting worker initialization" );
-            initialize_worker_support();
-        }
+        /* We always initialize worker support if we have extension data.
+         * If we don't do this some plugins do not work properly.
+         * This is needed even if( _idata->ext.worker == NULL) */
+        initialize_worker_support();
 #endif
     }
     else // Extension data
