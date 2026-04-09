@@ -527,8 +527,8 @@ LV2_Plugin::~LV2_Plugin( )
     _worker.exit_process = true;
     if ( _idata->ext.worker )
     {
-        non_worker_finish ( );
-        non_worker_destroy ( );
+        _worker.finish();
+        _worker.destroy();
     }
 
     Fl::remove_timeout ( &update_ui, this );
@@ -806,7 +806,7 @@ LV2_Plugin::initialize_worker_support()
 {
     _safe_restore = _use_custom_data = true;
     lv2_atom_forge_init ( &_atom_forge, _uridMapFt );
-    non_worker_init ( this, _idata->ext.worker, true );
+    _worker.init ( *this, _idata->ext.worker, true );
 }
 #endif
 
@@ -1910,65 +1910,76 @@ LV2_Plugin::init( void )
 #ifdef LV2_WORKER_SUPPORT
 
 void
-LV2_Plugin::non_worker_init( LV2_Plugin* plug,
+LV2_Plugin::WorkerContext::init( LV2_Plugin& plug,
     const LV2_Worker_Interface* iface,
     bool threaded )
 {
     DMESSAGE ( "Threaded = %d", threaded );
-    plug->_idata->ext.worker = iface;
-    plug->_worker.threaded = threaded;
+    plug._idata->ext.worker = iface;
+    this->threaded = threaded;
 
     if ( threaded )
     {
-        zix_thread_create ( &plug->_worker.zix_thread, ATOM_BUFFER_SIZE, worker_func, plug );
-        plug->_worker.zix_requests = zix_ring_new ( NULL, ATOM_BUFFER_SIZE );
-        zix_ring_mlock ( plug->_worker.zix_requests );
+        zix_thread_create ( &this->zix_thread, ATOM_BUFFER_SIZE, worker_func, &plug );
+        this->zix_requests = zix_ring_new ( NULL, ATOM_BUFFER_SIZE );
+        zix_ring_mlock ( this->zix_requests );
     }
 
-    plug->_worker.zix_responses = zix_ring_new ( NULL, ATOM_BUFFER_SIZE );
-    plug->_worker.worker_response = malloc ( ATOM_BUFFER_SIZE );
-    zix_ring_mlock ( plug->_worker.zix_responses );
+    this->zix_responses = zix_ring_new ( NULL, ATOM_BUFFER_SIZE );
+    this->worker_response = malloc ( ATOM_BUFFER_SIZE );
+    zix_ring_mlock ( this->zix_responses );
 }
 
 void
-LV2_Plugin::non_worker_emit_responses( LilvInstance* instance )
+LV2_Plugin::WorkerContext::emit_responses( LV2_Plugin& plug, LilvInstance* instance )
 {
-    if ( _worker.zix_responses )
+    if ( this->zix_responses )
     {
         static const uint32_t size_size = ( uint32_t )sizeof (uint32_t );
 
         uint32_t size = 0U;
-        while ( zix_ring_read ( _worker.zix_responses, &size, size_size ) == size_size )
+        while ( zix_ring_read ( this->zix_responses, &size, size_size ) == size_size )
         {
-            if ( zix_ring_read ( _worker.zix_responses, _worker.worker_response, size ) == size )
+            if ( zix_ring_read ( this->zix_responses, this->worker_response, size ) == size )
             {
                 DMESSAGE ( "Got work response" );
-                _idata->ext.worker->work_response (
-                    instance->lv2_handle, size, _worker.worker_response );
+                plug._idata->ext.worker->work_response (
+                    instance->lv2_handle, size, this->worker_response );
             }
         }
     }
 }
 
 void
-LV2_Plugin::non_worker_finish( void )
+LV2_Plugin::WorkerContext::finish()
 {
-    if ( _worker.threaded )
+    if ( this->threaded )
     {
         // zix_sem_post(&_zix_sem);
         // zix_thread_join(_zix_thread); FIXME this causes intermittent freeze - why do we need it??
-        _worker.threaded = false;
+        this->threaded = false;
     }
 }
 
 void
-LV2_Plugin::non_worker_destroy( void )
+LV2_Plugin::WorkerContext::destroy()
 {
-    if ( _worker.zix_requests )
+    if ( this->zix_requests )
     {
-        zix_ring_free ( _worker.zix_requests );
-        zix_ring_free ( _worker.zix_responses );
-        free ( _worker.worker_response );
+        zix_ring_free ( this->zix_requests );
+        this->zix_requests = NULL;
+    }
+
+    if ( this->zix_responses )
+    {
+        zix_ring_free ( this->zix_responses );
+        this->zix_responses = NULL;
+    }
+
+    if ( this->worker_response )
+    {
+        free ( this->worker_response );
+        this->worker_response = NULL;
     }
 }
 
@@ -3123,10 +3134,7 @@ LV2_Plugin::process( nframes_t nframes )
         /* Process any worker replies. */
         if ( _idata->ext.worker )
         {
-            // FIXME
-            // jalv_worker_emit_responses(&jalv->state_worker, jalv->instance);
-            // non_worker_emit_responses(&jalv->state_worker, jalv->instance);
-            non_worker_emit_responses ( _lilv_instance );
+            _worker.emit_responses ( *this, _lilv_instance );
             if ( _idata->ext.worker && _idata->ext.worker->end_run )
             {
                 _idata->ext.worker->end_run ( _lilv_instance->lv2_handle );

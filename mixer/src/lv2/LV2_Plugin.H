@@ -149,6 +149,13 @@ public:
               ui_event_buf( nullptr ), worker_response( nullptr ),
               zix_sem(), zix_thread( 0 ), threaded( false ),
               work_lock(), exit_process( false ) {}
+
+        void init( LV2_Plugin& plug,
+                   const LV2_Worker_Interface* iface,
+                   bool threaded );
+        void emit_responses( LV2_Plugin& plug, LilvInstance* instance );
+        void finish();
+        void destroy();
     } _worker;
 
     int _atom_ins;
@@ -169,13 +176,6 @@ public:
     void send_file_to_plugin( int port, const std::string &filename );
 
 private:
-    void non_worker_init(LV2_Plugin* plug,
-                         const LV2_Worker_Interface* iface,
-                         bool threaded);
-
-    void non_worker_emit_responses( LilvInstance* instance );
-    void non_worker_finish( void );
-    void non_worker_destroy( void );
     void apply_ui_events( uint32_t nframes );
     void set_lv2_port_properties ( Port * port, bool writable );
     int write_atom_event(ZixRing* target, const uint32_t port_index,
