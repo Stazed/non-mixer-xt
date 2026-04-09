@@ -156,6 +156,14 @@ public:
         void emit_responses( LV2_Plugin& plug, LilvInstance* instance );
         void finish();
         void destroy();
+        LV2_Worker_Status write_packet( ZixRing* target,
+                                        uint32_t size,
+                                        const void* data );
+        LV2_Worker_Status respond( LV2_Plugin& plug,
+                                   uint32_t size,
+                                   const void* data );
+        LV2_Worker_Status schedule( LV2_Plugin& plug, uint32_t size, const void* data );
+        void* thread_main( LV2_Plugin& plug );
     } _worker;
 
     int _atom_ins;
