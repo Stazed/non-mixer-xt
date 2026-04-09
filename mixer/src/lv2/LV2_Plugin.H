@@ -129,22 +129,33 @@ public:
 #endif  // LV2_STATE_SAVE
 
 #ifdef LV2_WORKER_SUPPORT
+    struct WorkerContext
+    {
+        ZixRing*  zix_requests;     ///< Requests to the worker
+        ZixRing*  zix_responses;    ///< Responses from the worker
+        ZixRing*  plugin_to_ui;     ///< Port events from plugin
+        ZixRing*  ui_to_plugin;     ///< Port events from UI
+        void*     ui_event_buf;     ///< Buffer for reading UI port events
+        void*     worker_response;  ///< Worker response buffer
+        ZixSem    zix_sem;          ///< Worker semaphore
+        ZixThread zix_thread;       ///< Worker thread
+        bool      threaded;         ///< Run work in another thread
+        ZixSem    work_lock;        ///< Lock for plugin work() method
+        bool      exit_process;     ///< True iff execution is finished
+
+        WorkerContext()
+            : zix_requests( nullptr ), zix_responses( nullptr ),
+              plugin_to_ui( nullptr ), ui_to_plugin( nullptr ),
+              ui_event_buf( nullptr ), worker_response( nullptr ),
+              zix_sem(), zix_thread( 0 ), threaded( false ),
+              work_lock(), exit_process( false ) {}
+    } _worker;
+
     int _atom_ins;
     int _atom_outs;
     bool _loading_from_file;
 
-    ZixRing* _zix_requests;         ///< Requests to the worker
-    ZixRing* _zix_responses;        ///< Responses from the worker
-    ZixRing* _plugin_to_ui;         ///< Port events from plugin
-    ZixRing* _ui_to_plugin;         ///< Port events from UI
-    void*    _ui_event_buf;         ///< Buffer for reading UI port events
-    void*    _worker_response;      ///< Worker response buffer
-    ZixSem   _zix_sem;              ///< Worker semaphore
-    ZixThread _zix_thread;          ///< Worker thread
     LV2_Atom_Forge _atom_forge;     ///< Atom forge
-    bool     _b_threaded;           ///< Run work in another thread
-    ZixSem  _work_lock;             ///< Lock for plugin work() method
-    bool    _exit_process;          ///< True iff execution is finished
     bool    _safe_restore;          ///< Plugin restore() is thread-safe
     size_t  _atom_buffer_size;
 

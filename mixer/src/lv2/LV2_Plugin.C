@@ -224,21 +224,21 @@ update_ui( void *data )
     LV2_Plugin* plug_ui = static_cast<LV2_Plugin *> ( data );
     /* Emit UI events. */
     ControlChange ev;
-    const size_t space = zix_ring_read_space ( plug_ui->_plugin_to_ui );
+    const size_t space = zix_ring_read_space ( plug_ui->_worker.plugin_to_ui );
     for ( size_t i = 0;
         i + sizeof (ev ) < space;
         i += sizeof (ev ) + ev.size )
     {
         //   DMESSAGE("Reading .plugin_events");
         /* Read event header to get the size */
-        zix_ring_read ( plug_ui->_plugin_to_ui, (char*) &ev, sizeof (ev ) );
+        zix_ring_read ( plug_ui->_worker.plugin_to_ui, (char*) &ev, sizeof (ev ) );
 
         /* Resize read buffer if necessary */
-        plug_ui->_ui_event_buf = realloc ( plug_ui->_ui_event_buf, ev.size );
-        void* const buf = plug_ui->_ui_event_buf;
+        plug_ui->_worker.ui_event_buf = realloc ( plug_ui->_worker.ui_event_buf, ev.size );
+        void* const buf = plug_ui->_worker.ui_event_buf;
 
         /* Read event body */
-        zix_ring_read ( plug_ui->_plugin_to_ui, static_cast<char*> ( buf ), ev.size );
+        zix_ring_read ( plug_ui->_worker.plugin_to_ui, static_cast<char*> ( buf ), ev.size );
 
         if ( plug_ui->_ui_instance ) // Custom UI
         {
@@ -263,7 +263,7 @@ non_worker_respond( LV2_Worker_Respond_Handle handle,
     LV2_Plugin* worker = static_cast<LV2_Plugin *> ( handle );
 
     DMESSAGE ( "non_worker_respond" );
-    return worker_write_packet ( worker->_zix_responses, size, data );
+    return worker_write_packet ( worker->_worker.zix_responses, size, data );
 }
 
 static void*
@@ -273,15 +273,15 @@ worker_func( void* data )
     void* buf = NULL;
     while ( true )
     {
-        zix_sem_wait ( &worker->_zix_sem );
-        if ( worker->_exit_process )
+        zix_sem_wait ( &worker->_worker.zix_sem );
+        if ( worker->_worker.exit_process )
         {
             DMESSAGE ( "EXIT" );
             break;
         }
 
         uint32_t size = 0;
-        zix_ring_read ( worker->_zix_requests, (char*) &size, sizeof (size ) );
+        zix_ring_read ( worker->_worker.zix_requests, (char*) &size, sizeof (size ) );
 
         // Reallocate buffer to accommodate request if necessary
         void* const new_buf = realloc ( buf, size );
@@ -291,20 +291,20 @@ worker_func( void* data )
             DMESSAGE ( "Read request into buffer" );
             // Read request into buffer
             buf = new_buf;
-            zix_ring_read ( worker->_zix_requests, buf, size );
+            zix_ring_read ( worker->_worker.zix_requests, buf, size );
 
             // Lock and dispatch request to plugin's work handler
-            zix_sem_wait ( &worker->_work_lock );
+            zix_sem_wait ( &worker->_worker.work_lock );
 
             worker->_idata->ext.worker->work (
                 worker->_lilv_instance->lv2_handle, non_worker_respond, worker, size, buf );
 
-            zix_sem_post ( &worker->_work_lock );
+            zix_sem_post ( &worker->_worker.work_lock );
         }
         else
         {
             // Reallocation failed, skip request to avoid corrupting ring
-            zix_ring_skip ( worker->_zix_requests, size );
+            zix_ring_skip ( worker->_worker.zix_requests, size );
         }
     }
 
@@ -326,26 +326,26 @@ lv2_non_worker_schedule( LV2_Worker_Schedule_Handle handle,
         return LV2_WORKER_ERR_UNKNOWN;
     }
 
-    if ( worker->_b_threaded )
+    if ( worker->_worker.threaded )
     {
         DMESSAGE ( "worker->threaded" );
 
         // Schedule a request to be executed by the worker thread
-        if ( !( st = worker_write_packet ( worker->_zix_requests, size, data ) ) )
+        if ( !( st = worker_write_packet ( worker->_worker.zix_requests, size, data ) ) )
         {
-            zix_sem_post ( &worker->_zix_sem );
+            zix_sem_post ( &worker->_worker.zix_sem );
         }
     }
     else
     {
         // Execute work immediately in this thread
         DMESSAGE ( "NOT threaded" );
-        zix_sem_wait ( &worker->_work_lock );
+        zix_sem_wait ( &worker->_worker.work_lock );
 
         st = worker->_idata->ext.worker->work (
             worker->_lilv_instance->lv2_handle, non_worker_respond, worker, size, data );
 
-        zix_sem_post ( &worker->_work_lock );
+        zix_sem_post ( &worker->_worker.work_lock );
     }
 
     return st;
@@ -485,21 +485,11 @@ LV2_Plugin::LV2_Plugin( ) :
     _uridMapFt( nullptr ),
     _uridUnmapFt( nullptr ),
     _project_directory( ),
+    _worker ( ),
     _atom_ins( 0 ),
     _atom_outs( 0 ),
     _loading_from_file( false ),
-    _zix_requests( nullptr ),
-    _zix_responses( nullptr ),
-    _plugin_to_ui( nullptr ),
-    _ui_to_plugin( nullptr ),
-    _ui_event_buf( nullptr ),
-    _worker_response( nullptr ),
-    _zix_sem ( ),
-    _zix_thread( 0 ),
     _atom_forge( ),
-    _b_threaded( false ),
-    _work_lock( ),
-    _exit_process( false ),
     _safe_restore( false ),
     _atom_buffer_size( ATOM_BUFFER_SIZE ),
     _ui_host( nullptr ),
@@ -534,7 +524,7 @@ LV2_Plugin::~LV2_Plugin( )
     log_destroy ( );
 
 #ifdef LV2_WORKER_SUPPORT
-    _exit_process = true;
+    _worker.exit_process = true;
     if ( _idata->ext.worker )
     {
         non_worker_finish ( );
@@ -591,9 +581,9 @@ LV2_Plugin::~LV2_Plugin( )
 #endif
 
 #ifdef LV2_WORKER_SUPPORT
-    zix_ring_free ( _plugin_to_ui );
-    zix_ring_free ( _ui_to_plugin );
-    free ( _ui_event_buf );
+    zix_ring_free ( _worker.plugin_to_ui );
+    zix_ring_free ( _worker.ui_to_plugin );
+    free ( _worker.ui_event_buf );
 #endif
 
 #ifdef PRESET_SUPPORT
@@ -1628,12 +1618,12 @@ LV2_Plugin::plugin_instances( unsigned int n )
 
     /* Create Plugin <=> UI communication buffers */
 #ifdef LV2_WORKER_SUPPORT
-    _ui_event_buf = malloc ( _atom_buffer_size );
-    _ui_to_plugin = zix_ring_new ( NULL, _atom_buffer_size );
-    _plugin_to_ui = zix_ring_new ( NULL, _atom_buffer_size );
+    _worker.ui_event_buf = malloc ( _atom_buffer_size );
+    _worker.ui_to_plugin = zix_ring_new ( NULL, _atom_buffer_size );
+    _worker.plugin_to_ui = zix_ring_new ( NULL, _atom_buffer_size );
 
-    zix_ring_mlock ( _ui_to_plugin );
-    zix_ring_mlock ( _plugin_to_ui );
+    zix_ring_mlock ( _worker.ui_to_plugin );
+    zix_ring_mlock ( _worker.plugin_to_ui );
 #endif
     return true;
 }
@@ -1870,8 +1860,8 @@ LV2_Plugin::init( void )
     m_lv2_schedule->handle = this;
     m_lv2_schedule->schedule_work = lv2_non_worker_schedule;
 
-    zix_sem_init ( &_zix_sem, 0 );
-    zix_sem_init ( &_work_lock, 1 );
+    zix_sem_init ( &_worker.zix_sem, 0 );
+    zix_sem_init ( &_worker.work_lock, 1 );
 #endif
 
 #ifdef USE_SUIL
@@ -1926,35 +1916,35 @@ LV2_Plugin::non_worker_init( LV2_Plugin* plug,
 {
     DMESSAGE ( "Threaded = %d", threaded );
     plug->_idata->ext.worker = iface;
-    plug->_b_threaded = threaded;
+    plug->_worker.threaded = threaded;
 
     if ( threaded )
     {
-        zix_thread_create ( &plug->_zix_thread, ATOM_BUFFER_SIZE, worker_func, plug );
-        plug->_zix_requests = zix_ring_new ( NULL, ATOM_BUFFER_SIZE );
-        zix_ring_mlock ( plug->_zix_requests );
+        zix_thread_create ( &plug->_worker.zix_thread, ATOM_BUFFER_SIZE, worker_func, plug );
+        plug->_worker.zix_requests = zix_ring_new ( NULL, ATOM_BUFFER_SIZE );
+        zix_ring_mlock ( plug->_worker.zix_requests );
     }
 
-    plug->_zix_responses = zix_ring_new ( NULL, ATOM_BUFFER_SIZE );
-    plug->_worker_response = malloc ( ATOM_BUFFER_SIZE );
-    zix_ring_mlock ( plug->_zix_responses );
+    plug->_worker.zix_responses = zix_ring_new ( NULL, ATOM_BUFFER_SIZE );
+    plug->_worker.worker_response = malloc ( ATOM_BUFFER_SIZE );
+    zix_ring_mlock ( plug->_worker.zix_responses );
 }
 
 void
 LV2_Plugin::non_worker_emit_responses( LilvInstance* instance )
 {
-    if ( _zix_responses )
+    if ( _worker.zix_responses )
     {
         static const uint32_t size_size = ( uint32_t )sizeof (uint32_t );
 
         uint32_t size = 0U;
-        while ( zix_ring_read ( _zix_responses, &size, size_size ) == size_size )
+        while ( zix_ring_read ( _worker.zix_responses, &size, size_size ) == size_size )
         {
-            if ( zix_ring_read ( _zix_responses, _worker_response, size ) == size )
+            if ( zix_ring_read ( _worker.zix_responses, _worker.worker_response, size ) == size )
             {
                 DMESSAGE ( "Got work response" );
                 _idata->ext.worker->work_response (
-                    instance->lv2_handle, size, _worker_response );
+                    instance->lv2_handle, size, _worker.worker_response );
             }
         }
     }
@@ -1963,22 +1953,22 @@ LV2_Plugin::non_worker_emit_responses( LilvInstance* instance )
 void
 LV2_Plugin::non_worker_finish( void )
 {
-    if ( _b_threaded )
+    if ( _worker.threaded )
     {
         // zix_sem_post(&_zix_sem);
         // zix_thread_join(_zix_thread); FIXME this causes intermittent freeze - why do we need it??
-        _b_threaded = false;
+        _worker.threaded = false;
     }
 }
 
 void
 LV2_Plugin::non_worker_destroy( void )
 {
-    if ( _zix_requests )
+    if ( _worker.zix_requests )
     {
-        zix_ring_free ( _zix_requests );
-        zix_ring_free ( _zix_responses );
-        free ( _worker_response );
+        zix_ring_free ( _worker.zix_requests );
+        zix_ring_free ( _worker.zix_responses );
+        free ( _worker.worker_response );
     }
 }
 
@@ -2036,7 +2026,7 @@ LV2_Plugin::ui_port_event( uint32_t port_index, uint32_t /*buffer_size*/, uint32
 void
 LV2_Plugin::send_atom_to_plugin( uint32_t port_index, uint32_t buffer_size, const void* buffer )
 {
-    if ( _exit_process )
+    if ( _worker.exit_process )
         return;
 
     const LV2_Atom * const atom = static_cast<const LV2_Atom*> ( buffer );
@@ -2050,7 +2040,7 @@ LV2_Plugin::send_atom_to_plugin( uint32_t port_index, uint32_t buffer_size, cons
     }
     else
     {
-        write_atom_event ( _ui_to_plugin, port_index, atom->size, atom->type, atom + 1U );
+        write_atom_event ( _worker.ui_to_plugin, port_index, atom->size, atom->type, atom + 1U );
     }
 }
 
@@ -2150,19 +2140,19 @@ LV2_Plugin::send_file_to_plugin( int port, const std::string &filename )
     if(index == C_MAX_UINT32)
         return;
 
-    write_atom_event ( _ui_to_plugin, index, atom->size, atom->type, atom + 1U );
+    write_atom_event ( _worker.ui_to_plugin, index, atom->size, atom->type, atom + 1U );
 }
 
 void
 LV2_Plugin::apply_ui_events( uint32_t nframes )
 {
     ControlChange ev = { 0U, 0U, 0U };
-    const size_t space = zix_ring_read_space ( _ui_to_plugin );
+    const size_t space = zix_ring_read_space ( _worker.ui_to_plugin );
 
     for ( size_t i = 0; i < space; i += sizeof (ev ) + ev.size )
     {
         DMESSAGE ( "APPLY UI" );
-        if ( zix_ring_read ( _ui_to_plugin, (char * ) &ev, sizeof (ev ) ) != sizeof (ev ) )
+        if ( zix_ring_read ( _worker.ui_to_plugin, (char * ) &ev, sizeof (ev ) ) != sizeof (ev ) )
         {
             WARNING ( "Failed to read header from UI ring buffer\n" );
             break;
@@ -2179,7 +2169,7 @@ LV2_Plugin::apply_ui_events( uint32_t nframes )
             uint8_t body[MSG_BUFFER_SIZE];
         } buffer;
 
-        if ( zix_ring_read ( _ui_to_plugin, &buffer, ev.size ) != ev.size )
+        if ( zix_ring_read ( _worker.ui_to_plugin, &buffer, ev.size ) != ev.size )
         {
             WARNING ( "Failed to read from UI ring buffer\n" );
             break;
@@ -2327,7 +2317,7 @@ LV2_Plugin::process_atom_out_events( uint32_t nframes, unsigned int port )
         if ( ( _ui_instance && _x_is_visible ) || ( _editor && _editor->visible ( ) ) )
         {
             //  DMESSAGE("SEND to UI index = %d", atom_output[port].hints.plug_port_index);
-            write_atom_event ( _plugin_to_ui, atom_output[port].hints.plug_port_index, size, type, body );
+            write_atom_event ( _worker.plugin_to_ui, atom_output[port].hints.plug_port_index, size, type, body );
         }
     }
 
@@ -2439,7 +2429,7 @@ send_to_plugin( void* const handle, // LV2_Plugin
         return;
 
 #ifdef LV2_WORKER_SUPPORT
-    if ( pLv2Plugin->_exit_process )
+    if ( pLv2Plugin->_worker.exit_process )
         return;
 #endif
     if ( protocol == 0U )
