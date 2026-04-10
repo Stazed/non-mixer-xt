@@ -34,8 +34,6 @@
 #include <lv2/data-access/data-access.h>
 #include <dlfcn.h>
 
-#define LV2_WORKER_SUPPORT 1
-
 /* supported lv2 features */
 enum Plugin_Module_Supported_Features
 {
@@ -46,9 +44,7 @@ enum Plugin_Module_Supported_Features
     Plugin_Feature_URID_Map,
     Plugin_Feature_URID_Unmap,
     Plugin_Feature_Make_path,
-#ifdef LV2_WORKER_SUPPORT
     Plugin_Feature_Worker_Schedule,
-#endif
     Plugin_Feature_Resize,  // Suil
     Plugin_Features_Count
 };
@@ -65,7 +61,7 @@ enum Plugin_Module_URIs
     Plugin_Module_URI_BufSize_MaxLength,
     Plugin_Module_URI_BufSize_MinLength,
     Plugin_Module_URI_Parameter_SampleRate,
-#ifdef LV2_WORKER_SUPPORT
+    // Worker support
     Plugin_Module_URI_Atom_Sequence,
     Plugin_Module_URI_Atom_Chunk,
     Plugin_Module_URI_Atom_eventTransfer,
@@ -76,7 +72,6 @@ enum Plugin_Module_URIs
     Plugin_Module_URI_patch_Put,
     Plugin_Module_URI_patch_Writable,
     Plugin_Module_URI_patch_Readable,
-#endif
     // Suil
     Plugin_Module_URI_Resize,
     Plugin_Module_URI_Scale,
@@ -209,7 +204,7 @@ struct ImplementationData
         mappedURIs.push_back(LV2_BUF_SIZE__maxBlockLength); // Plugin_Module_URI_BufSize_MaxLength
         mappedURIs.push_back(LV2_BUF_SIZE__minBlockLength); // Plugin_Module_URI_BufSize_MinLength
         mappedURIs.push_back(LV2_PARAMETERS__sampleRate);   // Plugin_Module_URI_Parameter_SampleRate
-#ifdef LV2_WORKER_SUPPORT
+        // Worker support
         mappedURIs.push_back(LV2_ATOM__Sequence);
         mappedURIs.push_back(LV2_ATOM__Chunk);
         mappedURIs.push_back(LV2_ATOM__eventTransfer);
@@ -218,7 +213,6 @@ struct ImplementationData
         mappedURIs.push_back(LV2_PATCH__body);
         mappedURIs.push_back(LV2_PATCH__Set);
         mappedURIs.push_back(LV2_PATCH__Put);
-#endif
         // Suil
         mappedURIs.push_back(LV2_UI__resize);
         mappedURIs.push_back(LV2_UI__scaleFactor);
@@ -261,10 +255,9 @@ struct ImplementationData
 
         if ( features[Plugin_Feature_Make_path] && features[Plugin_Feature_Make_path]->data )
             delete static_cast<LV2_State_Make_Path*>(features[Plugin_Feature_Make_path]->data);
-#ifdef LV2_WORKER_SUPPORT
+
         if ( features[Plugin_Feature_Worker_Schedule] && features[Plugin_Feature_Worker_Schedule]->data )
             delete static_cast<LV2_Worker_Schedule*>(features[Plugin_Feature_Worker_Schedule]->data);
-#endif
         // Suil
         if ( features[Plugin_Feature_Resize] && features[Plugin_Feature_Resize]->data )
             delete static_cast<LV2UI_Resize*>(features[Plugin_Feature_Resize]->data);
@@ -299,7 +292,7 @@ struct ImplementationData
             return Plugin_Module_URI_BufSize_MinLength;
         if ( ::strcmp(uri, LV2_PARAMETERS__sampleRate) == 0 )
             return Plugin_Module_URI_Parameter_SampleRate;
-#ifdef LV2_WORKER_SUPPORT
+        // Worker support
         if ( ::strcmp(uri, LV2_ATOM__Sequence) == 0 )
             return Plugin_Module_URI_Atom_Sequence;
         if ( ::strcmp(uri, LV2_ATOM__Chunk) == 0 )
@@ -320,7 +313,6 @@ struct ImplementationData
             return Plugin_Module_URI_patch_Writable;
         if ( ::strcmp(uri, LV2_PATCH__readable) == 0 )
             return Plugin_Module_URI_patch_Readable;
-#endif  // LV2_WORKER_SUPPORT
         // Suil
         if ( ::strcmp(uri, LV2_UI__resize) == 0 )
             return Plugin_Module_URI_Resize;

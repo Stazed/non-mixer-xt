@@ -124,7 +124,7 @@ public:
     LV2_URID_Unmap* _uridUnmapFt;
     std::string _project_directory;
 
-#ifdef LV2_WORKER_SUPPORT
+    // Worker support
     struct WorkerContext
     {
         ZixRing*  zix_requests;     ///< Requests to the worker
@@ -187,7 +187,7 @@ private:
                          const LV2_URID    type,
                          const void* const body);
     size_t get_atom_buffer_size(int port_index);
-#endif  // LV2_WORKER_SUPPORT
+    // End Worker support
 
 public:
 
@@ -234,7 +234,7 @@ private:
     void close_custom_ui();
     // End Suil
 
-#ifdef LV2_WORKER_SUPPORT
+    // Worker support
 public:
     void configure_midi_inputs () override;
     void configure_midi_outputs () override;
@@ -248,7 +248,7 @@ public:
 private:
     void process_atom_in_events( uint32_t nframes, unsigned int port );
     void process_atom_out_events( uint32_t nframes, unsigned int port );
-#endif  // LV2_WORKER_SUPPORT
+    // End Worker support
 
 private:
 
@@ -263,9 +263,7 @@ private:
                                   bool hasState,
                                   bool hasWorker );
     void validate_plugin_extensions();
-#ifdef LV2_WORKER_SUPPORT
     void initialize_worker_support();
-#endif
 
     void activate ( void );
     void deactivate ( void );

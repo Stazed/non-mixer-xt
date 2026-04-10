@@ -55,7 +55,6 @@ const std::vector<std::string> v_ui_types
 
 // Preset support
 // LV2 Presets: port value setter.
-
 static void
 mixer_lv2_set_port_value( const char *port_symbol,
     void *user_data, const void *value, uint32_t size, uint32_t type )
@@ -194,8 +193,7 @@ get_port_value( const char* port_symbol,
 }
 // End state save
 
-#ifdef LV2_WORKER_SUPPORT
-
+// Worker support
 static void
 update_ui( void *data )
 {
@@ -452,8 +450,6 @@ patch_put_get( LV2_Plugin* plugin,
     return 0;
 }
 
-#endif  // LV2_WORKER_SUPPORT
-
 // Suil
 static int
 x_resize( LV2UI_Feature_Handle handle, int width, int height )
@@ -535,7 +531,6 @@ LV2_Plugin::~LV2_Plugin( )
 {
     log_destroy ( );
 
-#ifdef LV2_WORKER_SUPPORT
     _worker.exit_process = true;
     if ( _idata->descriptor->extension_data )
     {
@@ -544,7 +539,7 @@ LV2_Plugin::~LV2_Plugin( )
     }
 
     Fl::remove_timeout ( &update_ui, this );
-#endif
+
     /* This is the case when the user manually removes a Plugin. We set the
      _is_removed = true, and add any custom data directory to the remove directories
      vector. If the user saves the project then we remove any items in the vector.
@@ -591,18 +586,16 @@ LV2_Plugin::~LV2_Plugin( )
         }
     }
 
-#ifdef LV2_WORKER_SUPPORT
     zix_ring_free ( _worker.plugin_to_ui );
     zix_ring_free ( _worker.ui_to_plugin );
     free ( _worker.ui_event_buf );
-#endif
 
     // Preset support
     lilv_world_free ( _lilvWorld );
     // End preset support
 
     // MIDI support
-#ifdef LV2_WORKER_SUPPORT
+    // Worker support
     for ( unsigned int i = 0; i < atom_input.size ( ); ++i )
     {
         if ( !( atom_input[i].type ( ) == Port::MIDI ) )
@@ -630,7 +623,7 @@ LV2_Plugin::~LV2_Plugin( )
 
     atom_output.clear ( );
     atom_input.clear ( );
-#endif  // LV2_WORKER_SUPPORT
+    // End Worker support
     // End MIDI support
 
     plugin_instances ( 0 ); // This must be last, or after UI destruction
@@ -678,10 +671,8 @@ LV2_Plugin::load_plugin( Module::Picked picked )
     create_atom_ports ( );
 
     MESSAGE ( "Plugin has %i AUDIO inputs and %i AUDIO outputs", _plugin_ins, _plugin_outs );
-#ifdef LV2_WORKER_SUPPORT
     MESSAGE ( "Plugin has %i ATOM inputs and %i ATOM outputs", _atom_ins, _atom_outs );
     MESSAGE ( "Plugin has %i MIDI in ports and %i MIDI out ports", _midi_ins, _midi_outs );
-#endif  // LV2_WORKER_SUPPORT
 
     if ( !_plugin_ins )
         is_zero_input_synth ( true );
@@ -689,7 +680,6 @@ LV2_Plugin::load_plugin( Module::Picked picked )
     if ( control_input.size ( ) > 50 )
         _use_custom_data = true;
 
-#ifdef LV2_WORKER_SUPPORT
     if ( _atom_ins || _atom_outs )
     {
         _use_custom_data = true;
@@ -708,7 +698,6 @@ LV2_Plugin::load_plugin( Module::Picked picked )
     }
     else
         _loading_from_file = false;
-#endif  // LV2_WORKER_SUPPORT
 
     int instances = plugin_instances ( 1 );
 
@@ -729,7 +718,6 @@ LV2_Plugin::load_plugin( Module::Picked picked )
         }
     }
 
-#ifdef LV2_WORKER_SUPPORT
     /* We need to set port properties after instances are created or
        the properties are not available for query from the plugin */
     for ( unsigned int i = 0; i < atom_input.size ( ); ++i )
@@ -746,7 +734,6 @@ LV2_Plugin::load_plugin( Module::Picked picked )
        This needs to have a separate timeout from custom ui since it
        can also apply to generic UI events.*/
     Fl::add_timeout ( 0.03f, &update_ui, this );
-#endif
 
     return instances;
 }
@@ -809,7 +796,6 @@ LV2_Plugin::validate_plugin_extensions()
         _idata->ext.worker = NULL;
 }
 
-#ifdef LV2_WORKER_SUPPORT
 void
 LV2_Plugin::initialize_worker_support()
 {
@@ -818,7 +804,6 @@ LV2_Plugin::initialize_worker_support()
     lv2_atom_forge_init ( &_atom_forge, _uridMapFt );
     _worker.init ( *this, _idata->ext.worker, true );
 }
-#endif
 
 void
 LV2_Plugin::get_plugin_extensions( )
@@ -833,7 +818,6 @@ LV2_Plugin::get_plugin_extensions( )
         fetch_plugin_extensions ( hasOptions, hasState, hasWorker );
         validate_plugin_extensions();
 
-#ifdef LV2_WORKER_SUPPORT
         if ( _idata->ext.state != NULL )
         {
             _safe_restore = _use_custom_data = true;
@@ -843,7 +827,6 @@ LV2_Plugin::get_plugin_extensions( )
          * If we don't do this some plugins do not work properly.
          * This is needed even if( _idata->ext.worker == NULL) */
         initialize_worker_support();
-#endif
     }
     else // Extension data
     {
@@ -1053,7 +1036,6 @@ LV2_Plugin::create_atom_ports( )
 {
     for ( unsigned int i = 0; i < _idata->rdf_data->PortCount; ++i )
     {
-#ifdef LV2_WORKER_SUPPORT
         if ( LV2_IS_PORT_ATOM_SEQUENCE ( _idata->rdf_data->Ports[i].Types ) )
         {
             if ( LV2_IS_PORT_INPUT ( _idata->rdf_data->Ports[i].Types ) )
@@ -1129,7 +1111,6 @@ LV2_Plugin::create_atom_ports( )
                 _atom_outs++;
             }
         }
-#endif
     }
 }
 
@@ -1216,8 +1197,6 @@ LV2_Plugin::configure_inputs( int n )
     return true;
 }
 
-#ifdef LV2_WORKER_SUPPORT
-
 void
 LV2_Plugin::configure_midi_inputs( )
 {
@@ -1281,7 +1260,6 @@ LV2_Plugin::configure_midi_outputs( )
         }
     }
 }
-#endif  // LV2_WORKER_SUPPORT
 
 void
 LV2_Plugin::handle_port_connection_change( void )
@@ -1313,7 +1291,7 @@ LV2_Plugin::handle_chain_name_changed( )
 
     if ( !chain ( )->strip ( )->group ( )->single ( ) )
     {
-#ifdef LV2_WORKER_SUPPORT
+        // Worker support
         // MIDI support
         for ( unsigned int i = 0; i < atom_input.size ( ); i++ )
         {
@@ -1337,7 +1315,6 @@ LV2_Plugin::handle_chain_name_changed( )
                 atom_output[i].jack_port ( )->rename ( );
             }
         }
-#endif  // LV2_WORKER_SUPPORT
     }
 }
 
@@ -1410,7 +1387,7 @@ void
 LV2_Plugin::freeze_ports( void )
 {
     Module::freeze_ports ( );
-#ifdef LV2_WORKER_SUPPORT
+    // Worker support
     // MIDI support
     for ( unsigned int i = 0; i < atom_input.size ( ); ++i )
     {
@@ -1435,7 +1412,6 @@ LV2_Plugin::freeze_ports( void )
             atom_output[i].jack_port ( )->shutdown ( );
         }
     }
-#endif  // LV2_WORKER_SUPPORT
 }
 
 /* rename and thaw all jack ports--used when changing groups */
@@ -1444,7 +1420,6 @@ LV2_Plugin::thaw_ports( void )
 {
     Module::thaw_ports ( );
 
-#ifdef LV2_WORKER_SUPPORT
     const char *trackname = chain ( )->strip ( )->group ( )->single ( ) ? NULL : chain ( )->name ( );
 
     for ( unsigned int i = 0; i < atom_input.size ( ); ++i )
@@ -1476,7 +1451,6 @@ LV2_Plugin::thaw_ports( void )
             atom_output[i].jack_port ( )->thaw ( );
         }
     }
-#endif  // LV2_WORKER_SUPPORT
 }
 
 void
@@ -1534,10 +1508,10 @@ LV2_Plugin::plugin_instances( unsigned int n )
 
             int ij = 0;
             int oj = 0;
-#ifdef LV2_WORKER_SUPPORT
+            // Worker support
             int aji = 0;
             int ajo = 0;
-#endif
+
             for ( unsigned int k = 0; k < _idata->rdf_data->PortCount; ++k )
             {
                 if ( LV2_IS_PORT_CONTROL ( _idata->rdf_data->Ports[k].Types ) )
@@ -1552,7 +1526,7 @@ LV2_Plugin::plugin_instances( unsigned int n )
                     !LV2_IS_PORT_ATOM_SEQUENCE ( _idata->rdf_data->Ports[k].Types ) )
                     _idata->descriptor->connect_port ( h, k, NULL );
 
-#ifdef LV2_WORKER_SUPPORT
+                // Worker support
                 if ( LV2_IS_PORT_ATOM_SEQUENCE ( _idata->rdf_data->Ports[k].Types ) )
                 {
                     if ( LV2_IS_PORT_INPUT ( _idata->rdf_data->Ports[k].Types ) )
@@ -1603,7 +1577,6 @@ LV2_Plugin::plugin_instances( unsigned int n )
                         ajo++;
                     }
                 }
-#endif
             }
 
             // connect ports to magic bogus value to aid debugging.
@@ -1614,14 +1587,13 @@ LV2_Plugin::plugin_instances( unsigned int n )
     }
 
     /* Create Plugin <=> UI communication buffers */
-#ifdef LV2_WORKER_SUPPORT
     _worker.ui_event_buf = malloc ( _atom_buffer_size );
     _worker.ui_to_plugin = zix_ring_new ( NULL, _atom_buffer_size );
     _worker.plugin_to_ui = zix_ring_new ( NULL, _atom_buffer_size );
 
     zix_ring_mlock ( _worker.ui_to_plugin );
     zix_ring_mlock ( _worker.plugin_to_ui );
-#endif
+
     return true;
 }
 
@@ -1806,7 +1778,7 @@ void
 LV2_Plugin::add_port( const Port &p )
 {
     Module::add_port ( p );
-#ifdef LV2_WORKER_SUPPORT
+
     if ( p.type ( ) == Port::ATOM && p.direction ( ) == Port::INPUT )
         atom_input.push_back ( p );
     else if ( p.type ( ) == Port::ATOM && p.direction ( ) == Port::OUTPUT )
@@ -1817,7 +1789,6 @@ LV2_Plugin::add_port( const Port &p )
         atom_input.push_back ( p );
     else if ( p.type ( ) == Port::MIDI && p.direction ( ) == Port::OUTPUT )
         atom_output.push_back ( p );
-#endif  // LV2_WORKER_SUPPORT
 }
 
 void
@@ -1847,7 +1818,7 @@ LV2_Plugin::init( void )
     uridUnmapFt->handle = _idata;
     uridUnmapFt->unmap = ImplementationData::_lv2_urid_unmap;
 
-#ifdef LV2_WORKER_SUPPORT
+    // Worker support
     LV2_State_Make_Path * const nonMakePath = new LV2_State_Make_Path;
     nonMakePath->handle = this;
     nonMakePath->path = lv2_make_path;
@@ -1858,7 +1829,6 @@ LV2_Plugin::init( void )
 
     zix_sem_init ( &_worker.zix_sem, 0 );
     zix_sem_init ( &_worker.work_lock, 1 );
-#endif
 
     // Suil
     LV2UI_Resize * const uiResizeFt = new LV2UI_Resize;
@@ -1882,13 +1852,13 @@ LV2_Plugin::init( void )
 
     _idata->features[Plugin_Feature_URID_Unmap]->URI = LV2_URID__unmap;
     _idata->features[Plugin_Feature_URID_Unmap]->data = uridUnmapFt;
-#ifdef LV2_WORKER_SUPPORT
+
+    // Worker support
     _idata->features[Plugin_Feature_Make_path]->URI = LV2_STATE__makePath;
     _idata->features[Plugin_Feature_Make_path]->data = nonMakePath;
 
     _idata->features[Plugin_Feature_Worker_Schedule]->URI = LV2_WORKER__schedule;
     _idata->features[Plugin_Feature_Worker_Schedule]->data = m_lv2_schedule;
-#endif
 
     // Suil
     _idata->features[Plugin_Feature_Resize]->URI = LV2_UI__resize;
@@ -1900,8 +1870,7 @@ LV2_Plugin::init( void )
     _lilvPlugins = lilv_world_get_all_plugins ( _lilvWorld );
 }
 
-#ifdef LV2_WORKER_SUPPORT
-
+// Worker support
 void
 LV2_Plugin::WorkerContext::init( LV2_Plugin& plug,
     const LV2_Worker_Interface* iface,
@@ -2385,7 +2354,7 @@ LV2_Plugin::set_lv2_port_properties( Port * port, bool writable )
     lilv_node_free ( patch_readable );
     lilv_node_free ( patch_writable );
 }
-#endif  // LV2_WORKER_SUPPORT
+// End Worker support
 
 // Suil
 static uint32_t
@@ -2429,10 +2398,9 @@ send_to_plugin( void* const handle, // LV2_Plugin
     if ( pLv2Plugin == NULL )
         return;
 
-#ifdef LV2_WORKER_SUPPORT
     if ( pLv2Plugin->_worker.exit_process )
         return;
-#endif
+
     if ( protocol == 0U )
     {
         if ( buffer_size != sizeof (float ) )
@@ -2447,13 +2415,11 @@ send_to_plugin( void* const handle, // LV2_Plugin
         /* Pass the control information to the plugin and other generic ui widgets */
         pLv2Plugin->set_control_value ( port_index, *(const float*) buffer );
     }
-#ifdef LV2_WORKER_SUPPORT
     else if ( protocol == Plugin_Module_URI_Atom_eventTransfer )
     {
         DMESSAGE ( "UI SENT LV2_ATOM__eventTransfer" );
         pLv2Plugin->send_atom_to_plugin ( port_index, buffer_size, buffer );
     }
-#endif
     else
     {
         DMESSAGE ( "UI wrote with unsupported protocol %u (%s)\n", protocol );
@@ -3071,8 +3037,6 @@ LV2_Plugin::process( nframes_t nframes )
     }
     else
     {
-
-#ifdef LV2_WORKER_SUPPORT
         for ( unsigned int i = 0; i < atom_input.size ( ); ++i )
         {
             if ( LV2_PORT(&atom_input[i])->_clear_input_buffer )
@@ -3087,14 +3051,13 @@ LV2_Plugin::process( nframes_t nframes )
         }
 
         apply_ui_events ( nframes );
-#endif
+
         // Run the plugin for LV2
         for ( unsigned int i = 0; i < _idata->handle.size ( ); ++i )
         {
             _idata->descriptor->run ( _idata->handle[i], nframes );
         }
 
-#ifdef LV2_WORKER_SUPPORT
         /* Atom out to custom UI and plugin MIDI out to JACK MIDI out */
         for ( unsigned int i = 0; i < atom_output.size ( ); ++i )
         {
@@ -3110,11 +3073,8 @@ LV2_Plugin::process( nframes_t nframes )
                 _idata->ext.worker->end_run ( _lilv_instance->lv2_handle );
             }
         }
-#endif
     }
 }
-
-#ifdef LV2_WORKER_SUPPORT
 
 /**
  * Gets the plugin file name and path if applicable.
@@ -3141,7 +3101,6 @@ LV2_Plugin::set_file( const std::string &file, int port_index )
     if ( _editor )
         _editor->refresh_file_button_label ( port_index );
 }
-#endif
 
 void
 LV2_Plugin::get( Log_Entry &e ) const
@@ -3228,9 +3187,8 @@ LV2_Plugin::set( Log_Entry &e )
 
         if ( !strcmp ( s, ":lv2_plugin_uri" ) )
         {
-#ifdef LV2_WORKER_SUPPORT
             _loading_from_file = true;
-#endif
+
             Module::Picked picked = { Type_LV2, v, 0, "" };
             if ( !load_plugin ( picked ) )
             {
