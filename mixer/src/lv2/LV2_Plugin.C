@@ -151,8 +151,7 @@ LV2_Plugin::update_control_parameters( int choice )
 }
 // End preset support
 
-#ifdef LV2_STATE_SAVE
-
+// State Save
 static const void*
 get_port_value( const char* port_symbol,
     void* user_data,
@@ -195,7 +194,7 @@ get_port_value( const char* port_symbol,
     *size = *type = 0;
     return NULL;
 }
-#endif  // LV2_STATE_SAVE
+// End state save
 
 #ifdef LV2_WORKER_SUPPORT
 

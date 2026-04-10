@@ -47,7 +47,6 @@
 #include "atom-forge.h"
 #include "LV2_PortBackend.H"
 
-#define LV2_STATE_SAVE 1
 #define LV2_EXTERNAL_UI 1
 
 #define ATOM_BUFFER_SIZE 16384  // 4096 * 4
@@ -122,10 +121,9 @@ public:
     void update_control_parameters(int choice);
     // End preset support
 
-#ifdef LV2_STATE_SAVE
+    // State save
     LV2_URID_Unmap* _uridUnmapFt;
     std::string _project_directory;
-#endif  // LV2_STATE_SAVE
 
 #ifdef LV2_WORKER_SUPPORT
     struct WorkerContext
@@ -289,10 +287,9 @@ public:
     LOG_CREATE_FUNC( LV2_Plugin );
     MODULE_CLONE_FUNC( LV2_Plugin );
 
-#ifdef LV2_STATE_SAVE
+    // State save
     void save_LV2_plugin_state(const std::string &directory);
     void restore_LV2_plugin_state(const std::string &directory);
-#endif
 
 protected:
 
