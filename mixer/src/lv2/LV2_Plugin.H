@@ -47,7 +47,6 @@
 #include "atom-forge.h"
 #include "LV2_PortBackend.H"
 
-#define LV2_EXTERNAL_UI 1
 
 #define ATOM_BUFFER_SIZE 16384  // 4096 * 4
 
@@ -201,7 +200,7 @@ public:
     const LilvUI*    _lilv_user_interface;  ///< Plugin UI (RDF data)
     const LilvNode*  _lilv_ui_type;         ///< Plugin UI type (unwrapped)
 
-#ifdef LV2_EXTERNAL_UI
+    // External UI
     bool          _use_external_ui;
     LV2UI_Widget  _lv2_ui_widget;
     LV2_External_UI_Host _lv2_ui_external_host;
@@ -209,7 +208,7 @@ public:
     LV2UI_Handle   _lv2_ui_handle;
 private:
     const LilvUI* try_external_ui (const char* native_ui_type);
-#endif  // LV2_EXTERNAL_UI
+    // End external UI
 
 public:
     /* X window for custom plugin ui */

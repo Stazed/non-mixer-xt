@@ -475,8 +475,7 @@ x_resize( LV2UI_Feature_Handle handle, int width, int height )
     return 0;
 }
 
-#ifdef LV2_EXTERNAL_UI
-
+// External UI
 static void
 mixer_lv2_ui_closed( LV2UI_Controller ui_controller )
 {
@@ -490,7 +489,6 @@ mixer_lv2_ui_closed( LV2UI_Controller ui_controller )
     // Just flag up the closure...
     pLv2Plugin->_x_is_visible = false;
 }
-#endif // LV2_EXTERNAL_UI
 #endif // USE_SUIL
 
 static LV2_Lib_Manager lv2_lib_manager;
@@ -2523,14 +2521,13 @@ LV2_Plugin::try_custom_ui( )
                 show_iface = _idata->ext.ui_showInterface = (const LV2UI_Show_Interface*) suil_instance_extension_data (
                     _ui_instance, LV2_UI__showInterface );
             }
-#ifdef LV2_EXTERNAL_UI
+            // External UI
             else if ( _use_external_ui )
             {
                 _lv2_ui_widget = suil_instance_get_widget ( _ui_instance );
                 _lv2_ui_handle = (LV2UI_Handle)
                     suil_instance_get_handle ( _ui_instance );
             }
-#endif
         }
     }
     else
@@ -2550,14 +2547,13 @@ LV2_Plugin::try_custom_ui( )
             return true;
         }
     }
-#ifdef LV2_EXTERNAL_UI
+    // External UI
     else if ( _use_external_ui )
     {
         show_custom_ui ( );
         DMESSAGE ( "Running external UI" );
         return true;
     }
-#endif
     else if ( _use_X11_interface ) /* Run the X11 embedded */
     {
         show_custom_ui ( );
@@ -2607,7 +2603,6 @@ LV2_Plugin::custom_ui_instantiate( )
     /* Still nothing so try External */
     if ( !_lilv_user_interface )
     {
-#ifdef LV2_EXTERNAL_UI
         _lilv_user_interface = try_external_ui ( LV2_EXTERNAL_UI__Widget );
         if ( _lilv_user_interface )
         {
@@ -2616,12 +2611,9 @@ LV2_Plugin::custom_ui_instantiate( )
         }
         else
         {
-#endif
             MESSAGE ( "NO CUSTOM UI SUPPORTED" );
             return false;
-#ifdef LV2_EXTERNAL_UI
         }
-#endif
     }
 
     void * parent = NULL;
@@ -2635,12 +2627,11 @@ LV2_Plugin::custom_ui_instantiate( )
         parent = (LV2UI_Widget) _X11_UI->getPtr ( );
     }
 
-#ifdef LV2_EXTERNAL_UI
+    // External UI
     _lv2_ui_external_host.ui_closed = mixer_lv2_ui_closed;
     _lv2_ui_external_host.plugin_human_id = base_label ( );
     _lv2_ui_external_feature.URI = LV2_EXTERNAL_UI__Host;
     _lv2_ui_external_feature.data = &_lv2_ui_external_host;
-#endif
 
     const LV2_Feature parent_feature {LV2_UI__parent, parent };
 
@@ -2667,9 +2658,7 @@ LV2_Plugin::custom_ui_instantiate( )
         // &jalv->features.request_value_feature,
         _idata->features[Plugin_Feature_Resize],
         _idata->features[Plugin_Feature_Make_path],
-#ifdef LV2_EXTERNAL_UI
         &_lv2_ui_external_feature,
-#endif
         NULL
         };
 
@@ -2738,8 +2727,7 @@ LV2_Plugin::try_X11_ui( const char* native_ui_type )
     return native_ui;
 }
 
-#ifdef LV2_EXTERNAL_UI
-
+// External UI
 const LilvUI*
 LV2_Plugin::try_external_ui( const char* native_ui_type )
 {
@@ -2771,7 +2759,6 @@ LV2_Plugin::try_external_ui( const char* native_ui_type )
 
     return native_ui;
 }
-#endif  // LV2_EXTERNAL_UI
 
 const LilvUI*
 LV2_Plugin::try_showInterface_ui( const char* native_ui_type )
@@ -2907,18 +2894,16 @@ LV2_Plugin::custom_update_ui( void *v )
 void
 LV2_Plugin::custom_update_ui( )
 {
-#ifdef LV2_EXTERNAL_UI
+    // External UI
     if ( _use_external_ui )
     {
         if ( _lv2_ui_widget )
             LV2_EXTERNAL_UI_RUN ( (LV2_External_UI_Widget *) _lv2_ui_widget );
     }
-    else
-#endif
-        if ( _use_X11_interface ) // X11 embedded
-        {
-            _X11_UI->idle ( );
-        }
+    else if ( _use_X11_interface ) // X11 embedded
+    {
+        _X11_UI->idle ( );
+    }
 
     if ( _idata->ext.idle_iface )
     {
@@ -2966,7 +2951,6 @@ LV2_Plugin::close_custom_ui( )
             _ui_host = NULL;
         }
     }
-#ifdef LV2_EXTERNAL_UI
     else if ( _use_external_ui )
     {
         if ( _lv2_ui_widget )
@@ -2986,7 +2970,6 @@ LV2_Plugin::close_custom_ui( )
             _ui_host = NULL;
         }
     }
-#endif
     else // X11
     {
         hide_custom_ui ( );
@@ -3004,7 +2987,7 @@ LV2_Plugin::show_custom_ui( )
         Fl::add_timeout ( 0.03f, &LV2_Plugin::custom_update_ui, this );
         return;
     }
-#ifdef LV2_EXTERNAL_UI
+
     if ( _use_external_ui )
     {
         if ( _lv2_ui_widget )
@@ -3014,7 +2997,6 @@ LV2_Plugin::show_custom_ui( )
         Fl::add_timeout ( 0.03f, &LV2_Plugin::custom_update_ui, this );
         return;
     }
-#endif
 
     _x_is_visible = true;
     _X11_UI->show ( );
