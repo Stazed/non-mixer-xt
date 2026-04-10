@@ -601,7 +601,7 @@ LV2_Plugin::~LV2_Plugin( )
     lilv_world_free ( _lilvWorld );
     // End preset support
 
-#ifdef LV2_MIDI_SUPPORT
+    // MIDI support
 #ifdef LV2_WORKER_SUPPORT
     for ( unsigned int i = 0; i < atom_input.size ( ); ++i )
     {
@@ -631,7 +631,7 @@ LV2_Plugin::~LV2_Plugin( )
     atom_output.clear ( );
     atom_input.clear ( );
 #endif  // LV2_WORKER_SUPPORT
-#endif  // LV2_MIDI_SUPPORT
+    // End MIDI support
 
     plugin_instances ( 0 ); // This must be last, or after UI destruction
 }
@@ -680,9 +680,7 @@ LV2_Plugin::load_plugin( Module::Picked picked )
     MESSAGE ( "Plugin has %i AUDIO inputs and %i AUDIO outputs", _plugin_ins, _plugin_outs );
 #ifdef LV2_WORKER_SUPPORT
     MESSAGE ( "Plugin has %i ATOM inputs and %i ATOM outputs", _atom_ins, _atom_outs );
-#ifdef LV2_MIDI_SUPPORT
     MESSAGE ( "Plugin has %i MIDI in ports and %i MIDI out ports", _midi_ins, _midi_outs );
-#endif
 #endif  // LV2_WORKER_SUPPORT
 
     if ( !_plugin_ins )
@@ -1060,7 +1058,7 @@ LV2_Plugin::create_atom_ports( )
         {
             if ( LV2_IS_PORT_INPUT ( _idata->rdf_data->Ports[i].Types ) )
             {
-#ifdef LV2_MIDI_SUPPORT
+                // MIDI support
                 if ( LV2_PORT_SUPPORTS_MIDI_EVENT ( _idata->rdf_data->Ports[i].Types ) )
                 {
                     Port p( this, Port::INPUT, Port::MIDI, _idata->rdf_data->Ports[i].Name );
@@ -1074,7 +1072,6 @@ LV2_Plugin::create_atom_ports( )
                 }
                 else
                 {
-#endif
                     Port p( this, Port::INPUT, Port::ATOM, _idata->rdf_data->Ports[i].Name );
                     auto* lv2 = new LV2_PortBackend();
                     p.backend(lv2);
@@ -1087,9 +1084,8 @@ LV2_Plugin::create_atom_ports( )
                     }
 
                     DMESSAGE ( "GOT ATOM SEQUENCE PORT IN = %s", _idata->rdf_data->Ports[i].Name );
-#ifdef LV2_MIDI_SUPPORT
                 }
-#endif
+
                 if ( LV2_PORT_SUPPORTS_TIME_POSITION ( _idata->rdf_data->Ports[i].Types ) )
                 {
                     LV2_PORT(&atom_input[_atom_ins])->_supports_time_position = true;
@@ -1101,7 +1097,7 @@ LV2_Plugin::create_atom_ports( )
             }
             else if ( LV2_IS_PORT_OUTPUT ( _idata->rdf_data->Ports[i].Types ) )
             {
-#ifdef LV2_MIDI_SUPPORT
+                // MIDI support
                 if ( LV2_PORT_SUPPORTS_MIDI_EVENT ( _idata->rdf_data->Ports[i].Types ) )
                 {
                     Port p( this, Port::OUTPUT, Port::MIDI, _idata->rdf_data->Ports[i].Name );
@@ -1115,7 +1111,6 @@ LV2_Plugin::create_atom_ports( )
                 }
                 else
                 {
-#endif
                     Port p( this, Port::OUTPUT, Port::ATOM, _idata->rdf_data->Ports[i].Name );
                     auto* lv2 = new LV2_PortBackend();
                     p.backend(lv2);
@@ -1128,9 +1123,8 @@ LV2_Plugin::create_atom_ports( )
                     }
 
                     DMESSAGE ( "GOT ATOM SEQUENCE PORT OUT = %s", _idata->rdf_data->Ports[i].Name );
-#ifdef LV2_MIDI_SUPPORT
                 }
-#endif
+
                 atom_output[_atom_outs].hints.plug_port_index = i;
                 _atom_outs++;
             }
@@ -1223,7 +1217,6 @@ LV2_Plugin::configure_inputs( int n )
 }
 
 #ifdef LV2_WORKER_SUPPORT
-#ifdef LV2_MIDI_SUPPORT
 
 void
 LV2_Plugin::configure_midi_inputs( )
@@ -1288,7 +1281,6 @@ LV2_Plugin::configure_midi_outputs( )
         }
     }
 }
-#endif  // LV2_MIDI_SUPPORT
 #endif  // LV2_WORKER_SUPPORT
 
 void
@@ -1322,7 +1314,7 @@ LV2_Plugin::handle_chain_name_changed( )
     if ( !chain ( )->strip ( )->group ( )->single ( ) )
     {
 #ifdef LV2_WORKER_SUPPORT
-#ifdef LV2_MIDI_SUPPORT
+        // MIDI support
         for ( unsigned int i = 0; i < atom_input.size ( ); i++ )
         {
             if ( !( atom_input[i].type ( ) == Port::MIDI ) )
@@ -1345,7 +1337,6 @@ LV2_Plugin::handle_chain_name_changed( )
                 atom_output[i].jack_port ( )->rename ( );
             }
         }
-#endif  // LV2_MIDI_SUPPORT
 #endif  // LV2_WORKER_SUPPORT
     }
 }
@@ -1420,7 +1411,7 @@ LV2_Plugin::freeze_ports( void )
 {
     Module::freeze_ports ( );
 #ifdef LV2_WORKER_SUPPORT
-#ifdef LV2_MIDI_SUPPORT
+    // MIDI support
     for ( unsigned int i = 0; i < atom_input.size ( ); ++i )
     {
         if ( !( atom_input[i].type ( ) == Port::MIDI ) )
@@ -1444,7 +1435,6 @@ LV2_Plugin::freeze_ports( void )
             atom_output[i].jack_port ( )->shutdown ( );
         }
     }
-#endif  // LV2_MIDI_SUPPORT
 #endif  // LV2_WORKER_SUPPORT
 }
 
@@ -1455,7 +1445,6 @@ LV2_Plugin::thaw_ports( void )
     Module::thaw_ports ( );
 
 #ifdef LV2_WORKER_SUPPORT
-#ifdef LV2_MIDI_SUPPORT
     const char *trackname = chain ( )->strip ( )->group ( )->single ( ) ? NULL : chain ( )->name ( );
 
     for ( unsigned int i = 0; i < atom_input.size ( ); ++i )
@@ -1487,7 +1476,6 @@ LV2_Plugin::thaw_ports( void )
             atom_output[i].jack_port ( )->thaw ( );
         }
     }
-#endif  // LV2_MIDI_SUPPORT
 #endif  // LV2_WORKER_SUPPORT
 }
 
@@ -1824,12 +1812,11 @@ LV2_Plugin::add_port( const Port &p )
     else if ( p.type ( ) == Port::ATOM && p.direction ( ) == Port::OUTPUT )
         atom_output.push_back ( p );
 
-#ifdef LV2_MIDI_SUPPORT
+    // MIDI support
     else if ( p.type ( ) == Port::MIDI && p.direction ( ) == Port::INPUT )
         atom_input.push_back ( p );
     else if ( p.type ( ) == Port::MIDI && p.direction ( ) == Port::OUTPUT )
         atom_output.push_back ( p );
-#endif  // LV2_MIDI_SUPPORT
 #endif  // LV2_WORKER_SUPPORT
 }
 
@@ -2219,8 +2206,7 @@ LV2_Plugin::apply_ui_events( uint32_t nframes )
     }
 }
 
-#ifdef LV2_MIDI_SUPPORT
-
+// MIDI support
 void
 LV2_Plugin::process_atom_in_events( uint32_t nframes, unsigned int port )
 {
@@ -2340,8 +2326,7 @@ LV2_Plugin::process_atom_out_events( uint32_t nframes, unsigned int port )
 
     lv2_evbuf_reset ( LV2_PORT(&atom_output[port])->event_buffer ( ), false );
 }
-
-#endif  // LV2_MIDI_SUPPORT
+// End MIDI support
 
 void
 LV2_Plugin::set_lv2_port_properties( Port * port, bool writable )
@@ -3097,10 +3082,8 @@ LV2_Plugin::process( nframes_t nframes )
                 lv2_evbuf_reset ( LV2_PORT(&atom_input[i])->event_buffer ( ), true );
             }
 
-#ifdef LV2_MIDI_SUPPORT
             /* Includes JACK MIDI in to plugin MIDI in and Time base */
             process_atom_in_events ( nframes, i );
-#endif
         }
 
         apply_ui_events ( nframes );
@@ -3112,13 +3095,11 @@ LV2_Plugin::process( nframes_t nframes )
         }
 
 #ifdef LV2_WORKER_SUPPORT
-#ifdef LV2_MIDI_SUPPORT
         /* Atom out to custom UI and plugin MIDI out to JACK MIDI out */
         for ( unsigned int i = 0; i < atom_output.size ( ); ++i )
         {
             process_atom_out_events ( nframes, i );
         }
-#endif  // LV2_MIDI_SUPPORT
 
         /* Process any worker replies. */
         if ( _idata->ext.worker )

@@ -35,7 +35,6 @@
 #include <dlfcn.h>
 
 #define LV2_WORKER_SUPPORT 1
-#define LV2_MIDI_SUPPORT 1
 
 /* supported lv2 features */
 enum Plugin_Module_Supported_Features
@@ -81,7 +80,7 @@ enum Plugin_Module_URIs
     // Suil
     Plugin_Module_URI_Resize,
     Plugin_Module_URI_Scale,
-#ifdef LV2_MIDI_SUPPORT
+    // MIDI support
     Plugin_Module_URI_Midi_event,
     Plugin_Module_URI_time_Position,
     Plugin_Module_URI_time_frame,
@@ -91,7 +90,7 @@ enum Plugin_Module_URIs
     Plugin_Module_URI_time_beatUnit,
     Plugin_Module_URI_time_beatsPerBar,
     Plugin_Module_URI_time_beatsPerMinute,
-#endif
+
     Plugin_Module_URI_Count
 };
 
@@ -223,7 +222,7 @@ struct ImplementationData
         // Suil
         mappedURIs.push_back(LV2_UI__resize);
         mappedURIs.push_back(LV2_UI__scaleFactor);
-#ifdef LV2_MIDI_SUPPORT
+        // MIDI support
         mappedURIs.push_back(LV2_MIDI__MidiEvent);
         mappedURIs.push_back(LV2_TIME__Position);
         mappedURIs.push_back(LV2_TIME__frame);
@@ -233,7 +232,7 @@ struct ImplementationData
         mappedURIs.push_back(LV2_TIME__beatUnit);
         mappedURIs.push_back(LV2_TIME__beatsPerBar);
         mappedURIs.push_back(LV2_TIME__beatsPerMinute);
-#endif
+        // ext
         ext.options = NULL;
         ext.state   = NULL;
         ext.worker  = NULL;
@@ -327,7 +326,7 @@ struct ImplementationData
             return Plugin_Module_URI_Resize;
         if ( ::strcmp(uri, LV2_UI__scaleFactor) == 0 )
             return Plugin_Module_URI_Scale;
-#ifdef LV2_MIDI_SUPPORT
+        // MIDI support
         if ( ::strcmp(uri, LV2_MIDI__MidiEvent) == 0 )
             return Plugin_Module_URI_Midi_event;
         if ( ::strcmp(uri, LV2_TIME__Position) == 0 )
@@ -346,7 +345,7 @@ struct ImplementationData
             return Plugin_Module_URI_time_beatsPerBar;
         if ( ::strcmp(uri, LV2_TIME__beatsPerMinute) == 0 )
             return Plugin_Module_URI_time_beatsPerMinute;
-#endif
+        // End MIDI support
 
         ImplementationData* self = static_cast<ImplementationData*>(handle);
 

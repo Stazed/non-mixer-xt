@@ -235,7 +235,6 @@ private:
     // End Suil
 
 #ifdef LV2_WORKER_SUPPORT
-#ifdef LV2_MIDI_SUPPORT
 public:
     void configure_midi_inputs () override;
     void configure_midi_outputs () override;
@@ -249,7 +248,6 @@ public:
 private:
     void process_atom_in_events( uint32_t nframes, unsigned int port );
     void process_atom_out_events( uint32_t nframes, unsigned int port );
-#endif  // LV2_MIDI_SUPPORT
 #endif  // LV2_WORKER_SUPPORT
 
 private:
