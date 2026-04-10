@@ -42,7 +42,7 @@ class Chain; // forward declaration
 
 #define MSG_BUFFER_SIZE 1024
 
-#ifdef USE_SUIL
+// Suil
 const std::vector<std::string> v_ui_types
 {
     LV2_UI__X11UI,
@@ -52,8 +52,6 @@ const std::vector<std::string> v_ui_types
     LV2_UI__Qt5UI,
     LV2_UI__UI // This s/b last or all match and crash - ??? FIXME check
 };
-
-#endif
 
 // Preset support
 // LV2 Presets: port value setter.
@@ -456,8 +454,7 @@ patch_put_get( LV2_Plugin* plugin,
 
 #endif  // LV2_WORKER_SUPPORT
 
-#ifdef USE_SUIL
-
+// Suil
 static int
 x_resize( LV2UI_Feature_Handle handle, int width, int height )
 {
@@ -489,7 +486,7 @@ mixer_lv2_ui_closed( LV2UI_Controller ui_controller )
     // Just flag up the closure...
     pLv2Plugin->_x_is_visible = false;
 }
-#endif // USE_SUIL
+// End Suil
 
 static LV2_Lib_Manager lv2_lib_manager;
 
@@ -561,7 +558,7 @@ LV2_Plugin::~LV2_Plugin( )
         }
     }
 
-#ifdef USE_SUIL
+    // Suil
     if ( _x_is_visible )
     {
         if ( _use_external_ui )
@@ -593,7 +590,6 @@ LV2_Plugin::~LV2_Plugin( )
             _X11_UI = nullptr;
         }
     }
-#endif
 
 #ifdef LV2_WORKER_SUPPORT
     zix_ring_free ( _worker.plugin_to_ui );
@@ -1877,11 +1873,10 @@ LV2_Plugin::init( void )
     zix_sem_init ( &_worker.work_lock, 1 );
 #endif
 
-#ifdef USE_SUIL
+    // Suil
     LV2UI_Resize * const uiResizeFt = new LV2UI_Resize;
     uiResizeFt->handle = this;
     uiResizeFt->ui_resize = x_resize;
-#endif // USE_SUIL
 
     _idata->features[Plugin_Feature_BufSize_Bounded]->URI = LV2_BUF_SIZE__boundedBlockLength;
     _idata->features[Plugin_Feature_BufSize_Bounded]->data = NULL;
@@ -1908,10 +1903,9 @@ LV2_Plugin::init( void )
     _idata->features[Plugin_Feature_Worker_Schedule]->data = m_lv2_schedule;
 #endif
 
-#ifdef USE_SUIL
+    // Suil
     _idata->features[Plugin_Feature_Resize]->URI = LV2_UI__resize;
     _idata->features[Plugin_Feature_Resize]->data = uiResizeFt;
-#endif
 
     // Preset support
     _lilvWorld = lilv_world_new ( );
@@ -2408,8 +2402,7 @@ LV2_Plugin::set_lv2_port_properties( Port * port, bool writable )
 }
 #endif  // LV2_WORKER_SUPPORT
 
-#ifdef USE_SUIL
-
+// Suil
 static uint32_t
 ui_port_index( void* const controller, const char* port_symbol )
 {
@@ -3037,7 +3030,7 @@ LV2_Plugin::isUiResizable(LilvWorld* const world, const LilvUI* const ui ) const
 
     return !fs_matches && !nrs_matches;
 }
-#endif  // USE_SUIL
+// End Suil
 
 nframes_t
 LV2_Plugin::get_current_latency( void )

@@ -191,7 +191,7 @@ private:
 
 public:
 
-#ifdef USE_SUIL
+    // Use Suil
     SuilHost*     _ui_host;                 ///< Plugin UI host support
     SuilInstance* _ui_instance;             ///< Plugin UI instance (shared library)
     bool          _use_showInterface;
@@ -232,7 +232,7 @@ private:
     void custom_update_ui();
     static void custom_update_ui ( void * );
     void close_custom_ui();
-#endif  // USE_SUIL
+    // End Suil
 
 #ifdef LV2_WORKER_SUPPORT
 #ifdef LV2_MIDI_SUPPORT

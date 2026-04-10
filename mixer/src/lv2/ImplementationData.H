@@ -36,7 +36,6 @@
 
 #define LV2_WORKER_SUPPORT 1
 #define LV2_MIDI_SUPPORT 1
-#define USE_SUIL 1
 
 /* supported lv2 features */
 enum Plugin_Module_Supported_Features
@@ -51,9 +50,7 @@ enum Plugin_Module_Supported_Features
 #ifdef LV2_WORKER_SUPPORT
     Plugin_Feature_Worker_Schedule,
 #endif
-#ifdef USE_SUIL
-    Plugin_Feature_Resize,
-#endif
+    Plugin_Feature_Resize,  // Suil
     Plugin_Features_Count
 };
 
@@ -81,10 +78,9 @@ enum Plugin_Module_URIs
     Plugin_Module_URI_patch_Writable,
     Plugin_Module_URI_patch_Readable,
 #endif
-#ifdef USE_SUIL
+    // Suil
     Plugin_Module_URI_Resize,
     Plugin_Module_URI_Scale,
-#endif
 #ifdef LV2_MIDI_SUPPORT
     Plugin_Module_URI_Midi_event,
     Plugin_Module_URI_time_Position,
@@ -182,12 +178,12 @@ struct ImplementationData
         const LV2_Options_Interface* options;
         const LV2_State_Interface*   state;
         const LV2_Worker_Interface*  worker;
-#ifdef USE_SUIL
+
+        // Suil
         LV2_Extension_Data_Feature ext_data;
         const LV2UI_Idle_Interface* idle_iface;
         const LV2UI_Show_Interface* ui_showInterface;
         const LV2UI_Resize* resize_ui;
-#endif
     } ext;
 
     std::vector<LV2_Handle> handle;
@@ -224,10 +220,9 @@ struct ImplementationData
         mappedURIs.push_back(LV2_PATCH__Set);
         mappedURIs.push_back(LV2_PATCH__Put);
 #endif
-#ifdef USE_SUIL
+        // Suil
         mappedURIs.push_back(LV2_UI__resize);
         mappedURIs.push_back(LV2_UI__scaleFactor);
-#endif
 #ifdef LV2_MIDI_SUPPORT
         mappedURIs.push_back(LV2_MIDI__MidiEvent);
         mappedURIs.push_back(LV2_TIME__Position);
@@ -271,10 +266,9 @@ struct ImplementationData
         if ( features[Plugin_Feature_Worker_Schedule] && features[Plugin_Feature_Worker_Schedule]->data )
             delete static_cast<LV2_Worker_Schedule*>(features[Plugin_Feature_Worker_Schedule]->data);
 #endif
-#ifdef USE_SUIL
+        // Suil
         if ( features[Plugin_Feature_Resize] && features[Plugin_Feature_Resize]->data )
             delete static_cast<LV2UI_Resize*>(features[Plugin_Feature_Resize]->data);
-#endif
     }
 
     // -------------------------------------------------------------------
@@ -328,12 +322,11 @@ struct ImplementationData
         if ( ::strcmp(uri, LV2_PATCH__readable) == 0 )
             return Plugin_Module_URI_patch_Readable;
 #endif  // LV2_WORKER_SUPPORT
-#ifdef  USE_SUIL
+        // Suil
         if ( ::strcmp(uri, LV2_UI__resize) == 0 )
             return Plugin_Module_URI_Resize;
         if ( ::strcmp(uri, LV2_UI__scaleFactor) == 0 )
             return Plugin_Module_URI_Scale;
-#endif
 #ifdef LV2_MIDI_SUPPORT
         if ( ::strcmp(uri, LV2_MIDI__MidiEvent) == 0 )
             return Plugin_Module_URI_Midi_event;
