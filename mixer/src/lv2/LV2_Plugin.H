@@ -47,7 +47,6 @@
 #include "atom-forge.h"
 #include "LV2_PortBackend.H"
 
-#define PRESET_SUPPORT 1
 #define LV2_STATE_SAVE 1
 #define LV2_EXTERNAL_UI 1
 
@@ -99,7 +98,7 @@ public:
     void thaw_ports ( void ) override;
     void clear_midi_vectors() override;
 
-#ifdef PRESET_SUPPORT
+    // Preset support
     std::vector<LV2_RDF_Preset> _PresetList;
     const LilvPlugin*     _lilv_plugin;     /**< Plugin "class" (actually just a few strings) */
     LilvWorld* 	_lilvWorld{};
@@ -121,7 +120,7 @@ public:
 
     void set_control_value(unsigned long port_index, float value);
     void update_control_parameters(int choice);
-#endif  // PRESET_SUPPORT
+    // End preset support
 
 #ifdef LV2_STATE_SAVE
     LV2_URID_Unmap* _uridUnmapFt;

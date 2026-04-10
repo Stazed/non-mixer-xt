@@ -55,7 +55,7 @@ const std::vector<std::string> v_ui_types
 
 #endif
 
-#ifdef PRESET_SUPPORT
+// Preset support
 // LV2 Presets: port value setter.
 
 static void
@@ -149,7 +149,7 @@ LV2_Plugin::update_control_parameters( int choice )
 
     lilv_state_free ( state );
 }
-#endif  // PRESET_SUPPORT
+// End preset support
 
 #ifdef LV2_STATE_SAVE
 
@@ -604,9 +604,9 @@ LV2_Plugin::~LV2_Plugin( )
     free ( _worker.ui_event_buf );
 #endif
 
-#ifdef PRESET_SUPPORT
+    // Preset support
     lilv_world_free ( _lilvWorld );
-#endif
+    // End preset support
 
 #ifdef LV2_MIDI_SUPPORT
 #ifdef LV2_WORKER_SUPPORT
@@ -1149,14 +1149,12 @@ LV2_Plugin::create_atom_ports( )
 void
 LV2_Plugin::initialize_presets( const std::string &uri )
 {
-#ifdef PRESET_SUPPORT
     _PresetList = _idata->rdf_data->PresetListStructs;
     _uridMapFt = static_cast<LV2_URID_Map*> ( _idata->features[Plugin_Feature_URID_Map]->data );
     _uridUnmapFt = static_cast<LV2_URID_Unmap*> ( _idata->features[Plugin_Feature_URID_Unmap]->data );
     LilvNode* plugin_uri = lilv_new_uri ( get_lilv_world ( ), uri.c_str ( ) );
     _lilv_plugin = lilv_plugins_get_by_uri ( get_lilv_plugins ( ), plugin_uri );
     lilv_node_free ( plugin_uri );
-#endif
 }
 
 bool
@@ -1918,11 +1916,10 @@ LV2_Plugin::init( void )
     _idata->features[Plugin_Feature_Resize]->data = uiResizeFt;
 #endif
 
-#ifdef PRESET_SUPPORT
+    // Preset support
     _lilvWorld = lilv_world_new ( );
     lilv_world_load_all ( _lilvWorld );
     _lilvPlugins = lilv_world_get_all_plugins ( _lilvWorld );
-#endif
 }
 
 #ifdef LV2_WORKER_SUPPORT
