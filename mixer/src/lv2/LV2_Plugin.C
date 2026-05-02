@@ -1945,6 +1945,19 @@ LV2_Plugin::WorkerContext::destroy()
     }
 }
 
+/**
+ * This is incoming processing from the plugin to the generic UI only.
+ * We use this for file updates, set file.
+ * 
+ * @param port_index
+ *      Incoming port_index is the index from the plugin .ttl port order.
+ * @param 
+ *      Buffer size, not used.
+ * @param 
+ *      Protocol, not used.
+ * @param buffer
+ *      The incoming atom port buffer.
+ */
 void
 LV2_Plugin::ui_port_event( uint32_t port_index, uint32_t /*buffer_size*/, uint32_t /*protocol*/, const void* buffer )
 {
@@ -1964,7 +1977,6 @@ LV2_Plugin::ui_port_event( uint32_t port_index, uint32_t /*buffer_size*/, uint32
     const LV2_Atom* atom = static_cast<const LV2_Atom*> ( buffer );
     if ( lv2_atom_forge_is_object_type ( &_atom_forge, atom->type ) )
     {
-        //        updating = true;  // FIXME
         const LV2_Atom_Object* obj = static_cast<const LV2_Atom_Object*> ( buffer );
         if ( obj->body.otype == Plugin_Module_URI_patch_Set )
         {
@@ -1978,21 +1990,23 @@ LV2_Plugin::ui_port_event( uint32_t port_index, uint32_t /*buffer_size*/, uint32
         }
         else if ( obj->body.otype == Plugin_Module_URI_patch_Put )
         {
+            // Not used
             const LV2_Atom_Object* body = NULL;
             if ( !patch_put_get ( this, obj, &body ) )
             {
 
                 LV2_ATOM_OBJECT_FOREACH ( body, prop )
                 {
-                    //property_changed(jalv, prop->key, &prop->value);  // FIXME
+                    DMESSAGE("property_changed(prop->key = %u, prop->value.type = %u)", prop->key, &prop->value.type);
+                    //property_changed(jalv, prop->key, &prop->value);
                 }
             }
         }
         else
         {
-            WARNING ( "Unknown object type = %d: ID = %d?", obj->body.otype, obj->body.id );
+            // Not used
+            DMESSAGE ( "Unused object type = %u: ID = %u?", obj->body.otype, obj->body.id );
         }
-        //  updating = false; // FIXME
     }
 }
 
