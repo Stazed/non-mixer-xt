@@ -531,7 +531,7 @@ CLAP_Plugin::process_reset( )
 }
 
 void
-CLAP_Plugin::process_jack_transport( uint32_t nframes )
+CLAP_Plugin::process_jack_transport( uint32_t /* nframes */ )
 {
     // Get Jack transport position
     jack_position_t pos;
@@ -1178,7 +1178,7 @@ CLAP_Plugin::plugin_request_restart( )
 }
 
 void
-CLAP_Plugin::request_process( const struct clap_host * host )
+CLAP_Plugin::request_process( const struct clap_host * /* host */ )
 {
     DMESSAGE ( "Request process" );
     // TODO
