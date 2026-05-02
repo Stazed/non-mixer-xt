@@ -193,7 +193,7 @@ Panner::event_point( void )
 }
 
 void
-Panner::draw_the_box( int tx, int ty, int tw, int th )
+Panner::draw_the_box( int tx, int ty, int /* tw */, int th )
 {
     draw_box ( );
 
