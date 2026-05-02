@@ -1621,7 +1621,7 @@ VST2_Plugin::loaded( void ) const
 }
 
 void
-VST2_Plugin::process_jack_transport( uint32_t nframes )
+VST2_Plugin::process_jack_transport( uint32_t /* nframes */ )
 {
     // Get Jack transport position
     jack_position_t pos;
