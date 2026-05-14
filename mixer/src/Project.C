@@ -67,6 +67,48 @@ bool Project::_is_open = false;
 bool Project::_is_opening_closing = false;
 int Project::_lockfd = 0;
 
+#ifdef JACKPATCH_SUPPORT
+extern bool launch_jackpatch;
+extern pid_t jackpatch_pid;
+
+int file_exists(const char *path)
+{
+    struct stat buffer;
+    return stat(path, &buffer) == 0;
+}
+
+int start_jackpatch(char *filepath)
+{
+    jackpatch_pid = fork();
+
+    if (jackpatch_pid < 0)
+    {
+        WARNING("Cannot fork - jackpatch_pid");
+        perror("fork");
+        return -1;
+    }
+
+    if (jackpatch_pid == 0)
+    {
+        /* Child process */
+        execlp("jackpatch",
+        "jackpatch",
+        filepath,
+        (char *)NULL);
+
+        /* Only reached if exec fails */
+        WARNING("execlp jackpatch failed");
+        perror("execlp");
+        _exit(EXIT_FAILURE);
+    }
+
+    /* Parent process */
+    MESSAGE("Started jackpatch with pid %d\n", jackpatch_pid);
+
+    return 0;
+}
+#endif
+
 /***********/
 /* Private */
 
@@ -430,6 +472,24 @@ Project::open( const char *name )
     free( created_by );
 
     MESSAGE ( "Loaded project \"%s\"", name );
+
+#ifdef JACKPATCH_SUPPORT
+    if(launch_jackpatch)
+    {
+        char filepath[PATH_MAX];
+
+        snprintf(filepath, sizeof(filepath),
+                 "%s/%s",
+                 project_directory.c_str(),
+                 "connections");
+
+        if (file_exists(filepath))
+        {
+            MESSAGE ( "Launching jackpatch to restore connections = %s", filepath);
+            start_jackpatch(filepath);
+        }
+    }
+#endif
 
     return 0;
 }

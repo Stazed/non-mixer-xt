@@ -39,6 +39,7 @@ else()
     option (EnableVST3Support "Enable VST3 plugin support" ON)
 endif()
 option (EnablePangoCairo "Optional: Enable PangoCairo needed by some plugins" ON)
+option (EnableJackPatch "Enable jackpatch saving in project directory - no NSM" OFF)
 
 
 set(CMAKE_BUILD_TYPE "Release")
@@ -111,6 +112,10 @@ if (EnablePangoCairo)
     set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
     find_package(PangoCairo REQUIRED)
 endif (EnablePangoCairo)
+
+if (EnableJackPatch)
+    add_definitions(-D'JACKPATCH_SUPPORT=1')
+endif (EnableJackPatch)
 
 pkg_check_modules(JACK REQUIRED jack>=0.115.6)
 pkg_check_modules(LIBLO liblo>=0.26 REQUIRED)
@@ -401,6 +406,7 @@ package_status(EnableVST2Support   "Build VST2 support . . . . . . . . . . . . .
 package_status(EnableVST3Support   "Build VST3 support . . . . . . . . . . . . . . . . . . .:"  )
 package_status(EnableNTK           "Use NTK for build. . . . . . . . . . . . . . . . . . . .:"  )
 package_status(EnablePangoCairo    "Enable PangoCairo support. . . . . . . . . . . . . . . .:"  )
+package_status(EnableJackPatch     "Enable jackpatch connection support. . . . . . . . . . .:"  )
 package_status(EnableOptimizations "Use optimizations. . . . . . . . . . . . . . . . . . . .:"  )
 package_status(EnableSSE           "Use sse. . . . . . . . . . . . . . . . . . . . . . . . .:"  )
 package_status(EnableSSE2          "Use sse2 . . . . . . . . . . . . . . . . . . . . . . . .:"  )

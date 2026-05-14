@@ -115,6 +115,12 @@ std::string project_directory = "";
 std::string export_import_strip = "";
 std::vector<std::string>remove_custom_data_directories;
 
+#ifdef JACKPATCH_SUPPORT
+#include <sys/wait.h>   // waitpid
+bool launch_jackpatch = false;  // extern in Project.C, Mixer.C
+pid_t jackpatch_pid = -1;       // extern in Project.C
+#endif
+
 /* Maximum number of audio, aux, control ports*/
 const int MAX_PORTS = 100; // extern
 const int MINIMUM_WINDOW_WIDTH = 400;   // extern
@@ -171,6 +177,23 @@ check_sigterm( void * )
     }
     Fl::repeat_timeout ( 0.1f, check_sigterm );
 }
+
+#ifdef JACKPATCH_SUPPORT
+void stop_jackpatch(void)
+{
+    if (jackpatch_pid > 0)
+    {
+        kill(jackpatch_pid, SIGTERM);
+
+        /* Reap child */
+        waitpid(jackpatch_pid, NULL, 0);
+
+        printf("Stopped jackpatch\n");
+
+        jackpatch_pid = -1;
+    }
+}
+#endif
 
 /*
  Unambiguous abbreviations of long options are converted to long options.
@@ -397,6 +420,23 @@ main( int argc, char **argv )
     }
     else
     {
+#ifdef JACKPATCH_SUPPORT
+        // Check if .config/non-mixer-xt/jackpatch file exists.
+        char filepath[PATH_MAX];
+
+        snprintf(filepath, sizeof(filepath),
+                 "%s/%s",
+                 user_config_dir,
+                 "jackpatch");
+
+        // If it exists then the user wants jack connections to be saved by jackpatch
+        // in the project directory, under mappings. This is invalid for NSM session use
+        if (file_exists(filepath))
+        {
+            launch_jackpatch = true;
+            MESSAGE("Jackpatch found");
+        }
+#endif
         if ( optind < argc )
         {
             MESSAGE ( "Loading \"%s\"", argv[optind] );
@@ -444,6 +484,10 @@ main( int argc, char **argv )
         remove_clipboard += "'";
         system ( remove_clipboard.c_str ( ) );
     }
+
+#ifdef JACKPATCH_SUPPORT
+    stop_jackpatch();
+#endif
 
     MESSAGE ( "Your fun is over" );
 }

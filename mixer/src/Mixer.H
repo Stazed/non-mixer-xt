@@ -93,6 +93,9 @@ private:
     void save_translations ( void );
     void load_translations ( void );
     void load_window_sizes ( void );
+#ifdef JACKPATCH_SUPPORT
+    void save_connections ( void );
+#endif
 
     static void send_feedback_cb ( void *v );
     void send_feedback ( bool force );

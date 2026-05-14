@@ -28,6 +28,10 @@ const char user_template_dir[] = "~/.non-daw/templates";
 
 #include "../../nonlib/types.h"
 
+#ifdef JACKPATCH_SUPPORT
+int file_exists(const char *path);
+#endif
+
 class Project
 {
 

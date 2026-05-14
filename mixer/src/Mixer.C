@@ -79,6 +79,10 @@ extern std::list<Plugin_Info> g_plugin_cache;
 extern NSM_Client *nsm;
 extern std::vector<std::string>remove_custom_data_directories;
 
+#ifdef JACKPATCH_SUPPORT
+extern bool launch_jackpatch;
+#endif
+
 bool b_use_escape_key = true;
 bool b_use_ctrl_w_key = true;
 
@@ -848,6 +852,9 @@ Mixer::osc_strip_by_number( const char *path, const char * /*types*/, lo_arg ** 
     return 0;
 }
 
+/*
+ * This used by NSM only, and uses the mappings file for MIDI remote control.
+ */
 void
 Mixer::load_translations( void )
 {
@@ -956,6 +963,51 @@ Mixer::load_window_sizes ( void )
 
     fclose ( fp );
 }
+
+#ifdef JACKPATCH_SUPPORT
+void
+Mixer::save_connections ( void )
+{
+    FILE *fp = fopen ( "connections", "w" );
+    fclose ( fp );
+
+    char filepath[PATH_MAX];
+
+    snprintf(filepath, sizeof(filepath),
+             "%s/%s",
+             project_directory.c_str(),
+             "connections");
+
+    if (file_exists(filepath))
+    {
+        MESSAGE("Running jackpatch = %s", filepath);
+        
+        pid_t jackpatch_pid = fork();
+
+        if (jackpatch_pid < 0)
+        {
+            WARNING("Cannot fork - jackpatch_pid");
+            perror("fork");
+            return;
+        }
+
+        if (jackpatch_pid == 0)
+        {
+            /* Child process */
+            execlp("jackpatch",
+            "jackpatch",
+            "--save",
+            filepath,
+            (char *)NULL);
+
+            /* Only reached if exec fails */
+            WARNING("execlp jackpatch failed");
+            perror("execlp");
+            _exit(EXIT_FAILURE);
+        }
+    }
+}
+#endif
 
 int
 Mixer::init_osc( const char *osc_port )
@@ -1350,7 +1402,16 @@ Mixer::save( void )
 
     Loggable::snapshot ( full_path.c_str ( ) );
 
-    save_translations ( );
+    if (nsm->is_active())
+    {
+        save_translations ( );
+    }
+#ifdef JACKPATCH_SUPPORT
+    else if (launch_jackpatch)
+    {
+        save_connections ( );
+    }
+#endif
 
     if ( !remove_custom_data_directories.empty ( ) )
     {
