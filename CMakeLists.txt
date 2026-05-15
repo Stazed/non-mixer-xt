@@ -39,7 +39,7 @@ else()
     option (EnableVST3Support "Enable VST3 plugin support" ON)
 endif()
 option (EnablePangoCairo "Optional: Enable PangoCairo needed by some plugins" ON)
-option (EnableJackPatch "Enable jackpatch saving in project directory - no NSM" OFF)
+option (EnableJackPatch "Enable jackpatch saving in project directory - no NSM" ON)
 
 
 set(CMAKE_BUILD_TYPE "Release")

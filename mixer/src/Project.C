@@ -107,7 +107,7 @@ int start_jackpatch(char *filepath)
 
     return 0;
 }
-#endif
+#endif  // JACKPATCH_SUPPORT
 
 /***********/
 /* Private */

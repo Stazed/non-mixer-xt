@@ -1007,7 +1007,7 @@ Mixer::save_connections ( void )
         }
     }
 }
-#endif
+#endif  // JACKPATCH_SUPPORT
 
 int
 Mixer::init_osc( const char *osc_port )
