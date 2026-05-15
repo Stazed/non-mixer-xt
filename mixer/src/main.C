@@ -117,6 +117,7 @@ std::vector<std::string>remove_custom_data_directories;
 
 #ifdef JACKPATCH_SUPPORT
 #include <sys/wait.h>   // waitpid
+#include <limits.h>     // PATH_MAX
 bool launch_jackpatch = false;  // extern in Project.C, Mixer.C
 pid_t jackpatch_pid = -1;       // extern in Project.C
 #endif
