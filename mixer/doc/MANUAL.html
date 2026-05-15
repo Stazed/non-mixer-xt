@@ -528,29 +528,33 @@ $ sed -i -e '/:lv2_plugin_uri/s/Plugin_Module/LV2_Plugin/' snapshot
 </pre></td></tr>
 </table></div>
 <p>
-Jack connections can be saved in the project directory using jackpatch outside of any user session.
-Jackpatch is part of the new-session-manager (NSM) project, and can be used as a standalone application.
+Jack connections can be saved in the project directory using <b>jackpatch</b> outside of any user session.
+<b>Jackpatch</b> is part of the <b>new-session-manager</b> (NSM) project, and can be used as a standalone application.
 You can get it by installing from most distribution repositories. NSM is not actually needed
 to be installed but if you install from your distribution repository you can't get it without installing NSM.
-If you do not want to install NSM, then you can build it from source and just copy the jackpatch binary to /usr/bin without installing NSM.
 
-The jackpatch binary from the official NSM project has a bug that causes it to crash when used with pipewire-jack.
-There is a fork with the pipepwire-jack fix that should be used if you are using pipewire-jack.
-If you use JACK2, then the official version will work.
+<p>If you do not want to install NSM, then you can build it from source and just copy the <b>jackpatch</b> binary to /usr/bin without installing NSM.</p>
+
+<p>The <b>jackpatch</b> binary from the official NSM project has a bug that causes it to crash when used with pipewire-jack.
+There is a fork with the fix that should be used if you are using pipewire-jack.
+If you use JACK2, then the official version will work.</p>
 <div class="fig example"><table width=100%><tr><td><pre>
 Official new-session-manager : https://github.com/jackaudio/new-session-manager.git
 Forked version : https://github.com/Stazed/non-mixer-xt.git
+
 </pre></td></tr>
 </table></div>
-To invoke the connection behavior you need to create an empty file named 'jackpatch' and place it as follows:
+To invoke the connection behavior you need to create an empty file named <b><i>jackpatch</i></b> and place it in the non-mixer-xt configure directory as follows:
 <div class="fig example"><table width=100%><tr><td><pre>
     ~/.config/non-mixer-xt/jackpatch
 </pre></td></tr>
 </table></div>
 Connections will then be saved in non-mixer-xt project directories when the mixer is used outside of NSM sessions.
 This will save and restore ALL connections, including any that are made unrelated to non-mixer-xt.
-If you do not want to invoke the jackpatch behavior, then do not place the empty jackpatch file in ~/.config/non-mixer-xt/, or
-remove it if previously set.
+<p>
+If you do not want to invoke the connections behavior, then do not place the empty jackpatch file in ~/.config/non-mixer-xt/, or
+remove it if previously set.</p>
+
 </p>
 <h3 id="n:1.4.1.">1.4.1. JACK I/O</h3>
 <p>
