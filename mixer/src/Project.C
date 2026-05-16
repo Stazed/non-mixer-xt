@@ -68,8 +68,8 @@ bool Project::_is_opening_closing = false;
 int Project::_lockfd = 0;
 
 #ifdef JACKPATCH_SUPPORT
-extern bool launch_jackpatch;
-extern pid_t jackpatch_pid;
+extern bool launch_nmxt_patch;
+extern pid_t nmxt_patch_pid;
 
 int file_exists(const char *path)
 {
@@ -77,33 +77,33 @@ int file_exists(const char *path)
     return stat(path, &buffer) == 0;
 }
 
-int start_jackpatch(char *filepath)
+int start_nmxt_patch(char *filepath)
 {
-    jackpatch_pid = fork();
+    nmxt_patch_pid = fork();
 
-    if (jackpatch_pid < 0)
+    if (nmxt_patch_pid < 0)
     {
-        WARNING("Cannot fork - jackpatch_pid");
+        WARNING("Cannot fork - nmxt_patch_pid");
         perror("fork");
         return -1;
     }
 
-    if (jackpatch_pid == 0)
+    if (nmxt_patch_pid == 0)
     {
         /* Child process */
-        execlp("jackpatch",
-        "jackpatch",
+        execlp("nmxt-patch",
+        "nmxt-patch",
         filepath,
         (char *)NULL);
 
         /* Only reached if exec fails */
-        WARNING("execlp jackpatch failed");
+        WARNING("execlp nmxt-patch failed");
         perror("execlp");
         _exit(EXIT_FAILURE);
     }
 
     /* Parent process */
-    MESSAGE("Started jackpatch with pid %d\n", jackpatch_pid);
+    MESSAGE("Started nmxt-patch with pid %d\n", nmxt_patch_pid);
 
     return 0;
 }
@@ -474,7 +474,7 @@ Project::open( const char *name )
     MESSAGE ( "Loaded project \"%s\"", name );
 
 #ifdef JACKPATCH_SUPPORT
-    if(launch_jackpatch)
+    if(launch_nmxt_patch)
     {
         char filepath[PATH_MAX];
 
@@ -485,8 +485,8 @@ Project::open( const char *name )
 
         if (file_exists(filepath))
         {
-            MESSAGE ( "Launching jackpatch to restore connections = %s", filepath);
-            start_jackpatch(filepath);
+            MESSAGE ( "Launching nmxt-patch to restore connections = %s", filepath);
+            start_nmxt_patch(filepath);
         }
     }
 #endif

@@ -80,7 +80,7 @@ extern NSM_Client *nsm;
 extern std::vector<std::string>remove_custom_data_directories;
 
 #ifdef JACKPATCH_SUPPORT
-extern bool launch_jackpatch;
+extern bool launch_nmxt_patch;
 #endif
 
 bool b_use_escape_key = true;
@@ -980,28 +980,28 @@ Mixer::save_connections ( void )
 
     if (file_exists(filepath))
     {
-        MESSAGE("Running jackpatch = %s", filepath);
+        MESSAGE("Running nmxt-patch = %s", filepath);
         
-        pid_t jackpatch_pid = fork();
+        pid_t nmxt_patch_pid = fork();
 
-        if (jackpatch_pid < 0)
+        if (nmxt_patch_pid < 0)
         {
-            WARNING("Cannot fork - jackpatch_pid");
+            WARNING("Cannot fork - nmxt_patch_pid");
             perror("fork");
             return;
         }
 
-        if (jackpatch_pid == 0)
+        if (nmxt_patch_pid == 0)
         {
             /* Child process */
-            execlp("jackpatch",
-            "jackpatch",
+            execlp("nmxt-patch",
+            "nmxt-patch",
             "--save",
             filepath,
             (char *)NULL);
 
             /* Only reached if exec fails */
-            WARNING("execlp jackpatch failed");
+            WARNING("execlp nmxt-patch failed");
             perror("execlp");
             _exit(EXIT_FAILURE);
         }
@@ -1407,7 +1407,7 @@ Mixer::save( void )
         save_translations ( );
     }
 #ifdef JACKPATCH_SUPPORT
-    else if (launch_jackpatch)
+    else if (launch_nmxt_patch)
     {
         save_connections ( );
     }

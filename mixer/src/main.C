@@ -118,8 +118,8 @@ std::vector<std::string>remove_custom_data_directories;
 #ifdef JACKPATCH_SUPPORT
 #include <sys/wait.h>   // waitpid
 #include <limits.h>     // PATH_MAX
-bool launch_jackpatch = false;  // extern in Project.C, Mixer.C
-pid_t jackpatch_pid = -1;       // extern in Project.C
+bool launch_nmxt_patch = false;  // extern in Project.C, Mixer.C
+pid_t nmxt_patch_pid = -1;       // extern in Project.C
 #endif
 
 /* Maximum number of audio, aux, control ports*/
@@ -180,18 +180,18 @@ check_sigterm( void * )
 }
 
 #ifdef JACKPATCH_SUPPORT
-void stop_jackpatch(void)
+void stop_nmxt_patch(void)
 {
-    if (jackpatch_pid > 0)
+    if (nmxt_patch_pid > 0)
     {
-        kill(jackpatch_pid, SIGTERM);
+        kill(nmxt_patch_pid, SIGTERM);
 
         /* Reap child */
-        waitpid(jackpatch_pid, NULL, 0);
+        waitpid(nmxt_patch_pid, NULL, 0);
 
-        printf("Stopped jackpatch\n");
+        printf("Stopped nmxt-patch\n");
 
-        jackpatch_pid = -1;
+        nmxt_patch_pid = -1;
     }
 }
 #endif
@@ -422,20 +422,20 @@ main( int argc, char **argv )
     else
     {
 #ifdef JACKPATCH_SUPPORT
-        // Check if .config/non-mixer-xt/jackpatch file exists.
+        // Check if .config/non-mixer-xt/nmxtpatch file exists.
         char filepath[PATH_MAX];
 
         snprintf(filepath, sizeof(filepath),
                  "%s/%s",
                  user_config_dir,
-                 "jackpatch");
+                 "nmxtpatch");
 
-        // If it exists then the user wants jack connections to be saved by jackpatch
+        // If it exists then the user wants jack connections to be saved by nmxt-patch
         // in the project directory, under mappings. This is invalid for NSM session use
         if (file_exists(filepath))
         {
-            launch_jackpatch = true;
-            MESSAGE("Jackpatch found");
+            launch_nmxt_patch = true;
+            MESSAGE("nmxtpatch file found");
         }
 #endif
         if ( optind < argc )
@@ -487,7 +487,8 @@ main( int argc, char **argv )
     }
 
 #ifdef JACKPATCH_SUPPORT
-    stop_jackpatch();
+    if(launch_nmxt_patch)
+        stop_nmxt_patch();
 #endif
 
     MESSAGE ( "Your fun is over" );
