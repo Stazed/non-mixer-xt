@@ -30,9 +30,6 @@
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #pragma GCC diagnostic ignored "-Wunused-result"
 
-/* needed for asprintf */
-//#define _GNU_SOURCE
-
 #include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -460,7 +457,7 @@ do_for_matching_patches ( const char *portname, void (*func)( struct patch_recor
     char client[512]; //Linux jack limit is 64
     char port[512];  //linux jack limit is 256
 
-    sscanf( portname, "%[^:]:%[^\n]", client, port );
+    sscanf( portname, "%511[^:]:%511[^\n]", client, port );
 
     for ( pr = patch_list; pr; pr = pr->next )
     {
@@ -547,7 +544,8 @@ register_prexisting_ports ( void )
         handle_new_port( *port );
     }
 
-    free( ports );
+    if( ports )
+        jack_free( (void*) ports );
 }
 
 static int stringsort ( const void *a, const void *b )
@@ -700,10 +698,12 @@ snapshot ( const char *file )
             //printf( "[nmxt-patch]  ++ %s |> %s\n", *port, *connection );
         }
 
-        free( connections );
+        if ( connections )
+            jack_free( (void*) connections );
     }
 
-    free( ports );
+    if ( ports )
+        jack_free( (void*) ports );
 
     qsort( table, table_index, sizeof(char*), stringsort );
 
@@ -931,7 +931,12 @@ void
 port_registration_callback( jack_port_id_t id, int reg, void *arg )
 {
     jack_port_t *p = jack_port_by_id( client, id );
+    if (!p)
+        return;
+
     const char *port = jack_port_name( p );
+    if (!port)
+        return;
 
     int size = strlen(port) + 1 + sizeof( struct port_notification_record );
 
