@@ -327,23 +327,29 @@ void
 connect_path ( struct patch_record *pr )
 {
     int r = 0;
+    char *srcport = NULL;
+    char *dstport = NULL;
 
-    char srcport[512]; // This should really be REAL_JACK_PORT_NAME_SIZE, but in the real world not every system and compiler does C99.
-    char dstport[512];
-
-    snprintf( srcport, REAL_JACK_PORT_NAME_SIZE, "%s:%s", pr->src.client, pr->src.port );
-    snprintf( dstport, REAL_JACK_PORT_NAME_SIZE, "%s:%s", pr->dst.client, pr->dst.port );
-
-    if ( pr->active )
-    {
-        /* patch is already active, don't bother JACK with it... */
+    if (REAL_JACK_PORT_NAME_SIZE == 0)
         return;
-    }
+
+    srcport = (char *)malloc((size_t)REAL_JACK_PORT_NAME_SIZE);
+    dstport = (char *)malloc((size_t)REAL_JACK_PORT_NAME_SIZE);
+
+    if (!srcport || !dstport)
+        goto cleanup;
+
+    snprintf(srcport, (size_t)REAL_JACK_PORT_NAME_SIZE,
+             "%s:%s", pr->src.client, pr->src.port);
+    snprintf(dstport, (size_t)REAL_JACK_PORT_NAME_SIZE,
+             "%s:%s", pr->dst.client, pr->dst.port);
+
+    if (pr->active)
+        goto cleanup;
 
     if ( ! ( find_known_port( srcport ) && find_known_port( dstport )  ) )
     {
-
-         /*
+        /*
          * Since we only connect KNOWN TO US ports a connection will not be made on startup / file load,
          * even if both jack ports are actually present in JACK.
          * This is because we have not parsed both ports yet.
@@ -352,12 +358,12 @@ connect_path ( struct patch_record *pr )
          * The log message below is misleading for users, because nothing is wrong, and should only
          * be used during development.
          *
-         * We just skip the first attempt, eventhough JACK will not complain and do nothing wrong.
+         * We just skip the first attempt, even though JACK will not complain and do nothing wrong.
          *
          * That also means that we do not detect actually missing ports.
          */
         //printf( "[jackpatch] Not attempting connection because one of the ports is missing: %s %s\n", srcport, dstport );
-        return;
+        goto cleanup;
     }
 
     // printf( "[jackpatch] Connecting %s |> %s\n", srcport, dstport );
@@ -367,16 +373,16 @@ connect_path ( struct patch_record *pr )
     //print_patch( pr, r ); //very verbose
 
     if ( r == 0 || r == EEXIST )
-    {
         pr->active = 1;
-        return;
-    }
     else
     {
         pr->active = 0;
         printf( "[jackpatch] Error is %i\n", r );
-        return;
     }
+
+cleanup:
+    free(srcport);
+    free(dstport);
 }
 
 
@@ -733,9 +739,9 @@ maybe_activate_jack_client ( void )
 {
     if ( ! client_active )
     {
+        REAL_JACK_PORT_NAME_SIZE = jack_port_name_size(); //global. This is client+port+1. 64 + 256 + 1 = 321 on Linux.
         jack_activate( client );
         client_active = 1;
-        REAL_JACK_PORT_NAME_SIZE = jack_port_name_size(); //global. This is client+port+1. 64 + 256 + 1 = 321 on Linux.
     }
 }
 
