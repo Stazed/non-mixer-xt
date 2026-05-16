@@ -31,7 +31,7 @@
 #pragma GCC diagnostic ignored "-Wunused-result"
 
 /* needed for asprintf */
-#define _GNU_SOURCE
+//#define _GNU_SOURCE
 
 #include <string.h>
 #include <sys/stat.h>
@@ -131,7 +131,7 @@ dequeue ( struct patch_record *pr )
 void
 enqueue_port ( struct port_record **q, const char *port )
 {
-    struct port_record *p = malloc( sizeof( struct port_record ));
+    struct port_record *p = (struct port_record *) malloc( sizeof( struct port_record ));
 
     p->port = strdup( port );
     p->next = *q;
@@ -193,7 +193,7 @@ process_patch ( const char *patch )
 
     dir[2] = 0;
 
-    pr = malloc( sizeof( struct patch_record ) );
+    pr = (struct patch_record *) malloc( sizeof( struct patch_record ) );
 
     switch ( *dir )
     {
@@ -224,7 +224,7 @@ process_patch ( const char *patch )
 
             enqueue( pr );
 
-            pr = malloc( sizeof( struct patch_record ) );
+            pr = (struct patch_record *) malloc( sizeof( struct patch_record ) );
 
             pr->src.client = strdup( leftc );
             pr->src.port = strdup( leftp );
@@ -582,7 +582,7 @@ snapshot ( const char *file )
             //This code is replicated below #TODO: create function.
             char *s;
             asprintf( &s, "%-40s |> %s\n", src_client_port, dst_client_port ); //prepare the magic string that is the step before creating a struct from with process_patch //port is source client:port and connection is the destination one.
-            if ( table_index >= table_size )
+            if ( table_index >= (int) table_size )
             {
                 table_size += table_increment;
                 table = (char**)realloc( table, table_size * sizeof( char *) );
@@ -625,7 +625,7 @@ snapshot ( const char *file )
             //This code is replicated above #TODO: create function.
             char *s;
             asprintf( &s, "%-40s |> %s\n", *port, *connection ); //prepare the magic string that is the step before creating a struct from with process_patch //port is source client:port and connection is the destination one.
-            if ( table_index >= table_size )
+            if ( table_index >= (int) table_size )
             {
                 table_size += table_increment;
                 table = (char**)realloc( table, table_size * sizeof( char *) );
@@ -833,9 +833,9 @@ dequeue_new_port ( void )
 
     if ( sizeof( int ) == jack_ringbuffer_peek( port_ringbuffer, (char*)&size, sizeof( int ) ) )
     {
-        if ( jack_ringbuffer_read_space( port_ringbuffer ) >= size )
+        if ( ( (int) jack_ringbuffer_read_space( port_ringbuffer ) ) >= size )
         {
-            struct port_notification_record *pr = malloc( size );
+            struct port_notification_record *pr = (struct port_notification_record *) malloc( size );
 
             jack_ringbuffer_read( port_ringbuffer, (char*)pr, size );
 
@@ -871,13 +871,13 @@ port_registration_callback( jack_port_id_t id, int reg, void *arg )
 
     int size = strlen(port) + 1 + sizeof( struct port_notification_record );
 
-    struct port_notification_record *pr = malloc( size );
+    struct port_notification_record *pr = (struct port_notification_record *) malloc( size );
 
     pr->len = size;
     pr->reg = reg;
     strcpy( pr->port, port );
 
-    if ( size != jack_ringbuffer_write( port_ringbuffer, (const char *)pr, size ) )
+    if ( size != (int) jack_ringbuffer_write( port_ringbuffer, (const char *)pr, size ) )
     {
         fprintf( stderr, "[jackpatch] ERROR: port notification buffer overrun\n" );
     }
