@@ -66,7 +66,7 @@ char *project_file;
 int REAL_JACK_PORT_NAME_SIZE; //defined after jack client activated
 
 #undef VERSION
-#define APP_TITLE "JACKPatch"
+#define APP_TITLE "MNXTPatch"
 #define VERSION "1.0.0"
 
 struct patch_record {
@@ -102,7 +102,7 @@ static jack_ringbuffer_t *port_ringbuffer = NULL;
 void
 print_patch ( struct patch_record *pr, int mode )
 {
-    printf( "[jackpatch] %s from '%s:%s' to '%s:%s'\n", mode ? ">>" : "::",
+    printf( "[nmxt-patch] %s from '%s:%s' to '%s:%s'\n", mode ? ">>" : "::",
             pr->src.client, pr->src.port, pr->dst.client, pr->dst.port );
 
 }
@@ -235,7 +235,7 @@ process_patch ( const char *patch )
             enqueue( pr );
             break;
         default:
-//            fprintf( stderr, "[jackpatch]  Invalid token '|%s' at line %i of %s!",  dir, i, file );
+//            fprintf( stderr, "[nmxt-patch]  Invalid token '|%s' at line %i of %s!",  dir, i, file );
             free( pr );
             return 0;
     }
@@ -266,7 +266,7 @@ clear_all_patches ( )
 int
 read_config ( const char *file )
 {
-    printf( "[jackpatch] Reading connections from file %s \n", file);
+    printf( "[nmxt-patch] Reading connections from file %s \n", file);
     FILE *fp;
     int i = 0;
 
@@ -307,7 +307,7 @@ read_config ( const char *file )
 
         if ( retval == 0 )
         {
-            printf( "[jackpatch] bad line %i.\n", i );
+            printf( "[nmxt-patch] bad line %i.\n", i );
             continue;
         }
     }
@@ -364,11 +364,11 @@ connect_path ( struct patch_record *pr )
          *
          * That also means that we do not detect actually missing ports.
          */
-        //printf( "[jackpatch] Not attempting connection because one of the ports is missing: %s %s\n", srcport, dstport );
+        //printf( "[nmxt-patch] Not attempting connection because one of the ports is missing: %s %s\n", srcport, dstport );
         goto cleanup;
     }
 
-    // printf( "[jackpatch] Connecting %s |> %s\n", srcport, dstport );
+    // printf( "[nmxt-patch] Connecting %s |> %s\n", srcport, dstport );
 
     r = jack_connect( client, srcport, dstport );
 
@@ -379,7 +379,7 @@ connect_path ( struct patch_record *pr )
     else
     {
         pr->active = 0;
-        printf( "[jackpatch] Error is %i\n", r );
+        printf( "[nmxt-patch] Error is %i\n", r );
     }
 
 cleanup:
@@ -463,7 +463,7 @@ handle_new_port ( const char *portname )
     enqueue_known_port( portname );
 
     //Verbose output that a new port was detected during runtime
-    //printf( "[jackpatch] New endpoint '%s' registered.\n", portname );
+    //printf( "[nmxt-patch] New endpoint '%s' registered.\n", portname );
 
     /* this is a new port */
     activate_patch( portname );
@@ -520,7 +520,7 @@ snapshot ( const char *file )
 
     if ( NULL == ( fp = fopen( file, "w" ) ) )
     {
-        fprintf( stderr, "[jackpatch] Error opening snapshot file for writing\n" );
+        fprintf( stderr, "[nmxt-patch] Error opening snapshot file for writing\n" );
         return;
     }
 
@@ -555,23 +555,23 @@ snapshot ( const char *file )
         asprintf( &dst_client_port, "%s:%s", pr->dst.client, pr->dst.port );
 
         jack_port_t *jp_t_src;
-        jp_t_src = jack_port_by_name( client, src_client_port ); //client is our own jackpatch-jack-client.
+        jp_t_src = jack_port_by_name( client, src_client_port ); //client is our own nmxt-patch-jack-client.
 
         if ( ! jp_t_src ) {
             //The port does not exist anymore. We need to remember it!
             //It doesn't matter if the destination port still exists, the file-writing below will only consider ports that are currently present and connected.
-            //printf("[jackpatch] We remember source %s but it does not exist anymore. Making sure it will not be forgotten.\n", src_client_port);
+            //printf("[nmxt-patch] We remember source %s but it does not exist anymore. Making sure it will not be forgotten.\n", src_client_port);
             remember_this_connection = 1;
         }
         else {
             //The source port does still exist, but is it's connection still alive?
             //Do not use jack_port_get_all_connections, we want to know if a specific destination is still there.
             jack_port_t *jp_t_dst;
-            jp_t_dst = jack_port_by_name( client, dst_client_port ); //client is our own jackpatch-jack-client.
+            jp_t_dst = jack_port_by_name( client, dst_client_port ); //client is our own nmxt-patch-jack-client.
              if ( ! jp_t_dst ) {
                 //The port does not exist anymore. We need to remember it!
                 //It doesn't matter if the destination port still exists, the file-writing below will only consider ports that are currently present and connected.
-                //printf("[jackpatch] We remember destination %s but it does not exist anymore. Making sure it will not be forgotten.\n", dst_client_port);
+                //printf("[nmxt-patch] We remember destination %s but it does not exist anymore. Making sure it will not be forgotten.\n", dst_client_port);
                 remember_this_connection = 1;
             }
         }
@@ -590,7 +590,7 @@ snapshot ( const char *file )
             table[table_index++] = s;
             // process_patch( s ); infinite loop! But we still need to keep these patch_records! See below
             // Verbose output that an individual connection was saved.
-            //printf( "[jackpatch] Remember ++ %s |> %s\n", src_client_port, dst_client_port );
+            //printf( "[nmxt-patch] Remember ++ %s |> %s\n", src_client_port, dst_client_port );
         }
         free ( src_client_port );
         free ( dst_client_port );
@@ -633,7 +633,7 @@ snapshot ( const char *file )
             table[table_index++] = s;
             process_patch( s );
             // Verbose output that an individual connection was saved.
-            //printf( "[jackpatch]  ++ %s |> %s\n", *port, *connection );
+            //printf( "[nmxt-patch]  ++ %s |> %s\n", *port, *connection );
         }
 
         free( connections );
@@ -661,7 +661,7 @@ static int die_now = 0;
 void
 signal_handler ( int x )
 {
-    printf("[jackpatch] Handle signal %d\n", x);
+    printf("[nmxt-patch] Handle signal %d\n", x);
     die_now = 1;
 }
 
@@ -670,7 +670,7 @@ die ( void )
 {
     if ( client_active )
         jack_deactivate( client );
-    printf( "[jackpatch] Closing jack client\n" );
+    printf( "[nmxt-patch] Closing jack client\n" );
 
     jack_client_close( client );
     client = NULL;
@@ -705,7 +705,7 @@ osc_announce_error ( const char *path, const char *types, lo_arg **argv, int arg
     if ( strcmp( "/nsm/server/announce", &argv[0]->s ) )
          return -1;
 
-    printf( "[jackpatch] Failed to register with NSM: %s\n", &argv[2]->s );
+    printf( "[nmxt-patch] Failed to register with NSM: %s\n", &argv[2]->s );
     nsm_is_active = 0;
 
     return 0;
@@ -718,7 +718,7 @@ osc_announce_reply ( const char *path, const char *types, lo_arg **argv, int arg
     if ( strcmp( "/nsm/server/announce", &argv[0]->s ) )
          return -1;
 
-    printf( "[jackpatch] Successfully registered. NSM says: %s\n", &argv[1]->s );
+    printf( "[nmxt-patch] Successfully registered. NSM says: %s\n", &argv[1]->s );
 
     nsm_is_active = 1;
     nsm_addr = lo_address_new_from_url( lo_address_get_url( lo_message_get_source( msg ) ) );
@@ -755,7 +755,7 @@ osc_open ( const char *path, const char *types, lo_arg **argv, int argc, lo_mess
 
     char *new_filename;
 
-    asprintf( &new_filename, "%s.jackpatch", new_path );
+    asprintf( &new_filename, "%s.nmxt-patch", new_path );
 
     struct stat st;
 
@@ -793,7 +793,7 @@ osc_open ( const char *path, const char *types, lo_arg **argv, int argc, lo_mess
 void
 announce ( const char *nsm_url, const char *client_name, const char *process_name )
 {
-    printf( "[jackpatch] Announcing to NSM\n" );
+    printf( "[nmxt-patch] Announcing to NSM\n" );
 
     lo_address to = lo_address_new_from_url( nsm_url );
 
@@ -817,7 +817,7 @@ init_osc ( const char *osc_port )
 //error_handler );
 
     char *url = lo_server_get_url(losrv);
-    printf("[jackpatch] OSC: %s\n",url);
+    printf("[nmxt-patch] OSC: %s\n",url);
     free(url);
 
     lo_server_add_method( losrv, "/nsm/client/save", "", osc_save, NULL );
@@ -879,7 +879,7 @@ port_registration_callback( jack_port_id_t id, int reg, void *arg )
 
     if ( size != (int) jack_ringbuffer_write( port_ringbuffer, (const char *)pr, size ) )
     {
-        fprintf( stderr, "[jackpatch] ERROR: port notification buffer overrun\n" );
+        fprintf( stderr, "[nmxt-patch] ERROR: port notification buffer overrun\n" );
     }
 
 //    enqueue_new_port( port, reg );
@@ -909,14 +909,10 @@ main ( int argc, char **argv )
             case 'h':
                 {
                 const char *usage =
-                "jackpatch - Remember and restore the JACK Audio Connection Kit Graph in NSM\n\n"
-                "It is intended as module for the 'New Session Manager' and only communicates\n"
-                "over OSC in an NSM-Session.\n\n"
-                "It has limited standalone functionality for testing and debugging, such as:\n"
-                "\n"
+                "nmxt-patch - Remember and restore the JACK Audio Connection Kit Graph in NSM or standalone.\n\n"
                 "Usage:\n"
-                "  jackpatch [filename]  Restore a snapshot from --save and monitor.\n"
-                "  jackpatch --help\n"
+                "  nmxt-patch [filename]  Restore a snapshot from --save and monitor.\n"
+                "  nmxt-patch --help\n"
                 "\n"
                 "Options:\n"
                 "  --help                Show this screen and exit\n"
@@ -952,7 +948,7 @@ main ( int argc, char **argv )
 
     if ( ! client )
     {
-        fprintf( stderr, "[jackpatch] Could not register JACK client\n" );
+        fprintf( stderr, "[nmxt-patch] Could not register JACK client\n" );
         exit(1);
 
     }
@@ -975,7 +971,7 @@ main ( int argc, char **argv )
                     register_prexisting_ports();
                 }
 
-                printf( "[jackpatch] Standalone: Saving current graph to: %s\n", argv[2] );
+                printf( "[nmxt-patch] Standalone: Saving current graph to: %s\n", argv[2] );
                 snapshot( argv[2] );
                 die();
             }
@@ -991,7 +987,7 @@ main ( int argc, char **argv )
                 register_prexisting_ports();
             }
 
-            printf( "[jackpatch] Monitoring in standalone mode…\n" );
+            printf( "[nmxt-patch] Monitoring in standalone mode…\n" );
             for ( ;; )
             {
                 usleep( 50000 );
@@ -1012,7 +1008,7 @@ main ( int argc, char **argv )
     }
     else
     {
-        fprintf( stderr, "[jackpatch] Could not register as NSM client.\n" );
+        fprintf( stderr, "[nmxt-patch] Could not register as NSM client.\n" );
         exit(1);
     }
 
