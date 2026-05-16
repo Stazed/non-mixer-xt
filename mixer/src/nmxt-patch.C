@@ -167,82 +167,146 @@ int
 process_patch ( const char *patch )
 {
     struct patch_record *pr;
-    char *leftc, *rightc, *leftp, *rightp;
-    char dir[3];
+
+    char leftc_buf[256];
+    char leftp_buf[256];
+    char rightc_buf[256];
+    char rightp_buf[256];
+
+    char *leftc;
+    char *leftp;
+    char *rightc;
+    char *rightp;
+
+    char dir[2];
 
     int retval;
 
-    retval = sscanf( patch, " %m[^:]:%m[^|] |%1[<>|] %m[^:]:%m[^\n]",
-                     &leftc, &leftp, dir, &rightc, &rightp );
+    retval = sscanf(
+        patch,
+        " %255[^:]:%255[^|] |%1[<>|] %255[^:]:%255[^\n]",
+        leftc_buf,
+        leftp_buf,
+        dir,
+        rightc_buf,
+        rightp_buf
+    );
 
-    if ( retval == EOF )
+    if (retval == EOF)
         return -1;
 
-    if ( retval != 5 )
+    if (retval != 5)
         return 0;
 
-    /* trim space */
-    int j;
-    for ( j = strlen( leftp ) - 1; j > 0; j-- )
+    /* trim trailing whitespace from leftp */
+    for (int j = strlen(leftp_buf) - 1; j >= 0; --j)
     {
-        if ( leftp[j] == ' ' || leftp[j] == '\t' )
-            leftp[j] = 0;
+        if (leftp_buf[j] == ' ' || leftp_buf[j] == '\t')
+            leftp_buf[j] = '\0';
         else
             break;
     }
 
-    dir[2] = 0;
+    leftc  = strdup(leftc_buf);
+    leftp  = strdup(leftp_buf);
+    rightc = strdup(rightc_buf);
+    rightp = strdup(rightp_buf);
 
-    pr = (struct patch_record *) malloc( sizeof( struct patch_record ) );
+    if (!leftc || !leftp || !rightc || !rightp)
+    {
+        free(leftc);
+        free(leftp);
+        free(rightc);
+        free(rightp);
+        return 0;
+    }
 
-    switch ( *dir )
+    pr = (struct patch_record *) malloc(sizeof(*pr));
+
+    if (!pr)
+    {
+        free(leftc);
+        free(leftp);
+        free(rightc);
+        free(rightp);
+        return 0;
+    }
+
+    switch (*dir)
     {
         case '<':
             pr->src.client = rightc;
-            pr->src.port = rightp;
+            pr->src.port   = rightp;
 
             pr->dst.client = leftc;
-            pr->dst.port = leftp;
+            pr->dst.port   = leftp;
 
-            enqueue( pr );
+            pr->active = 0;
+
+            enqueue(pr);
             break;
+
         case '>':
             pr->src.client = leftc;
-            pr->src.port = leftp;
+            pr->src.port   = leftp;
 
             pr->dst.client = rightc;
-            pr->dst.port = rightp;
+            pr->dst.port   = rightp;
 
-            enqueue( pr );
+            pr->active = 0;
+
+            enqueue(pr);
             break;
+
         case '|':
             pr->src.client = rightc;
-            pr->src.port = rightp;
+            pr->src.port   = rightp;
 
             pr->dst.client = leftc;
-            pr->dst.port = leftp;
+            pr->dst.port   = leftp;
 
-            enqueue( pr );
+            pr->active = 0;
 
-            pr = (struct patch_record *) malloc( sizeof( struct patch_record ) );
+            enqueue(pr);
 
-            pr->src.client = strdup( leftc );
-            pr->src.port = strdup( leftp );
+            pr = (struct patch_record *) malloc(sizeof(*pr));
 
-            pr->dst.client = strdup( rightc );
-            pr->dst.port = strdup( rightp );
+            if (!pr)
+                return 0;
 
-            enqueue( pr );
+            pr->src.client = strdup(leftc);
+            pr->src.port   = strdup(leftp);
+
+            pr->dst.client = strdup(rightc);
+            pr->dst.port   = strdup(rightp);
+
+            if (!pr->src.client || !pr->src.port ||
+                !pr->dst.client || !pr->dst.port)
+            {
+                free(pr->src.client);
+                free(pr->src.port);
+                free(pr->dst.client);
+                free(pr->dst.port);
+                free(pr);
+                return 0;
+            }
+
+            pr->active = 0;
+
+            enqueue(pr);
             break;
+
         default:
 //            fprintf( stderr, "[nmxt-patch]  Invalid token '|%s' at line %i of %s!",  dir, i, file );
-            free( pr );
+            free(pr);
+
+            free(leftc);
+            free(leftp);
+            free(rightc);
+            free(rightp);
+    //print_patch( pr, 1 ); //very verbose
             return 0;
     }
-
-    pr->active = 0;
-
-    //print_patch( pr, 1 ); //very verbose
 
     return 1;
 }
