@@ -308,6 +308,20 @@ endif()
 
 install (TARGETS nmxt-plugin-scan RUNTIME DESTINATION bin)
 
+# nmxt-patch
+add_executable (nmxt-patch ${CMAKE_SOURCE_DIR}/mixer/src/nmxt-patch.C)
+
+target_include_directories (nmxt-patch PRIVATE
+    ${JACK_INCLUDE_DIRS}
+    ${LIBLO_INCLUDE_DIRS}
+)
+target_link_libraries(nmxt-patch PRIVATE
+    ${LIBLO_LIBRARIES}
+    ${JACK_LINK_LIBRARIES}
+)
+
+install (TARGETS nmxt-patch RUNTIME DESTINATION bin)
+
 
 install (FILES non-mixer-xt.desktop.in
     DESTINATION share/applications RENAME non-mixer-xt.desktop)
