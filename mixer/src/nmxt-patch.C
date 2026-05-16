@@ -1,9 +1,10 @@
 
 /*******************************************************************************/
 /* Copyright (C) 2008-2020 Jonathan Moore Liles (as "Non-Session-Manager")     */
-/* Copyright (C) 2020- Nils Hilbricht                                          */
+/* Copyright (C) 2020-2025 Nils Hilbricht                                      */
+/* Copyright (C) 2026- Stazed                                                  */
 /*                                                                             */
-/* This file is part of New-Session-Manager                                    */
+/* This file is part of Non-Mixer-XT                                           */
 /*                                                                             */
 /* New-Session-Manager is free software: you can redistribute it and/or modify */
 /* it under the terms of the GNU General Public License as published by        */
@@ -19,7 +20,7 @@
 /* along with New-Session-Manager. If not, see <https://www.gnu.org/licenses/>.*/
 /*******************************************************************************/
 
-/* jackpatch.c
+/* nmxt-patch.C
 
   This program is just like ASSPatch, except that it works with Jack ports (audio and MIDI).
 
