@@ -1,7 +1,7 @@
 
 /*******************************************************************************/
 /* Copyright (C) 2008-2020 Jonathan Moore Liles (as "Non-Session-Manager")     */
-/* Copyright (C) 2020-2025 Nils Hilbricht                                      */
+/* Copyright (C) 2020-2025 Nils Hilbricht (as "New-Session-Manager")           */
 /* Copyright (C) 2026- Stazed                                                  */
 /*                                                                             */
 /* This file is part of Non-Mixer-XT                                           */
