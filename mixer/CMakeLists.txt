@@ -328,3 +328,6 @@ install (FILES non-mixer-xt.desktop.in
 
 install (FILES midi-mapper-xt.desktop.in
     DESTINATION share/applications RENAME midi-mapper-xt.desktop)
+
+install (FILES nmxt-patch.desktop.in
+    DESTINATION share/applications RENAME nmxt-patch.desktop)

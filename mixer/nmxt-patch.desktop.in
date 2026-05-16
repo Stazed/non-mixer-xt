@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Name=NMXTpatch
+Comment=Remember the JACK Audio Connection Kit Graph
+Exec=nmxt-patch
+Icon=nmxt-patch
+Terminal=false
+StartupNotify=false
+Version=1.0
+Categories=AudioVideo;Audio;
+X-NSM-Capable=true
+X-NSM-Exec=nmxt-patch
+NoDisplay=true
