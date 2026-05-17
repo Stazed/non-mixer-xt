@@ -540,7 +540,9 @@ To invoke the connection behavior you need to create an empty file named <b><i>n
 </pre></td></tr>
 </table></div>
 Connections will then be saved in non-mixer-xt project directories when the mixer is used outside of NSM sessions.
-This will save and restore ALL connections, including any that are made unrelated to non-mixer-xt.
+This will save and restore ALL connections at the time of saving the project, including any that are made unrelated to non-mixer-xt.
+If you open an existing project that does not have saved connections then you will need to save <tt><b>CTRL+S</b></tt> to update the project
+for connections.
 <p>
 If you do not want to invoke the connections behavior, then do not place the empty nmxtpatch file in ~/.config/non-mixer-xt/, or
 remove it if previously set.</p>
