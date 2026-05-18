@@ -114,7 +114,7 @@ if (EnablePangoCairo)
 endif (EnablePangoCairo)
 
 if (EnableNMXTPatch)
-    add_definitions(-D'JACKPATCH_SUPPORT=1')
+    add_definitions(-D'NMXT_PATCH_SUPPORT=1')
 endif (EnableNMXTPatch)
 
 pkg_check_modules(JACK REQUIRED jack>=0.115.6)

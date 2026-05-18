@@ -79,7 +79,7 @@ extern std::list<Plugin_Info> g_plugin_cache;
 extern NSM_Client *nsm;
 extern std::vector<std::string>remove_custom_data_directories;
 
-#ifdef JACKPATCH_SUPPORT
+#ifdef NMXT_PATCH_SUPPORT
 extern bool launch_nmxt_patch;
 #endif
 
@@ -964,7 +964,7 @@ Mixer::load_window_sizes ( void )
     fclose ( fp );
 }
 
-#ifdef JACKPATCH_SUPPORT
+#ifdef NMXT_PATCH_SUPPORT
 void
 Mixer::save_connections ( void )
 {
@@ -1007,7 +1007,7 @@ Mixer::save_connections ( void )
         }
     }
 }
-#endif  // JACKPATCH_SUPPORT
+#endif  // NMXT_PATCH_SUPPORT
 
 int
 Mixer::init_osc( const char *osc_port )
@@ -1406,7 +1406,7 @@ Mixer::save( void )
     {
         save_translations ( );
     }
-#ifdef JACKPATCH_SUPPORT
+#ifdef NMXT_PATCH_SUPPORT
     else if (launch_nmxt_patch)
     {
         save_connections ( );

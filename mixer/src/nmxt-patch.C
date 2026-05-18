@@ -25,7 +25,7 @@
   This program is just like ASSPatch, except that it works with Jack ports (audio and MIDI).
 
  */
-#ifdef JACKPATCH_SUPPORT
+#ifdef NMXT_PATCH_SUPPORT
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #pragma GCC diagnostic ignored "-Wunused-result"
@@ -1093,4 +1093,4 @@ main ( int argc, char **argv )
     }
 }
 
-#endif  // JACKPATCH_SUPPORT
+#endif  // NMXT_PATCH_SUPPORT

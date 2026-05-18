@@ -115,7 +115,7 @@ std::string project_directory = "";
 std::string export_import_strip = "";
 std::vector<std::string>remove_custom_data_directories;
 
-#ifdef JACKPATCH_SUPPORT
+#ifdef NMXT_PATCH_SUPPORT
 #include <sys/wait.h>   // waitpid
 #include <limits.h>     // PATH_MAX
 bool launch_nmxt_patch = false;  // extern in Project.C, Mixer.C
@@ -179,7 +179,7 @@ check_sigterm( void * )
     Fl::repeat_timeout ( 0.1f, check_sigterm );
 }
 
-#ifdef JACKPATCH_SUPPORT
+#ifdef NMXT_PATCH_SUPPORT
 void stop_nmxt_patch(void)
 {
     if (nmxt_patch_pid > 0)
@@ -421,7 +421,7 @@ main( int argc, char **argv )
     }
     else
     {
-#ifdef JACKPATCH_SUPPORT
+#ifdef NMXT_PATCH_SUPPORT
         // Check if .config/non-mixer-xt/nmxtpatch file exists.
         char filepath[PATH_MAX];
 
@@ -486,7 +486,7 @@ main( int argc, char **argv )
         system ( remove_clipboard.c_str ( ) );
     }
 
-#ifdef JACKPATCH_SUPPORT
+#ifdef NMXT_PATCH_SUPPORT
     if(launch_nmxt_patch)
         stop_nmxt_patch();
 #endif

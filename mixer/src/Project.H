@@ -28,7 +28,7 @@ const char user_template_dir[] = "~/.non-daw/templates";
 
 #include "../../nonlib/types.h"
 
-#ifdef JACKPATCH_SUPPORT
+#ifdef NMXT_PATCH_SUPPORT
 int file_exists(const char *path);
 #endif
 

@@ -67,7 +67,7 @@ bool Project::_is_open = false;
 bool Project::_is_opening_closing = false;
 int Project::_lockfd = 0;
 
-#ifdef JACKPATCH_SUPPORT
+#ifdef NMXT_PATCH_SUPPORT
 extern bool launch_nmxt_patch;
 extern pid_t nmxt_patch_pid;
 
@@ -107,7 +107,7 @@ int start_nmxt_patch(char *filepath)
 
     return 0;
 }
-#endif  // JACKPATCH_SUPPORT
+#endif  // NMXT_PATCH_SUPPORT
 
 /***********/
 /* Private */
@@ -473,7 +473,7 @@ Project::open( const char *name )
 
     MESSAGE ( "Loaded project \"%s\"", name );
 
-#ifdef JACKPATCH_SUPPORT
+#ifdef NMXT_PATCH_SUPPORT
     if(launch_nmxt_patch)
     {
         char filepath[PATH_MAX];
