@@ -130,9 +130,8 @@ Plugin_Scan::scan_LADSPA_plugins( std::list<Plugin_Info> & pr )
 
     std::vector<LADSPAInfo::PluginInfo> plugins = ladspainfo->GetPluginInfo ( );
 
-    int j = 0;
     for ( std::vector<LADSPAInfo::PluginInfo>::iterator i = plugins.begin ( );
-        i != plugins.end ( ); ++i, j++ )
+        i != plugins.end ( ); ++i)
     {
         Plugin_Info pi ( "LADSPA" );
 
