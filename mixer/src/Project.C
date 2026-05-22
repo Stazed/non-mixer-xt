@@ -79,6 +79,9 @@ int file_exists(const char *path)
 
 int start_nmxt_patch(char *filepath)
 {
+    std::string s_command(BINARY_PATH);
+    s_command += "/nmxt-patch";
+
     nmxt_patch_pid = fork();
 
     if (nmxt_patch_pid < 0)
@@ -91,13 +94,12 @@ int start_nmxt_patch(char *filepath)
     if (nmxt_patch_pid == 0)
     {
         /* Child process */
-        execlp("nmxt-patch",
+        execlp(s_command.c_str(),
         "nmxt-patch",
         filepath,
         (char *)NULL);
 
         /* Only reached if exec fails */
-        WARNING("execlp nmxt-patch failed");
         perror("execlp");
         _exit(EXIT_FAILURE);
     }
@@ -485,7 +487,6 @@ Project::open( const char *name )
 
         if (file_exists(filepath))
         {
-            MESSAGE ( "Launching nmxt-patch to restore connections = %s", filepath);
             start_nmxt_patch(filepath);
         }
     }

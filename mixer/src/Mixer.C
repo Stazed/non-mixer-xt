@@ -981,6 +981,8 @@ Mixer::save_connections ( void )
     if (file_exists(filepath))
     {
         MESSAGE("Running nmxt-patch = %s", filepath);
+        std::string s_command(BINARY_PATH);
+        s_command += "/nmxt-patch";
         
         pid_t nmxt_patch_pid = fork();
 
@@ -994,14 +996,13 @@ Mixer::save_connections ( void )
         if (nmxt_patch_pid == 0)
         {
             /* Child process */
-            execlp("nmxt-patch",
+            execlp(s_command.c_str(),
             "nmxt-patch",
             "--save",
             filepath,
             (char *)NULL);
 
             /* Only reached if exec fails */
-            WARNING("execlp nmxt-patch failed");
             perror("execlp");
             _exit(EXIT_FAILURE);
         }

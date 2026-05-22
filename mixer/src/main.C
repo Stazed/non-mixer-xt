@@ -189,7 +189,7 @@ void stop_nmxt_patch(void)
         /* Reap child */
         waitpid(nmxt_patch_pid, NULL, 0);
 
-        printf("Stopped nmxt-patch\n");
+        MESSAGE("Stopped nmxt-patch");
 
         nmxt_patch_pid = -1;
     }
@@ -431,11 +431,11 @@ main( int argc, char **argv )
                  "nmxtpatch");
 
         // If it exists then the user wants jack connections to be saved by nmxt-patch
-        // in the project directory, under mappings. This is invalid for NSM session use
+        // in the project directory, under connections. This is invalid for NSM session use
         if (file_exists(filepath))
         {
             launch_nmxt_patch = true;
-            MESSAGE("nmxtpatch file found");
+            MESSAGE("nmxtpatch file found. Connections will be saved in project.");
         }
 #endif
         if ( optind < argc )
