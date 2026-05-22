@@ -1429,7 +1429,7 @@ Mixer::save( void )
     return true;
 }
 
-static const char options_filename[] = "options";
+// static const char options_filename[] = "options";
 
 void
 Mixer::load_options( void )
