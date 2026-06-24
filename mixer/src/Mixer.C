@@ -1000,6 +1000,10 @@ Mixer::save_connections ( void )
             "nmxt-patch",
             "--save",
             filepath,
+#ifdef NMXT_FILTER_CLIENT
+            "--client",
+            instance_name,
+#endif
             (char *)NULL);
 
             /* Only reached if exec fails */

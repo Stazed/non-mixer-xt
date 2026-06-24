@@ -40,6 +40,7 @@ else()
 endif()
 option (EnablePangoCairo "Optional: Enable PangoCairo needed by some plugins" ON)
 option (EnableNMXTPatch "Enable nmxt-patch saving in project directory - no NSM" ON)
+option (EnableFilterClient "Enable only Non-Mixer-XT connection saving for NMXTPatch" OFF)
 
 
 set(CMAKE_BUILD_TYPE "Release")
@@ -116,6 +117,10 @@ endif (EnablePangoCairo)
 if (EnableNMXTPatch)
     add_definitions(-D'NMXT_PATCH_SUPPORT=1')
 endif (EnableNMXTPatch)
+
+if (EnableFilterClient)
+    add_definitions(-D'NMXT_FILTER_CLIENT=1')
+endif (EnableFilterClient)
 
 pkg_check_modules(JACK REQUIRED jack>=0.115.6)
 pkg_check_modules(LIBLO liblo>=0.26 REQUIRED)
@@ -407,6 +412,7 @@ package_status(EnableVST3Support   "Build VST3 support . . . . . . . . . . . . .
 package_status(EnableNTK           "Use NTK for build. . . . . . . . . . . . . . . . . . . .:"  )
 package_status(EnablePangoCairo    "Enable PangoCairo support. . . . . . . . . . . . . . . .:"  )
 package_status(EnableNMXTPatch     "Enable nmxt-patch connection support . . . . . . . . . .:"  )
+package_status(EnableFilterClient  "Enable nmxt-patch Non-Mixer-XT filter support. . . . . .:"  )
 package_status(EnableOptimizations "Use optimizations. . . . . . . . . . . . . . . . . . . .:"  )
 package_status(EnableSSE           "Use sse. . . . . . . . . . . . . . . . . . . . . . . . .:"  )
 package_status(EnableSSE2          "Use sse2 . . . . . . . . . . . . . . . . . . . . . . . .:"  )
