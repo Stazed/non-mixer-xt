@@ -62,6 +62,10 @@ char *project_file;
 
 int REAL_JACK_PORT_NAME_SIZE; //defined after jack client activated
 
+#ifdef NMXT_FILTER_CLIENT
+static const char *save_client_filter = NULL;
+#endif
+
 #undef VERSION
 #define APP_TITLE "MNXTPatch"
 #define VERSION "1.0.0"
@@ -548,6 +552,29 @@ register_prexisting_ports ( void )
         jack_free( (void*) ports );
 }
 
+#ifdef NMXT_FILTER_CLIENT
+static int
+connection_matches_client_filter( const char *src_port,
+                                  const char *dst_port )
+{
+    if ( !save_client_filter || !*save_client_filter )
+        return 1;
+
+    char src_client[512];
+    char dst_client[512];
+
+    if ( sscanf( src_port, "%511[^:]", src_client ) != 1 )
+        return 0;
+
+    if ( sscanf( dst_port, "%511[^:]", dst_client ) != 1 )
+        return 0;
+
+//    printf("src_client = %s : dst_client = %s\n", src_client, dst_client);
+    return strstr( src_client, save_client_filter ) != NULL ||
+           strstr( dst_client, save_client_filter ) != NULL;
+}
+#endif
+
 static int stringsort ( const void *a, const void *b )
 {
     return strcmp(* (char * const *) a, * (char * const *) b);
@@ -684,6 +711,13 @@ snapshot ( const char *file )
 
         for ( connection = connections; *connection; connection++ )
         {
+#ifdef NMXT_FILTER_CLIENT
+            if ( !connection_matches_client_filter( *port,
+                                                   *connection ) )
+            {
+                continue;
+            }
+#endif
             //This code is replicated above #TODO: create function.
             char *s;
             asprintf( &s, "%-40s |> %s\n", *port, *connection ); //prepare the magic string that is the step before creating a struct from with process_patch //port is source client:port and connection is the destination one.
@@ -965,13 +999,16 @@ main ( int argc, char **argv )
     static struct option long_options[] =
     {
         { "help", no_argument, 0, 'h' },
-        { "save", no_argument, 0, 's' },
+        { "save", required_argument, 0, 's' },
+#ifdef NMXT_FILTER_CLIENT
+        { "client", required_argument, 0, 'c' },
+#endif
         { "version", no_argument, 0, 'v' },
         { 0, 0, 0, 0 }
     };
     int option_index = 0;
     int c = 0;
-    while ( ( c = getopt_long_only( argc, argv, "", long_options, &option_index  ) ) != -1 )
+    while ( ( c = getopt_long_only( argc, argv, "s:c:", long_options, &option_index ) ) != -1 )
     {
         switch ( c )
         {
@@ -986,7 +1023,10 @@ main ( int argc, char **argv )
                 "Options:\n"
                 "  --help                Show this screen and exit\n"
                 "  --version             Show version and exit\n"
-                "  --save                Save current connection snapshot to file and exit\n"
+                "  --save <file>         Save current connection snapshot to file and exit\n"
+#ifdef NMXT_FILTER_CLIENT
+                "  --client <name>       Restrict --save to a single JACK client\n"
+#endif
                 "";
                 puts ( usage );
                 exit(0);
@@ -998,7 +1038,13 @@ main ( int argc, char **argv )
                     //save is handled below.
                     break;
                 }
-
+#ifdef NMXT_FILTER_CLIENT
+           case 'c':
+                {
+                    save_client_filter = optarg;
+                    break;
+                }
+#endif
            case 'v':
                 {
                     printf("%s\n", VERSION);
@@ -1031,6 +1077,13 @@ main ( int argc, char **argv )
         maybe_activate_jack_client();
         if ( ! strcmp( argv[1], "--save" ) )
         {
+#ifdef NMXT_FILTER_CLIENT
+            if ( save_client_filter &&
+                 ( argc < 4 || strcmp( argv[3], save_client_filter ) ) )
+            {
+                /* filter already parsed via getopt */
+            }
+#endif
             if ( argc > 2 )
             {
 
@@ -1047,6 +1100,14 @@ main ( int argc, char **argv )
         }
         else
         {
+#ifdef NMXT_FILTER_CLIENT
+            if ( save_client_filter )
+            {
+                fprintf( stderr,
+                         "[nmxt-patch] --client may only be used together with --save\n" );
+                exit(1);
+            }
+#endif
             /**
              * Enter standalone commandline mode. This is without NSM.
              */
