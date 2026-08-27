@@ -289,18 +289,30 @@ set (ScanSources
 add_executable (nmxt-plugin-scan ${ScanSources} ${VST3SDK_SOURCES} ${CMAKE_SOURCE_DIR}/mixer/src/nmxt-plugin-scan.C)
 
 target_include_directories (nmxt-plugin-scan PRIVATE
+        ${CAIRO_INCLUDE_DIRS}
         ${LRDF_INCLUDE_DIRS}
         ${LILV_INCLUDE_DIRS}
         ${SUIL_INCLUDE_DIRS}
 )
 
-target_link_libraries(nmxt-plugin-scan PRIVATE
-        ${LILV_LIBRARIES}
-        ${SUIL_LIBRARIES}
-        ${CMAKE_THREAD_LIBS_INIT}
-        ${DL_LIBRARY}
-        ${LRDF_LIBRARIES}
-)
+if(TARGET fltk::fltk)   # Modern cmake
+    target_link_libraries(nmxt-plugin-scan PRIVATE
+            fltk::fltk
+            ${LILV_LIBRARIES}
+            ${SUIL_LIBRARIES}
+            ${CMAKE_THREAD_LIBS_INIT}
+            ${DL_LIBRARY}
+            ${LRDF_LIBRARIES}
+    )
+else()                  # Legacy cmake
+    target_link_libraries(nmxt-plugin-scan PRIVATE
+            ${LILV_LIBRARIES}
+            ${SUIL_LIBRARIES}
+            ${CMAKE_THREAD_LIBS_INIT}
+            ${DL_LIBRARY}
+            ${LRDF_LIBRARIES}
+    )
+endif()
 
 if (EnableVST3Support AND CONFIG_VST3SDK)
     target_include_directories (nmxt-plugin-scan PRIVATE ${CONFIG_VST3SDK})
