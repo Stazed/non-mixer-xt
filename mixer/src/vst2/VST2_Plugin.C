@@ -853,22 +853,26 @@ VST2_Plugin::open_descriptor( unsigned long iIndex )
         unsigned long i = 0;
         for (; iIndex >= i; ++i )
         {
-            buf[0] = (char) 0;
-            id = vst2_dispatch ( effShellGetNextPlugin, 0, 0, (void *) buf, 0.0f );
+            std::memset(buf, 0, sizeof(buf));
 
-            if ( _iUniqueID != id )
-            {
-                continue;
-            }
-            else
+            id = vst2_dispatch(
+                effShellGetNextPlugin,
+                0,
+                0,
+                buf,
+                0.0f
+            );
+
+            if (id == 0 || buf[0] == '\0')
+                break;
+
+            if (_iUniqueID == id)
             {
                 _found_plugin = true;
                 break;
             }
-
-    //        if ( id == 0 || !buf[0] )
-    //            break;
         }
+
         // Check if we're actually the intended plugin...
         if ( i < iIndex || id == 0 || !buf[0] )
         {
@@ -876,6 +880,16 @@ VST2_Plugin::open_descriptor( unsigned long iIndex )
             _pEffect = nullptr;
             return false;
         }
+
+        // Enumerate the shell and identify id first.
+
+        // Close the temporary shell instance before creating the child.
+        if (_pEffect != nullptr)
+        {
+            vst2_dispatch(effClose, 0, 0, nullptr, 0.0f);
+            _pEffect = nullptr;
+        }
+
         // Make it known...
         g_iVst2ShellCurrentId = id;
         // Re-allocate the thing all over again...
@@ -1157,10 +1171,23 @@ Vst2Plugin_HostCallback( AEffect *effect,
 
         case audioMasterCurrentId:
             DMESSAGE ( "audioMasterCurrentId" );
-            pVst2Plugin = VST2_Plugin::findPlugin ( effect );
-            if ( pVst2Plugin )
+            /*
+             * This callback is made by a VST shell while VSTPluginMain()
+             * is creating the selected child plug-in. At that point the
+             * AEffect is usually not registered with findPlugin() yet.
+             */
+            if (g_iVst2ShellCurrentId != 0)
             {
-                ret = (VstIntPtr) pVst2Plugin->get_unique_id ( );
+                ret = static_cast<VstIntPtr>(g_iVst2ShellCurrentId);
+            }
+            else
+            {
+                pVst2Plugin = VST2_Plugin::findPlugin(effect);
+
+                if (pVst2Plugin)
+                    ret = static_cast<VstIntPtr>(pVst2Plugin->get_unique_id());
+                else
+                    ret = 0;
             }
 
             break;
