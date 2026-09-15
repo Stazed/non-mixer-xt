@@ -2302,10 +2302,21 @@ VST3_Plugin::numChannels(
         Vst::BusInfo busInfo;
         if ( _pComponent->getBusInfo ( type, direction, i, busInfo ) == kResultOk )
         {
-            if ( ( busInfo.busType == Vst::kMain ) ||
-                ( busInfo.flags & Vst::BusInfo::kDefaultActive ) )
+            if ( (direction == Vst::kInput) && (type == Vst::kAudio) )
             {
-                nchannels += busInfo.channelCount;
+                if ( ( busInfo.busType == Vst::kMain ) || ( busInfo.busType == Vst::kAux ) ||
+                    ( busInfo.flags & Vst::BusInfo::kDefaultActive ) )
+                {
+                    nchannels += busInfo.channelCount;
+                }
+            }
+            else
+            {
+                if ( ( busInfo.busType == Vst::kMain ) ||
+                    ( busInfo.flags & Vst::BusInfo::kDefaultActive ) )
+                {
+                    nchannels += busInfo.channelCount;
+                }
             }
         }
     }
@@ -2325,7 +2336,7 @@ VST3_Plugin::create_audio_ports( )
         Vst::BusInfo busInfo;
         if ( _pComponent->getBusInfo ( Vst::kAudio, Vst::kInput, i, busInfo ) == kResultOk )
         {
-            if ( ( busInfo.busType == Vst::kMain ) ||
+            if ( ( busInfo.busType == Vst::kMain ) || ( busInfo.busType == Vst::kAux ) ||
                 ( busInfo.flags & Vst::BusInfo::kDefaultActive ) )
             {
                 _iAudioInBuses++;

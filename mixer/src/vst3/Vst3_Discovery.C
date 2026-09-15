@@ -499,7 +499,7 @@ public:
             Vst::BusInfo busInfo;
             if ( m_component->getBusInfo ( type, direction, i, busInfo ) == kResultOk )
             {
-                if ( ( busInfo.busType == Vst::kMain ) ||
+                if ( ( busInfo.busType == Vst::kMain ) || ( busInfo.busType == Vst::kAux ) ||
                     ( busInfo.flags & Vst::BusInfo::kDefaultActive ) )
                     nchannels += busInfo.channelCount;
             }
