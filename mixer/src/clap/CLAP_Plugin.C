@@ -2059,6 +2059,11 @@ CLAP_Plugin::try_custom_ui( )
             _gui->destroy ( _plugin );
             return false;
         }
+
+        /* Set the default parent size to the plugin default */
+        uint width = 0, height = 0;
+        _gui->get_size(_plugin, &width, &height);
+        _X11_UI->setSize(width, height, true, false);
     }
 
     DMESSAGE ( "GOT A CREATE" );
