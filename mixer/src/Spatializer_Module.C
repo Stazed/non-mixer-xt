@@ -810,6 +810,10 @@ Spatializer_Module::process( nframes_t nframes )
 void
 Spatializer_Module::handle_control_changed( Port *p )
 {
+    // If constructor calls control_value() before all controls are added.
+    if ( control_input.size() < 10 )
+        return;
+
     if ( p == &control_input[6] )
     {
         bool v = p->control_value ( );
