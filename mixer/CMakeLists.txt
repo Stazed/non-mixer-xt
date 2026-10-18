@@ -91,6 +91,7 @@ set(CORE_SOURCES
     ${CMAKE_SOURCE_DIR}/mixer/src/Module.C
     ${CMAKE_SOURCE_DIR}/mixer/src/Module_Parameter_Editor.C
     ${CMAKE_SOURCE_DIR}/mixer/src/Mono_Pan_Module.C
+    ${CMAKE_SOURCE_DIR}/mixer/src/Stereo_Pan_Module.C
     ${CMAKE_SOURCE_DIR}/mixer/src/Panner.C
 
     # Project / UI / misc

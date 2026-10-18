@@ -71,6 +71,7 @@
 #include "Meter_Indicator_Module.H"
 #include "Controller_Module.H"
 #include "Mono_Pan_Module.H"
+#include "Stereo_Pan_Module.H"
 #include "Chain.H"
 #include "Mixer_Strip.H"
 #include "AUX_Module.H"
@@ -281,6 +282,7 @@ main( int argc, char **argv )
     LOG_REGISTER_CREATE ( Meter_Module );
     LOG_REGISTER_CREATE ( JACK_Module );
     LOG_REGISTER_CREATE ( Mono_Pan_Module );
+    LOG_REGISTER_CREATE ( Stereo_Pan_Module );
     LOG_REGISTER_CREATE ( Meter_Indicator_Module );
     LOG_REGISTER_CREATE ( Controller_Module );
     LOG_REGISTER_CREATE ( AUX_Module );

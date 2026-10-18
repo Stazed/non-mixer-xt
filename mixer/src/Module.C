@@ -36,6 +36,7 @@
 #include "JACK_Module.H"
 #include "Gain_Module.H"
 #include "Mono_Pan_Module.H"
+#include "Stereo_Pan_Module.H"
 #include "Meter_Module.H"
 #include "Plugin_Module.H"
 
@@ -1276,6 +1277,8 @@ Module::insert_menu_cb( const Fl_Menu_ *menu )
         mod = new Meter_Module ( );
     else if ( !strcmp ( s_picked, "Mono Pan" ) )
         mod = new Mono_Pan_Module ( );
+    else if ( !strcmp ( s_picked, "Stereo Pan" ) )
+        mod = new Stereo_Pan_Module ( );
     else if ( !strcmp ( s_picked, "Scan for plugins" ) )
     {
         Scanner_Window scanner;
@@ -1488,6 +1491,7 @@ Module::menu( void ) const
         insert_menu->add ( "Gain", 0, 0 );
         insert_menu->add ( "Meter", 0, 0 );
         insert_menu->add ( "Mono Pan", 0, 0 );
+        insert_menu->add ( "Stereo Pan", 0, 0 );
         insert_menu->add ( "Aux", 0, 0 );
         insert_menu->add ( "Spatializer", 0, 0 );
         insert_menu->add ( "Plugin", 0, 0 );
