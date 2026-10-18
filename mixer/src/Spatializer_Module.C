@@ -811,7 +811,7 @@ void
 Spatializer_Module::handle_control_changed( Port *p )
 {
     // If constructor calls control_value() before all controls are added.
-    if ( control_input.size() < 10 )
+    if ( control_input.size() < 10 )    // Magic 10 are the predetermined number of controls
         return;
 
     if ( p == &control_input[6] )
