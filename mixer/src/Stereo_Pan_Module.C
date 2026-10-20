@@ -101,33 +101,57 @@ Stereo_Pan_Module::process( nframes_t nframes )
                 nframes );
         }
     }
-    else
+    else if ( audio_input.size ( ) == 1 )   // Mono input - same as Mono_Pan_Module
     {
-        const float pan = control_input[0].control_value(); // -1 to +1
+        const float gt = ( control_input[0].control_value ( ) + 1.0f ) * 0.5f;
+
+        sample_t gainbuf[nframes];
+        bool use_gainbuf = smoothing.apply ( gainbuf, nframes, gt );
+
+        if ( unlikely ( use_gainbuf ) )
+        {
+            /* right channel */
+            buffer_copy_and_apply_gain_buffer ( static_cast<sample_t*> ( audio_output[1].buffer ( ) ),
+                static_cast<sample_t*> ( audio_input[0].buffer ( ) ),
+                gainbuf,
+                nframes );
+
+            /*  left channel  */
+            for ( nframes_t i = 0; i < nframes; i++ )
+                gainbuf[i] = 1.0f - gainbuf[i];
+
+            buffer_apply_gain_buffer ( static_cast<sample_t*> ( audio_output[0].buffer ( ) ),
+                gainbuf,
+                nframes );
+        }
+        else
+        {
+            /* right channel */
+            buffer_copy_and_apply_gain ( static_cast<sample_t*> ( audio_output[1].buffer ( ) ),
+                static_cast<sample_t*> ( audio_input[0].buffer ( ) ),
+                nframes,
+                gt );
+
+            /*  left channel  */
+            buffer_apply_gain ( static_cast<sample_t*> ( audio_output[0].buffer ( ) ),
+                nframes,
+                1.0f - gt );
+        }
+    }
+    else    // Stereo input
+    {
+        const float pan = control_input[0].control_value();
         const float left_gain  = pan > 0.0f ? 1.0f - pan : 1.0f;
         const float right_gain = pan < 0.0f ? 1.0f + pan : 1.0f;
 
-        {
-            /* right channel */
-            if ( audio_input.size ( ) == 1 )    // mono input
-            {
-                buffer_copy_and_apply_gain ( static_cast<sample_t*> ( audio_output[1].buffer ( ) ),
-                    static_cast<sample_t*> ( audio_input[0].buffer ( ) ),
-                    nframes,
-                    right_gain );
-            }
-            else    // Stereo input
-            {
-                buffer_copy_and_apply_gain ( static_cast<sample_t*> ( audio_output[1].buffer ( ) ),
-                    static_cast<sample_t*> ( audio_input[1].buffer ( ) ),
-                    nframes,
-                    right_gain );
-            }
-            /*  left channel  */
-            buffer_copy_and_apply_gain ( static_cast<sample_t*> ( audio_output[0].buffer ( ) ),
-                static_cast<sample_t*> ( audio_input[0].buffer ( ) ),
-                nframes,
-                left_gain );
-        }
+        buffer_copy_and_apply_gain(
+            static_cast<sample_t*>( audio_output[1].buffer() ),
+            static_cast<sample_t*>( audio_input[1].buffer() ),
+            nframes, right_gain );
+
+        buffer_copy_and_apply_gain(
+            static_cast<sample_t*>( audio_output[0].buffer() ),
+            static_cast<sample_t*>( audio_input[0].buffer() ),
+            nframes, left_gain );
     }
 }
