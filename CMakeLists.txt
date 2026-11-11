@@ -160,7 +160,6 @@ else(EnableNTK) #FLTK Build
     find_package(FLTK 1.4 CONFIG)
     if(TARGET fltk::fltk)   # Modern cmake
         message(STATUS "FLTK CONFIG is available")
-        add_definitions(-D'FLTK_VERSION_1_4=1')
         add_definitions(-D'FLTK_SUPPORT=1')
         add_definitions(-D'BUILD_TYPE="Built with FLTK static library"')
     else()                  # Legacy cmake

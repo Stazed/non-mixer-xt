@@ -46,7 +46,7 @@
 
 #include <FL/Fl_PNG_Image.H>
 
-#ifdef FLTK_VERSION_1_4
+#if FL_API_VERSION >= 10400
 #include <FL/platform.H>
 #endif
 

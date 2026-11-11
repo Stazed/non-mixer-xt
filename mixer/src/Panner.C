@@ -22,7 +22,7 @@
 /*******************************************************************************/
 
 #include "Panner.H"
-#ifdef FLTK_VERSION_1_4
+#if FL_API_VERSION >= 10400
 #include <FL/platform.H>
 #else
 #include <FL/x.H>
