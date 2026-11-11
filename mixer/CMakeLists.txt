@@ -198,7 +198,7 @@ if(EnableNTK)
     )
 
 else(EnableNTK) #FLTK Build
-    if(TARGET fltk::fltk)    # Modern cmake
+    if(TARGET fltk::fltk-static OR TARGET fltk::fltk)    # Modern cmake
         set(ExternLibraries
             ${JACK_LINK_LIBRARIES}
             ${CMAKE_THREAD_LIBS_INIT}
@@ -240,7 +240,9 @@ endif()
 if(EnableNTK)
     target_link_libraries (non-mixer-xt PRIVATE ${NTK_STATIC} ${NTK_STATIC_IMAGES} ${ExternLibraries})
 else(EnableNTK) #FLTK
-    if(TARGET fltk::fltk)   # Modern cmake
+    if(TARGET fltk::fltk-static)    # Modern cmake with Ubuntu for static
+        target_link_libraries (non-mixer-xt PRIVATE fltk::fltk-static fltk::images-static ${ExternLibraries})
+    elseif(TARGET fltk::fltk)       # Modern cmake with Arch for static
         target_link_libraries (non-mixer-xt PRIVATE fltk::fltk fltk::images ${ExternLibraries})
     else()                  # Legacy cmake
         target_link_libraries (non-mixer-xt PRIVATE ${FLTK_STATIC} ${FLTK_STATIC_IMAGES} ${ExternLibraries})
@@ -296,9 +298,10 @@ target_include_directories (nmxt-plugin-scan PRIVATE
         ${SUIL_INCLUDE_DIRS}
 )
 
-if(TARGET fltk::fltk)   # Modern cmake
+if(TARGET fltk::fltk-static OR TARGET fltk::fltk)   # Modern cmake
+# The fltk::fltk below is O.K. since nmxt-plugin-scan does not need to be static.
     target_link_libraries(nmxt-plugin-scan PRIVATE
-            fltk::fltk
+            fltk::fltk  
             ${LILV_LIBRARIES}
             ${SUIL_LIBRARIES}
             ${CMAKE_THREAD_LIBS_INIT}

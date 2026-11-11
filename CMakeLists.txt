@@ -158,7 +158,10 @@ if(EnableNTK)
 else(EnableNTK) #FLTK Build
     SET(FLTK_SKIP_OPENGL TRUE)
     find_package(FLTK 1.4 CONFIG)
-    if(TARGET fltk::fltk)   # Modern cmake
+# Some distos (Ubuntu) use fltk::fltk-static and fltk::fltk for shared.
+# Others (Arch) fltk::fltk is static and fltk::shared. Probably this is correct.
+# We are trying both to cover each possible way as we need static.
+    if(TARGET fltk::fltk-static OR TARGET fltk::fltk)   # Modern cmake
         message(STATUS "FLTK CONFIG is available")
         add_definitions(-D'FLTK_SUPPORT=1')
         add_definitions(-D'BUILD_TYPE="Built with FLTK static library"')
