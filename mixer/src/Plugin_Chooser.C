@@ -332,7 +332,7 @@ Plugin_Table::draw_cell( TableContext context,
 
             if(_plugin_rows[R]->disallowed)
             {
-                fl_color ( fl_rgb_color ( 255, 94, 92 ) );  // some sort of red
+                fl_color ( fl_rgb_color ( 255, 115, 115 ) );  // some sort of red
                 fl_rectf ( X, Y, W, H );
                 fl_rect ( X, Y, W, H );
             }
