@@ -50,6 +50,7 @@ public:
     int midi_inputs;
     int midi_outputs;
     bool favorite;
+    bool disallowed;
 
     explicit Plugin_Info ( const std::string &s_type ) :  // LADSPA, LV2, CLAP, VST2, VST3
         type(s_type),
@@ -63,7 +64,8 @@ public:
         audio_outputs(0),
         midi_inputs(0),
         midi_outputs(0),
-        favorite(false) {}
+        favorite(false),
+        disallowed(false) {}
 
     bool operator< ( const Plugin_Info &rhs ) const
     {

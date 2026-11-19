@@ -1,5 +1,5 @@
 # data file for the Fltk User Interface Designer (fluid)
-version 1.0309
+version 1.0405
 header_name {.H}
 code_name {.C}
 comment {//
@@ -22,7 +22,7 @@ comment {//
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
-} {selected in_source in_header
+} {in_source in_header
 }
 
 decl {\#include "../../FL/Fl_Scalepack.H"} {public global
@@ -32,9 +32,17 @@ decl {\#include <FL/Fl_Table_Row.H>} {public global
 }
 
 widget_class Plugin_Chooser_UI {
-  label {Plugin Selector} open
-  xywh {0 29 1920 1050} type Double hide resizable size_range {740 0 740 0}
+  label {Plugin Selector} open selected
+  xywh {0 59 1920 1021} hide resizable size_range {740 0 740 0}
 } {
+  Fl_Group {} {open
+    xywh {200 5 100 20}
+  } {
+    Fl_Round_Button show_disallowed_button {
+      label {Show Disallowed Plugins}
+      tooltip {Show plugins that are not allowed due to mixer strip port configuration. The disallowed plugins will be highlighted 'RED' and cannot be selected for insertion.} xywh {200 5 100 20} down_box ROUND_DOWN_BOX
+    }
+  }
   Fl_Group {} {open
     xywh {10 5 155 20}
   } {
@@ -44,7 +52,7 @@ widget_class Plugin_Chooser_UI {
     }
     Fl_Round_Button favorites_button {
       label {&Favorites}
-      xywh {65 5 100 20} type Radio down_box ROUND_DOWN_BOX shortcut 0x80066
+      xywh {65 5 20 20} type Radio down_box ROUND_DOWN_BOX shortcut 0x80066
     }
   }
   Fl_Group {} {open

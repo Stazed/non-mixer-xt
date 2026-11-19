@@ -42,6 +42,7 @@ extern std::list<Plugin_Info> g_plugin_cache;
 static std::vector <Plugin_Info*> _plugin_rows;
 static int previous_favorites = 1;
 static int plugin_type = 0;
+static int show_disallowed_plugins = 0;
 static std::string search_name;
 static std::string search_author;
 static int search_category = 0;
@@ -53,6 +54,7 @@ Plugin_Chooser::plugin_chooser( int ninputs )
 
     Plugin_Chooser *o = new Plugin_Chooser ( 0, 0, 735, 500, "Plugin Chooser" );
 
+    o->ui->show_disallowed_button->value( show_disallowed_plugins );
     o->ui->favorites_button->value ( previous_favorites );
     o->ui->all_button->value ( previous_favorites ? 0 : 1 );
     o->ui->type_choice->value ( plugin_type );
@@ -139,6 +141,7 @@ Plugin_Chooser::plugin_chooser( int ninputs )
             break;
     }
 
+    show_disallowed_plugins = o->ui->show_disallowed_button->value( );
     previous_favorites = o->ui->favorites_button->value ( );
     plugin_type = o->ui->type_choice->value ( );
     search_name = o->ui->name_input->value ( );
@@ -172,7 +175,12 @@ Plugin_Chooser::search( const char *name, const char *author, const char *catego
                 ( noutputs == 0 || noutputs == p->audio_outputs ) ) ||
                 ( p->audio_inputs == 1 && p->audio_outputs == 1 ) ||
                 ( p->audio_inputs == 0 && ninputs == 1 ) ) ) // this would be a synth with no inputs
-                continue;
+            {
+                if ( show_disallowed_plugins )
+                    p->disallowed = true;
+                else
+                    continue;
+            }
 
 #if defined(CLAP_SUPPORT) || defined(VST3_SUPPORT) || defined(VST2_SUPPORT)
             /* We do not support multiple instance for these ATM. */
@@ -222,6 +230,11 @@ Plugin_Chooser::cb_handle( Fl_Widget *w )
     if ( w == ui->all_button )
     {
         ui->favorites_button->value ( !ui->all_button->value ( ) );
+    }
+
+    if ( w == ui->show_disallowed_button )
+    {
+        show_disallowed_plugins = ui->show_disallowed_button->value();
     }
 
     {
@@ -317,10 +330,19 @@ Plugin_Table::draw_cell( TableContext context,
                     break;
             }
 
-            fl_color ( row_selected ( R ) ? selection_color ( ) : FL_DARK1 );
-            fl_rectf ( X, Y, W, H );
-            fl_color ( color ( ) );
-            fl_rect ( X, Y, W, H );
+            if(_plugin_rows[R]->disallowed)
+            {
+                fl_color ( fl_rgb_color ( 255, 94, 92 ) );  // some sort of red
+                fl_rectf ( X, Y, W, H );
+                fl_rect ( X, Y, W, H );
+            }
+            else
+            {
+                fl_color ( row_selected ( R ) ? selection_color ( ) : FL_DARK1 );
+                fl_rectf ( X, Y, W, H );
+                fl_color ( color ( ) );
+                fl_rect ( X, Y, W, H );
+            }
 
             X += 4;
             W -= 8;
@@ -372,6 +394,10 @@ Plugin_Chooser::cb_table( Fl_Widget *w )
         }
         else
         {
+            // disable callback on disallowed
+            if( _plugin_rows[R]->disallowed )
+                return;
+
 #ifdef LV2_SUPPORT
             if ( ::strcmp ( _plugin_rows[R]->type.c_str ( ), "LV2" ) == 0 )
             {
@@ -608,6 +634,9 @@ Plugin_Chooser::Plugin_Chooser( int X, int Y, int W, int H, const char *L )
 
         o->outputs_input->callback ( &Plugin_Chooser::cb_handle, this );
         o->outputs_input->when ( FL_WHEN_CHANGED );
+
+        o->show_disallowed_button->callback( &Plugin_Chooser::cb_handle, this );
+        o->show_disallowed_button->when( FL_WHEN_CHANGED );
 
         o->favorites_button->callback ( &Plugin_Chooser::cb_handle, this );
         o->favorites_button->when ( FL_WHEN_CHANGED );
